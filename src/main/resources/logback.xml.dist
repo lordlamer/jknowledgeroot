@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+<!--  
+	see: https://wiki.base22.com/display/btg/How+to+setup+SLF4J+and+LOGBack+in+a+web+app+-+fast 
+	http://logback.qos.ch/manual/appenders.html
+-->
+   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <layout class="ch.qos.logback.classic.PatternLayout">
+      <Pattern>
+      	%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n
+      </Pattern>
+    </layout>
+  </appender>
+  
+  <!-- 
+  <appender name="EMAIL" class="ch.qos.logback.classic.net.SMTPAppender">
+    <smtpHost>ADDRESS-OF-YOUR-SMTP-HOST</smtpHost>
+    <to>EMAIL-DESTINATION</to>
+    <to>ANOTHER_EMAIL_DESTINATION</to>
+    <from>SENDER-EMAIL</from>
+    <subject>TESTING: %logger{20} - %m</subject>
+    <layout class="ch.qos.logback.classic.PatternLayout">
+      <pattern>%date %-5level %logger{35} - %message%n</pattern>
+    </layout>       
+  </appender>
+  -->
+  
+  <!-- 
+  <appender name="SYSLOG" class="ch.qos.logback.classic.net.SyslogAppender">
+    <syslogHost>remote_home</syslogHost>
+    <facility>AUTH</facility>
+    <suffixPattern>[%thread] %logger %msg</suffixPattern>
+  </appender>
+  -->
+
+  <!--
+  <appender name="DB" class="ch.qos.logback.classic.db.DBAppender">
+    <connectionSource class="ch.qos.logback.core.db.DriverManagerConnectionSource">
+      <driverClass>com.mysql.jdbc.Driver</driverClass>
+      <url>jdbc:mysql://host:3306/knowledgeroot</url>
+      <user>root</user>
+      <password></password>
+    </connectionSource>
+  </appender>
+  -->
+
+  <logger name="org.knowledgeroot" level="info">
+  </logger> 
+ 
+  <root level="warn">
+    <appender-ref ref="STDOUT" />
+    <!-- <appender-ref ref="DB" /> -->
+  </root>
+
+</configuration>
