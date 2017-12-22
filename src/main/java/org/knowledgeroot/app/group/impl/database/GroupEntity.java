@@ -1,18 +1,47 @@
 package org.knowledgeroot.app.group.impl.database;
 
+import javax.persistence.*;
 import java.time.LocalDateTime;
 
+import static javax.persistence.GenerationType.IDENTITY;
+
+@Entity
+@Table(name = "group")
 public class GroupEntity {
+    @Id
+    @GeneratedValue(strategy = IDENTITY)
+    @Column(name = "id", unique = true, nullable = false)
     private Integer id;
+
+    @Column(name = "name", nullable = false)
     private String name;
+
+    @Column(name = "description")
     private String description;
 
+
+    @Column(name = "time_start")
     private LocalDateTime timeStart;
+
+    @Column(name = "time_end")
     private LocalDateTime timeEnd;
+
+    @Column(name = "active", nullable = false)
     private Boolean active;
+
+    @Column(name = "created_by", nullable = false)
     private Integer createdBy;
+
+    @Column(name = "create_date", nullable = false)
     private LocalDateTime  createDate;
+
+    @Column(name = "changed_by", nullable = false)
     private Integer changedBy;
+
+    @Column(name = "change_date", nullable = false)
+    private Integer changeDate;
+
+    @Column(name = "deleted", nullable = false)
     private Boolean deleted;
 
     public Integer getId() {
@@ -85,6 +114,14 @@ public class GroupEntity {
 
     public void setChangedBy(Integer changedBy) {
         this.changedBy = changedBy;
+    }
+
+    public Integer getChangeDate() {
+        return changeDate;
+    }
+
+    public void setChangeDate(Integer changeDate) {
+        this.changeDate = changeDate;
     }
 
     public Boolean getDeleted() {
