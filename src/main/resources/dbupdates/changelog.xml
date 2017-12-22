@@ -63,8 +63,8 @@
             <column name="name" type="VARCHAR(255)" defaultValue="">
                 <constraints nullable="false"/>
             </column>
-            <column name="description" type="TEXT" defaultValue="">
-                <constraints nullable="false"/>
+            <column name="description" type="TEXT">
+                <constraints nullable="true"/>
             </column>
             <column name="time_start" type="datetime">
                 <constraints nullable="false"/>
@@ -144,8 +144,8 @@
             <column name="subtitle" type="VARCHAR(255)" defaultValue="">
                 <constraints nullable="false"/>
             </column>
-            <column name="description" type="TEXT" defaultValue="">
-                <constraints nullable="false"/>
+            <column name="description" type="clob">
+                <constraints nullable="true"/>
             </column>
             <column name="tooltip" type="VARCHAR(255)" defaultValue="">
                 <constraints nullable="false"/>
@@ -210,8 +210,8 @@
             <column name="name" type="VARCHAR(255)" defaultValue="">
                 <constraints nullable="false"/>
             </column>
-            <column name="content" type="TEXT" defaultValue="">
-                <constraints nullable="false"/>
+            <column name="content" type="clob">
+                <constraints nullable="true"/>
             </column>
             <column name="type" type="VARCHAR(20)" defaultValue="text">
                 <constraints nullable="false"/>
