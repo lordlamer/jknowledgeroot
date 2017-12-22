@@ -1,23 +1,62 @@
 package org.knowledgeroot.app.user.impl.database;
 
+import javax.persistence.*;
 import java.time.LocalDateTime;
 
+import static javax.persistence.GenerationType.IDENTITY;
+
+@Entity
+@Table(name = "user")
 public class UserEntity {
+    @Id
+    @GeneratedValue(strategy = IDENTITY)
+    @Column(name = "id", unique = true, nullable = false)
     private Integer id;
+
+    @Column(name = "first_name", nullable = false)
     private String firstName;
+
+    @Column(name = "last_name", nullable = false)
     private String lastName;
+
+    @Column(name = "login", nullable = false)
     private String login;
+
+    @Column(name = "email", nullable = false)
     private String email;
+
+    @Column(name = "password", nullable = false)
     private String password;
+
+    @Column(name = "language", nullable = false)
     private String language;
+
+    @Column(name = "timezone", nullable = false)
     private String timezone;
 
+
+    @Column(name = "time_start")
     private LocalDateTime timeStart;
+
+    @Column(name = "time_end")
     private LocalDateTime timeEnd;
+
+    @Column(name = "active", nullable = false)
     private Boolean active;
+
+    @Column(name = "created_by", nullable = false)
     private Integer createdBy;
+
+    @Column(name = "create_date", nullable = false)
     private LocalDateTime  createDate;
+
+    @Column(name = "changed_by", nullable = false)
     private Integer changedBy;
+
+    @Column(name = "change_date", nullable = false)
+    private Integer changeDate;
+
+    @Column(name = "deleted", nullable = false)
     private Boolean deleted;
 
     public Integer getId() {
@@ -130,6 +169,14 @@ public class UserEntity {
 
     public void setChangedBy(Integer changedBy) {
         this.changedBy = changedBy;
+    }
+
+    public Integer getChangeDate() {
+        return changeDate;
+    }
+
+    public void setChangeDate(Integer changeDate) {
+        this.changeDate = changeDate;
     }
 
     public Boolean getDeleted() {
