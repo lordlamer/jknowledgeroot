@@ -49,6 +49,7 @@ public class OAuth2ServerConfiguration {
                     .antMatchers("/swagger-resources/**").permitAll()
                     .antMatchers("/webjars/**").permitAll()
                     .antMatchers("/v2/**").permitAll()
+                    .antMatchers("/test/**").permitAll() // test
                     .antMatchers("/**")
                         .access("#oauth2.hasScope('read')")
             ;
