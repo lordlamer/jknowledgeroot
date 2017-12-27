@@ -1,5 +1,7 @@
 package org.knowledgeroot.app.user.impl.database;
 
+import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters;
+
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
@@ -11,7 +13,7 @@ public class UserEntity {
     @Id
     @GeneratedValue(strategy = IDENTITY)
     @Column(name = "id", unique = true, nullable = false)
-    private Integer id;
+    private Long id;
 
     @Column(name = "first_name", nullable = false)
     private String firstName;
@@ -36,9 +38,11 @@ public class UserEntity {
 
 
     @Column(name = "time_start")
+    @Convert(converter = Jsr310JpaConverters.LocalDateTimeConverter.class)
     private LocalDateTime timeStart;
 
     @Column(name = "time_end")
+    @Convert(converter = Jsr310JpaConverters.LocalDateTimeConverter.class)
     private LocalDateTime timeEnd;
 
     @Column(name = "active", nullable = false)
@@ -48,22 +52,24 @@ public class UserEntity {
     private Integer createdBy;
 
     @Column(name = "create_date", nullable = false)
+    @Convert(converter = Jsr310JpaConverters.LocalDateTimeConverter.class)
     private LocalDateTime  createDate;
 
     @Column(name = "changed_by", nullable = false)
     private Integer changedBy;
 
     @Column(name = "change_date", nullable = false)
-    private Integer changeDate;
+    @Convert(converter = Jsr310JpaConverters.LocalDateTimeConverter.class)
+    private LocalDateTime changeDate;
 
     @Column(name = "deleted", nullable = false)
     private Boolean deleted;
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -171,11 +177,11 @@ public class UserEntity {
         this.changedBy = changedBy;
     }
 
-    public Integer getChangeDate() {
+    public LocalDateTime getChangeDate() {
         return changeDate;
     }
 
-    public void setChangeDate(Integer changeDate) {
+    public void setChangeDate(LocalDateTime changeDate) {
         this.changeDate = changeDate;
     }
 
