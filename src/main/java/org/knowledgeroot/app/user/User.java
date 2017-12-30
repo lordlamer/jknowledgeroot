@@ -1,5 +1,7 @@
 package org.knowledgeroot.app.user;
 
+import org.knowledgeroot.app.auth.PasswordHasher;
+
 import java.time.LocalDateTime;
 
 public class User {
@@ -66,7 +68,8 @@ public class User {
     }
 
     public void setPassword(String password) {
-        this.password = password;
+        // create password hash
+        this.password = PasswordHasher.hash(password, PasswordHasher.HASH_METHOD.SHA512, 100);
     }
 
     public String getLanguage() {

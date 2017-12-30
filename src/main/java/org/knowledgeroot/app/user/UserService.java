@@ -10,30 +10,59 @@ public class UserService {
     @Autowired
     private UserDao userImpl;
 
+    /**
+     * find all users
+     * @return
+     */
     public List<User> findAllUsers() {
         return userImpl.findAllUsers();
     }
 
+    /**
+     * find user by given id
+     * @param id
+     * @return
+     */
     public User findById(long id) {
         return userImpl.findById(id);
     }
 
+    /**
+     * check if user exists
+     * @param user
+     * @return
+     */
     public boolean isUserExist(User user) {
         return userImpl.isUserExist(user);
     }
 
-    public void saveUser(User user) {
-        userImpl.saveUser(user);
+    /**
+     * create user
+     * @param user
+     */
+    public void createUser(User user) {
+        userImpl.createUser(user);
     }
 
+    /**
+     * update existing user
+     * @param user
+     */
     public void updateUser(User user) {
         userImpl.updateUser(user);
     }
 
+    /**
+     * delete all users
+     */
     public void deleteAllUsers() {
         userImpl.deleteAllUsers();
     }
 
+    /**
+     * delete user by id
+     * @param id
+     */
     public void deleteUserById(long id) {
         userImpl.deleteUserById(id);
     }

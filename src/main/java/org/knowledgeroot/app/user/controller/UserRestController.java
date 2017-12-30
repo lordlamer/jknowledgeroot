@@ -21,8 +21,10 @@ public class UserRestController {
     @Autowired
     protected UserService userService;
 
-    //-------------------Retrieve All Users--------------------------------------------------------
-
+    /**
+     * get all users
+     * @return
+     */
     @RequestMapping(value = "/user", method = RequestMethod.GET)
     public ResponseEntity<List<UserDto>> listAllUsers() {
         List<User> users = userService.findAllUsers();
@@ -36,9 +38,11 @@ public class UserRestController {
         return new ResponseEntity<List<UserDto>>(userDtos, HttpStatus.OK);
     }
 
-
-    //-------------------Retrieve Single User--------------------------------------------------------
-
+    /**
+     * get single user by id
+     * @param id
+     * @return
+     */
     @RequestMapping(value = "/user/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UserDto> getUser(@PathVariable("id") long id) {
         User user = userService.findById(id);
@@ -52,10 +56,13 @@ public class UserRestController {
         return new ResponseEntity<UserDto>(userDto, HttpStatus.OK);
     }
 
-
-    //-------------------Create a User--------------------------------------------------------
-
-    @RequestMapping(value = "/user/", method = RequestMethod.POST)
+    /**
+     * create user
+     * @param userDto
+     * @param ucBuilder
+     * @return
+     */
+    @RequestMapping(value = "/user", method = RequestMethod.POST)
     public ResponseEntity<Void> createUser(@RequestBody UserDto userDto, UriComponentsBuilder ucBuilder) {
 
         User user = mapper.map(userDto, User.class);
@@ -64,7 +71,7 @@ public class UserRestController {
             return new ResponseEntity<Void>(HttpStatus.CONFLICT);
         }
 
-        userService.saveUser(user);
+        userService.createUser(user);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setLocation(ucBuilder.path("/user/{id}").buildAndExpand(user.getId()).toUri());
@@ -72,9 +79,12 @@ public class UserRestController {
         return new ResponseEntity<Void>(headers, HttpStatus.CREATED);
     }
 
-
-    //------------------- Update a User --------------------------------------------------------
-
+    /**
+     * update existing user
+     * @param id
+     * @param userDto
+     * @return
+     */
     @RequestMapping(value = "/user/{id}", method = RequestMethod.PUT)
     public ResponseEntity<UserDto> updateUser(@PathVariable("id") long id, @RequestBody UserDto userDto) {
         if(id != userDto.getId()) {
@@ -96,6 +106,11 @@ public class UserRestController {
 
     //------------------- Delete a User --------------------------------------------------------
 
+    /**
+     * delete user
+     * @param id
+     * @return
+     */
     @RequestMapping(value = "/user/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<UserDto> deleteUser(@PathVariable("id") long id) {
         User user = userService.findById(id);
@@ -109,10 +124,11 @@ public class UserRestController {
         return new ResponseEntity<UserDto>(HttpStatus.NO_CONTENT);
     }
 
-
-    //------------------- Delete All Users --------------------------------------------------------
-
-    @RequestMapping(value = "/user/", method = RequestMethod.DELETE)
+    /**
+     * delete all users
+     * @return
+     */
+    @RequestMapping(value = "/user", method = RequestMethod.DELETE)
     public ResponseEntity<UserDto> deleteAllUsers() {
         userService.deleteAllUsers();
 

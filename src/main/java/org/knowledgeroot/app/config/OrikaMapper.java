@@ -60,7 +60,7 @@ public class OrikaMapper extends ConfigurableMapper implements ApplicationContex
     public void addMapper(Mapper<?, ?> mapper) {
         if(mapper instanceof UserToUserDtoMapper) {
             mapperFactory.classMap(mapper.getAType(), mapper.getBType())
-                    .exclude("password")
+                    //.exclude("password")
                     .byDefault()
                     .customize((Mapper) mapper)
                     .register();
