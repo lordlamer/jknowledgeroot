@@ -14,8 +14,8 @@ public class UserService {
      * find all users
      * @return
      */
-    public List<User> findAllUsers() {
-        return userImpl.findAllUsers();
+    public List<User> listUsers(UserFilter userFilter) {
+        return userImpl.listUsers(userFilter);
     }
 
     /**

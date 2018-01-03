@@ -7,7 +7,7 @@ public interface UserDao {
      * find all users
      * @return
      */
-    List<User> findAllUsers();
+    List<User> listUsers(UserFilter userFilter);
 
     /**
      * find user by given id
