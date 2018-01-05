@@ -166,28 +166,11 @@ public class UserImpl implements UserDao {
      */
     @Override
     public void updateUser(User user) {
-        // get existing entity
-        UserEntity userEntity = findEntityById(user.getId());
-
-        // map fields
-        userEntity.setLogin(user.getLogin());
-        userEntity.setPassword(user.getPassword());
-        userEntity.setFirstName(user.getFirstName());
-        userEntity.setLastName(user.getLastName());
-        userEntity.setEmail(user.getEmail());
-        userEntity.setActive(user.getActive());
-        userEntity.setDeleted(user.getDeleted());
-        userEntity.setCreatedBy(user.getCreatedBy());
-        userEntity.setCreateDate(user.getCreateDate());
-        userEntity.setChangedBy(user.getChangedBy());
-        userEntity.setChangeDate(user.getChangeDate());
-        userEntity.setLanguage(user.getLanguage());
-        userEntity.setTimezone(user.getTimezone());
-        userEntity.setTimeStart(user.getTimeStart());
-        userEntity.setTimeEnd(user.getTimeEnd());
+        // create user entity
+        UserEntity userEntity = mapper.map(user, UserEntity.class);
 
         // save to database
-        entityManager.persist(userEntity);
+        entityManager.merge(userEntity);
     }
 
     /**
