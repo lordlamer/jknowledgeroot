@@ -1,5 +1,7 @@
 package org.knowledgeroot.app.page.controller;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.time.LocalDateTime;
 
 public class PageDto {
@@ -17,12 +19,21 @@ public class PageDto {
     private Boolean showTableOfContent;
     private Integer sorting;
 
+    @JsonFormat
+            (shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime timeStart;
+    @JsonFormat
+            (shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime timeEnd;
     private Boolean active;
     private Integer createdBy;
+    @JsonFormat
+            (shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime  createDate;
     private Integer changedBy;
+    @JsonFormat
+            (shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime changeDate;
     private Boolean deleted;
 
     public Integer getId() {
@@ -175,6 +186,14 @@ public class PageDto {
 
     public void setChangedBy(Integer changedBy) {
         this.changedBy = changedBy;
+    }
+
+    public LocalDateTime getChangeDate() {
+        return changeDate;
+    }
+
+    public void setChangeDate(LocalDateTime changeDate) {
+        this.changeDate = changeDate;
     }
 
     public Boolean getDeleted() {

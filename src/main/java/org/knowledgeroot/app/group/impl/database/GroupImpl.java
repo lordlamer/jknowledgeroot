@@ -130,7 +130,7 @@ public class GroupImpl implements GroupDao {
         boolean found = false;
 
         List<GroupEntity> groupEntities = entityManager.createQuery(
-                "SELECT u FROM GroupEntity u WHERE u.name = :name",
+                "SELECT u FROM GroupEntity g WHERE g.name = :name",
                 GroupEntity.class)
                 .setParameter("name", group.getName())
                 .getResultList();
@@ -182,7 +182,7 @@ public class GroupImpl implements GroupDao {
      */
     @Override
     public void deleteGroupById(long id) {
-        entityManager.createQuery("DELETE FROM GroupEntity u WHERE u.id = :id")
+        entityManager.createQuery("DELETE FROM GroupEntity g WHERE g.id = :id")
                 .setParameter("id", id)
                 .executeUpdate();
     }

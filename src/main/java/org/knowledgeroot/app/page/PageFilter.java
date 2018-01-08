@@ -2,7 +2,7 @@ package org.knowledgeroot.app.page;
 
 import java.time.LocalDateTime;
 
-public class Page {
+public class PageFilter {
     private Integer id;
     private Integer parent;
     private String name;
@@ -17,14 +17,21 @@ public class Page {
     private Boolean showTableOfContent;
     private Integer sorting;
 
-    private LocalDateTime timeStart;
-    private LocalDateTime timeEnd;
+    private LocalDateTime timeStartBegin;
+    private LocalDateTime timeStartEnd;
+    private LocalDateTime timeEndBegin;
+    private LocalDateTime timeEndEnd;
     private Boolean active;
     private Integer createdBy;
-    private LocalDateTime createDate;
+    private LocalDateTime  createDateBegin;
+    private LocalDateTime  createDateEnd;
     private Integer changedBy;
-    private LocalDateTime changDate;
+    private LocalDateTime changeDateBegin;
+    private LocalDateTime changeDateEnd;
     private Boolean deleted;
+
+    private Integer start;
+    private Integer limit;
 
     public Integer getId() {
         return id;
@@ -130,20 +137,36 @@ public class Page {
         this.sorting = sorting;
     }
 
-    public LocalDateTime getTimeStart() {
-        return timeStart;
+    public LocalDateTime getTimeStartBegin() {
+        return timeStartBegin;
     }
 
-    public void setTimeStart(LocalDateTime timeStart) {
-        this.timeStart = timeStart;
+    public void setTimeStartBegin(LocalDateTime timeStartBegin) {
+        this.timeStartBegin = timeStartBegin;
     }
 
-    public LocalDateTime getTimeEnd() {
-        return timeEnd;
+    public LocalDateTime getTimeStartEnd() {
+        return timeStartEnd;
     }
 
-    public void setTimeEnd(LocalDateTime timeEnd) {
-        this.timeEnd = timeEnd;
+    public void setTimeStartEnd(LocalDateTime timeStartEnd) {
+        this.timeStartEnd = timeStartEnd;
+    }
+
+    public LocalDateTime getTimeEndBegin() {
+        return timeEndBegin;
+    }
+
+    public void setTimeEndBegin(LocalDateTime timeEndBegin) {
+        this.timeEndBegin = timeEndBegin;
+    }
+
+    public LocalDateTime getTimeEndEnd() {
+        return timeEndEnd;
+    }
+
+    public void setTimeEndEnd(LocalDateTime timeEndEnd) {
+        this.timeEndEnd = timeEndEnd;
     }
 
     public Boolean getActive() {
@@ -162,12 +185,20 @@ public class Page {
         this.createdBy = createdBy;
     }
 
-    public LocalDateTime getCreateDate() {
-        return createDate;
+    public LocalDateTime getCreateDateBegin() {
+        return createDateBegin;
     }
 
-    public void setCreateDate(LocalDateTime createDate) {
-        this.createDate = createDate;
+    public void setCreateDateBegin(LocalDateTime createDateBegin) {
+        this.createDateBegin = createDateBegin;
+    }
+
+    public LocalDateTime getCreateDateEnd() {
+        return createDateEnd;
+    }
+
+    public void setCreateDateEnd(LocalDateTime createDateEnd) {
+        this.createDateEnd = createDateEnd;
     }
 
     public Integer getChangedBy() {
@@ -178,12 +209,20 @@ public class Page {
         this.changedBy = changedBy;
     }
 
-    public LocalDateTime getChangDate() {
-        return changDate;
+    public LocalDateTime getChangeDateBegin() {
+        return changeDateBegin;
     }
 
-    public void setChangDate(LocalDateTime changDate) {
-        this.changDate = changDate;
+    public void setChangeDateBegin(LocalDateTime changeDateBegin) {
+        this.changeDateBegin = changeDateBegin;
+    }
+
+    public LocalDateTime getChangeDateEnd() {
+        return changeDateEnd;
+    }
+
+    public void setChangeDateEnd(LocalDateTime changeDateEnd) {
+        this.changeDateEnd = changeDateEnd;
     }
 
     public Boolean getDeleted() {
@@ -192,5 +231,21 @@ public class Page {
 
     public void setDeleted(Boolean deleted) {
         this.deleted = deleted;
+    }
+
+    public Integer getStart() {
+        return start;
+    }
+
+    public void setStart(Integer start) {
+        this.start = start;
+    }
+
+    public Integer getLimit() {
+        return limit;
+    }
+
+    public void setLimit(Integer limit) {
+        this.limit = limit;
     }
 }
