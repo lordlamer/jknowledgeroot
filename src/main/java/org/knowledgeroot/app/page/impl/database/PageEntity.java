@@ -13,7 +13,7 @@ public class PageEntity {
     @Id
     @GeneratedValue(strategy = IDENTITY)
     @Column(name = "id", unique = true, nullable = false)
-    private Integer id;
+    private Long id;
 
     @Column(name = "parent", nullable = false)
     private Integer parent;
@@ -80,11 +80,11 @@ public class PageEntity {
     @Column(name = "deleted", nullable = false)
     private Boolean deleted;
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
