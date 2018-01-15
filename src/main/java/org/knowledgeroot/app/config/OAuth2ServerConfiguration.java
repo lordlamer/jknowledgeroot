@@ -52,6 +52,7 @@ public class OAuth2ServerConfiguration {
                     .antMatchers("/user/**").permitAll() // test
                     .antMatchers("/group/**").permitAll() // test
                     .antMatchers("/page/**").permitAll() // test
+                    .antMatchers("/content/**").permitAll() // test
                     .antMatchers("/**")
                         .access("#oauth2.hasScope('read')")
             ;

@@ -1,5 +1,7 @@
 package org.knowledgeroot.app.content.impl.database;
 
+import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters;
+
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
@@ -30,9 +32,11 @@ public class ContentEntity {
 
 
     @Column(name = "time_start")
+    @Convert(converter = Jsr310JpaConverters.LocalDateTimeConverter.class)
     private LocalDateTime timeStart;
 
     @Column(name = "time_end")
+    @Convert(converter = Jsr310JpaConverters.LocalDateTimeConverter.class)
     private LocalDateTime timeEnd;
 
     @Column(name = "active", nullable = false)
@@ -42,13 +46,15 @@ public class ContentEntity {
     private Integer createdBy;
 
     @Column(name = "create_date", nullable = false)
+    @Convert(converter = Jsr310JpaConverters.LocalDateTimeConverter.class)
     private LocalDateTime  createDate;
 
     @Column(name = "changed_by", nullable = false)
     private Integer changedBy;
 
     @Column(name = "change_date", nullable = false)
-    private Integer changeDate;
+    @Convert(converter = Jsr310JpaConverters.LocalDateTimeConverter.class)
+    private LocalDateTime changeDate;
 
     @Column(name = "deleted", nullable = false)
     private Boolean deleted;
@@ -149,11 +155,11 @@ public class ContentEntity {
         this.changedBy = changedBy;
     }
 
-    public Integer getChangeDate() {
+    public LocalDateTime getChangeDate() {
         return changeDate;
     }
 
-    public void setChangeDate(Integer changeDate) {
+    public void setChangeDate(LocalDateTime changeDate) {
         this.changeDate = changeDate;
     }
 

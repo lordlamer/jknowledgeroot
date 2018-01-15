@@ -16,6 +16,7 @@ public class Content {
     private Integer createdBy;
     private LocalDateTime  createDate;
     private Integer changedBy;
+    private LocalDateTime changeDate;
     private Boolean deleted;
 
     public Integer getId() {
@@ -112,6 +113,14 @@ public class Content {
 
     public void setChangedBy(Integer changedBy) {
         this.changedBy = changedBy;
+    }
+
+    public LocalDateTime getChangeDate() {
+        return changeDate;
+    }
+
+    public void setChangeDate(LocalDateTime changeDate) {
+        this.changeDate = changeDate;
     }
 
     public Boolean getDeleted() {
