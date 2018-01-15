@@ -32,7 +32,7 @@ public class ContentRestController {
     private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss";
 
     /**
-     * get all pages
+     * get all contents
      * @return
      */
     @RequestMapping(value = "/content", method = RequestMethod.GET)
@@ -126,7 +126,7 @@ public class ContentRestController {
      * @return
      */
     @RequestMapping(value = "/content/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ContentDto> getPage(@PathVariable("id") long id) {
+    public ResponseEntity<ContentDto> getContent(@PathVariable("id") long id) {
         Content content = contentService.findById(id);
 
         ContentDto contentDto = mapper.map(content, ContentDto.class);
@@ -144,7 +144,7 @@ public class ContentRestController {
      * @param ucBuilder
      * @return
      */
-    @RequestMapping(value = "/page", method = RequestMethod.POST)
+    @RequestMapping(value = "/content", method = RequestMethod.POST)
     public ResponseEntity<Void> createContent(@RequestBody ContentDto contentDto, UriComponentsBuilder ucBuilder) {
 
         Content content = mapper.map(contentDto, Content.class);
