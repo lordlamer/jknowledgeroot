@@ -206,7 +206,7 @@ public class PageRestController {
      * @return
      */
     @RequestMapping(value = "/page/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<PageDto> deleteUser(@PathVariable("id") long id) {
+    public ResponseEntity<PageDto> deletePage(@PathVariable("id") long id) {
         Page page = pageService.findById(id);
 
         if (page == null) {
@@ -223,7 +223,7 @@ public class PageRestController {
      * @return
      */
     @RequestMapping(value = "/page", method = RequestMethod.DELETE)
-    public ResponseEntity<PageDto> deleteAllUsers() {
+    public ResponseEntity<PageDto> deleteAllPages() {
         pageService.deleteAllPages();
 
         return new ResponseEntity<PageDto>(HttpStatus.NO_CONTENT);

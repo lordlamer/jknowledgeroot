@@ -17,6 +17,7 @@ public class FileDto {
     private Integer createdBy;
     private LocalDateTime  createDate;
     private Integer changedBy;
+    private LocalDateTime changDate;
     private Boolean deleted;
 
     public Integer getId() {
@@ -121,6 +122,14 @@ public class FileDto {
 
     public void setChangedBy(Integer changedBy) {
         this.changedBy = changedBy;
+    }
+
+    public LocalDateTime getChangDate() {
+        return changDate;
+    }
+
+    public void setChangDate(LocalDateTime changDate) {
+        this.changDate = changDate;
     }
 
     public Boolean getDeleted() {
