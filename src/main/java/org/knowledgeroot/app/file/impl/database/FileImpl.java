@@ -1,4 +1,8 @@
 package org.knowledgeroot.app.file.impl.database;
 
-public class FileImpl {
+import org.knowledgeroot.app.file.FileDao;
+import org.springframework.stereotype.Service;
+
+@Service
+public class FileImpl implements FileDao {
 }
