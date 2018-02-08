@@ -12,10 +12,13 @@
     <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 
-    <!-- Le styles -->
-    <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    <link href="vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet">
-    <link href="css/base.css" rel="stylesheet">
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="webjars/bootstrap/css/bootstrap.min.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="webjars/font-awesome/css/font-awesome.min.css">
+
+    <link href="resources/css/base.css" rel="stylesheet">
     <style type="text/css">
 
         .colorme {
@@ -76,14 +79,24 @@
         }
     </style>
 
-    <script src="vendor/jquery/jquery.min.js"></script>
-    <script src="vendor/jquery-ui/jquery-ui.min.js"></script>
-    <script src="vendor/jquery-layout/jquery.layout-latest.min.js"></script>
-    <script src="vendor/bootstrap/js/bootstrap.min.js"></script>
+    <!-- jQuery -->
+    <script src="webjars/jquery/jquery.min.js"></script>
+
+    <!-- jQuery ui -->
+    <script src="webjars/jquery-ui/jquery-ui.min.js"></script>
+
+    <!-- jQuery layout -->
+    <script src="resources/jquery-layout/jquery.layout-latest.min.js"></script>
+
+    <!-- Bootstrap -->
+    <script src="webjars/bootstrap/js/bootstrap.min.js"></script>
+
+    <!-- AngularJS -->
+    <script src="webjars/angularjs/angular.min.js"></script>
 
     <!-- jstree -->
-    <link rel="stylesheet" href="vendor/jstree/themes/default/style.min.css" />
-    <script src="vendor/jstree/jstree.min.js"></script>
+    <link rel="stylesheet" href="webjars/jstree/themes/default/style.min.css" />
+    <script src="webjars/jstree/jstree.min.js"></script>
 
     <script type="text/javascript">
         $(document).ready(function() {
@@ -96,7 +109,7 @@
         });
     </script>
 
-    <link type="text/css" rel="stylesheet" href="vendor/jquery-layout/layout-default-latest.css" />
+    <link type="text/css" rel="stylesheet" href="resources/jquery-layout/layout-default-latest.css" />
 </head>
 <body>
 
