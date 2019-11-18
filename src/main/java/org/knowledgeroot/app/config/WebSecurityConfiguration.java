@@ -31,7 +31,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true) // enable PreAuthorize annotations
-@Order(SecurityProperties.ACCESS_OVERRIDE_ORDER) // this is required. without that oauth would not work!
+@Order(SecurityProperties.DEFAULT_FILTER_ORDER) // this is required. without that oauth would not work!
 public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Autowired
