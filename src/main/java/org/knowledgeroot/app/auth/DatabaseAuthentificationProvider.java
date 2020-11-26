@@ -26,14 +26,14 @@ public class DatabaseAuthentificationProvider implements AuthenticationProvider 
 
         // check if customer was found and if password hash matches
         if(login.equals("admin") && password.equals("admin")) {
-            logger.info("Login success for user: " + login);
+            logger.info("Login success for user: {}", login);
 
             // build spring auth object for session
             List<GrantedAuthority> grantedAuths = new ArrayList<>();
             grantedAuths.add(new SimpleGrantedAuthority("ROLE_USER"));
             userAuth = new UsernamePasswordAuthenticationToken(login, password, grantedAuths);
         } else {
-            logger.info("Login failed for user: " + login);
+            logger.info("Login failed for user: {}", login);
         }
 
         return userAuth;

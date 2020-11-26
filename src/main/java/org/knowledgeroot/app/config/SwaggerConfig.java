@@ -14,8 +14,8 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @Configuration
 @EnableSwagger2
 public class SwaggerConfig {
-    private String applicationName = "Knowledgeroot";
-    private String buildVersion = "DEV";
+    private static final String APPLICATION_NAME = "Knowledgeroot";
+    private static final String BUILD_VERSION = "DEV";
 
     @Bean
     public Docket swaggerSpringMvcPlugin() {
@@ -30,12 +30,12 @@ public class SwaggerConfig {
 
     private ApiInfo apiInfo() {
         return new ApiInfoBuilder()
-                .title(applicationName)
+                .title(APPLICATION_NAME)
                 .description("Knowledgeroot API")
-                .contact(new Contact("Knowledgeroot", "http://www.knowledgeroot.org", "info@knowledgeroot.org"))
+                .contact(new Contact(APPLICATION_NAME, "http://www.knowledgeroot.org", "info@knowledgeroot.org"))
                 .license("BSD 2-Clause License")
                 .licenseUrl("https://github.com/lordlamer/jknowledgeroot/blob/master/LICENSE")
-                .version(buildVersion)
+                .version(BUILD_VERSION)
                 .build();
     }
 }

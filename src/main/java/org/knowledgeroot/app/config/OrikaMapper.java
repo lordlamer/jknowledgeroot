@@ -147,7 +147,7 @@ public class OrikaMapper extends ConfigurableMapper implements ApplicationContex
             addConverter(converter);
         }
 
-        Map<String, ConfigurableMapper> configurations = applicationContext.getBeansOfType(ConfigurableMapper.class);
+        //Map<String, ConfigurableMapper> configurations = applicationContext.getBeansOfType(ConfigurableMapper.class);
     }
 
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
