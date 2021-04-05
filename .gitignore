@@ -1,6 +1,4 @@
 target/
-!.mvn/wrapper/maven-wrapper.jar
-.mvn
 src/main/resources/application.properties
 src/main/resources/logback.xml
 
