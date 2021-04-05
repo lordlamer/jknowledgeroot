@@ -35,6 +35,10 @@ public interface AclInterface {
 	 */
 	void addRole(RoleInterface role, List<BaseRole> parents) throws AclException;
 
+	void addRoleIfNotExists(RoleInterface role) throws AclException;
+
+	void addRoleIfNotExists(RoleInterface role, List<BaseRole> parents) throws AclException;
+
 	/**
 	 * remove role
 	 *
@@ -77,6 +81,8 @@ public interface AclInterface {
 	 * @param resource
 	 */
 	void addResource(ResourceInterface resource) throws AclException;
+
+	void addResourceIfNotExists(ResourceInterface resource) throws AclException;
 
 	/**
 	 * remove resource
@@ -127,7 +133,9 @@ public interface AclInterface {
 	 */
 	void allow(RoleInterface role, ResourceInterface resource, String action) throws AclException;
 
-	/**
+    void allowIfNotExists(RoleInterface role, ResourceInterface resource, String action) throws AclException;
+
+    /**
 	 * create deny acl entry
 	 *
 	 * @param role
@@ -135,6 +143,8 @@ public interface AclInterface {
 	 * @param action
 	 */
 	void deny(RoleInterface role, ResourceInterface resource, String action) throws AclException;
+
+	void denyIfNotExists(RoleInterface role, ResourceInterface resource, String action) throws AclException;
 
 	/**
 	 * remove acl entry

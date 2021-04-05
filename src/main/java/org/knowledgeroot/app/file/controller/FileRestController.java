@@ -1,12 +1,11 @@
 package org.knowledgeroot.app.file.controller;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.config.OrikaMapper;
 import org.knowledgeroot.app.file.File;
 import org.knowledgeroot.app.file.FileFilter;
 import org.knowledgeroot.app.file.FileService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,14 +25,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
+@Slf4j
+@AllArgsConstructor
 public class FileRestController {
-    @Autowired
-    private FileService fileService;
-
-    private static final Logger logger = LoggerFactory.getLogger(FileRestController.class);
-
-    @Autowired
-    protected OrikaMapper mapper;
+    private final FileService fileService;
+    private final OrikaMapper mapper;
 
     private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss";
 
@@ -139,7 +135,7 @@ public class FileRestController {
             InputStream inputStream = new BufferedInputStream(new FileInputStream(file));
             FileCopyUtils.copy(inputStream, response.getOutputStream());
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            log.error(e.getMessage());
 
             try {
                 // show error message to user
@@ -148,7 +144,7 @@ public class FileRestController {
                 outputStream.write(errorMessage.getBytes(Charset.forName("UTF-8")));
                 outputStream.close();
             } catch (Exception ex) {
-                logger.error(ex.getMessage());
+                log.error(ex.getMessage());
             }
         }
     }

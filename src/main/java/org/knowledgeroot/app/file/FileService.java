@@ -1,15 +1,17 @@
 package org.knowledgeroot.app.file;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 @Service
+@AllArgsConstructor
+@Slf4j
 public class FileService {
-    @Autowired
-    private FileDao fileImpl;
+    private final FileDao fileImpl;
 
     public List<File> listFiles(FileFilter fileFilter) {
         return null;

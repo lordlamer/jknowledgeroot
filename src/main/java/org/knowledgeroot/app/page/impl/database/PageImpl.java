@@ -1,5 +1,6 @@
 package org.knowledgeroot.app.page.impl.database;
 
+import lombok.AllArgsConstructor;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
@@ -7,7 +8,6 @@ import org.knowledgeroot.app.config.OrikaMapper;
 import org.knowledgeroot.app.page.Page;
 import org.knowledgeroot.app.page.PageDao;
 import org.knowledgeroot.app.page.PageFilter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
@@ -17,12 +17,10 @@ import java.util.List;
 
 @Service
 @Transactional
+@AllArgsConstructor
 public class PageImpl implements PageDao {
-    @Autowired
-    private EntityManager entityManager;
-
-    @Autowired
-    private OrikaMapper mapper;
+    private final EntityManager entityManager;
+    private final OrikaMapper mapper;
 
     /**
      * find pages

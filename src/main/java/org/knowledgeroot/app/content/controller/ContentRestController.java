@@ -1,12 +1,11 @@
 package org.knowledgeroot.app.content.controller;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.config.OrikaMapper;
 import org.knowledgeroot.app.content.Content;
 import org.knowledgeroot.app.content.ContentFilter;
 import org.knowledgeroot.app.content.ContentService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -20,14 +19,11 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 
 @RestController
+@Slf4j
+@AllArgsConstructor
 public class ContentRestController {
-    private static final Logger logger = LoggerFactory.getLogger(ContentRestController.class);
-
-    @Autowired
-    protected OrikaMapper mapper;
-
-    @Autowired
-    protected ContentService contentService;
+    private final OrikaMapper mapper;
+    private final ContentService contentService;
 
     private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss";
 
@@ -103,7 +99,7 @@ public class ContentRestController {
             if (changeDateEnd != null)
                 contentFilter.setChangeDateEnd(LocalDateTime.parse(changeDateEnd, formatter));
         } catch(DateTimeParseException e) {
-            logger.error("Could not convert date: " + e.getMessage());
+            log.error("Could not convert date: " + e.getMessage());
         }
 
         // get filtered user list

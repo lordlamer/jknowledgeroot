@@ -1,5 +1,7 @@
 package org.knowledgeroot.app.file.impl.database;
 
+import lombok.Data;
+
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
@@ -7,6 +9,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 
 @Entity
 @Table(name = "file")
+@Data
 public class FileEntity {
     @Id
     @GeneratedValue(strategy = IDENTITY)
@@ -55,124 +58,4 @@ public class FileEntity {
 
     @Column(name = "deleted", nullable = false)
     private Boolean deleted;
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public Integer getParent() {
-        return parent;
-    }
-
-    public void setParent(Integer parent) {
-        this.parent = parent;
-    }
-
-    public String getHash() {
-        return hash;
-    }
-
-    public void setHash(String hash) {
-        this.hash = hash;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Integer getSize() {
-        return size;
-    }
-
-    public void setSize(Integer size) {
-        this.size = size;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public Integer getDownloads() {
-        return downloads;
-    }
-
-    public void setDownloads(Integer downloads) {
-        this.downloads = downloads;
-    }
-
-    public LocalDateTime getTimeStart() {
-        return timeStart;
-    }
-
-    public void setTimeStart(LocalDateTime timeStart) {
-        this.timeStart = timeStart;
-    }
-
-    public LocalDateTime getTimeEnd() {
-        return timeEnd;
-    }
-
-    public void setTimeEnd(LocalDateTime timeEnd) {
-        this.timeEnd = timeEnd;
-    }
-
-    public Boolean getActive() {
-        return active;
-    }
-
-    public void setActive(Boolean active) {
-        this.active = active;
-    }
-
-    public Integer getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(Integer createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public LocalDateTime getCreateDate() {
-        return createDate;
-    }
-
-    public void setCreateDate(LocalDateTime createDate) {
-        this.createDate = createDate;
-    }
-
-    public Integer getChangedBy() {
-        return changedBy;
-    }
-
-    public void setChangedBy(Integer changedBy) {
-        this.changedBy = changedBy;
-    }
-
-    public Integer getChangeDate() {
-        return changeDate;
-    }
-
-    public void setChangeDate(Integer changeDate) {
-        this.changeDate = changeDate;
-    }
-
-    public Boolean getDeleted() {
-        return deleted;
-    }
-
-    public void setDeleted(Boolean deleted) {
-        this.deleted = deleted;
-    }
 }

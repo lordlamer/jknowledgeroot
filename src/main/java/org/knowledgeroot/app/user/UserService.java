@@ -1,14 +1,14 @@
 package org.knowledgeroot.app.user;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@AllArgsConstructor
 public class UserService {
-    @Autowired
-    private UserDao userImpl;
+    private final UserDao userImpl;
 
     /**
      * find all users

@@ -1,14 +1,14 @@
 package org.knowledgeroot.app.page;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@AllArgsConstructor
 public class PageService {
-    @Autowired
-    private PageDao pageImpl;
+    private final PageDao pageImpl;
 
     /**
      * find all pages

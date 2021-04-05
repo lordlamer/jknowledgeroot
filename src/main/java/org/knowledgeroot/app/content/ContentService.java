@@ -1,14 +1,14 @@
 package org.knowledgeroot.app.content;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@AllArgsConstructor
 public class ContentService {
-    @Autowired
-    ContentDao contentImpl;
+    private final ContentDao contentImpl;
 
     /**
      * find all contents

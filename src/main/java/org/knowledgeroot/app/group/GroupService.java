@@ -1,14 +1,14 @@
 package org.knowledgeroot.app.group;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@AllArgsConstructor
 public class GroupService {
-    @Autowired
-    private GroupDao groupImpl;
+    private final GroupDao groupImpl;
 
     /**
      * find groups by filter

@@ -1,5 +1,6 @@
 package org.knowledgeroot.app.user.impl.database;
 
+import lombok.AllArgsConstructor;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
@@ -7,7 +8,6 @@ import org.knowledgeroot.app.config.OrikaMapper;
 import org.knowledgeroot.app.user.User;
 import org.knowledgeroot.app.user.UserDao;
 import org.knowledgeroot.app.user.UserFilter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
@@ -17,12 +17,10 @@ import java.util.List;
 
 @Service
 @Transactional
+@AllArgsConstructor
 public class UserImpl implements UserDao {
-    @Autowired
-    private EntityManager entityManager;
-
-    @Autowired
-    private OrikaMapper mapper;
+    private final EntityManager entityManager;
+    private final OrikaMapper mapper;
 
     /**
      * find all users

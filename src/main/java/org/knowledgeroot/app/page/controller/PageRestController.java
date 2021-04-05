@@ -1,12 +1,11 @@
 package org.knowledgeroot.app.page.controller;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.config.OrikaMapper;
 import org.knowledgeroot.app.page.Page;
 import org.knowledgeroot.app.page.PageFilter;
 import org.knowledgeroot.app.page.PageService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -20,16 +19,13 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 
 @RestController
+@Slf4j
+@AllArgsConstructor
 public class PageRestController {
-    private static final Logger logger = LoggerFactory.getLogger(PageRestController.class);
+    private final OrikaMapper mapper;
+    private final PageService pageService;
 
-    @Autowired
-    protected OrikaMapper mapper;
-
-    @Autowired
-    protected PageService pageService;
-
-    private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss";
+    private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
 
     /**
      * get all pages
@@ -66,7 +62,7 @@ public class PageRestController {
             @RequestParam(name = "start", required = false) Integer start,
             @RequestParam(name = "limit", required = false) Integer limit
     ) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dateFormat);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
 
         PageFilter pageFilter = new PageFilter();
 
@@ -117,7 +113,7 @@ public class PageRestController {
             if (changeDateEnd != null)
                 pageFilter.setChangeDateEnd(LocalDateTime.parse(changeDateEnd, formatter));
         } catch(DateTimeParseException e) {
-            logger.error("Could not convert date: " + e.getMessage());
+            log.error("Could not convert date: {}", e.getMessage());
         }
 
         // get filtered user list
@@ -128,10 +124,10 @@ public class PageRestController {
 
         // check for entries
         if(pageDtos.isEmpty()){
-            return new ResponseEntity<List<PageDto>>(HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
 
-        return new ResponseEntity<List<PageDto>>(pageDtos, HttpStatus.OK);
+        return new ResponseEntity<>(pageDtos, HttpStatus.OK);
     }
 
     /**
@@ -146,10 +142,10 @@ public class PageRestController {
         PageDto pageDto = mapper.map(page, PageDto.class);
 
         if (pageDto == null) {
-            return new ResponseEntity<PageDto>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        return new ResponseEntity<PageDto>(pageDto, HttpStatus.OK);
+        return new ResponseEntity<>(pageDto, HttpStatus.OK);
     }
 
     /**
@@ -164,7 +160,7 @@ public class PageRestController {
         Page page = mapper.map(pageDto, Page.class);
 
         if (pageService.isPageExist(page)) {
-            return new ResponseEntity<Void>(HttpStatus.CONFLICT);
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
         pageService.createPage(page);
@@ -172,7 +168,7 @@ public class PageRestController {
         HttpHeaders headers = new HttpHeaders();
         headers.setLocation(ucBuilder.path("/page/{id}").buildAndExpand(page.getId()).toUri());
 
-        return new ResponseEntity<Void>(headers, HttpStatus.CREATED);
+        return new ResponseEntity<>(headers, HttpStatus.CREATED);
     }
 
     /**
@@ -184,20 +180,20 @@ public class PageRestController {
     @RequestMapping(value = "/page/{id}", method = RequestMethod.PUT)
     public ResponseEntity<PageDto> updatePage(@PathVariable("id") long id, @RequestBody PageDto pageDto) {
         if(id != pageDto.getId()) {
-            return new ResponseEntity<PageDto>(HttpStatus.CONFLICT);
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
         Page currentPage = pageService.findById(id);
 
         if (currentPage==null) {
-            return new ResponseEntity<PageDto>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         currentPage = mapper.map(pageDto, Page.class);
 
         pageService.updatePage(currentPage);
 
-        return new ResponseEntity<PageDto>(pageDto, HttpStatus.OK);
+        return new ResponseEntity<>(pageDto, HttpStatus.OK);
     }
 
     /**
@@ -210,12 +206,12 @@ public class PageRestController {
         Page page = pageService.findById(id);
 
         if (page == null) {
-            return new ResponseEntity<PageDto>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         pageService.deletePageById(id);
 
-        return new ResponseEntity<PageDto>(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     /**
@@ -226,6 +222,6 @@ public class PageRestController {
     public ResponseEntity<PageDto> deleteAllPages() {
         pageService.deleteAllPages();
 
-        return new ResponseEntity<PageDto>(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
