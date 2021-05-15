@@ -4,8 +4,8 @@
 
     <meta charset="utf-8">
     <title>Knowledgeroot</title>
-    <meta name="description" content="">
-    <meta name="author" content="">
+    <meta name="description" content="Knowledgeroot Knowledgebase">
+    <meta name="author" content="Knowledgeroot Team">
 
     <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
     <!--[if lt IE 9]>
@@ -16,7 +16,8 @@
     <link rel="stylesheet" href="webjars/bootstrap/css/bootstrap.min.css">
 
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="webjars/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="webjars/font-awesome/css/fontawesome.min.css">
+    <link rel="stylesheet" href="webjars/font-awesome/css/solid.min.css">
 
     <link href="resources/css/base.css" rel="stylesheet">
     <style type="text/css">
@@ -71,12 +72,6 @@
             color: #555;
         }
 
-        #sidebar-layout {
-            background:	#999;
-            height:		100%;
-            margin:		0 auto;
-            width:		100%;
-        }
     </style>
 
     <!-- jQuery -->
@@ -84,9 +79,6 @@
 
     <!-- jQuery ui -->
     <script src="webjars/jquery-ui/jquery-ui.min.js"></script>
-
-    <!-- jQuery layout -->
-    <script src="resources/jquery-layout/jquery.layout-latest.min.js"></script>
 
     <!-- Bootstrap -->
     <script src="webjars/bootstrap/js/bootstrap.min.js"></script>
@@ -98,112 +90,153 @@
     <link rel="stylesheet" href="webjars/jstree/themes/default/style.min.css" />
     <script src="webjars/jstree/jstree.min.js"></script>
 
-    <script type="text/javascript">
-        $(document).ready(function() {
-            $('#sidebar-layout').layout({
-                minSize: 300,
-                west__size: 300,
-                stateManagement__enabled: true,
-                stateManagement__cookie__path: "/"
-            });
-        });
-    </script>
-
     <link type="text/css" rel="stylesheet" href="resources/jquery-layout/layout-default-latest.css" />
 </head>
 <body>
 
 <nav class="navbar fixed-top navbar-dark bg-dark navbar-expand-lg" style="border-bottom: 3px solid #F88529;">
-    <a class="navbar-brand" href="#"><i class="fa fa-lock" aria-hidden="true"></i> Knowledgeroot</a>
+    <a class="navbar-brand" href="#" data-toggle="dropdown"><i class="fas fa-bars"></i></a>
+    <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+        <a class="dropdown-item" href="#"><i class="fas fa-rocket"></i>&nbsp;Knowledgeroot</a>
+        <a class="dropdown-item" href="#"><i class="fas fa-book"></i>&nbsp;Docs</a>
+        <a class="dropdown-item" href="#"><i class="fas fa-puzzle-piece"></i>&nbsp;API</a>
+    </div>
+    <a class="navbar-brand" href="#"><i class="fas fa-hashtag" aria-hidden="true"></i> Knowledgeroot</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarText">
         <ul class="navbar-nav mr-auto">
-            <li class="nav-item active">
-                <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">Features</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">Pricing</a>
-            </li>
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Dropdown link
+                    <i class="fas fa-plus icon-white"></i>
                 </a>
                 <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                    <a class="dropdown-item" href="#">Action</a>
-                    <a class="dropdown-item" href="#">Another action</a>
-                    <a class="dropdown-item" href="#">Something else here</a>
+                    <a class="dropdown-item" href="#"><i class="fas fa-file"></i>&nbsp;Page</a>
+                    <a class="dropdown-item" href="#"><i class="fas fa-file-alt"></i>&nbsp;Content</a>
+                    <a class="dropdown-item" href="#"><i class="fas fa-paperclip"></i>&nbsp;File</a>
                 </div>
             </li>
         </ul>
-        <form class="form-inline">
-            <div class="input-group">
-                <div class="input-group-prepend">
-                    <span class="input-group-text" id="basic-addon1">@</span>
+        <ul class="navbar-nav navbar-right">
+            <li class="nav-item dropdown">
+                <input class="form-control mr-4" type="search" placeholder="Search" aria-label="Search">
+            </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-question-circle icon-white"></i>
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                    <a class="dropdown-item" href="#"><i class="fas fa-book"></i>&nbsp;Help</a>
+                    <a class="dropdown-item" href="#"><i class="fas fa-star"></i>&nbsp;About</a>
                 </div>
-                <input type="text" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
-            </div>
-        </form>
-        <span class="navbar-text">
-      Navbar text with an inline element
-    </span>
+            </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-cogs icon-white"></i>
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                    <a class="dropdown-item" href="#"><i class="fas fa-file"></i>&nbsp;Users</a>
+                    <a class="dropdown-item" href="#"><i class="fas fa-file-alt"></i>&nbsp;Groups</a>
+                    <a class="dropdown-item" href="#"><i class="fas fa-paperclip"></i>&nbsp;Permissions</a>
+                </div>
+            </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-user icon-white"></i>
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                    <a class="dropdown-item" href="#"><i class="fas fa-sign-in-alt"></i>&nbsp;Sign in</a>
+                </div>
+            </li>
+        </ul>
     </div>
 </nav>
+<div class="container-fluid">
+    <div class="row">
+        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+            <div class="sidebar-sticky pt-3">
 
-<div id="sidebar-layout">
-    <div class="ui-layout-west" style="background-color: #f5f5f5;">
-        <div class="input-group">
-            <div class="input-group-btn">
-                <button class="btn btn-default" type="button" onclick="$('#treeOne').jstree(true).refresh();"><i class="fa fa-refresh"></i></button>
-                <button class="btn btn-default" type="button" onclick="$('#treeOne').jstree('open_all');"><i class="fa fa-plus"></i></button>
-                <button class="btn btn-default" type="button" onclick="$('#treeOne').jstree('close_all');"><i class="fa fa-minus"></i></button>
+                <!--
+                <div class="row">
+                    <div class="col-md-4 col-sm-8 col-xs-8">
+                        <button type="button" class="btn btn-success btn-sm" onclick="demo_create();"><i class="glyphicon glyphicon-asterisk"></i> Create</button>
+                        <button type="button" class="btn btn-warning btn-sm" onclick="demo_rename();"><i class="glyphicon glyphicon-pencil"></i> Rename</button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="demo_delete();"><i class="glyphicon glyphicon-remove"></i> Delete</button>
+                    </div>
+                    <div class="col-md-2 col-sm-4 col-xs-4" style="text-align:right;">
+                        <input type="text" value="" style="box-shadow:inset 0 0 4px #eee; width:120px; margin:0; padding:6px 12px; border-radius:4px; border:1px solid silver; font-size:1.1em;" id="demo_q" placeholder="Search" />
+                    </div>
+                </div>
+                -->
+
+                <div id="treeOne"></div>
+
+                <script type="text/javascript">
+                    function demo_create() {
+                        var ref = $('#treeOne').jstree(true),
+                            sel = ref.get_selected();
+                        if(!sel.length) { return false; }
+                        sel = sel[0];
+                        sel = ref.create_node(sel, {"type":"file"});
+                        if(sel) {
+                            ref.edit(sel);
+                        }
+                    };
+                    function demo_rename() {
+                        var ref = $('#treeOne').jstree(true),
+                            sel = ref.get_selected();
+                        if(!sel.length) { return false; }
+                        sel = sel[0];
+                        ref.edit(sel);
+                    };
+                    function demo_delete() {
+                        var ref = $('#treeOne').jstree(true),
+                            sel = ref.get_selected();
+                        if(!sel.length) { return false; }
+                        ref.delete_node(sel);
+                    };
+                    $(function () {
+                        var to = false;
+                        $('#demo_q').keyup(function () {
+                            if(to) { clearTimeout(to); }
+                            to = setTimeout(function () {
+                                var v = $('#demo_q').val();
+                                $('#jstree_demo').jstree(true).search(v);
+                            }, 250);
+                        });
+
+                        $('#treeOne')
+                            .jstree({
+                                "core" : {
+                                    "animation" : 0,
+                                    "check_callback" : true,
+                                    'force_text' : true,
+                                    "themes" : { "stripes" : true },
+                                    'data' : {
+                                        'url' : function (node) {
+                                            return node.id === '#' ? 'resources/roots.json' : 'resources/tree.json';
+                                        },
+                                        'data' : function (node) {
+                                            return { 'id' : node.id };
+                                        }
+                                    }
+                                },
+                                "types" : {
+                                    "#" : { "max_children" : 1, "max_depth" : 4, "valid_children" : ["root"] },
+                                    "root" : { "icon" : "/static/3.3.11/assets/images/tree_icon.png", "valid_children" : ["default"] },
+                                    "default" : { "valid_children" : ["default","file"] },
+                                    "file" : { "icon" : "glyphicon glyphicon-file", "valid_children" : [] }
+                                },
+                                "plugins" : [ "contextmenu", "dnd", "search", "state", "types", "wholerow" ]
+                            });
+                    });
+
+                </script>
             </div>
-            <input id="treeOneSearch" type="text" placeholder="Search" class="form-control">
-        </div>
-        <script type="text/javascript">
-            $.getJSON( "tree.json", function( data ) {
-                $(function () { $('#treeOne')
-                        .on('changed.jstree', function (e, data) {
-                            item = data.node.original;
+        </nav>
 
-                            if(item.alias != "")
-                                location.href = item.alias;
-                            else
-                                location.href = item.url;
-                        })
-                        .jstree({
-                            'core' : {
-                                'data' : data.items
-                            },
-                            'sort': function(a, b) {
-                                return this.get_node(a).original.sort > this.get_node(b).original.sort ? 1 : -1;
-                            },
-                            "plugins" : [ "sort", "state", "search" ]
-                        }); });
-
-                var to = false;
-                $('#treeOneSearch').keyup(function () {
-                    if(to)
-                        clearTimeout(to);
-
-                    to = setTimeout(function () {
-                        var v = $('#treeOneSearch').val();
-                        $('#treeOne').jstree(true).search(v);
-                    }, 250);
-                });
-            });
-        </script>
-
-        <div id="treeOne"></div>
-    </div>
-
-    <div class="ui-layout-center">
-
-        <div class="content">
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
             <script>
                 $(".alert").alert()
             </script>
@@ -216,12 +249,12 @@
                     </ol>
                 </nav>
 
-                <div class="d-flex align-items-center p-3 my-3 text-white-50 bg-purple rounded box-shadow">
-                    <img class="mr-3" src="https://getbootstrap.com/assets/brand/bootstrap-outline.svg" alt="" width="48" height="48">
-                    <div class="lh-100">
-                        <h6 class="mb-0 text-white lh-100">Bootstrap</h6>
-                        <small>Since 2011</small>
-                    </div>
+                <div class="jumbotron">
+                    <h1 class="display-4">Hello, world!</h1>
+                    <p class="lead">This is a simple hero unit, a simple jumbotron-style component for calling extra attention to featured content or information.</p>
+                    <hr class="my-4">
+                    <p>It uses utility classes for typography and spacing to space content out within the larger container.</p>
+                    <a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a>
                 </div>
 
                 <div class="card">
@@ -300,10 +333,11 @@
                     </table>
                 </div>
             </div><!--/span-->
-        </div>
+        </main>
     </div>
 </div>
 
+<!--
 <nav class="navbar fixed-bottom navbar-dark bg-dark navbar-expand-lg" style="border-top: 3px solid #F88529;">
     <div class="collapse navbar-collapse">
         <span class="navbar-text">
@@ -311,6 +345,7 @@
         </span>
     </div>
 </nav>
+-->
 
 </body>
 </html>
