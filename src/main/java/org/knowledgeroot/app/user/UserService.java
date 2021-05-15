@@ -1,6 +1,7 @@
 package org.knowledgeroot.app.user;
 
 import lombok.AllArgsConstructor;
+import org.knowledgeroot.app.user.impl.database.User;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,7 +13,6 @@ public class UserService {
 
     /**
      * find all users
-     * @return
      */
     public List<User> listUsers(UserFilter userFilter) {
         return userImpl.listUsers(userFilter);
@@ -20,8 +20,7 @@ public class UserService {
 
     /**
      * find user by given id
-     * @param id
-     * @return
+     * @param id user id
      */
     public User findById(long id) {
         return userImpl.findById(id);
@@ -29,8 +28,7 @@ public class UserService {
 
     /**
      * check if user exists
-     * @param user
-     * @return
+     * @param user user to check
      */
     public boolean isUserExist(User user) {
         return userImpl.isUserExist(user);
@@ -38,7 +36,7 @@ public class UserService {
 
     /**
      * create user
-     * @param user
+     * @param user user to create
      */
     public void createUser(User user) {
         userImpl.createUser(user);
@@ -46,7 +44,7 @@ public class UserService {
 
     /**
      * update existing user
-     * @param user
+     * @param user user to update
      */
     public void updateUser(User user) {
         userImpl.updateUser(user);
@@ -61,7 +59,7 @@ public class UserService {
 
     /**
      * delete user by id
-     * @param id
+     * @param id user id
      */
     public void deleteUserById(long id) {
         userImpl.deleteUserById(id);

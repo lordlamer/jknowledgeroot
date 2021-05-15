@@ -4,8 +4,6 @@ import lombok.AllArgsConstructor;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
-import org.knowledgeroot.app.config.OrikaMapper;
-import org.knowledgeroot.app.content.Content;
 import org.knowledgeroot.app.content.ContentDao;
 import org.knowledgeroot.app.content.ContentFilter;
 import org.springframework.stereotype.Service;
@@ -20,7 +18,6 @@ import java.util.List;
 @AllArgsConstructor
 public class ContentImpl implements ContentDao {
     private final EntityManager entityManager;
-    private final OrikaMapper mapper;
 
     /**
      * find all contents
@@ -33,7 +30,7 @@ public class ContentImpl implements ContentDao {
         // get current session
         Session session = entityManager.unwrap(org.hibernate.Session.class);
 
-        Criteria contentCriteria = session.createCriteria(ContentEntity.class, "c");
+        Criteria contentCriteria = session.createCriteria(Content.class, "c");
 
         // build restrictions
         if(contentFilter.getId() != null)
@@ -99,9 +96,9 @@ public class ContentImpl implements ContentDao {
             contentCriteria.setFirstResult(contentFilter.getStart());
 
         // get result
-        List<ContentEntity> contentEntities = Collections.checkedList(contentCriteria.list(), ContentEntity.class);
+        List<Content> contentEntities = Collections.checkedList(contentCriteria.list(), Content.class);
 
-        return mapper.mapAsList(contentEntities, Content.class);
+        return contentEntities;
     }
 
     /**
@@ -112,9 +109,9 @@ public class ContentImpl implements ContentDao {
      */
     @Override
     public Content findById(long id) {
-        ContentEntity contentEntity = findEntityById(id);
+        Content content = findEntityById(id);
 
-        return mapper.map(contentEntity, Content.class);
+        return content;
     }
 
     /**
@@ -122,8 +119,8 @@ public class ContentImpl implements ContentDao {
      * @param id
      * @return
      */
-    private ContentEntity findEntityById(long id) {
-        return entityManager.find(ContentEntity.class, id);
+    private Content findEntityById(long id) {
+        return entityManager.find(Content.class, id);
     }
 
     /**
@@ -136,9 +133,9 @@ public class ContentImpl implements ContentDao {
     public boolean isContentExist(Content content) {
         boolean found = false;
 
-        List<ContentEntity> contentEntities = entityManager.createQuery(
-                "SELECT c FROM ContentEntity c WHERE c.id = :id",
-                ContentEntity.class)
+        List<Content> contentEntities = entityManager.createQuery(
+                "SELECT c FROM Content c WHERE c.id = :id",
+                Content.class)
                 .setParameter("id", content.getId())
                 .getResultList();
 
@@ -155,9 +152,7 @@ public class ContentImpl implements ContentDao {
      */
     @Override
     public void createContent(Content content) {
-        ContentEntity contentEntity = mapper.map(content, ContentEntity.class);
-
-        entityManager.persist(contentEntity);
+        entityManager.persist(content);
     }
 
     /**
@@ -167,11 +162,8 @@ public class ContentImpl implements ContentDao {
      */
     @Override
     public void updateContent(Content content) {
-        // create content entity
-        ContentEntity contentEntity = mapper.map(content, ContentEntity.class);
-
         // save to database
-        entityManager.merge(contentEntity);
+        entityManager.merge(content);
     }
 
     /**
@@ -179,7 +171,7 @@ public class ContentImpl implements ContentDao {
      */
     @Override
     public void deleteAllContents() {
-        entityManager.createQuery("DELETE FROM ContentEntity").executeUpdate();
+        entityManager.createQuery("DELETE FROM Content").executeUpdate();
     }
 
     /**
@@ -189,7 +181,7 @@ public class ContentImpl implements ContentDao {
      */
     @Override
     public void deleteContentById(long id) {
-        entityManager.createQuery("DELETE FROM ContentEntity c WHERE c.id = :id")
+        entityManager.createQuery("DELETE FROM Content c WHERE c.id = :id")
                 .setParameter("id", id)
                 .executeUpdate();
     }

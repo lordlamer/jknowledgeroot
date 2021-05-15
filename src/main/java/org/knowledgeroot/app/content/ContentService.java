@@ -1,6 +1,7 @@
 package org.knowledgeroot.app.content;
 
 import lombok.AllArgsConstructor;
+import org.knowledgeroot.app.content.impl.database.Content;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

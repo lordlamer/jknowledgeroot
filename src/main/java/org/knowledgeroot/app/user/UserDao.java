@@ -1,5 +1,7 @@
 package org.knowledgeroot.app.user;
 
+import org.knowledgeroot.app.user.impl.database.User;
+
 import java.util.List;
 
 public interface UserDao {

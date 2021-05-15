@@ -2,10 +2,9 @@ package org.knowledgeroot.app.user.controller;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.knowledgeroot.app.config.OrikaMapper;
-import org.knowledgeroot.app.user.User;
 import org.knowledgeroot.app.user.UserFilter;
 import org.knowledgeroot.app.user.UserService;
+import org.knowledgeroot.app.user.impl.database.User;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,14 +21,14 @@ import java.util.List;
 @Slf4j
 @AllArgsConstructor
 public class UserRestController {
-    private final OrikaMapper mapper;
     private final UserService userService;
 
     private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss";
 
+    private final UserDtoConverter userDtoConverter = new UserDtoConverter();
+
     /**
      * get all users
-     * @return
      */
     @RequestMapping(value = "/user", method = RequestMethod.GET)
     public ResponseEntity<List<UserDto>> listAllUsers(
@@ -107,47 +106,45 @@ public class UserRestController {
         List<User> users = userService.listUsers(userFilter);
 
         // map to dto
-        List<UserDto> userDtos = mapper.mapAsList(users, UserDto.class);
+        List<UserDto> userDtos = userDtoConverter.fromDomain(users);
 
         // check for entries
         if(userDtos.isEmpty()){
-            return new ResponseEntity<List<UserDto>>(HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
 
-        return new ResponseEntity<List<UserDto>>(userDtos, HttpStatus.OK);
+        return new ResponseEntity<>(userDtos, HttpStatus.OK);
     }
 
     /**
      * get single user by id
-     * @param id
-     * @return
+     * @param id user id
      */
     @RequestMapping(value = "/user/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UserDto> getUser(@PathVariable("id") long id) {
         User user = userService.findById(id);
 
-        UserDto userDto = mapper.map(user, UserDto.class);
+        UserDto userDto = userDtoConverter.fromDomain(user);
 
         if (userDto == null) {
-            return new ResponseEntity<UserDto>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        return new ResponseEntity<UserDto>(userDto, HttpStatus.OK);
+        return new ResponseEntity<>(userDto, HttpStatus.OK);
     }
 
     /**
      * create user
-     * @param userDto
-     * @param ucBuilder
-     * @return
+     * @param userDto user to create
+     * @param ucBuilder uri component builder
      */
     @RequestMapping(value = "/user", method = RequestMethod.POST)
     public ResponseEntity<Void> createUser(@RequestBody UserDto userDto, UriComponentsBuilder ucBuilder) {
 
-        User user = mapper.map(userDto, User.class);
+        User user = userDtoConverter.toDomain(userDto);
 
         if (userService.isUserExist(user)) {
-            return new ResponseEntity<Void>(HttpStatus.CONFLICT);
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
         userService.createUser(user);
@@ -155,62 +152,59 @@ public class UserRestController {
         HttpHeaders headers = new HttpHeaders();
         headers.setLocation(ucBuilder.path("/user/{id}").buildAndExpand(user.getId()).toUri());
 
-        return new ResponseEntity<Void>(headers, HttpStatus.CREATED);
+        return new ResponseEntity<>(headers, HttpStatus.CREATED);
     }
 
     /**
      * update existing user
-     * @param id
-     * @param userDto
-     * @return
+     * @param id user id
+     * @param userDto user to update
      */
     @RequestMapping(value = "/user/{id}", method = RequestMethod.PUT)
     public ResponseEntity<UserDto> updateUser(@PathVariable("id") long id, @RequestBody UserDto userDto) {
         if(id != userDto.getId()) {
-            return new ResponseEntity<UserDto>(HttpStatus.CONFLICT);
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
         User currentUser = userService.findById(id);
 
         if (currentUser==null) {
-            return new ResponseEntity<UserDto>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        currentUser = mapper.map(userDto, User.class);
+        currentUser = userDtoConverter.toDomain(userDto);
 
         userService.updateUser(currentUser);
 
-        return new ResponseEntity<UserDto>(userDto, HttpStatus.OK);
+        return new ResponseEntity<>(userDto, HttpStatus.OK);
     }
 
     //------------------- Delete a User --------------------------------------------------------
 
     /**
      * delete user
-     * @param id
-     * @return
+     * @param id user id
      */
     @RequestMapping(value = "/user/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<UserDto> deleteUser(@PathVariable("id") long id) {
         User user = userService.findById(id);
 
         if (user == null) {
-            return new ResponseEntity<UserDto>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         userService.deleteUserById(id);
 
-        return new ResponseEntity<UserDto>(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     /**
      * delete all users
-     * @return
      */
     @RequestMapping(value = "/user", method = RequestMethod.DELETE)
     public ResponseEntity<UserDto> deleteAllUsers() {
         userService.deleteAllUsers();
 
-        return new ResponseEntity<UserDto>(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

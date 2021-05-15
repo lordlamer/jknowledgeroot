@@ -1,4 +1,4 @@
-package org.knowledgeroot.app.content.impl.database;
+package org.knowledgeroot.app.user.impl.database;
 
 import lombok.Data;
 import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters;
@@ -9,28 +9,34 @@ import java.time.LocalDateTime;
 import static javax.persistence.GenerationType.IDENTITY;
 
 @Entity
-@Table(name = "content")
+@Table(name = "user")
 @Data
-public class ContentEntity {
+public class User {
     @Id
     @GeneratedValue(strategy = IDENTITY)
     @Column(name = "id", unique = true, nullable = false)
-    private Integer id;
+    private Long id;
 
-    @Column(name = "parent", nullable = false)
-    private Integer parent;
+    @Column(name = "first_name", nullable = false)
+    private String firstName;
 
-    @Column(name = "name", nullable = false)
-    private String name;
+    @Column(name = "last_name", nullable = false)
+    private String lastName;
 
-    @Column(name = "content")
-    private String content;
+    @Column(name = "login", nullable = false)
+    private String login;
 
-    @Column(name = "type", nullable = false)
-    private String type;
+    @Column(name = "email", nullable = false)
+    private String email;
 
-    @Column(name = "sorting", nullable = false)
-    private Integer sorting;
+    @Column(name = "password", nullable = false)
+    private String password;
+
+    @Column(name = "language", nullable = false)
+    private String language;
+
+    @Column(name = "timezone", nullable = false)
+    private String timezone;
 
 
     @Column(name = "time_start")

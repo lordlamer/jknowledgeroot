@@ -4,8 +4,6 @@ import lombok.AllArgsConstructor;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
-import org.knowledgeroot.app.config.OrikaMapper;
-import org.knowledgeroot.app.user.User;
 import org.knowledgeroot.app.user.UserDao;
 import org.knowledgeroot.app.user.UserFilter;
 import org.springframework.stereotype.Service;
@@ -20,7 +18,6 @@ import java.util.List;
 @AllArgsConstructor
 public class UserImpl implements UserDao {
     private final EntityManager entityManager;
-    private final OrikaMapper mapper;
 
     /**
      * find all users
@@ -31,7 +28,7 @@ public class UserImpl implements UserDao {
         // get current session
         Session session = entityManager.unwrap(org.hibernate.Session.class);
 
-        Criteria userCriteria = session.createCriteria(UserEntity.class, "u");
+        Criteria userCriteria = session.createCriteria(User.class, "u");
 
         // build restrictions
         if(userFilter.getId() != null)
@@ -100,44 +97,37 @@ public class UserImpl implements UserDao {
             userCriteria.setFirstResult(userFilter.getStart());
 
         // get result
-        List<UserEntity> userEntities = Collections.checkedList(userCriteria.list(), UserEntity.class);
-
-        return mapper.mapAsList(userEntities, User.class);
+        return Collections.checkedList(userCriteria.list(), User.class);
     }
 
     /**
      * find user by given id
-     * @param id
-     * @return
+     * @param id user id
      */
     @Override
     public User findById(long id) {
-        UserEntity userEntity = findEntityById(id);
-
-        return mapper.map(userEntity, User.class);
+        return findEntityById(id);
     }
 
     /**
      * find user entity by given id
-     * @param id
-     * @return
+     * @param id user id
      */
-    private UserEntity findEntityById(long id) {
-        return entityManager.find(UserEntity.class, id);
+    private User findEntityById(long id) {
+        return entityManager.find(User.class, id);
     }
 
     /**
      * check if user exists
-     * @param user
-     * @return
+     * @param user user to check
      */
     @Override
     public boolean isUserExist(User user) {
         boolean found = false;
 
-        List<UserEntity> userEntities = entityManager.createQuery(
-                "SELECT u FROM UserEntity u WHERE u.login = :login",
-                UserEntity.class)
+        List<User> userEntities = entityManager.createQuery(
+                "SELECT u FROM User u WHERE u.login = :login",
+                User.class)
                 .setParameter("login", user.getLogin())
                 .getResultList();
 
@@ -149,26 +139,21 @@ public class UserImpl implements UserDao {
 
     /**
      * create user from domain object
-     * @param user
+     * @param user user to create
      */
     @Override
     public void createUser(User user) {
-        UserEntity userEntity = mapper.map(user, UserEntity.class);
-
-        entityManager.persist(userEntity);
+        entityManager.persist(user);
     }
 
     /**
      * update existing user
-     * @param user
+     * @param user user object to update
      */
     @Override
     public void updateUser(User user) {
-        // create user entity
-        UserEntity userEntity = mapper.map(user, UserEntity.class);
-
         // save to database
-        entityManager.merge(userEntity);
+        entityManager.merge(user);
     }
 
     /**
@@ -176,16 +161,16 @@ public class UserImpl implements UserDao {
      */
     @Override
     public void deleteAllUsers() {
-        entityManager.createQuery("DELETE FROM UserEntity").executeUpdate();
+        entityManager.createQuery("DELETE FROM User").executeUpdate();
     }
 
     /**
      * delete user by id
-     * @param id
+     * @param id user id
      */
     @Override
     public void deleteUserById(long id) {
-        entityManager.createQuery("DELETE FROM UserEntity u WHERE u.id = :id")
+        entityManager.createQuery("DELETE FROM User u WHERE u.id = :id")
                 .setParameter("id", id)
                 .executeUpdate();
     }

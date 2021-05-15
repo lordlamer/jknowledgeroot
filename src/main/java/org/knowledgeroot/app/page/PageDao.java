@@ -1,5 +1,7 @@
 package org.knowledgeroot.app.page;
 
+import org.knowledgeroot.app.page.impl.database.Page;
+
 import java.util.List;
 
 public interface PageDao {

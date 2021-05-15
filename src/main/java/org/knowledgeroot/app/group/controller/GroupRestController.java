@@ -2,10 +2,9 @@ package org.knowledgeroot.app.group.controller;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.knowledgeroot.app.config.OrikaMapper;
-import org.knowledgeroot.app.group.Group;
 import org.knowledgeroot.app.group.GroupFilter;
 import org.knowledgeroot.app.group.GroupService;
+import org.knowledgeroot.app.group.impl.database.Group;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,14 +21,14 @@ import java.util.List;
 @Slf4j
 @AllArgsConstructor
 public class GroupRestController {
-    private final OrikaMapper mapper;
     private final GroupService groupService;
 
     private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss";
 
+    private final GroupDtoConverter groupDtoConverter = new GroupDtoConverter();
+
     /**
      * get filtered list of groups
-     * @return
      */
     @RequestMapping(value = "/group", method = RequestMethod.GET)
     public ResponseEntity<List<GroupDto>> filterAllGroups(
@@ -99,47 +98,45 @@ public class GroupRestController {
         List<Group> groups = groupService.listGroups(groupFilter);
 
         // map to dto
-        List<GroupDto> groupDtos = mapper.mapAsList(groups, GroupDto.class);
+        List<GroupDto> groupDtos = groupDtoConverter.fromDomain(groups);
 
         // check for entries
         if(groupDtos.isEmpty()){
-            return new ResponseEntity<List<GroupDto>>(HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
 
-        return new ResponseEntity<List<GroupDto>>(groupDtos, HttpStatus.OK);
+        return new ResponseEntity<>(groupDtos, HttpStatus.OK);
     }
 
     /**
      * get single group by id
-     * @param id
-     * @return
+     * @param id group id
      */
     @RequestMapping(value = "/group/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<GroupDto> getGroup(@PathVariable("id") long id) {
         Group group = groupService.findById(id);
 
-        GroupDto groupDto = mapper.map(group, GroupDto.class);
+        GroupDto groupDto = groupDtoConverter.fromDomain(group);
 
         if (groupDto == null) {
-            return new ResponseEntity<GroupDto>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        return new ResponseEntity<GroupDto>(groupDto, HttpStatus.OK);
+        return new ResponseEntity<>(groupDto, HttpStatus.OK);
     }
 
     /**
      * create group
-     * @param groupDto
-     * @param ucBuilder
-     * @return
+     * @param groupDto group object
+     * @param ucBuilder uri component builder
      */
     @RequestMapping(value = "/group", method = RequestMethod.POST)
     public ResponseEntity<Void> createGroup(@RequestBody GroupDto groupDto, UriComponentsBuilder ucBuilder) {
 
-        Group group = mapper.map(groupDto, Group.class);
+        Group group = groupDtoConverter.toDomain(groupDto);
 
         if (groupService.isGroupExist(group)) {
-            return new ResponseEntity<Void>(HttpStatus.CONFLICT);
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
         groupService.createGroup(group);
@@ -147,62 +144,59 @@ public class GroupRestController {
         HttpHeaders headers = new HttpHeaders();
         headers.setLocation(ucBuilder.path("/group/{id}").buildAndExpand(group.getId()).toUri());
 
-        return new ResponseEntity<Void>(headers, HttpStatus.CREATED);
+        return new ResponseEntity<>(headers, HttpStatus.CREATED);
     }
 
     /**
      * update existing group
-     * @param id
-     * @param groupDto
-     * @return
+     * @param id group id
+     * @param groupDto group object
      */
     @RequestMapping(value = "/group/{id}", method = RequestMethod.PUT)
     public ResponseEntity<GroupDto> updateGroup(@PathVariable("id") long id, @RequestBody GroupDto groupDto) {
         if(id != groupDto.getId()) {
-            return new ResponseEntity<GroupDto>(HttpStatus.CONFLICT);
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
         Group currentGroup = groupService.findById(id);
 
         if (currentGroup==null) {
-            return new ResponseEntity<GroupDto>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        currentGroup = mapper.map(groupDto, Group.class);
+        currentGroup = groupDtoConverter.toDomain(groupDto);
 
         groupService.updateGroup(currentGroup);
 
-        return new ResponseEntity<GroupDto>(groupDto, HttpStatus.OK);
+        return new ResponseEntity<>(groupDto, HttpStatus.OK);
     }
 
     //------------------- Delete a Group --------------------------------------------------------
 
     /**
      * delete group
-     * @param id
-     * @return
+     * @param id group id
      */
     @RequestMapping(value = "/group/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<GroupDto> deleteGroup(@PathVariable("id") long id) {
         Group group = groupService.findById(id);
 
         if (group == null) {
-            return new ResponseEntity<GroupDto>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         groupService.deleteGroupById(id);
 
-        return new ResponseEntity<GroupDto>(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     /**
      * delete all groups
-     * @return
      */
     @RequestMapping(value = "/group", method = RequestMethod.DELETE)
     public ResponseEntity<GroupDto> deleteAllGroups() {
         groupService.deleteAllGroups();
 
-        return new ResponseEntity<GroupDto>(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

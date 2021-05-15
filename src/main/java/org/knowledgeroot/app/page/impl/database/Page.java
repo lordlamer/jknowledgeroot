@@ -1,4 +1,4 @@
-package org.knowledgeroot.app.user.impl.database;
+package org.knowledgeroot.app.page.impl.database;
 
 import lombok.Data;
 import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters;
@@ -9,34 +9,49 @@ import java.time.LocalDateTime;
 import static javax.persistence.GenerationType.IDENTITY;
 
 @Entity
-@Table(name = "user")
+@Table(name = "page")
 @Data
-public class UserEntity {
+public class Page {
     @Id
     @GeneratedValue(strategy = IDENTITY)
     @Column(name = "id", unique = true, nullable = false)
     private Long id;
 
-    @Column(name = "first_name", nullable = false)
-    private String firstName;
+    @Column(name = "parent", nullable = false)
+    private Integer parent;
 
-    @Column(name = "last_name", nullable = false)
-    private String lastName;
+    @Column(name = "name", nullable = false)
+    private String name;
 
-    @Column(name = "login", nullable = false)
-    private String login;
+    @Column(name = "subtitle", nullable = false)
+    private String subtitle;
 
-    @Column(name = "email", nullable = false)
-    private String email;
+    @Column(name = "description")
+    private String description;
 
-    @Column(name = "password", nullable = false)
-    private String password;
+    @Column(name = "tooltip", nullable = false)
+    private String tooltip;
 
-    @Column(name = "language", nullable = false)
-    private String language;
+    @Column(name = "icon", nullable = false)
+    private String icon;
 
-    @Column(name = "timezone", nullable = false)
-    private String timezone;
+    @Column(name = "alias", nullable = false)
+    private String alias;
+
+    @Column(name = "content_collapse", nullable = false)
+    private Boolean contentCollapse;
+
+    @Column(name = "content_position", nullable = false)
+    private String contentPosition;
+
+    @Column(name = "show_content_description", nullable = false)
+    private Boolean showContentDescription;
+
+    @Column(name = "show_table_of_content", nullable = false)
+    private Boolean showTableOfContent;
+
+    @Column(name = "sorting", nullable = false)
+    private Integer sorting;
 
 
     @Column(name = "time_start")

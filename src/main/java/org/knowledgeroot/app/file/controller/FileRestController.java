@@ -2,10 +2,9 @@ package org.knowledgeroot.app.file.controller;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.knowledgeroot.app.config.OrikaMapper;
-import org.knowledgeroot.app.file.File;
 import org.knowledgeroot.app.file.FileFilter;
 import org.knowledgeroot.app.file.FileService;
+import org.knowledgeroot.app.file.impl.database.File;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -20,7 +19,7 @@ import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -29,13 +28,13 @@ import java.util.List;
 @AllArgsConstructor
 public class FileRestController {
     private final FileService fileService;
-    private final OrikaMapper mapper;
 
     private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss";
 
+    private final FileDtoConverter fileDtoConverter = new FileDtoConverter();
+
     /**
      * get all files
-     * @return
      */
     @RequestMapping(value = "/file", method = RequestMethod.GET)
     public ResponseEntity<List<FileDto>> listAllFiles(
@@ -69,40 +68,39 @@ public class FileRestController {
         List<File> files = fileService.listFiles(fileFilter);
 
         // map to dto
-        List<FileDto> fileDtos = mapper.mapAsList(files, FileDto.class);
+        List<FileDto> fileDtos = fileDtoConverter.fromDomain(files);
 
         // check for entries
         if(fileDtos.isEmpty()){
-            return new ResponseEntity<List<FileDto>>(HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
 
-        return new ResponseEntity<List<FileDto>>(fileDtos, HttpStatus.OK);
+        return new ResponseEntity<>(fileDtos, HttpStatus.OK);
     }
 
     /**
      * get single file meta data by id
-     * @param id
-     * @return
+     * @param id file id
      */
     @RequestMapping(value = "/file/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<FileDto> getFile(@PathVariable("id") long id) {
         File file = fileService.findById(id);
 
-        FileDto fileDto = mapper.map(file, FileDto.class);
+        FileDto fileDto = fileDtoConverter.fromDomain(file);
 
         if (fileDto == null) {
-            return new ResponseEntity<FileDto>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        return new ResponseEntity<FileDto>(fileDto, HttpStatus.OK);
+        return new ResponseEntity<>(fileDto, HttpStatus.OK);
     }
 
     /**
      * download file
      *
-     * @param response
-     * @param fileId
-     * @param filename
+     * @param response http response
+     * @param fileId file id
+     * @param filename file name
      */
     @RequestMapping(value="download/{id}/{filename}", method = RequestMethod.GET)
     public void downloadFile(
@@ -141,7 +139,7 @@ public class FileRestController {
                 // show error message to user
                 String errorMessage = "Could not download file!";
                 OutputStream outputStream = response.getOutputStream();
-                outputStream.write(errorMessage.getBytes(Charset.forName("UTF-8")));
+                outputStream.write(errorMessage.getBytes(StandardCharsets.UTF_8));
                 outputStream.close();
             } catch (Exception ex) {
                 log.error(ex.getMessage());
@@ -152,10 +150,9 @@ public class FileRestController {
     /**
      * create file
      *
-     * @param files
-     * @param parentContent
-     * @param ucBuilder
-     * @return
+     * @param files multipart files
+     * @param parentContent parent content id
+     * @param ucBuilder uri component builder
      */
     @RequestMapping(value = "/file", method = RequestMethod.POST)
     public ResponseEntity<Void> createFile(
@@ -181,35 +178,33 @@ public class FileRestController {
             headers.setLocation(ucBuilder.path("/file/{id}").buildAndExpand(file.getId()).toUri());
         */
 
-        return new ResponseEntity<Void>(headers, HttpStatus.CREATED);
+        return new ResponseEntity<>(headers, HttpStatus.CREATED);
     }
 
     /**
-     * delete file
-     * @param id
-     * @return
+     * delete file by id
+     * @param id file id
      */
     @RequestMapping(value = "/file/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<FileDto> deleteFile(@PathVariable("id") long id) {
         File file = fileService.findById(id);
 
         if (file == null) {
-            return new ResponseEntity<FileDto>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         fileService.deleteFileById(id);
 
-        return new ResponseEntity<FileDto>(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     /**
      * delete all files
-     * @return
      */
     @RequestMapping(value = "/file", method = RequestMethod.DELETE)
     public ResponseEntity<FileDto> deleteAllFiles() {
         fileService.deleteAllFiles();
 
-        return new ResponseEntity<FileDto>(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

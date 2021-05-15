@@ -2,10 +2,9 @@ package org.knowledgeroot.app.content.controller;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.knowledgeroot.app.config.OrikaMapper;
-import org.knowledgeroot.app.content.Content;
 import org.knowledgeroot.app.content.ContentFilter;
 import org.knowledgeroot.app.content.ContentService;
+import org.knowledgeroot.app.content.impl.database.Content;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,14 +21,14 @@ import java.util.List;
 @Slf4j
 @AllArgsConstructor
 public class ContentRestController {
-    private final OrikaMapper mapper;
     private final ContentService contentService;
 
     private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss";
 
+    private final ContentDtoConverter contentDtoConverter = new ContentDtoConverter();
+
     /**
      * get all contents
-     * @return
      */
     @RequestMapping(value = "/content", method = RequestMethod.GET)
     public ResponseEntity<List<ContentDto>> listAllContents(
@@ -106,47 +105,45 @@ public class ContentRestController {
         List<Content> contents = contentService.listContents(contentFilter);
 
         // map to dto
-        List<ContentDto> contentDtos = mapper.mapAsList(contents, ContentDto.class);
+        List<ContentDto> contentDtos = contentDtoConverter.fromDomain(contents);
 
         // check for entries
         if(contentDtos.isEmpty()){
-            return new ResponseEntity<List<ContentDto>>(HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
 
-        return new ResponseEntity<List<ContentDto>>(contentDtos, HttpStatus.OK);
+        return new ResponseEntity<>(contentDtos, HttpStatus.OK);
     }
 
     /**
      * get single content by id
      * @param id
-     * @return
      */
     @RequestMapping(value = "/content/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ContentDto> getContent(@PathVariable("id") long id) {
         Content content = contentService.findById(id);
 
-        ContentDto contentDto = mapper.map(content, ContentDto.class);
+        ContentDto contentDto = contentDtoConverter.fromDomain(content);
 
         if (contentDto == null) {
-            return new ResponseEntity<ContentDto>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        return new ResponseEntity<ContentDto>(contentDto, HttpStatus.OK);
+        return new ResponseEntity<>(contentDto, HttpStatus.OK);
     }
 
     /**
      * create content
-     * @param contentDto
-     * @param ucBuilder
-     * @return
+     * @param contentDto content
+     * @param ucBuilder uri component builder
      */
     @RequestMapping(value = "/content", method = RequestMethod.POST)
     public ResponseEntity<Void> createContent(@RequestBody ContentDto contentDto, UriComponentsBuilder ucBuilder) {
 
-        Content content = mapper.map(contentDto, Content.class);
+        Content content = contentDtoConverter.toDomain(contentDto);
 
         if (contentService.isContentExist(content)) {
-            return new ResponseEntity<Void>(HttpStatus.CONFLICT);
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
         contentService.createContent(content);
@@ -154,60 +151,57 @@ public class ContentRestController {
         HttpHeaders headers = new HttpHeaders();
         headers.setLocation(ucBuilder.path("/content/{id}").buildAndExpand(content.getId()).toUri());
 
-        return new ResponseEntity<Void>(headers, HttpStatus.CREATED);
+        return new ResponseEntity<>(headers, HttpStatus.CREATED);
     }
 
     /**
      * update existing content
-     * @param id
-     * @param contentDto
-     * @return
+     * @param id content id
+     * @param contentDto content
      */
     @RequestMapping(value = "/content/{id}", method = RequestMethod.PUT)
     public ResponseEntity<ContentDto> updateContent(@PathVariable("id") long id, @RequestBody ContentDto contentDto) {
         if(id != contentDto.getId()) {
-            return new ResponseEntity<ContentDto>(HttpStatus.CONFLICT);
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
         Content currentContent = contentService.findById(id);
 
         if (currentContent==null) {
-            return new ResponseEntity<ContentDto>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        currentContent = mapper.map(contentDto, Content.class);
+        currentContent = contentDtoConverter.toDomain(contentDto);
 
         contentService.updateContent(currentContent);
 
-        return new ResponseEntity<ContentDto>(contentDto, HttpStatus.OK);
+        return new ResponseEntity<>(contentDto, HttpStatus.OK);
     }
 
     /**
      * delete content
-     * @param id
-     * @return
+     * @param id content id
      */
     @RequestMapping(value = "/content/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<ContentDto> deleteContent(@PathVariable("id") long id) {
         Content content = contentService.findById(id);
 
         if (content == null) {
-            return new ResponseEntity<ContentDto>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         contentService.deleteContentById(id);
 
-        return new ResponseEntity<ContentDto>(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     /**
      * delete all contents
-     * @return
      */
     @RequestMapping(value = "/content", method = RequestMethod.DELETE)
     public ResponseEntity<ContentDto> deleteAllContents() {
         contentService.deleteAllContents();
 
-        return new ResponseEntity<ContentDto>(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

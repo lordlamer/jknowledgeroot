@@ -4,8 +4,6 @@ import lombok.AllArgsConstructor;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
-import org.knowledgeroot.app.config.OrikaMapper;
-import org.knowledgeroot.app.page.Page;
 import org.knowledgeroot.app.page.PageDao;
 import org.knowledgeroot.app.page.PageFilter;
 import org.springframework.stereotype.Service;
@@ -20,7 +18,6 @@ import java.util.List;
 @AllArgsConstructor
 public class PageImpl implements PageDao {
     private final EntityManager entityManager;
-    private final OrikaMapper mapper;
 
     /**
      * find pages
@@ -33,7 +30,7 @@ public class PageImpl implements PageDao {
         // get current session
         Session session = entityManager.unwrap(org.hibernate.Session.class);
 
-        Criteria pageCriteria = session.createCriteria(PageEntity.class, "p");
+        Criteria pageCriteria = session.createCriteria(Page.class, "p");
 
         // build restrictions
         if(pageFilter.getId() != null)
@@ -120,9 +117,7 @@ public class PageImpl implements PageDao {
             pageCriteria.setFirstResult(pageFilter.getStart());
 
         // get result
-        List<PageEntity> pageEntities = Collections.checkedList(pageCriteria.list(), PageEntity.class);
-
-        return mapper.mapAsList(pageEntities, Page.class);
+        return Collections.checkedList(pageCriteria.list(), Page.class);
     }
 
     /**
@@ -133,33 +128,29 @@ public class PageImpl implements PageDao {
      */
     @Override
     public Page findById(long id) {
-        PageEntity pageEntity = findEntityById(id);
-
-        return mapper.map(pageEntity, Page.class);
+        return findEntityById(id);
     }
 
     /**
      * find page entity by given id
-     * @param id
-     * @return
+     * @param id page id
      */
-    private PageEntity findEntityById(long id) {
-        return entityManager.find(PageEntity.class, id);
+    private Page findEntityById(long id) {
+        return entityManager.find(Page.class, id);
     }
 
     /**
      * check if page exists
      *
-     * @param page
-     * @return
+     * @param page page to check
      */
     @Override
     public boolean isPageExist(Page page) {
         boolean found = false;
 
-        List<PageEntity> pageEntities = entityManager.createQuery(
-                "SELECT p FROM PageEntity p WHERE p.id = :id",
-                PageEntity.class)
+        List<Page> pageEntities = entityManager.createQuery(
+                "SELECT p FROM Page p WHERE p.id = :id",
+                Page.class)
                 .setParameter("id", page.getId())
                 .getResultList();
 
@@ -172,27 +163,22 @@ public class PageImpl implements PageDao {
     /**
      * create page from domain object
      *
-     * @param page
+     * @param page page to create
      */
     @Override
     public void createPage(Page page) {
-        PageEntity pageEntity = mapper.map(page, PageEntity.class);
-
-        entityManager.persist(pageEntity);
+        entityManager.persist(page);
     }
 
     /**
      * update existing page
      *
-     * @param page
+     * @param page page to update
      */
     @Override
     public void updatePage(Page page) {
-        // create page entity
-        PageEntity pageEntity = mapper.map(page, PageEntity.class);
-
         // save to database
-        entityManager.merge(pageEntity);
+        entityManager.merge(page);
     }
 
     /**
@@ -200,17 +186,17 @@ public class PageImpl implements PageDao {
      */
     @Override
     public void deleteAllPages() {
-        entityManager.createQuery("DELETE FROM PageEntity").executeUpdate();
+        entityManager.createQuery("DELETE FROM Page").executeUpdate();
     }
 
     /**
      * delete page by given id
      *
-     * @param id
+     * @param id page id
      */
     @Override
     public void deletePageById(long id) {
-        entityManager.createQuery("DELETE FROM PageEntity p WHERE p.id = :id")
+        entityManager.createQuery("DELETE FROM Page p WHERE p.id = :id")
                 .setParameter("id", id)
                 .executeUpdate();
     }

@@ -4,8 +4,6 @@ import lombok.AllArgsConstructor;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
-import org.knowledgeroot.app.config.OrikaMapper;
-import org.knowledgeroot.app.group.Group;
 import org.knowledgeroot.app.group.GroupDao;
 import org.knowledgeroot.app.group.GroupFilter;
 import org.springframework.stereotype.Service;
@@ -20,7 +18,6 @@ import java.util.List;
 @AllArgsConstructor
 public class GroupImpl implements GroupDao {
     private final EntityManager entityManager;
-    private final OrikaMapper mapper;
 
     /**
      * find groups
@@ -33,7 +30,7 @@ public class GroupImpl implements GroupDao {
         // get current session
         Session session = entityManager.unwrap(org.hibernate.Session.class);
 
-        Criteria groupCriteria = session.createCriteria(GroupEntity.class, "g");
+        Criteria groupCriteria = session.createCriteria(Group.class, "g");
 
         // build restrictions
         if(groupFilter.getId() != null)
@@ -90,9 +87,7 @@ public class GroupImpl implements GroupDao {
             groupCriteria.setFirstResult(groupFilter.getStart());
 
         // get result
-        List<GroupEntity> groupEntities = Collections.checkedList(groupCriteria.list(), GroupEntity.class);
-
-        return mapper.mapAsList(groupEntities, Group.class);
+        return Collections.checkedList(groupCriteria.list(), Group.class);
     }
 
     /**
@@ -103,33 +98,30 @@ public class GroupImpl implements GroupDao {
      */
     @Override
     public Group findById(long id) {
-        GroupEntity groupEntity = findEntityById(id);
 
-        return mapper.map(groupEntity, Group.class);
+        return findEntityById(id);
     }
 
     /**
      * find group entity by given id
-     * @param id
-     * @return
+     * @param id group id
      */
-    private GroupEntity findEntityById(long id) {
-        return entityManager.find(GroupEntity.class, id);
+    private Group findEntityById(long id) {
+        return entityManager.find(Group.class, id);
     }
 
     /**
      * check if group exists
      *
-     * @param group
-     * @return
+     * @param group group to check
      */
     @Override
     public boolean isGroupExist(Group group) {
         boolean found = false;
 
-        List<GroupEntity> groupEntities = entityManager.createQuery(
-                "SELECT u FROM GroupEntity g WHERE g.name = :name",
-                GroupEntity.class)
+        List<Group> groupEntities = entityManager.createQuery(
+                "SELECT u FROM Group g WHERE g.name = :name",
+                Group.class)
                 .setParameter("name", group.getName())
                 .getResultList();
 
@@ -142,27 +134,22 @@ public class GroupImpl implements GroupDao {
     /**
      * create group from domain object
      *
-     * @param group
+     * @param group group to create
      */
     @Override
     public void createGroup(Group group) {
-        GroupEntity groupEntity = mapper.map(group, GroupEntity.class);
-
-        entityManager.persist(groupEntity);
+        entityManager.persist(group);
     }
 
     /**
      * update existing group
      *
-     * @param group
+     * @param group group to update
      */
     @Override
     public void updateGroup(Group group) {
-        // create group entity
-        GroupEntity groupEntity = mapper.map(group, GroupEntity.class);
-
         // save to database
-        entityManager.merge(groupEntity);
+        entityManager.merge(group);
     }
 
     /**
@@ -170,17 +157,17 @@ public class GroupImpl implements GroupDao {
      */
     @Override
     public void deleteAllGroups() {
-        entityManager.createQuery("DELETE FROM GroupEntity").executeUpdate();
+        entityManager.createQuery("DELETE FROM Group").executeUpdate();
     }
 
     /**
      * delete group by given id
      *
-     * @param id
+     * @param id group id
      */
     @Override
     public void deleteGroupById(long id) {
-        entityManager.createQuery("DELETE FROM GroupEntity g WHERE g.id = :id")
+        entityManager.createQuery("DELETE FROM Group g WHERE g.id = :id")
                 .setParameter("id", id)
                 .executeUpdate();
     }

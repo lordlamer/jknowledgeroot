@@ -1,5 +1,7 @@
 package org.knowledgeroot.app.content;
 
+import org.knowledgeroot.app.content.impl.database.Content;
+
 import java.util.List;
 
 public interface ContentDao {

@@ -2,10 +2,9 @@ package org.knowledgeroot.app.page.controller;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.knowledgeroot.app.config.OrikaMapper;
-import org.knowledgeroot.app.page.Page;
 import org.knowledgeroot.app.page.PageFilter;
 import org.knowledgeroot.app.page.PageService;
+import org.knowledgeroot.app.page.impl.database.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,14 +21,14 @@ import java.util.List;
 @Slf4j
 @AllArgsConstructor
 public class PageRestController {
-    private final OrikaMapper mapper;
     private final PageService pageService;
 
     private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
 
+    private final PageDtoConverter pageDtoConverter = new PageDtoConverter();
+
     /**
      * get all pages
-     * @return
      */
     @RequestMapping(value = "/page", method = RequestMethod.GET)
     public ResponseEntity<List<PageDto>> listAllPages(
@@ -120,7 +119,7 @@ public class PageRestController {
         List<Page> pages = pageService.listPages(pageFilter);
 
         // map to dto
-        List<PageDto> pageDtos = mapper.mapAsList(pages, PageDto.class);
+        List<PageDto> pageDtos = pageDtoConverter.fromDomain(pages);
 
         // check for entries
         if(pageDtos.isEmpty()){
@@ -132,14 +131,13 @@ public class PageRestController {
 
     /**
      * get single page by id
-     * @param id
-     * @return
+     * @param id page id
      */
     @RequestMapping(value = "/page/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PageDto> getPage(@PathVariable("id") long id) {
         Page page = pageService.findById(id);
 
-        PageDto pageDto = mapper.map(page, PageDto.class);
+        PageDto pageDto = pageDtoConverter.fromDomain(page);
 
         if (pageDto == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -150,14 +148,13 @@ public class PageRestController {
 
     /**
      * create page
-     * @param pageDto
-     * @param ucBuilder
-     * @return
+     * @param pageDto page to create
+     * @param ucBuilder uri component builder
      */
     @RequestMapping(value = "/page", method = RequestMethod.POST)
     public ResponseEntity<Void> createPage(@RequestBody PageDto pageDto, UriComponentsBuilder ucBuilder) {
 
-        Page page = mapper.map(pageDto, Page.class);
+        Page page = pageDtoConverter.toDomain(pageDto);
 
         if (pageService.isPageExist(page)) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
@@ -173,9 +170,8 @@ public class PageRestController {
 
     /**
      * update existing page
-     * @param id
-     * @param pageDto
-     * @return
+     * @param id page id
+     * @param pageDto page object to update
      */
     @RequestMapping(value = "/page/{id}", method = RequestMethod.PUT)
     public ResponseEntity<PageDto> updatePage(@PathVariable("id") long id, @RequestBody PageDto pageDto) {
@@ -189,7 +185,7 @@ public class PageRestController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        currentPage = mapper.map(pageDto, Page.class);
+        currentPage = pageDtoConverter.toDomain(pageDto);
 
         pageService.updatePage(currentPage);
 
@@ -198,8 +194,7 @@ public class PageRestController {
 
     /**
      * delete page
-     * @param id
-     * @return
+     * @param id page id
      */
     @RequestMapping(value = "/page/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<PageDto> deletePage(@PathVariable("id") long id) {
@@ -216,7 +211,6 @@ public class PageRestController {
 
     /**
      * delete all pages
-     * @return
      */
     @RequestMapping(value = "/page", method = RequestMethod.DELETE)
     public ResponseEntity<PageDto> deleteAllPages() {

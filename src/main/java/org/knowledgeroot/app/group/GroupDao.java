@@ -1,5 +1,7 @@
 package org.knowledgeroot.app.group;
 
+import org.knowledgeroot.app.group.impl.database.Group;
+
 import java.util.List;
 
 public interface GroupDao {

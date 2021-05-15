@@ -1,7 +1,6 @@
-package org.knowledgeroot.app.group.impl.database;
+package org.knowledgeroot.app.file.impl.database;
 
 import lombok.Data;
-import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -9,26 +8,37 @@ import java.time.LocalDateTime;
 import static javax.persistence.GenerationType.IDENTITY;
 
 @Entity
-@Table(name = "[group]")
+@Table(name = "file")
 @Data
-public class GroupEntity {
+public class File {
     @Id
     @GeneratedValue(strategy = IDENTITY)
     @Column(name = "id", unique = true, nullable = false)
-    private Long id;
+    private Integer id;
 
-    @Column(name = "name", nullable = false, unique = true)
+    @Column(name = "parent", nullable = false)
+    private Integer parent;
+
+    @Column(name = "hash", nullable = false)
+    private String hash;
+
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "description")
-    private String description;
+    @Column(name = "size", nullable = false)
+    private Integer size;
+
+    @Column(name = "type", nullable = false)
+    private String type;
+
+    @Column(name = "downloads", nullable = false)
+    private Integer downloads;
+
 
     @Column(name = "time_start")
-    @Convert(converter = Jsr310JpaConverters.LocalDateTimeConverter.class)
     private LocalDateTime timeStart;
 
     @Column(name = "time_end")
-    @Convert(converter = Jsr310JpaConverters.LocalDateTimeConverter.class)
     private LocalDateTime timeEnd;
 
     @Column(name = "active", nullable = false)
@@ -38,14 +48,12 @@ public class GroupEntity {
     private Integer createdBy;
 
     @Column(name = "create_date", nullable = false)
-    @Convert(converter = Jsr310JpaConverters.LocalDateTimeConverter.class)
     private LocalDateTime  createDate;
 
     @Column(name = "changed_by", nullable = false)
     private Integer changedBy;
 
     @Column(name = "change_date", nullable = false)
-    @Convert(converter = Jsr310JpaConverters.LocalDateTimeConverter.class)
     private Integer changeDate;
 
     @Column(name = "deleted", nullable = false)

@@ -1,4 +1,4 @@
-package org.knowledgeroot.app.page.impl.database;
+package org.knowledgeroot.app.content.impl.database;
 
 import lombok.Data;
 import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters;
@@ -9,13 +9,13 @@ import java.time.LocalDateTime;
 import static javax.persistence.GenerationType.IDENTITY;
 
 @Entity
-@Table(name = "page")
+@Table(name = "content")
 @Data
-public class PageEntity {
+public class Content {
     @Id
     @GeneratedValue(strategy = IDENTITY)
     @Column(name = "id", unique = true, nullable = false)
-    private Long id;
+    private Integer id;
 
     @Column(name = "parent", nullable = false)
     private Integer parent;
@@ -23,32 +23,11 @@ public class PageEntity {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "subtitle", nullable = false)
-    private String subtitle;
+    @Column(name = "content")
+    private String content;
 
-    @Column(name = "description")
-    private String description;
-
-    @Column(name = "tooltip", nullable = false)
-    private String tooltip;
-
-    @Column(name = "icon", nullable = false)
-    private String icon;
-
-    @Column(name = "alias", nullable = false)
-    private String alias;
-
-    @Column(name = "content_collapse", nullable = false)
-    private Boolean contentCollapse;
-
-    @Column(name = "content_position", nullable = false)
-    private String contentPosition;
-
-    @Column(name = "show_content_description", nullable = false)
-    private Boolean showContentDescription;
-
-    @Column(name = "show_table_of_content", nullable = false)
-    private Boolean showTableOfContent;
+    @Column(name = "type", nullable = false)
+    private String type;
 
     @Column(name = "sorting", nullable = false)
     private Integer sorting;
