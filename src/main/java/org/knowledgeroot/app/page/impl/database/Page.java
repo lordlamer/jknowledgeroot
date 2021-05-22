@@ -15,7 +15,7 @@ public class Page {
     @Id
     @GeneratedValue(strategy = IDENTITY)
     @Column(name = "id", unique = true, nullable = false)
-    private Long id;
+    private Integer id;
 
     @Column(name = "parent", nullable = false)
     private Integer parent;

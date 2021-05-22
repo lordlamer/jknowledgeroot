@@ -68,7 +68,7 @@ public class FileRestController {
         List<File> files = fileService.listFiles(fileFilter);
 
         // map to dto
-        List<FileDto> fileDtos = fileDtoConverter.fromDomain(files);
+        List<FileDto> fileDtos = fileDtoConverter.convertAtoB(files);
 
         // check for entries
         if(fileDtos.isEmpty()){
@@ -86,7 +86,7 @@ public class FileRestController {
     public ResponseEntity<FileDto> getFile(@PathVariable("id") long id) {
         File file = fileService.findById(id);
 
-        FileDto fileDto = fileDtoConverter.fromDomain(file);
+        FileDto fileDto = fileDtoConverter.convertAtoB(file);
 
         if (fileDto == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

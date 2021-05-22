@@ -98,7 +98,7 @@ public class GroupRestController {
         List<Group> groups = groupService.listGroups(groupFilter);
 
         // map to dto
-        List<GroupDto> groupDtos = groupDtoConverter.fromDomain(groups);
+        List<GroupDto> groupDtos = groupDtoConverter.convertAtoB(groups);
 
         // check for entries
         if(groupDtos.isEmpty()){
@@ -116,7 +116,7 @@ public class GroupRestController {
     public ResponseEntity<GroupDto> getGroup(@PathVariable("id") long id) {
         Group group = groupService.findById(id);
 
-        GroupDto groupDto = groupDtoConverter.fromDomain(group);
+        GroupDto groupDto = groupDtoConverter.convertAtoB(group);
 
         if (groupDto == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -133,7 +133,7 @@ public class GroupRestController {
     @RequestMapping(value = "/group", method = RequestMethod.POST)
     public ResponseEntity<Void> createGroup(@RequestBody GroupDto groupDto, UriComponentsBuilder ucBuilder) {
 
-        Group group = groupDtoConverter.toDomain(groupDto);
+        Group group = groupDtoConverter.convertBtoA(groupDto);
 
         if (groupService.isGroupExist(group)) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
@@ -164,7 +164,7 @@ public class GroupRestController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        currentGroup = groupDtoConverter.toDomain(groupDto);
+        currentGroup = groupDtoConverter.convertBtoA(groupDto);
 
         groupService.updateGroup(currentGroup);
 

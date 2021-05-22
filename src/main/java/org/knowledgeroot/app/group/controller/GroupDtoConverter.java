@@ -1,23 +1,45 @@
 package org.knowledgeroot.app.group.controller;
 
 import org.knowledgeroot.app.group.impl.database.Group;
+import org.knowledgeroot.app.util.Converter;
 
-import java.util.List;
+public class GroupDtoConverter implements Converter<Group, GroupDto> {
 
-public class GroupDtoConverter {
-    public Group toDomain(GroupDto groupDto) {
-        return null;
+    @Override
+    public GroupDto convertAtoB(Group from) {
+        GroupDto groupDto = new GroupDto();
+
+        groupDto.setId(from.getId());
+        groupDto.setName(from.getName());
+        groupDto.setDescription(from.getDescription());
+        groupDto.setCreatedBy(from.getCreatedBy());
+        groupDto.setCreateDate(from.getCreateDate());
+        groupDto.setChangedBy(from.getChangedBy());
+        groupDto.setChangeDate(from.getCreateDate());
+        groupDto.setTimeStart(from.getTimeStart());
+        groupDto.setTimeEnd(from.getTimeEnd());
+        groupDto.setDeleted(from.getDeleted());
+        groupDto.setActive(from.getActive());
+
+        return groupDto;
     }
 
-    public List<Group> toDomain(List<GroupDto> groupDtos) {
-        return null;
-    }
+    @Override
+    public Group convertBtoA(GroupDto from) {
+        Group group = new Group();
 
-    public GroupDto fromDomain(Group group) {
-        return null;
-    }
+        group.setId(from.getId());
+        group.setName(from.getName());
+        group.setDescription(from.getDescription());
+        group.setCreatedBy(from.getCreatedBy());
+        group.setCreateDate(from.getCreateDate());
+        group.setChangedBy(from.getChangedBy());
+        group.setChangeDate(from.getCreateDate());
+        group.setTimeStart(from.getTimeStart());
+        group.setTimeEnd(from.getTimeEnd());
+        group.setDeleted(from.getDeleted());
+        group.setActive(from.getActive());
 
-    public List<GroupDto> fromDomain(List<Group> groupDtos) {
-        return null;
+        return group;
     }
 }

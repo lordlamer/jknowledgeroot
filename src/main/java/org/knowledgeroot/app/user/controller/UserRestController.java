@@ -106,7 +106,7 @@ public class UserRestController {
         List<User> users = userService.listUsers(userFilter);
 
         // map to dto
-        List<UserDto> userDtos = userDtoConverter.fromDomain(users);
+        List<UserDto> userDtos = userDtoConverter.convertAtoB(users);
 
         // check for entries
         if(userDtos.isEmpty()){
@@ -124,7 +124,7 @@ public class UserRestController {
     public ResponseEntity<UserDto> getUser(@PathVariable("id") long id) {
         User user = userService.findById(id);
 
-        UserDto userDto = userDtoConverter.fromDomain(user);
+        UserDto userDto = userDtoConverter.convertAtoB(user);
 
         if (userDto == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -141,7 +141,7 @@ public class UserRestController {
     @RequestMapping(value = "/user", method = RequestMethod.POST)
     public ResponseEntity<Void> createUser(@RequestBody UserDto userDto, UriComponentsBuilder ucBuilder) {
 
-        User user = userDtoConverter.toDomain(userDto);
+        User user = userDtoConverter.convertBtoA(userDto);
 
         if (userService.isUserExist(user)) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
@@ -172,7 +172,7 @@ public class UserRestController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        currentUser = userDtoConverter.toDomain(userDto);
+        currentUser = userDtoConverter.convertBtoA(userDto);
 
         userService.updateUser(currentUser);
 

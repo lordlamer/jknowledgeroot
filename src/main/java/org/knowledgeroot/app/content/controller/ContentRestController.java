@@ -105,7 +105,7 @@ public class ContentRestController {
         List<Content> contents = contentService.listContents(contentFilter);
 
         // map to dto
-        List<ContentDto> contentDtos = contentDtoConverter.fromDomain(contents);
+        List<ContentDto> contentDtos = contentDtoConverter.convertAtoB(contents);
 
         // check for entries
         if(contentDtos.isEmpty()){
@@ -123,7 +123,7 @@ public class ContentRestController {
     public ResponseEntity<ContentDto> getContent(@PathVariable("id") long id) {
         Content content = contentService.findById(id);
 
-        ContentDto contentDto = contentDtoConverter.fromDomain(content);
+        ContentDto contentDto = contentDtoConverter.convertAtoB(content);
 
         if (contentDto == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -140,7 +140,7 @@ public class ContentRestController {
     @RequestMapping(value = "/content", method = RequestMethod.POST)
     public ResponseEntity<Void> createContent(@RequestBody ContentDto contentDto, UriComponentsBuilder ucBuilder) {
 
-        Content content = contentDtoConverter.toDomain(contentDto);
+        Content content = contentDtoConverter.convertBtoA(contentDto);
 
         if (contentService.isContentExist(content)) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
@@ -171,7 +171,7 @@ public class ContentRestController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        currentContent = contentDtoConverter.toDomain(contentDto);
+        currentContent = contentDtoConverter.convertBtoA(contentDto);
 
         contentService.updateContent(currentContent);
 
