@@ -1,5 +1,7 @@
 package org.knowledgeroot.app.auth;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.xml.bind.DatatypeConverter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -117,7 +119,7 @@ public class PasswordHasher {
 	 * @param passwordHash
 	 * @return
 	 */
-	public static final boolean verify(String password, String passwordHash) {
+	public static final boolean verify(@NotNull String password, @NotNull String passwordHash) {
 		String[] parts = passwordHash.split("\\$");
 		return parts.length == 5
 				&& new PasswordHasher(password, HASH_METHOD.fromIndex(Integer.parseUnsignedInt(parts[1])),

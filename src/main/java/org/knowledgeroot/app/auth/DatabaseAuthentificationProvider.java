@@ -1,6 +1,9 @@
 package org.knowledgeroot.app.auth;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -15,6 +18,11 @@ import java.util.List;
 @Component
 @Slf4j
 public class DatabaseAuthentificationProvider implements AuthenticationProvider {
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    private static final String AUTH_SQL = "select `password` from `user` WHERE BINARY lower(`login`)=?";
+
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         Authentication userAuth = null;
@@ -22,8 +30,16 @@ public class DatabaseAuthentificationProvider implements AuthenticationProvider 
         String login = authentication.getName();
         String password = authentication.getCredentials().toString();
 
-        // check if customer was found and if password hash matches
-        if(login.equals("admin") && password.equals("admin")) {
+        String dbPassword = "";
+        try {
+            dbPassword = jdbcTemplate.queryForObject(AUTH_SQL, new Object[]{login.toLowerCase()}, String.class);
+        } catch(EmptyResultDataAccessException e) {
+            log.debug("Could not find user in database: {}", login);
+        }
+
+        // check login
+        // check plain text password with database password
+        if (PasswordHasher.verify(password, dbPassword)) {
             log.info("Login success for user: {}", login);
 
             // build spring auth object for session
