@@ -19,6 +19,12 @@
     <link rel="stylesheet" href="webjars/font-awesome/css/fontawesome.min.css">
     <link rel="stylesheet" href="webjars/font-awesome/css/solid.min.css">
 
+    <!-- vuejs -->
+    <script src="https://unpkg.com/vue@next"></script>
+
+    <!-- axios -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.js"></script>
+
     <link href="resources/css/base.css" rel="stylesheet">
     <style type="text/css">
 
@@ -74,25 +80,17 @@
 
     </style>
 
-    <!-- jQuery -->
-    <script src="webjars/jquery/jquery.min.js"></script>
-
-    <!-- jQuery ui -->
-    <script src="webjars/jquery-ui/jquery-ui.min.js"></script>
-
     <!-- Bootstrap -->
     <script src="webjars/bootstrap/js/bootstrap.min.js"></script>
-
-    <!-- AngularJS -->
-    <script src="webjars/angularjs/angular.min.js"></script>
 
     <!-- jstree -->
     <link rel="stylesheet" href="webjars/jstree/themes/default/style.min.css" />
     <script src="webjars/jstree/jstree.min.js"></script>
 
-    <link type="text/css" rel="stylesheet" href="resources/jquery-layout/layout-default-latest.css" />
+    <!-- Knowledgeroot Vuejs App -->
+    <script type="module" src="resources/Knowledgeroot.js"></script>
 </head>
-<body>
+<body id="knowledgeroot-app">
 
 <nav class="navbar fixed-top navbar-dark bg-dark navbar-expand-lg" style="border-bottom: 3px solid #F88529;">
     <a class="navbar-brand" href="#" data-toggle="dropdown"><i class="fas fa-bars"></i></a>
@@ -237,6 +235,10 @@
         </nav>
 
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+                <knowledgeroot-content></knowledgeroot-content>
+                <knowledgeroot-file></knowledgeroot-file>
+
+
             <script>
                 $(".alert").alert()
             </script>
