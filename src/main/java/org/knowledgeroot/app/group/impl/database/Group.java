@@ -15,7 +15,7 @@ public class Group {
     @Id
     @GeneratedValue(strategy = IDENTITY)
     @Column(name = "id", unique = true, nullable = false)
-    private Long id;
+    private Integer id;
 
     @Column(name = "name", nullable = false, unique = true)
     private String name;
@@ -46,7 +46,7 @@ public class Group {
 
     @Column(name = "change_date", nullable = false)
     @Convert(converter = Jsr310JpaConverters.LocalDateTimeConverter.class)
-    private Integer changeDate;
+    private LocalDateTime changeDate;
 
     @Column(name = "deleted", nullable = false)
     private Boolean deleted;

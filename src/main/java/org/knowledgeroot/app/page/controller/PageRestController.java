@@ -119,7 +119,7 @@ public class PageRestController {
         List<Page> pages = pageService.listPages(pageFilter);
 
         // map to dto
-        List<PageDto> pageDtos = pageDtoConverter.fromDomain(pages);
+        List<PageDto> pageDtos = pageDtoConverter.convertAtoB(pages);
 
         // check for entries
         if(pageDtos.isEmpty()){
@@ -137,7 +137,7 @@ public class PageRestController {
     public ResponseEntity<PageDto> getPage(@PathVariable("id") long id) {
         Page page = pageService.findById(id);
 
-        PageDto pageDto = pageDtoConverter.fromDomain(page);
+        PageDto pageDto = pageDtoConverter.convertAtoB(page);
 
         if (pageDto == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -154,7 +154,7 @@ public class PageRestController {
     @RequestMapping(value = "/page", method = RequestMethod.POST)
     public ResponseEntity<Void> createPage(@RequestBody PageDto pageDto, UriComponentsBuilder ucBuilder) {
 
-        Page page = pageDtoConverter.toDomain(pageDto);
+        Page page = pageDtoConverter.convertBtoA(pageDto);
 
         if (pageService.isPageExist(page)) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
@@ -185,7 +185,7 @@ public class PageRestController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        currentPage = pageDtoConverter.toDomain(pageDto);
+        currentPage = pageDtoConverter.convertBtoA(pageDto);
 
         pageService.updatePage(currentPage);
 

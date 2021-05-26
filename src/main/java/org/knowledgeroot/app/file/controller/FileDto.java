@@ -20,6 +20,6 @@ public class FileDto {
     private Integer createdBy;
     private LocalDateTime  createDate;
     private Integer changedBy;
-    private LocalDateTime changDate;
+    private LocalDateTime changeDate;
     private Boolean deleted;
 }

@@ -54,7 +54,7 @@ public class File {
     private Integer changedBy;
 
     @Column(name = "change_date", nullable = false)
-    private Integer changeDate;
+    private LocalDateTime changeDate;
 
     @Column(name = "deleted", nullable = false)
     private Boolean deleted;
