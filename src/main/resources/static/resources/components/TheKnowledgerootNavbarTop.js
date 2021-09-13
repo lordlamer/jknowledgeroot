@@ -5,64 +5,113 @@ export const TheKnowledgerootNavbarTop = {
         }
     },
     template: `
-        <nav class="navbar fixed-top navbar-dark bg-dark navbar-expand-lg" style="border-bottom: 3px solid #F88529;">
-            <a class="navbar-brand" href="#" data-toggle="dropdown"><i class="fas fa-bars"></i></a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                <a class="dropdown-item" href="#"><i class="fas fa-rocket"></i>&nbsp;Knowledgeroot</a>
-                <a class="dropdown-item" href="#"><i class="fas fa-book"></i>&nbsp;Docs</a>
-                <a class="dropdown-item" href="#"><i class="fas fa-puzzle-piece"></i>&nbsp;API</a>
-            </div>
-            <a class="navbar-brand" href="#"><i class="fas fa-hashtag" aria-hidden="true"></i> Knowledgeroot</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarText">
-                <ul class="navbar-nav mr-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-plus icon-white"></i>
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                            <a class="dropdown-item" href="#"><i class="fas fa-file"></i>&nbsp;Page</a>
-                            <a class="dropdown-item" href="#"><i class="fas fa-file-alt"></i>&nbsp;Content</a>
-                            <a class="dropdown-item" href="#"><i class="fas fa-paperclip"></i>&nbsp;File</a>
-                        </div>
-                    </li>
-                </ul>
-                <ul class="navbar-nav navbar-right">
-                    <li class="nav-item dropdown">
-                        <input class="form-control mr-4" type="search" placeholder="Search" aria-label="Search">
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-question-circle icon-white"></i>
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                            <a class="dropdown-item" href="#"><i class="fas fa-book"></i>&nbsp;Help</a>
-                            <a class="dropdown-item" href="#"><i class="fas fa-star"></i>&nbsp;About</a>
-                        </div>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-cogs icon-white"></i>
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                            <a class="dropdown-item" href="#"><i class="fas fa-file"></i>&nbsp;Users</a>
-                            <a class="dropdown-item" href="#"><i class="fas fa-file-alt"></i>&nbsp;Groups</a>
-                            <a class="dropdown-item" href="#"><i class="fas fa-paperclip"></i>&nbsp;Permissions</a>
-                        </div>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-user icon-white"></i>
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                            <a class="dropdown-item" href="#"><i class="fas fa-sign-in-alt"></i>&nbsp;Sign in</a>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </nav>`
+<nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-dark" style="border-bottom: 3px solid #F88529;">
+	<ul class="container-fluid">
+		<ul class="navbar-nav me-auto mb-2 mb-lg-0">
+			<li class="nav-item dropdown">
+				<a class="navbar-brand" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+					<i class="fas fa-bars"/>
+				</a>
+				<ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+					<li>
+						<a class="dropdown-item" href="#">
+							<i class="fas fa-rocket"/>&nbsp;Knowledgeroot</a>
+					</li>
+					<li>
+						<a class="dropdown-item" href="#">
+							<i class="fas fa-book"/>&nbsp;Docs</a>
+					</li>
+					<li>
+						<a class="dropdown-item" href="#">
+							<i class="fas fa-puzzle-piece"/>&nbsp;API</a>
+					</li>
+				</ul>
+			</li>
+		</ul>
+
+		<a class="navbar-brand" href="#"><i class="fas fa-hashtag" aria-hidden="true"/> Knowledgeroot</a>
+		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"/>
+		</button>
+		<div class="collapse navbar-collapse" id="navbarSupportedContent">
+			<ul class="navbar-nav me-auto mb-2 mb-lg-0">
+				<!-- create new item -->
+				<li class="nav-item dropdown">
+					<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+						<i class="fas fa-plus icon-white"/>
+					</a>
+					<ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+						<li>
+							<a class="dropdown-item" href="#">
+								<i class="fas fa-file"/>&nbsp;Page</a>
+						</li>
+						<li>
+							<a class="dropdown-item" href="#">
+								<i class="fas fa-file-alt"/>&nbsp;Content</a>
+						</li>
+						<li>
+							<a class="dropdown-item" href="#">
+								<i class="fas fa-paperclip"/>&nbsp;File</a>
+						</li>
+					</ul>
+				</li>
+				<!-- user -->
+				<li class="nav-item dropdown">
+					<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink2" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+						<i class="fas fa-user icon-white"/>
+					</a>
+					<ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink2">
+						<li>
+							<a class="dropdown-item" href="#">
+								<i class="fas fa-sign-in-alt"/>&nbsp;Sign in</a>
+						</li>
+					</ul>
+				</li>
+				<!-- help / info -->
+				<li class="nav-item dropdown">
+					<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink3" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+						<i class="fas fa-question-circle icon-white"/>
+					</a>
+					<ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink3">
+						<li>
+							<a class="dropdown-item" href="#">
+								<i class="fas fa-book"/>&nbsp;Help</a>
+						</li>
+						<li>
+							<a class="dropdown-item" href="#">
+								<i class="fas fa-star"/>&nbsp;About</a>
+						</li>
+					</ul>
+				</li>
+				<!-- settings -->
+				<li class="nav-item dropdown">
+					<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink4" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+						<i class="fas fa-cogs icon-white"/>
+					</a>
+					<ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink4">
+						<li>
+							<a class="dropdown-item" href="#">
+								<i class="fas fa-file"/>&nbsp;Users</a>
+						</li>
+						<li>
+							<a class="dropdown-item" href="#">
+								<i class="fas fa-file-alt"/>&nbsp;Groups</a>
+						</li>
+						<li>
+							<a class="dropdown-item" href="#">
+								<i class="fas fa-paperclip"/>&nbsp;Permissions</a>
+						</li>
+					</ul>
+				</li>
+			</ul>
+			<form class="d-flex">
+				<input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+				<button class="btn btn-outline-success" type="submit">Search</button>
+			</form>
+		</div>
+	</div>
+</nav>
+`
 }
 
 export default TheKnowledgerootNavbarTop;

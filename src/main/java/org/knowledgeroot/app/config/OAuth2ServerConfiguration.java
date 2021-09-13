@@ -46,6 +46,8 @@ public class OAuth2ServerConfiguration {
                 .and()
                 .authorizeRequests()
                     .antMatchers("/swagger-ui.html").permitAll()
+                    .antMatchers("/h2/**").permitAll()
+                    .antMatchers("/h2-console/**").permitAll()
                     .antMatchers("/swagger-resources/**").permitAll()
                     .antMatchers("/webjars/**").permitAll()
                     .antMatchers("/v2/**").permitAll()

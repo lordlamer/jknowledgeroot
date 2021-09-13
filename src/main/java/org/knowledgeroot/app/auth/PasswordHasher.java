@@ -1,6 +1,6 @@
 package org.knowledgeroot.app.auth;
 
-import org.jetbrains.annotations.NotNull;
+import com.sun.istack.NotNull;
 
 import javax.xml.bind.DatatypeConverter;
 import java.security.MessageDigest;
