@@ -6,7 +6,7 @@ export const TheKnowledgerootNavbarTop = {
     },
     template: `
 <nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-dark" style="border-bottom: 3px solid #F88529;">
-	<ul class="container-fluid">
+	<div class="container-fluid">
 		<ul class="navbar-nav me-auto mb-2 mb-lg-0">
 			<li class="nav-item dropdown">
 				<a class="navbar-brand" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -109,7 +109,7 @@ export const TheKnowledgerootNavbarTop = {
 				<button class="btn btn-outline-success" type="submit">Search</button>
 			</form>
 		</div>
-	</ul>
+	</div>
 </nav>
 `
 }

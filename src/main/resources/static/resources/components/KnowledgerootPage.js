@@ -1,12 +1,15 @@
 export const KnowledgerootPage = {
     data() {
         return {
-            name: "FooBar"
+            name: "PAGE:"
         }
     },
     template: `
     <div>
     {{ name }}
+    <knowledgeroot-content title="FOO">BAR</knowledgeroot-content>
+    <knowledgeroot-content></knowledgeroot-content>
+    <knowledgeroot-content></knowledgeroot-content>
     </div>`
 }
 
