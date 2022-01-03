@@ -7,10 +7,8 @@
     <meta name="description" content="Knowledgeroot Knowledgebase">
     <meta name="author" content="Knowledgeroot Team">
 
-    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
-    <!--[if lt IE 9]>
-    <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+    <!-- htmx -->
+    <script src="https://unpkg.com/htmx.org@1.6.1"></script>
 
     <!-- jQuery -->
     <!--
@@ -21,38 +19,23 @@
     <link rel="stylesheet" href="webjars/bootstrap/css/bootstrap.min.css">
     <script src="webjars/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="webjars/font-awesome/css/fontawesome.min.css">
-    <link rel="stylesheet" href="webjars/font-awesome/css/solid.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
 
     <!-- vuejs -->
+    <!--
     <script src="https://unpkg.com/vue@next"></script>
+    -->
 
     <!-- axios -->
+    <!--
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.js"></script>
+    -->
 
+    <!--
     <link href="resources/css/base.css" rel="stylesheet">
+    -->
     <style type="text/css">
-
-        .colorme {
-            /* IE10+ */
-            background-image: -ms-linear-gradient(top right, #B0FFE2 0%, #23538A 100%);
-
-            /* Mozilla Firefox */
-            background-image: -moz-linear-gradient(top right, #B0FFE2 0%, #23538A 100%);
-
-            /* Opera */
-            background-image: -o-linear-gradient(top right, #B0FFE2 0%, #23538A 100%);
-
-            /* Webkit (Safari/Chrome 10) */
-            background-image: -webkit-gradient(linear, right top, left bottom, color-stop(0, #B0FFE2), color-stop(100, #23538A));
-
-            /* Webkit (Chrome 11+) */
-            background-image: -webkit-linear-gradient(top right, #B0FFE2 0%, #23538A 100%);
-
-            /* W3C Markup */
-            background-image: linear-gradient(to bottom left, #B0FFE2 0%, #23538A 100%);
-        }
 
         html, body {
             width: 100%;
@@ -63,53 +46,104 @@
         }
 
         body {
-            padding-top: 60px;
-            padding-bottom: 60px;
+            padding-top: 55px;
+            padding-bottom: 55px;
             background-color: #fdfdfd;
+            display: flex;
+            flex-wrap: nowrap;
+            height: 100vh;
+            height: -webkit-fill-available;
+            max-height: 100vh;
+            overflow-x: auto;
+            overflow-y: hidden;
         }
 
-        /* Footer
-        -------------------------------------------------- */
-        .footer {
-            background-color: #eee;
-            min-width: 940px;
-            padding: 30px 0;
-            text-shadow: 0 1px 0 #fff;
-            border-top: 1px solid #e5e5e5;
-            -webkit-box-shadow: inset 0 5px 15px rgba(0,0,0,.025);
-            -moz-box-shadow: inset 0 5px 15px rgba(0,0,0,.025);
-            /*          box-shadow: inset 0 5px 15px rgba(0,0,0,.025);
-            */}
-        .footer p {
-            color: #555;
+        .main {
+            display: flex;
+            flex-wrap: nowrap;
+            height: 100vh;
+            height: -webkit-fill-available;
+            max-height: 100vh;
+            overflow-x: auto;
+            overflow-y: hidden;
         }
 
     </style>
 
-    <!-- jstree -->
-    <!--
-    <link rel="stylesheet" href="webjars/jstree/themes/default/style.min.css" />
-    <script src="webjars/jstree/jstree.min.js"></script>
-    -->
-
-    <!-- Knowledgeroot Vuejs App -->
-    <script type="module" src="resources/Knowledgeroot.js"></script>
 </head>
-<body id="knowledgeroot-app">
+<body>
+<!-- https://cssgradient.io/ -->
+<nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-dark" style="background: rgb(181,28,103); background: linear-gradient(90deg, rgba(181,28,103,1) 0%, rgba(181,28,103,1) 39%, rgba(0,168,255,1) 100%);" aria-label="Main navigation">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">Knowledgeroot</a>
+        <button class="navbar-toggler p-0 border-0" type="button" id="navbarSideCollapse" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-<knowledgeroot-navbar-top></knowledgeroot-navbar-top>
+        <div class="navbar-collapse offcanvas-collapse" id="navbarsExampleDefault">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-plus-square"></i> New</a>
+                    <ul class="dropdown-menu" aria-labelledby="dropdown01">
+                        <li><a class="dropdown-item" hx-get="/page/new" hx-target="#content"><i class="bi bi-folder-plus"></i> Page</a></li>
+                        <li><a class="dropdown-item" hx-get="/content/new" hx-target="#content"><i class="bi bi-card-text"></i> Content</a></li>
+                        <li><a class="dropdown-item" hx-get="/file/new" hx-target="#content"><i class="bi bi-file-plus"></i> File</a></li>
+                    </ul>
+                </li>
+                <!-- user -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink2" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person"></i> Profile
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink2">
+                        <li>
+                            <a class="dropdown-item" href="/login">Sign in</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-gear-fill"></i> Admin</a>
+                    <ul class="dropdown-menu" aria-labelledby="dropdown01">
+                        <li><a class="dropdown-item" hx-get="/admin/users" hx-target="#content">Users</a></li>
+                        <li><a class="dropdown-item" hx-get="/admin/groups" hx-target="#content">Groups</a></li>
+                        <li><a class="dropdown-item" hx-get="/admin/permissions" hx-target="#content">Permissions</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-question-circle"></i></a>
+                    <ul class="dropdown-menu" aria-labelledby="dropdown01">
+                        <li><a class="dropdown-item" hx-get="/help" hx-target="#content">Help</a></li>
+                        <li><a class="dropdown-item" hx-get="/about" hx-target="#content">About</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <form class="d-flex" hx-get="/search" hx-target="#content">
+                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                <button class="btn btn-outline-success" type="submit">Search</button>
+            </form>
+        </div>
+    </div>
+</nav>
 
 <div class="container-fluid">
-    <div class="row">
-        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light xsidebar collapse">
-            <div class="xsidebar-sticky pt-3">
-                <knowledgeroot-sidebar></knowledgeroot-sidebar>
-            </div>
-        </nav>
+    <div class="row main">
 
-        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-            <div class="">
-                <knowledgeroot-breadcrumb></knowledgeroot-breadcrumb>
+        <div class="flex-shrink-0 p-3 bg-white" style="width: 280px;" id="sidebar" hx-get="/ui/sidebar" hx-trigger="load" hx-target="#sidebar">
+
+
+        </div>
+
+
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4" id="content">
+            <div class="" style="padding-top: 20px;">
+                <div class="nav-scroller bg-body shadow-sm">
+                    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="#">Home</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Library</li>
+                        </ol>
+                    </nav>
+                </div>
 
                 <!--
                 <div class="p-5 mb-4 bg-light rounded-3">
@@ -121,7 +155,7 @@
                 </div>
                 -->
 
-                <knowledgeroot-page></knowledgeroot-page>
+                page
             </div><!--/span-->
         </main>
     </div>

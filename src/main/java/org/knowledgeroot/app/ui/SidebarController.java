@@ -1,13 +1,13 @@
-package org.knowledgeroot.app.config;
+package org.knowledgeroot.app.ui;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
-public class IndexController {
-    @RequestMapping("/")
+public class SidebarController {
+    @RequestMapping("/ui/sidebar")
     public String index(Model model) {
-        return "knowledgeroot";
+        return "sidebar";
     }
 }
