@@ -134,28 +134,16 @@
         </div>
 
 
-        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4" id="content">
-            <div class="" style="padding-top: 20px;">
-                <div class="nav-scroller bg-body shadow-sm">
-                    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="#">Home</a></li>
-                            <li class="breadcrumb-item active" aria-current="page">Library</li>
-                        </ol>
-                    </nav>
-                </div>
-
-                <!--
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+            <div class="" style="padding-top: 20px;" id="content">
                 <div class="p-5 mb-4 bg-light rounded-3">
                     <div class="container-fluid py-5">
-                        <h1 class="display-5 fw-bold">Custom jumbotron</h1>
-                        <p class="col-md-8 fs-4">Using a series of utilities, you can create this jumbotron, just like the one in previous versions of Bootstrap. Check out the examples below for how you can remix and restyle it to your liking.</p>
-                        <button class="btn btn-primary btn-lg" type="button">Example button</button>
+                        <h1 class="display-5 fw-bold">Welcome to Knowledgeroot</h1>
+                        <p class="col-md-8 fs-4">Welcome to your new Knowledgebase...</p>
+                        <button class="btn btn-primary btn-lg" type="button" hx-get="/content/new" hx-target="#content">Create Content</button>
+                        <button class="btn btn-primary btn-lg" type="button" hx-get="/page/new" hx-target="#content">Create a Page</button>
                     </div>
                 </div>
-                -->
-
-                page
             </div><!--/span-->
         </main>
     </div>

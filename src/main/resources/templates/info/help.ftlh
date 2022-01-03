@@ -1,1 +1,10 @@
-HELP
+<div class="card">
+    <div class="card-header">
+        Help
+    </div>
+    <div class="card-body">
+        <h5 class="card-title">Get Help for Knowledgeroot</h5>
+        <p class="card-text">See the docs...</p>
+        <a href="#" class="btn btn-primary">Open Docs</a>
+    </div>
+</div>
