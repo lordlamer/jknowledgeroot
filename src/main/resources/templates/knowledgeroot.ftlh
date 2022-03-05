@@ -8,7 +8,7 @@
     <meta name="author" content="Knowledgeroot Team">
 
     <!-- htmx -->
-    <script src="https://unpkg.com/htmx.org@1.6.1"></script>
+    <script src="https://unpkg.com/htmx.org@1.7.0"></script>
 
     <!-- jQuery -->
     <!--
@@ -65,7 +65,7 @@
             height: -webkit-fill-available;
             max-height: 100vh;
             overflow-x: auto;
-            overflow-y: hidden;
+            overflow-y: scroll;
         }
 
     </style>
@@ -148,10 +148,6 @@
         </main>
     </div>
 </div>
-
-<!--
-<knowledgeroot-navbar-bottom></knowledgeroot-navbar-bottom>
--->
 
 </body>
 </html>

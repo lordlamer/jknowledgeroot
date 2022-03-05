@@ -134,7 +134,7 @@ public class PageRestController {
      * @param id page id
      */
     @RequestMapping(value = "/page/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<PageDto> getPage(@PathVariable("id") long id) {
+    public ResponseEntity<PageDto> getPage(@PathVariable("id") Integer id) {
         Page page = pageService.findById(id);
 
         PageDto pageDto = pageDtoConverter.convertAtoB(page);
@@ -174,7 +174,7 @@ public class PageRestController {
      * @param pageDto page object to update
      */
     @RequestMapping(value = "/page/{id}", method = RequestMethod.PUT)
-    public ResponseEntity<PageDto> updatePage(@PathVariable("id") long id, @RequestBody PageDto pageDto) {
+    public ResponseEntity<PageDto> updatePage(@PathVariable("id") Integer id, @RequestBody PageDto pageDto) {
         if(id != pageDto.getId()) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
@@ -197,7 +197,7 @@ public class PageRestController {
      * @param id page id
      */
     @RequestMapping(value = "/page/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<PageDto> deletePage(@PathVariable("id") long id) {
+    public ResponseEntity<PageDto> deletePage(@PathVariable("id") Integer id) {
         Page page = pageService.findById(id);
 
         if (page == null) {

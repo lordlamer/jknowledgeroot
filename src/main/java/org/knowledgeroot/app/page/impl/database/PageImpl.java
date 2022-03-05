@@ -127,7 +127,7 @@ public class PageImpl implements PageDao {
      * @return
      */
     @Override
-    public Page findById(long id) {
+    public Page findById(Integer id) {
         return findEntityById(id);
     }
 
@@ -135,7 +135,7 @@ public class PageImpl implements PageDao {
      * find page entity by given id
      * @param id page id
      */
-    private Page findEntityById(long id) {
+    private Page findEntityById(Integer id) {
         return entityManager.find(Page.class, id);
     }
 

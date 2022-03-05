@@ -22,7 +22,7 @@ public class PageService {
      * find page by given id
      * @param id page id
      */
-    public Page findById(long id) {
+    public Page findById(Integer id) {
         return pageImpl.findById(id);
     }
 

@@ -16,7 +16,7 @@ public interface PageDao {
      * @param id
      * @return
      */
-    Page findById(long id);
+    Page findById(Integer id);
 
     /**
      * check if page exists
