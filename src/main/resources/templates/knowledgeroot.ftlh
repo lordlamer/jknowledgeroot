@@ -128,7 +128,7 @@
 <div class="container-fluid">
     <div class="row main">
 
-        <div class="flex-shrink-0 p-3 bg-white" style="width: 280px;" id="sidebar" hx-get="/ui/sidebar" hx-trigger="load" hx-target="#sidebar">
+        <div class="flex-shrink-0 p-3 bg-white" style="width: 280px;" id="sidebar" hx-get="/ui/sidebar" hx-trigger="load, reload-sidebar from:body" hx-target="#sidebar">
 
 
         </div>

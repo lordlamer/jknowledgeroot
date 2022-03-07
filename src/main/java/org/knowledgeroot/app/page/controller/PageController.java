@@ -6,12 +6,10 @@ import org.knowledgeroot.app.page.PageService;
 import org.knowledgeroot.app.page.impl.database.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 
 @Controller
@@ -31,12 +29,21 @@ public class PageController {
     }
 
     @GetMapping("/page/{pageId}")
-    public String showPage(@PathVariable("pageId") Integer pageId, Model model) {
+    public String showPage(
+            @PathVariable("pageId") Integer pageId,
+            @RequestParam(name = "trigger", required = false) String trigger,
+            Model model,
+            HttpServletResponse response
+    ) {
         model.addAttribute("page", pageService.findById(pageId));
 
         ContentFilter contentFilter = new ContentFilter();
         contentFilter.setParent(pageId);
         model.addAttribute("contents", contentService.listContents(contentFilter));
+
+        // trigger reload sidebar
+        if(trigger != null && trigger.equals("reload-sidebar"))
+            response.addHeader("HX-Trigger", "reload-sidebar");
 
         return "page/show";
     }
@@ -68,6 +75,6 @@ public class PageController {
         Page page = pageDtoConverter.convertBtoA(pageDto);
         pageService.createPage(page);
 
-        return new ModelAndView("redirect:/page/" + page.getId());
+        return new ModelAndView("redirect:/page/" + page.getId() + "?trigger=reload-sidebar");
     }
 }
