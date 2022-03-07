@@ -49,7 +49,7 @@
             padding-top: 55px;
             padding-bottom: 55px;
             background-color: #fdfdfd;
-            display: flex;
+            //display: flex;
             flex-wrap: nowrap;
             height: 100vh;
             height: -webkit-fill-available;
@@ -65,7 +65,7 @@
             height: -webkit-fill-available;
             max-height: 100vh;
             overflow-x: auto;
-            overflow-y: scroll;
+            overflow-y: visible;
         }
 
     </style>
