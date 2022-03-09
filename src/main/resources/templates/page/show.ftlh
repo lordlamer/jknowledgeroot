@@ -11,7 +11,7 @@
     <button type="button" class="btn btn-outline-secondary" hx-get="/ui/page/${page.id}/edit" hx-trigger="click" hx-target="#content">edit page</button>
     <button type="button" class="btn btn-outline-secondary">move page</button>
     <button type="button" class="btn btn-outline-secondary" hx-delete="/ui/page/${page.id}" hx-trigger="click" hx-target="#content" hx-confirm="Are you sure?">delete page</button>
-    <button type="button" class="btn btn-outline-secondary">add new content</button>
+    <button type="button" class="btn btn-outline-secondary" hx-get="/ui/page/${page.id}/content/new" hx-trigger="click" hx-target="#content">add new content</button>
 </div>
 
 <h1>${page.name}</h1>
