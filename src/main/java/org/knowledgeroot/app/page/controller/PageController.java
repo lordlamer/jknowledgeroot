@@ -48,12 +48,54 @@ public class PageController {
         return "page/show";
     }
 
+    @GetMapping("/ui/page/{pageId}/edit")
+    public String showEditPage(
+            @PathVariable("pageId") Integer pageId,
+            @RequestParam(name = "trigger", required = false) String trigger,
+            Model model,
+            HttpServletResponse response
+    ) {
+        model.addAttribute("page", pageService.findById(pageId));
+
+        // trigger reload sidebar
+        if(trigger != null && trigger.equals("reload-sidebar"))
+            response.addHeader("HX-Trigger", "reload-sidebar");
+
+        return "page/edit";
+    }
+
+    @PostMapping("/ui/page/{pageId}/edit")
+    public ModelAndView editPage(
+            @PathVariable("pageId") Integer pageId,
+            @ModelAttribute PageDto pageDto
+    ) {
+        pageDto.setId(pageId);
+        pageDto.setCreateDate(LocalDateTime.now());
+        pageDto.setCreatedBy(0);
+        pageDto.setChangeDate(LocalDateTime.now());
+        pageDto.setChangedBy(0);
+        pageDto.setActive(true);
+        pageDto.setAlias("");
+        pageDto.setTimeStart(LocalDateTime.now());
+        pageDto.setTimeEnd(LocalDateTime.now());
+        pageDto.setContentCollapse(false);
+        pageDto.setContentPosition("end");
+        pageDto.setDeleted(false);
+        pageDto.setIcon("");
+        pageDto.setParent(0);
+        pageDto.setShowContentDescription(true);
+        pageDto.setShowTableOfContent(true);
+        pageDto.setSorting(0);
+        pageDto.setTooltip("");
+
+        Page page = pageDtoConverter.convertBtoA(pageDto);
+        pageService.updatePage(page);
+
+        return new ModelAndView("redirect:/ui/page/" + page.getId() + "?trigger=reload-sidebar");
+    }
+
     @PostMapping("/ui/page/new")
     public ModelAndView createNewPage(@ModelAttribute PageDto pageDto) {
-        System.out.println(pageDto.getName());
-        System.out.println(pageDto.getSubtitle());
-        System.out.println(pageDto.getDescription());
-
         pageDto.setCreateDate(LocalDateTime.now());
         pageDto.setCreatedBy(0);
         pageDto.setChangeDate(LocalDateTime.now());

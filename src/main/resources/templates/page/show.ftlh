@@ -8,7 +8,7 @@
 
 <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
     <button type="button" class="btn btn-outline-secondary">add new page</button>
-    <button type="button" class="btn btn-outline-secondary">edit page</button>
+    <button type="button" class="btn btn-outline-secondary" hx-get="/ui/page/${page.id}/edit" hx-trigger="click" hx-target="#content">edit page</button>
     <button type="button" class="btn btn-outline-secondary">move page</button>
     <button type="button" class="btn btn-outline-secondary" hx-delete="/ui/page/${page.id}" hx-trigger="click" hx-target="#content" hx-confirm="Are you sure?">delete page</button>
     <button type="button" class="btn btn-outline-secondary">add new content</button>
