@@ -195,7 +195,7 @@ public class PageImpl implements PageDao {
      * @param id page id
      */
     @Override
-    public void deletePageById(long id) {
+    public void deletePageById(Integer id) {
         entityManager.createQuery("DELETE FROM Page p WHERE p.id = :id")
                 .setParameter("id", id)
                 .executeUpdate();

@@ -23,12 +23,12 @@ public class PageController {
         this.contentService = contentService;
     }
 
-    @GetMapping("/page/new")
+    @GetMapping("/ui/page/new")
     public String showNewPage(Model model) {
         return "page/new";
     }
 
-    @GetMapping("/page/{pageId}")
+    @GetMapping("/ui/page/{pageId}")
     public String showPage(
             @PathVariable("pageId") Integer pageId,
             @RequestParam(name = "trigger", required = false) String trigger,
@@ -48,7 +48,7 @@ public class PageController {
         return "page/show";
     }
 
-    @PostMapping("/page/new")
+    @PostMapping("/ui/page/new")
     public ModelAndView createNewPage(@ModelAttribute PageDto pageDto) {
         System.out.println(pageDto.getName());
         System.out.println(pageDto.getSubtitle());
@@ -75,6 +75,13 @@ public class PageController {
         Page page = pageDtoConverter.convertBtoA(pageDto);
         pageService.createPage(page);
 
-        return new ModelAndView("redirect:/page/" + page.getId() + "?trigger=reload-sidebar");
+        return new ModelAndView("redirect:/ui/page/" + page.getId() + "?trigger=reload-sidebar");
+    }
+
+    @DeleteMapping("/ui/page/{pageId}")
+    public ModelAndView deletePage(@PathVariable("pageId") Integer pageId) {
+        pageService.deletePageById(pageId);
+
+        return new ModelAndView("redirect:/ui/welcome?trigger=reload-sidebar");
     }
 }

@@ -61,7 +61,7 @@ public class PageService {
      * delete page by id
      * @param id page to delete
      */
-    public void deletePageById(long id) {
+    public void deletePageById(Integer id) {
         pageImpl.deletePageById(id);
     }
 }

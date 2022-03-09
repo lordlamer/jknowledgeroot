@@ -46,5 +46,5 @@ public interface PageDao {
      * delete page by given id
      * @param id
      */
-    void deletePageById(long id);
+    void deletePageById(Integer id);
 }
