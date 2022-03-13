@@ -46,5 +46,5 @@ public interface ContentDao {
      * delete content by given id
      * @param id
      */
-    void deleteContentById(long id);
+    void deleteContentById(Integer id);
 }

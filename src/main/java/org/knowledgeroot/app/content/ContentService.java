@@ -64,7 +64,7 @@ public class ContentService {
      * delete content by id
      * @param id
      */
-    public void deleteContentById(long id) {
+    public void deleteContentById(Integer id) {
         contentImpl.deleteContentById(id);
     }
 }

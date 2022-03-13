@@ -180,7 +180,7 @@ public class ContentImpl implements ContentDao {
      * @param id
      */
     @Override
-    public void deleteContentById(long id) {
+    public void deleteContentById(Integer id) {
         entityManager.createQuery("DELETE FROM Content c WHERE c.id = :id")
                 .setParameter("id", id)
                 .executeUpdate();

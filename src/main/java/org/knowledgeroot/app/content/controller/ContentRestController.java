@@ -183,7 +183,7 @@ public class ContentRestController {
      * @param id content id
      */
     @RequestMapping(value = "/content/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<ContentDto> deleteContent(@PathVariable("id") long id) {
+    public ResponseEntity<ContentDto> deleteContent(@PathVariable("id") Integer id) {
         Content content = contentService.findById(id);
 
         if (content == null) {
