@@ -24,7 +24,7 @@ public class ContentService {
      * @param id
      * @return
      */
-    public Content findById(long id) {
+    public Content findById(Integer id) {
         return contentImpl.findById(id);
     }
 

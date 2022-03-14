@@ -108,7 +108,7 @@ public class ContentImpl implements ContentDao {
      * @return
      */
     @Override
-    public Content findById(long id) {
+    public Content findById(Integer id) {
         Content content = findEntityById(id);
 
         return content;
@@ -119,7 +119,7 @@ public class ContentImpl implements ContentDao {
      * @param id
      * @return
      */
-    private Content findEntityById(long id) {
+    private Content findEntityById(Integer id) {
         return entityManager.find(Content.class, id);
     }
 

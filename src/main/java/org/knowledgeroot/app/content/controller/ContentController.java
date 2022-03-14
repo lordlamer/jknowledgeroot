@@ -53,7 +53,45 @@ public class ContentController {
         Content content = contentDtoConverter.convertBtoA(contentDto);
         contentService.createContent(content);
 
-        return new ModelAndView("redirect:/ui/page/" + pageId + "?trigger=reload-sidebar");
+        return new ModelAndView("redirect:/ui/page/" + pageId);
+    }
+
+    @GetMapping("/ui/page/{pageId}/content/{contentId}/edit")
+    public String showEditContent(
+            @PathVariable("pageId") Integer pageId,
+            @PathVariable("contentId") Integer contentId,
+            Model model,
+            HttpServletResponse response
+    ) {
+        model.addAttribute("page", pageService.findById(pageId));
+        model.addAttribute("content", contentService.findById(contentId));
+
+        return "content/edit";
+    }
+
+    @PostMapping("/ui/page/{pageId}/content/{contentId}/edit")
+    public ModelAndView editContent(
+            @PathVariable("pageId") Integer pageId,
+            @PathVariable("contentId") Integer contentId,
+            @ModelAttribute ContentDto contentDto
+    ) {
+        contentDto.setId(contentId);
+        contentDto.setParent(pageId);
+        contentDto.setActive(true);
+        contentDto.setCreateDate(LocalDateTime.now());
+        contentDto.setChangeDate(LocalDateTime.now());
+        contentDto.setCreatedBy(0);
+        contentDto.setChangedBy(0);
+        contentDto.setDeleted(false);
+        contentDto.setSorting(1);
+        contentDto.setTimeStart(LocalDateTime.now());
+        contentDto.setTimeEnd(LocalDateTime.now());
+        contentDto.setType("text");
+
+        Content content = contentDtoConverter.convertBtoA(contentDto);
+        contentService.updateContent(content);
+
+        return new ModelAndView("redirect:/ui/page/" + pageId);
     }
 
     @DeleteMapping("/ui/page/{pageId}/content/{contentId}")

@@ -33,7 +33,7 @@
     <div class="collapse show" id="content-${content.id}">
         <div class="card-body">
             <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
-                <button type="button" class="btn btn-outline-secondary">edit</button>
+                <button type="button" class="btn btn-outline-secondary" hx-get="/ui/page/${page.id}/content/${content.id}/edit" hx-trigger="click">edit</button>
                 <button type="button" class="btn btn-outline-secondary" hx-delete="/ui/page/${page.id}/content/${content.id}" hx-trigger="click" hx-target="#content" hx-confirm="Are you sure?">delete</button>
                 <button type="button" class="btn btn-outline-secondary">move</button>
                 <button type="button" class="btn btn-outline-secondary">print</button>

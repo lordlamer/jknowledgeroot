@@ -120,7 +120,7 @@ public class ContentRestController {
      * @param id
      */
     @RequestMapping(value = "/content/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ContentDto> getContent(@PathVariable("id") long id) {
+    public ResponseEntity<ContentDto> getContent(@PathVariable("id") Integer id) {
         Content content = contentService.findById(id);
 
         ContentDto contentDto = contentDtoConverter.convertAtoB(content);
@@ -160,7 +160,7 @@ public class ContentRestController {
      * @param contentDto content
      */
     @RequestMapping(value = "/content/{id}", method = RequestMethod.PUT)
-    public ResponseEntity<ContentDto> updateContent(@PathVariable("id") long id, @RequestBody ContentDto contentDto) {
+    public ResponseEntity<ContentDto> updateContent(@PathVariable("id") Integer id, @RequestBody ContentDto contentDto) {
         if(id != contentDto.getId()) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }

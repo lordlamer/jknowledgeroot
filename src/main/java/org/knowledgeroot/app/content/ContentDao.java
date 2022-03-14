@@ -16,7 +16,7 @@ public interface ContentDao {
      * @param id
      * @return
      */
-    Content findById(long id);
+    Content findById(Integer id);
 
     /**
      * check if content exists
