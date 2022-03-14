@@ -85,7 +85,7 @@
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-plus-square"></i> New</a>
                     <ul class="dropdown-menu" aria-labelledby="dropdown01">
-                        <li><a class="dropdown-item" hx-get="/ui/page/new" hx-target="#content"><i class="bi bi-folder-plus"></i> Page</a></li>
+                        <li><a class="dropdown-item" hx-get="/ui/page/new" hx-target="#content" hx-push-url="true"><i class="bi bi-folder-plus"></i> Page</a></li>
                         <li><a class="dropdown-item" hx-get="/content/new" hx-target="#content"><i class="bi bi-card-text"></i> Content</a></li>
                         <li><a class="dropdown-item" hx-get="/file/new" hx-target="#content"><i class="bi bi-file-plus"></i> File</a></li>
                     </ul>
@@ -112,8 +112,8 @@
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-question-circle"></i></a>
                     <ul class="dropdown-menu" aria-labelledby="dropdown01">
-                        <li><a class="dropdown-item" hx-get="/help" hx-target="#content">Help</a></li>
-                        <li><a class="dropdown-item" hx-get="/about" hx-target="#content">About</a></li>
+                        <li><a class="dropdown-item" hx-get="/help" hx-target="#content" hx-push-url="true">Help</a></li>
+                        <li><a class="dropdown-item" hx-get="/about" hx-target="#content" hx-push-url="true">About</a></li>
                     </ul>
                 </li>
             </ul>
