@@ -1,16 +1,18 @@
 package org.knowledgeroot.app.content.impl.database;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
-import org.hibernate.Criteria;
-import org.hibernate.Session;
-import org.hibernate.criterion.Restrictions;
 import org.knowledgeroot.app.content.ContentDao;
 import org.knowledgeroot.app.content.ContentFilter;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -27,78 +29,118 @@ public class ContentImpl implements ContentDao {
      */
     @Override
     public List<Content> listContents(ContentFilter contentFilter) {
-        // get current session
-        Session session = entityManager.unwrap(org.hibernate.Session.class);
+        // get criteria builder
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Content> cq = cb.createQuery(Content.class);
 
-        Criteria contentCriteria = session.createCriteria(Content.class, "c");
+        Root<Content> from = cq.from(Content.class);
+
+        List<Predicate> predicates = new ArrayList<>();
 
         // build restrictions
-        if(contentFilter.getId() != null)
-            contentCriteria.add(Restrictions.eq("c.id", contentFilter.getId()));
+        if(contentFilter.getId() != null) {
+            Predicate id = cb.equal(from.get("id"), contentFilter.getId());
+            predicates.add(id);
+        }
 
-        if(contentFilter.getParent() != null)
-            contentCriteria.add(Restrictions.eq("c.parent", contentFilter.getParent()));
+        if(contentFilter.getParent() != null) {
+            Predicate parent = cb.equal(from.get("parent"), contentFilter.getParent());
+            predicates.add(parent);
+        }
 
-        if(contentFilter.getName() != null)
-            contentCriteria.add(Restrictions.like("c.name", "%" + contentFilter.getName() + "%"));
+        if(contentFilter.getName() != null) {
+            Predicate name = cb.like(from.get("name"), "%" + contentFilter.getName() + "%");
+            predicates.add(name);
+        }
 
-        if(contentFilter.getContent() != null)
-            contentCriteria.add(Restrictions.like("c.content", "%" + contentFilter.getContent() + "%"));
+        if(contentFilter.getContent() != null) {
+            Predicate content = cb.like(from.get("content"), "%" + contentFilter.getContent() + "%");
+            predicates.add(content);
+        }
 
-        if(contentFilter.getType() != null)
-            contentCriteria.add(Restrictions.like("c.type", "%" + contentFilter.getType() + "%"));
+        if(contentFilter.getType() != null) {
+            Predicate type = cb.like(from.get("type"), "%" + contentFilter.getType() + "%");
+            predicates.add(type);
+        }
 
-        if(contentFilter.getSorting() != null)
-            contentCriteria.add(Restrictions.eq("c.sorting", contentFilter.getSorting()));
+        if(contentFilter.getSorting() != null) {
+            Predicate sorting = cb.equal(from.get("sorting"), contentFilter.getSorting());
+            predicates.add(sorting);
+        }
 
-        if(contentFilter.getDeleted() != null)
-            contentCriteria.add(Restrictions.eq("c.deleted", contentFilter.getDeleted()));
+        if(contentFilter.getDeleted() != null) {
+            Predicate deleted = cb.equal(from.get("deleted"), contentFilter.getDeleted());
+            predicates.add(deleted);
+        }
 
-        if(contentFilter.getActive() != null)
-            contentCriteria.add(Restrictions.eq("c.active", contentFilter.getActive()));
+        if(contentFilter.getActive() != null) {
+            Predicate active = cb.equal(from.get("active"), contentFilter.getActive());
+            predicates.add(active);
+        }
 
-        if(contentFilter.getCreatedBy() != null)
-            contentCriteria.add(Restrictions.eq("c.createdBy", contentFilter.getCreatedBy()));
+        if(contentFilter.getCreatedBy() != null) {
+            Predicate createdBy = cb.equal(from.get("createdBy"), contentFilter.getCreatedBy());
+            predicates.add(createdBy);
+        }
 
-        if(contentFilter.getChangedBy() != null)
-            contentCriteria.add(Restrictions.eq("c.changedBy", contentFilter.getChangedBy()));
+        if(contentFilter.getChangedBy() != null) {
+            Predicate changedBy = cb.equal(from.get("changedBy"), contentFilter.getChangedBy());
+            predicates.add(changedBy);
+        }
 
-        if(contentFilter.getTimeStartBegin() != null)
-            contentCriteria.add(Restrictions.ge("c.timeStart", contentFilter.getTimeStartBegin()));
+        if(contentFilter.getTimeStartBegin() != null) {
+            Predicate timeStartBegin = cb.greaterThan(from.get("timeStart"), contentFilter.getTimeStartBegin());
+            predicates.add(timeStartBegin);
+        }
 
-        if(contentFilter.getTimeStartEnd() != null)
-            contentCriteria.add(Restrictions.le("c.timeStart", contentFilter.getTimeStartEnd()));
+        if(contentFilter.getTimeStartEnd() != null) {
+            Predicate timeStartEnd = cb.lessThan(from.get("timeStart"), contentFilter.getTimeStartEnd());
+            predicates.add(timeStartEnd);
+        }
 
-        if(contentFilter.getTimeEndBegin() != null)
-            contentCriteria.add(Restrictions.ge("c.timeEnd", contentFilter.getTimeEndBegin()));
+        if(contentFilter.getTimeEndBegin() != null) {
+            Predicate timeEndBegin = cb.greaterThan(from.get("timeEnd"), contentFilter.getTimeEndBegin());
+            predicates.add(timeEndBegin);
+        }
 
-        if(contentFilter.getTimeEndEnd() != null)
-            contentCriteria.add(Restrictions.le("c.timeEnd", contentFilter.getTimeEndEnd()));
+        if(contentFilter.getTimeEndEnd() != null) {
+            Predicate timeEndEnd = cb.lessThan(from.get("timeEnd"), contentFilter.getTimeEndEnd());
+            predicates.add(timeEndEnd);
+        }
 
-        if(contentFilter.getCreateDateBegin() != null)
-            contentCriteria.add(Restrictions.ge("c.createDate", contentFilter.getCreateDateBegin()));
+        if(contentFilter.getCreateDateBegin() != null) {
+            Predicate createDateBegin = cb.greaterThan(from.get("createDate"), contentFilter.getCreateDateBegin());
+            predicates.add(createDateBegin);
+        }
 
-        if(contentFilter.getCreateDateEnd() != null)
-            contentCriteria.add(Restrictions.le("c.createDate", contentFilter.getCreateDateEnd()));
+        if(contentFilter.getCreateDateEnd() != null) {
+            Predicate createDateEnd = cb.lessThan(from.get("createDate"), contentFilter.getCreateDateEnd());
+            predicates.add(createDateEnd);
+        }
 
-        if(contentFilter.getChangeDateBegin() != null)
-            contentCriteria.add(Restrictions.ge("c.changeDate", contentFilter.getChangeDateBegin()));
+        if(contentFilter.getChangeDateBegin() != null) {
+            Predicate changeDateBegin = cb.greaterThan(from.get("changeDate"), contentFilter.getChangeDateBegin());
+            predicates.add(changeDateBegin);
+        }
 
-        if(contentFilter.getChangeDateEnd() != null)
-            contentCriteria.add(Restrictions.le("c.changeDate", contentFilter.getChangeDateEnd()));
+        if(contentFilter.getChangeDateEnd() != null) {
+            Predicate changeDateEnd = cb.lessThan(from.get("changeDate"), contentFilter.getChangeDateEnd());
+            predicates.add(changeDateEnd);
+        }
+
+        cq.select(from).where(cb.and(predicates.toArray(Predicate[]::new)));
+        TypedQuery<Content> q = entityManager.createQuery(cq);
 
         // set limit
         if(contentFilter.getLimit() != null)
-            contentCriteria.setMaxResults(contentFilter.getLimit());
+            q.setMaxResults(contentFilter.getLimit());
 
         // set start position
         if(contentFilter.getStart() != null)
-            contentCriteria.setFirstResult(contentFilter.getStart());
+            q.setFirstResult(contentFilter.getStart());
 
         // get result
-        List<Content> contentEntities = Collections.checkedList(contentCriteria.list(), Content.class);
-
-        return contentEntities;
+        return q.getResultList();
     }
 
     /**

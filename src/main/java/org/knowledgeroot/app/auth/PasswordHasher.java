@@ -1,6 +1,6 @@
 package org.knowledgeroot.app.auth;
 
-import com.sun.istack.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import javax.xml.bind.DatatypeConverter;
 import java.security.MessageDigest;

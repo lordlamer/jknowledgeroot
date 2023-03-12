@@ -1,11 +1,10 @@
 package org.knowledgeroot.app.file.impl.database;
 
 import lombok.Data;
-
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-import static javax.persistence.GenerationType.IDENTITY;
+import static jakarta.persistence.GenerationType.IDENTITY;
 
 @Entity
 @Table(name = "file")

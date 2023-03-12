@@ -8,7 +8,7 @@
     <meta name="author" content="Knowledgeroot Team">
 
     <!-- htmx -->
-    <script src="https://unpkg.com/htmx.org@1.7.0"></script>
+    <script src="https://unpkg.com/htmx.org@1.8.0"></script>
 
     <!-- jQuery -->
     <!--
@@ -73,7 +73,7 @@
 </head>
 <body>
 <!-- https://cssgradient.io/ -->
-<nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-dark" style="background: rgb(181,28,103); background: linear-gradient(90deg, rgba(181,28,103,1) 0%, rgba(181,28,103,1) 39%, rgba(0,168,255,1) 100%);" aria-label="Main navigation">
+<nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-dark" style="background-image: linear-gradient(15deg, #13547a 0%, #80d0c7 100%)" x-style="background: rgb(181,28,103); background: linear-gradient(90deg, rgba(181,28,103,1) 0%, rgba(181,28,103,1) 39%, rgba(0,168,255,1) 100%);" aria-label="Main navigation">
     <div class="container-fluid">
         <a class="navbar-brand" href="#">Knowledgeroot</a>
         <button class="navbar-toggler p-0 border-0" type="button" id="navbarSideCollapse" aria-label="Toggle navigation">

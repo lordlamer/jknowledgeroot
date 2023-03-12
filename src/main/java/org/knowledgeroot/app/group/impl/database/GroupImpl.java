@@ -1,16 +1,18 @@
 package org.knowledgeroot.app.group.impl.database;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
-import org.hibernate.Criteria;
-import org.hibernate.Session;
-import org.hibernate.criterion.Restrictions;
 import org.knowledgeroot.app.group.GroupDao;
 import org.knowledgeroot.app.group.GroupFilter;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -27,67 +29,103 @@ public class GroupImpl implements GroupDao {
      */
     @Override
     public List<Group> listGroups(GroupFilter groupFilter) {
-        // get current session
-        Session session = entityManager.unwrap(org.hibernate.Session.class);
+        // get criteria builder
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Group> cq = cb.createQuery(Group.class);
 
-        Criteria groupCriteria = session.createCriteria(Group.class, "g");
+        Root<Group> from = cq.from(Group.class);
+
+        List<Predicate> predicates = new ArrayList<>();
 
         // build restrictions
-        if(groupFilter.getId() != null)
-            groupCriteria.add(Restrictions.eq("g.id", groupFilter.getId()));
+        if(groupFilter.getId() != null) {
+            Predicate id = cb.equal(from.get("id"), groupFilter.getId());
+            predicates.add(id);
+        }
 
-        if(groupFilter.getName() != null)
-            groupCriteria.add(Restrictions.like("g.name", "%" + groupFilter.getName() + "%"));
+        if(groupFilter.getName() != null) {
+            Predicate name = cb.like(from.get("name"), "%" + groupFilter.getName() + "%");
+            predicates.add(name);
+        }
 
-        if(groupFilter.getDescription() != null)
-            groupCriteria.add(Restrictions.like("g.description", "%" + groupFilter.getDescription() + "%"));
+        if(groupFilter.getDescription() != null) {
+            Predicate description = cb.like(from.get("description"), "%" + groupFilter.getDescription() + "%");
+            predicates.add(description);
+        }
 
-        if(groupFilter.getDeleted() != null)
-            groupCriteria.add(Restrictions.eq("g.deleted", groupFilter.getDeleted()));
+        if(groupFilter.getDeleted() != null) {
+            Predicate deleted = cb.equal(from.get("deleted"), groupFilter.getDeleted());
+            predicates.add(deleted);
+        }
 
-        if(groupFilter.getActive() != null)
-            groupCriteria.add(Restrictions.eq("g.active", groupFilter.getActive()));
+        if(groupFilter.getActive() != null) {
+            Predicate active = cb.equal(from.get("active"), groupFilter.getActive());
+            predicates.add(active);
+        }
 
-        if(groupFilter.getCreatedBy() != null)
-            groupCriteria.add(Restrictions.eq("g.createdBy", groupFilter.getCreatedBy()));
+        if(groupFilter.getCreatedBy() != null) {
+            Predicate createdBy = cb.equal(from.get("createdBy"), groupFilter.getCreatedBy());
+            predicates.add(createdBy);
+        }
 
-        if(groupFilter.getChangedBy() != null)
-            groupCriteria.add(Restrictions.eq("g.changedBy", groupFilter.getChangedBy()));
+        if(groupFilter.getChangedBy() != null) {
+            Predicate changedBy = cb.equal(from.get("changedBy"), groupFilter.getChangedBy());
+            predicates.add(changedBy);
+        }
 
-        if(groupFilter.getTimeStartBegin() != null)
-            groupCriteria.add(Restrictions.ge("g.timeStart", groupFilter.getTimeStartBegin()));
+        if(groupFilter.getTimeStartBegin() != null) {
+            Predicate timeStartBegin = cb.greaterThan(from.get("timeStart"), groupFilter.getTimeStartBegin());
+            predicates.add(timeStartBegin);
+        }
 
-        if(groupFilter.getTimeStartEnd() != null)
-            groupCriteria.add(Restrictions.le("g.timeStart", groupFilter.getTimeStartEnd()));
+        if(groupFilter.getTimeStartEnd() != null) {
+            Predicate timeStartEnd = cb.lessThan(from.get("timeStart"), groupFilter.getTimeStartEnd());
+            predicates.add(timeStartEnd);
+        }
 
-        if(groupFilter.getTimeEndBegin() != null)
-            groupCriteria.add(Restrictions.ge("g.timeEnd", groupFilter.getTimeEndBegin()));
+        if(groupFilter.getTimeEndBegin() != null) {
+            Predicate timeEndBegin = cb.greaterThan(from.get("timeEnd"), groupFilter.getTimeEndBegin());
+            predicates.add(timeEndBegin);
+        }
 
-        if(groupFilter.getTimeEndEnd() != null)
-            groupCriteria.add(Restrictions.le("g.timeEnd", groupFilter.getTimeEndEnd()));
+        if(groupFilter.getTimeEndEnd() != null) {
+            Predicate timeEndEnd = cb.lessThan(from.get("timeEnd"), groupFilter.getTimeEndEnd());
+            predicates.add(timeEndEnd);
+        }
 
-        if(groupFilter.getCreateDateBegin() != null)
-            groupCriteria.add(Restrictions.ge("g.createDate", groupFilter.getCreateDateBegin()));
+        if(groupFilter.getCreateDateBegin() != null) {
+            Predicate createDateBegin = cb.greaterThan(from.get("createDate"), groupFilter.getCreateDateBegin());
+            predicates.add(createDateBegin);
+        }
 
-        if(groupFilter.getCreateDateEnd() != null)
-            groupCriteria.add(Restrictions.le("g.createDate", groupFilter.getCreateDateEnd()));
+        if(groupFilter.getCreateDateEnd() != null) {
+            Predicate createDateEnd = cb.lessThan(from.get("createDate"), groupFilter.getCreateDateEnd());
+            predicates.add(createDateEnd);
+        }
 
-        if(groupFilter.getChangeDateBegin() != null)
-            groupCriteria.add(Restrictions.ge("g.changeDate", groupFilter.getChangeDateBegin()));
+        if(groupFilter.getChangeDateBegin() != null) {
+            Predicate changeDateBegin = cb.greaterThan(from.get("changeDate"), groupFilter.getChangeDateBegin());
+            predicates.add(changeDateBegin);
+        }
 
-        if(groupFilter.getChangeDateEnd() != null)
-            groupCriteria.add(Restrictions.le("g.changeDate", groupFilter.getChangeDateEnd()));
+        if(groupFilter.getChangeDateEnd() != null) {
+            Predicate changeDateEnd = cb.lessThan(from.get("changeDate"), groupFilter.getChangeDateEnd());
+            predicates.add(changeDateEnd);
+        }
+
+        cq.select(from).where(cb.and(predicates.toArray(Predicate[]::new)));
+        TypedQuery<Group> q = entityManager.createQuery(cq);
 
         // set limit
         if(groupFilter.getLimit() != null)
-            groupCriteria.setMaxResults(groupFilter.getLimit());
+            q.setMaxResults(groupFilter.getLimit());
 
         // set start position
         if(groupFilter.getStart() != null)
-            groupCriteria.setFirstResult(groupFilter.getStart());
+            q.setFirstResult(groupFilter.getStart());
 
         // get result
-        return Collections.checkedList(groupCriteria.list(), Group.class);
+        return q.getResultList();
     }
 
     /**
