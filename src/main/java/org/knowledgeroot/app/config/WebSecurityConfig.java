@@ -1,26 +1,26 @@
 package org.knowledgeroot.app.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
-public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http
-                .authorizeRequests()
-                .antMatchers("/ui/admin/**").hasRole("ADMIN")
-                .antMatchers("/admin/**").hasRole("ADMIN")
+public class WebSecurityConfig {
+    @Bean
+    protected SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        // configure login
+        return http
+                .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers("/ui/admin/**").hasRole("ADMIN");
+                    auth.requestMatchers("/admin/**").hasRole("ADMIN");
 
-                .anyRequest().permitAll()
-                .and()
+                    auth.anyRequest().permitAll();
+                })
                 .formLogin()
                 //.loginPage("/ui/login")
                 //.failureUrl("/ui/login?error")
@@ -34,10 +34,13 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .csrf()
                 .disable()
+                .build()
         ;
     }
 
-    protected void configure(final AuthenticationManagerBuilder auth) throws Exception {
+    //@Autowired
+    /*
+    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
         //auth.authenticationProvider(authProvider);
 
         // memory auth
@@ -46,10 +49,25 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .withUser("user").password(passwordEncoder().encode("password")).roles("USER")
                 .and()
                 .withUser("admin").password(passwordEncoder().encode("password")).roles("ADMIN");
+*/
+
+    @Autowired
+    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+        //auth.authenticationProvider(authProvider);
+
+        // memory auth
+        auth
+                .inMemoryAuthentication()
+                .withUser("user").password("{noop}password").roles("USER")
+                .and()
+                .withUser("admin").password("{noop}password").roles("ADMIN");
+
     }
 
+    /*
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+     */
 }

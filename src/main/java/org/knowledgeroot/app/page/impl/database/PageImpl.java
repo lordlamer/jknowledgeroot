@@ -1,16 +1,18 @@
 package org.knowledgeroot.app.page.impl.database;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
-import org.hibernate.Criteria;
-import org.hibernate.Session;
-import org.hibernate.criterion.Restrictions;
 import org.knowledgeroot.app.page.PageDao;
 import org.knowledgeroot.app.page.PageFilter;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -27,97 +29,153 @@ public class PageImpl implements PageDao {
      */
     @Override
     public List<Page> listPages(PageFilter pageFilter) {
-        // get current session
-        Session session = entityManager.unwrap(org.hibernate.Session.class);
+        // get criteria builder
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Page> cq = cb.createQuery(Page.class);
 
-        Criteria pageCriteria = session.createCriteria(Page.class, "p");
+        Root<Page> from = cq.from(Page.class);
+
+        List<Predicate> predicates = new ArrayList<>();
 
         // build restrictions
-        if(pageFilter.getId() != null)
-            pageCriteria.add(Restrictions.eq("p.id", pageFilter.getId()));
+        if(pageFilter.getId() != null) {
+            Predicate id = cb.equal(from.get("id"), pageFilter.getId());
+            predicates.add(id);
+        }
 
-        if(pageFilter.getParent() != null)
-            pageCriteria.add(Restrictions.eq("p.parent", pageFilter.getParent()));
+        if(pageFilter.getParent() != null) {
+            Predicate parent = cb.equal(from.get("parent"), pageFilter.getParent());
+            predicates.add(parent);
+        }
 
-        if(pageFilter.getName() != null)
-            pageCriteria.add(Restrictions.like("p.name", "%" + pageFilter.getName() + "%"));
+        if(pageFilter.getName() != null) {
+            Predicate name = cb.like(from.get("name"), "%" + pageFilter.getName() + "%");
+            predicates.add(name);
+        }
 
-        if(pageFilter.getSubtitle() != null)
-            pageCriteria.add(Restrictions.like("p.subtitle", "%" + pageFilter.getSubtitle() + "%"));
+        if(pageFilter.getSubtitle() != null) {
+            Predicate subtitle = cb.like(from.get("subtitle"), "%" + pageFilter.getSubtitle() + "%");
+            predicates.add(subtitle);
+        }
 
-        if(pageFilter.getDescription() != null)
-            pageCriteria.add(Restrictions.like("p.description", "%" + pageFilter.getDescription() + "%"));
+        if(pageFilter.getDescription() != null) {
+            Predicate description = cb.like(from.get("description"), "%" + pageFilter.getDescription() + "%");
+            predicates.add(description);
+        }
 
-        if(pageFilter.getTooltip() != null)
-            pageCriteria.add(Restrictions.like("p.tooltip", "%" + pageFilter.getTooltip() + "%"));
+        if(pageFilter.getTooltip() != null) {
+            Predicate tooltip = cb.like(from.get("tooltip"), "%" + pageFilter.getTooltip() + "%");
+            predicates.add(tooltip);
+        }
 
-        if(pageFilter.getIcon() != null)
-            pageCriteria.add(Restrictions.like("p.icon", "%" + pageFilter.getIcon() + "%"));
+        if(pageFilter.getIcon() != null) {
+            Predicate icon = cb.like(from.get("icon"), "%" + pageFilter.getIcon() + "%");
+            predicates.add(icon);
+        }
 
-        if(pageFilter.getAlias() != null)
-            pageCriteria.add(Restrictions.like("p.alias", "%" + pageFilter.getAlias() + "%"));
+        if(pageFilter.getAlias() != null) {
+            Predicate alias = cb.like(from.get("alias"), "%" + pageFilter.getAlias() + "%");
+            predicates.add(alias);
+        }
 
-        if(pageFilter.getContentCollapse() != null)
-            pageCriteria.add(Restrictions.eq("p.contentCollapse", pageFilter.getContentCollapse()));
+        if(pageFilter.getContentCollapse() != null) {
+            Predicate contentCollapse = cb.equal(from.get("contentCollapse"), pageFilter.getContentCollapse());
+            predicates.add(contentCollapse);
+        }
 
-        if(pageFilter.getContentPosition() != null)
-            pageCriteria.add(Restrictions.like("p.contentPosition", "%" + pageFilter.getContentPosition() + "%"));
+        if(pageFilter.getContentPosition() != null) {
+            Predicate contentPosition = cb.like(from.get("contentPosition"), "%" + pageFilter.getContentPosition() + "%");
+            predicates.add(contentPosition);
+        }
 
-        if(pageFilter.getShowContentDescription() != null)
-            pageCriteria.add(Restrictions.eq("p.showContentDescription", pageFilter.getShowContentDescription()));
+        if(pageFilter.getShowContentDescription() != null) {
+            Predicate showContentDescription = cb.equal(from.get("showContentDescription"), pageFilter.getShowContentDescription());
+            predicates.add(showContentDescription);
+        }
 
-        if(pageFilter.getShowTableOfContent() != null)
-            pageCriteria.add(Restrictions.eq("p.showTableOfContent", pageFilter.getShowTableOfContent()));
+        if(pageFilter.getShowTableOfContent() != null) {
+            Predicate showTableOfContent = cb.equal(from.get("showTableOfContent"), pageFilter.getShowTableOfContent());
+            predicates.add(showTableOfContent);
+        }
 
-        if(pageFilter.getSorting() != null)
-            pageCriteria.add(Restrictions.eq("p.sorting", pageFilter.getSorting()));
+        if(pageFilter.getSorting() != null) {
+            Predicate sorting = cb.equal(from.get("sorting"), pageFilter.getSorting());
+            predicates.add(sorting);
+        }
 
-        if(pageFilter.getDeleted() != null)
-            pageCriteria.add(Restrictions.eq("p.deleted", pageFilter.getDeleted()));
+        if(pageFilter.getDeleted() != null) {
+            Predicate deleted = cb.equal(from.get("deleted"), pageFilter.getDeleted());
+            predicates.add(deleted);
+        }
 
-        if(pageFilter.getActive() != null)
-            pageCriteria.add(Restrictions.eq("p.active", pageFilter.getActive()));
+        if(pageFilter.getActive() != null) {
+            Predicate active = cb.equal(from.get("active"), pageFilter.getActive());
+            predicates.add(active);
+        }
 
-        if(pageFilter.getCreatedBy() != null)
-            pageCriteria.add(Restrictions.eq("p.createdBy", pageFilter.getCreatedBy()));
+        if(pageFilter.getCreatedBy() != null) {
+            Predicate createdBy = cb.equal(from.get("createdBy"), pageFilter.getCreatedBy());
+            predicates.add(createdBy);
+        }
 
-        if(pageFilter.getChangedBy() != null)
-            pageCriteria.add(Restrictions.eq("p.changedBy", pageFilter.getChangedBy()));
+        if(pageFilter.getChangedBy() != null) {
+            Predicate changedBy = cb.equal(from.get("changedBy"), pageFilter.getChangedBy());
+            predicates.add(changedBy);
+        }
 
-        if(pageFilter.getTimeStartBegin() != null)
-            pageCriteria.add(Restrictions.ge("p.timeStart", pageFilter.getTimeStartBegin()));
+        if(pageFilter.getTimeStartBegin() != null) {
+            Predicate timeStartBegin = cb.greaterThan(from.get("timeStart"), pageFilter.getTimeStartBegin());
+            predicates.add(timeStartBegin);
+        }
 
-        if(pageFilter.getTimeStartEnd() != null)
-            pageCriteria.add(Restrictions.le("p.timeStart", pageFilter.getTimeStartEnd()));
+        if(pageFilter.getTimeStartEnd() != null) {
+            Predicate timeStartEnd = cb.lessThan(from.get("timeStart"), pageFilter.getTimeStartEnd());
+            predicates.add(timeStartEnd);
+        }
 
-        if(pageFilter.getTimeEndBegin() != null)
-            pageCriteria.add(Restrictions.ge("p.timeEnd", pageFilter.getTimeEndBegin()));
+        if(pageFilter.getTimeEndBegin() != null) {
+            Predicate timeEndBegin = cb.greaterThan(from.get("timeEnd"), pageFilter.getTimeEndBegin());
+            predicates.add(timeEndBegin);
+        }
 
-        if(pageFilter.getTimeEndEnd() != null)
-            pageCriteria.add(Restrictions.le("p.timeEnd", pageFilter.getTimeEndEnd()));
+        if(pageFilter.getTimeEndEnd() != null) {
+            Predicate timeEndEnd = cb.lessThan(from.get("timeEnd"), pageFilter.getTimeEndEnd());
+            predicates.add(timeEndEnd);
+        }
 
-        if(pageFilter.getCreateDateBegin() != null)
-            pageCriteria.add(Restrictions.ge("p.createDate", pageFilter.getCreateDateBegin()));
+        if(pageFilter.getCreateDateBegin() != null) {
+            Predicate createDateBegin = cb.greaterThan(from.get("createDate"), pageFilter.getCreateDateBegin());
+            predicates.add(createDateBegin);
+        }
 
-        if(pageFilter.getCreateDateEnd() != null)
-            pageCriteria.add(Restrictions.le("p.createDate", pageFilter.getCreateDateEnd()));
+        if(pageFilter.getCreateDateEnd() != null) {
+            Predicate createDateEnd = cb.lessThan(from.get("createDate"), pageFilter.getCreateDateEnd());
+            predicates.add(createDateEnd);
+        }
 
-        if(pageFilter.getChangeDateBegin() != null)
-            pageCriteria.add(Restrictions.ge("p.changeDate", pageFilter.getChangeDateBegin()));
+        if(pageFilter.getChangeDateBegin() != null) {
+            Predicate changeDateBegin = cb.greaterThan(from.get("changeDate"), pageFilter.getChangeDateBegin());
+            predicates.add(changeDateBegin);
+        }
 
-        if(pageFilter.getChangeDateEnd() != null)
-            pageCriteria.add(Restrictions.le("p.changeDate", pageFilter.getChangeDateEnd()));
+        if(pageFilter.getChangeDateEnd() != null) {
+            Predicate changeDateEnd = cb.lessThan(from.get("changeDate"), pageFilter.getChangeDateEnd());
+            predicates.add(changeDateEnd);
+        }
+
+        cq.select(from).where(cb.and(predicates.toArray(Predicate[]::new)));
+        TypedQuery<Page> q = entityManager.createQuery(cq);
 
         // set limit
         if(pageFilter.getLimit() != null)
-            pageCriteria.setMaxResults(pageFilter.getLimit());
+            q.setMaxResults(pageFilter.getLimit());
 
         // set start position
         if(pageFilter.getStart() != null)
-            pageCriteria.setFirstResult(pageFilter.getStart());
+            q.setFirstResult(pageFilter.getStart());
 
         // get result
-        return Collections.checkedList(pageCriteria.list(), Page.class);
+        return q.getResultList();
     }
 
     /**

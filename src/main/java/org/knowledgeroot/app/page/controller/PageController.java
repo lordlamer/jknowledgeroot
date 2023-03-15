@@ -1,5 +1,6 @@
 package org.knowledgeroot.app.page.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.knowledgeroot.app.content.ContentFilter;
 import org.knowledgeroot.app.content.ContentService;
 import org.knowledgeroot.app.page.PageService;
@@ -9,7 +10,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 
 @Controller
