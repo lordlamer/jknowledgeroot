@@ -1,7 +1,6 @@
 package org.knowledgeroot.app.user.impl.database;
 
 import lombok.Data;
-import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -40,11 +39,9 @@ public class User {
 
 
     @Column(name = "time_start")
-    @Convert(converter = Jsr310JpaConverters.LocalDateTimeConverter.class)
     private LocalDateTime timeStart;
 
     @Column(name = "time_end")
-    @Convert(converter = Jsr310JpaConverters.LocalDateTimeConverter.class)
     private LocalDateTime timeEnd;
 
     @Column(name = "active", nullable = false)
@@ -54,14 +51,12 @@ public class User {
     private Integer createdBy;
 
     @Column(name = "create_date", nullable = false)
-    @Convert(converter = Jsr310JpaConverters.LocalDateTimeConverter.class)
     private LocalDateTime  createDate;
 
     @Column(name = "changed_by", nullable = false)
     private Integer changedBy;
 
     @Column(name = "change_date", nullable = false)
-    @Convert(converter = Jsr310JpaConverters.LocalDateTimeConverter.class)
     private LocalDateTime changeDate;
 
     @Column(name = "deleted", nullable = false)

@@ -6,8 +6,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -40,7 +38,8 @@ public class WebSecurityConfig {
         ;
     }
 
-    @Autowired
+    //@Autowired
+    /*
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
         //auth.authenticationProvider(authProvider);
 
@@ -50,11 +49,25 @@ public class WebSecurityConfig {
                 .withUser("user").password(passwordEncoder().encode("password")).roles("USER")
                 .and()
                 .withUser("admin").password(passwordEncoder().encode("password")).roles("ADMIN");
+*/
+
+    @Autowired
+    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+        //auth.authenticationProvider(authProvider);
+
+        // memory auth
+        auth
+                .inMemoryAuthentication()
+                .withUser("user").password("{noop}password").roles("USER")
+                .and()
+                .withUser("admin").password("{noop}password").roles("ADMIN");
 
     }
 
+    /*
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+     */
 }
