@@ -8,7 +8,7 @@
     <meta name="author" content="Knowledgeroot Team">
 
     <!-- htmx -->
-    <script src="https://unpkg.com/htmx.org@1.8.0"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.0"></script>
 
     <!-- jQuery -->
     <!--
@@ -20,7 +20,7 @@
     <script src="webjars/bootstrap/js/bootstrap.bundle.min.js"></script>
 
     <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 
     <!-- vuejs -->
     <!--
