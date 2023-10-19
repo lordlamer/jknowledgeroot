@@ -1,8 +1,8 @@
 package org.knowledgeroot.app.ui;
 
-import org.knowledgeroot.app.page.PageFilter;
-import org.knowledgeroot.app.page.PageService;
-import org.knowledgeroot.app.page.impl.database.Page;
+import org.knowledgeroot.app.api.filter.PageFilter;
+import org.knowledgeroot.app.services.PageService;
+import org.knowledgeroot.persistence.Page.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
