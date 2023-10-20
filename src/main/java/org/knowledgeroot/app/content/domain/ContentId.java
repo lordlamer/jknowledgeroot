@@ -6,4 +6,9 @@ public record ContentId(Integer value) {
             throw new IllegalArgumentException("value must not be null");
         }
     }
+
+    @Override
+    public String toString() {
+        return value.toString();
+    }
 }

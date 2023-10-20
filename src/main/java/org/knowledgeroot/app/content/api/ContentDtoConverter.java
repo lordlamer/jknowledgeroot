@@ -1,6 +1,7 @@
 package org.knowledgeroot.app.content.api;
 
 import org.knowledgeroot.app.content.domain.Content;
+import org.knowledgeroot.app.content.domain.ContentId;
 import org.knowledgeroot.app.util.Converter;
 
 public class ContentDtoConverter implements Converter<Content, ContentDto> {
@@ -8,7 +9,7 @@ public class ContentDtoConverter implements Converter<Content, ContentDto> {
     public ContentDto convertAtoB(Content from) {
         ContentDto contentDto = new ContentDto();
 
-        contentDto.setId(from.getId());
+        contentDto.setId(from.getContentId().value());
         contentDto.setContent(from.getContent());
         contentDto.setActive(from.getActive());
         contentDto.setParent(from.getParent());
@@ -29,7 +30,7 @@ public class ContentDtoConverter implements Converter<Content, ContentDto> {
     @Override
     public Content convertBtoA(ContentDto from) {
         return Content.builder()
-                .id(from.getId())
+                .contentId(new ContentId(from.getId()))
                 .content(from.getContent())
                 .active(from.getActive())
                 .parent(from.getParent())

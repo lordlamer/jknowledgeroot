@@ -28,7 +28,7 @@ public class ContentImpl implements ContentDao {
      */
     @Override
     public List<Content> listContents(ContentFilter contentFilter) {
-        StringBuilder sql = new StringBuilder("SELECT * FROM content");
+        StringBuilder sql = new StringBuilder("SELECT id as contentId,parent,name,content,type,sorting,time_start,time_end,active,created_by,create_date,changed_by,change_date,deleted FROM content");
 
         Map<String, Object> params = new HashMap<>();
         Map<String, String> sqlParams = new HashMap<>();
@@ -39,11 +39,13 @@ public class ContentImpl implements ContentDao {
         }
 
         if(contentFilter.getName() != null) {
-            params.put("name", contentFilter.getName());
+            params.put("name", "%" + contentFilter.getName() + "%");
+            sqlParams.put("name", "name like :name");
         }
 
         if(contentFilter.getContent() != null) {
-            params.put("content", contentFilter.getContent());
+            params.put("content", "%" + contentFilter.getContent() + "%");
+            sqlParams.put("content", "content like :content");
         }
 
         if(contentFilter.getType() != null) {
@@ -64,49 +66,53 @@ public class ContentImpl implements ContentDao {
 
         if(contentFilter.getTimeEndBegin() != null) {
             params.put("timeEndBegin", contentFilter.getTimeEndBegin());
+            sqlParams.put("timeEndBegin", "time_end >= :timeEndBegin");
         }
 
         if(contentFilter.getTimeEndEnd() != null) {
             params.put("timeEndEnd", contentFilter.getTimeEndEnd());
+            sqlParams.put("timeEndEnd", "time_end <= :timeEndEnd");
         }
 
         if(contentFilter.getActive() != null) {
             params.put("active", contentFilter.getActive());
+            sqlParams.put("active", "active = :active");
         }
 
         if(contentFilter.getCreatedBy() != null) {
             params.put("createdBy", contentFilter.getCreatedBy());
+            sqlParams.put("createdBy", "created_by = :createdBy");
         }
 
         if(contentFilter.getCreateDateBegin() != null) {
             params.put("createDateBegin", contentFilter.getCreateDateBegin());
+            sqlParams.put("createDateBegin", "create_date >= :createDateBegin");
         }
 
         if(contentFilter.getCreateDateEnd() != null) {
             params.put("createDateEnd", contentFilter.getCreateDateEnd());
+            sqlParams.put("createDateEnd", "create_date <= :createDateEnd");
         }
 
         if(contentFilter.getChangedBy() != null) {
             params.put("changedBy", contentFilter.getChangedBy());
+            sqlParams.put("changedBy", "changed_by = :changedBy");
         }
 
         if(contentFilter.getChangeDateBegin() != null) {
             params.put("changeDateBegin", contentFilter.getChangeDateBegin());
+            sqlParams.put("changeDateBegin", "change_date >= :changeDateBegin");
         }
 
         if(contentFilter.getChangeDateEnd() != null) {
             params.put("changeDateEnd", contentFilter.getChangeDateEnd());
+            sqlParams.put("changeDateEnd", "change_date <= :changeDateEnd");
         }
 
         if(contentFilter.getDeleted() != null) {
             params.put("deleted", contentFilter.getDeleted());
+            sqlParams.put("deleted", "deleted = :deleted");
         }
-
-        if(contentFilter.getStart() != null) {
-            params.put("start", contentFilter.getStart());
-        }
-
-
 
         if(!sqlParams.isEmpty()) {
             sql.append(" WHERE ");
@@ -119,9 +125,16 @@ public class ContentImpl implements ContentDao {
             }
         }
 
-        if(contentFilter.getLimit() != null) {
+        if(contentFilter.getLimit() != null && contentFilter.getStart() != null) {
+            params.put("limit", contentFilter.getLimit());
+            params.put("start", contentFilter.getStart());
+            sql.append(" LIMIT :start, :limit");
+        } else if(contentFilter.getLimit() != null) {
             params.put("limit", contentFilter.getLimit());
             sql.append(" LIMIT :limit");
+        } else if(contentFilter.getStart() != null) {
+            params.put("start", contentFilter.getStart());
+            sql.append(" LIMIT :start, 18446744073709551615");
         }
 
         return jdbcClient.sql(sql.toString())
@@ -138,7 +151,7 @@ public class ContentImpl implements ContentDao {
      */
     @Override
     public Content findById(ContentId contentId) {
-        return jdbcClient.sql("SELECT * FROM content WHERE id = :id")
+        return jdbcClient.sql("SELECT id as contentId,parent,name,content,type,sorting,time_start,time_end,active,created_by,create_date,changed_by,change_date,deleted FROM content WHERE id = :id")
                 .param("id", contentId.value())
                 .query(Content.class)
                 .single();
@@ -197,12 +210,12 @@ public class ContentImpl implements ContentDao {
                                 content.getChangeDate(),
                                 content.getActive(),
                                 content.getDeleted(),
-                                content.getId()
+                                content.getContentId().value()
                         )
                 )
                 .update();
 
-        Assert.state(update == 1, "Failed to update content with id: " + content.getId());
+        Assert.state(update == 1, "Failed to update content with id: " + content.getContentId().value());
     }
 
     /**

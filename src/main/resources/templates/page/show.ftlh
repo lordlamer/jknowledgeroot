@@ -25,16 +25,16 @@
 <#list contents as content>
 <div class="card" style="margin-bottom: 20px;">
     <div class="card-header">
-        <a data-bs-toggle="collapse" href="#content-${content.id}" aria-expanded="true" aria-controls="content-${content.id}" id="content-head-${content.id}" class="d-block ">
+        <a data-bs-toggle="collapse" href="#content-${content.contentId}" aria-expanded="true" aria-controls="content-${content.contentId}" id="content-head-${content.contentId}" class="d-block ">
             <i class="bi bi-chevron-down float-end"></i>
             ${content.name}
         </a>
     </div>
-    <div class="collapse show" id="content-${content.id}">
+    <div class="collapse show" id="content-${content.contentId}">
         <div class="card-body">
             <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
-                <button type="button" class="btn btn-outline-secondary" hx-get="/ui/page/${page.id}/content/${content.id}/edit" hx-trigger="click" hx-push-url="true">edit</button>
-                <button type="button" class="btn btn-outline-secondary" hx-delete="/ui/page/${page.id}/content/${content.id}" hx-trigger="click" hx-target="#content" hx-confirm="Are you sure?">delete</button>
+                <button type="button" class="btn btn-outline-secondary" hx-get="/ui/page/${page.id}/content/${content.contentId}/edit" hx-trigger="click" hx-push-url="true">edit</button>
+                <button type="button" class="btn btn-outline-secondary" hx-delete="/ui/page/${page.id}/content/${content.contentId}" hx-trigger="click" hx-target="#content" hx-confirm="Are you sure?">delete</button>
                 <button type="button" class="btn btn-outline-secondary">move</button>
                 <button type="button" class="btn btn-outline-secondary">print</button>
                 <button type="button" class="btn btn-outline-secondary">add file</button>

@@ -146,7 +146,7 @@ class ContentRestController {
         contentImpl.createContent(content);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(ucBuilder.path("/content/{id}").buildAndExpand(content.getId()).toUri());
+        headers.setLocation(ucBuilder.path("/content/{id}").buildAndExpand(content.getContentId()).toUri());
 
         return new ResponseEntity<>(headers, HttpStatus.CREATED);
     }
