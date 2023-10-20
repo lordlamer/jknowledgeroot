@@ -1,25 +1,24 @@
 package org.knowledgeroot.app.content.db;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.TypedQuery;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.knowledgeroot.app.content.api.filter.ContentFilter;
+import org.knowledgeroot.app.content.domain.Content;
 import org.knowledgeroot.app.content.domain.ContentDao;
+import org.knowledgeroot.app.content.domain.ContentFilter;
+import org.knowledgeroot.app.content.domain.ContentId;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class ContentImpl implements ContentDao {
-    private final EntityManager entityManager;
+    private final JdbcClient jdbcClient;
 
     /**
      * find all contents
@@ -29,162 +28,120 @@ public class ContentImpl implements ContentDao {
      */
     @Override
     public List<Content> listContents(ContentFilter contentFilter) {
-        // get criteria builder
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Content> cq = cb.createQuery(Content.class);
+        StringBuilder sql = new StringBuilder("SELECT * FROM content");
 
-        Root<Content> from = cq.from(Content.class);
-
-        List<Predicate> predicates = new ArrayList<>();
-
-        // build restrictions
-        if(contentFilter.getId() != null) {
-            Predicate id = cb.equal(from.get("id"), contentFilter.getId());
-            predicates.add(id);
-        }
+        Map<String, Object> params = new HashMap<>();
+        Map<String, String> sqlParams = new HashMap<>();
 
         if(contentFilter.getParent() != null) {
-            Predicate parent = cb.equal(from.get("parent"), contentFilter.getParent());
-            predicates.add(parent);
+            params.put("parent", contentFilter.getParent());
+            sqlParams.put("parent", "parent = :parent");
         }
 
         if(contentFilter.getName() != null) {
-            Predicate name = cb.like(from.get("name"), "%" + contentFilter.getName() + "%");
-            predicates.add(name);
+            params.put("name", contentFilter.getName());
         }
 
         if(contentFilter.getContent() != null) {
-            Predicate content = cb.like(from.get("content"), "%" + contentFilter.getContent() + "%");
-            predicates.add(content);
+            params.put("content", contentFilter.getContent());
         }
 
         if(contentFilter.getType() != null) {
-            Predicate type = cb.like(from.get("type"), "%" + contentFilter.getType() + "%");
-            predicates.add(type);
+            params.put("type", contentFilter.getType());
         }
 
         if(contentFilter.getSorting() != null) {
-            Predicate sorting = cb.equal(from.get("sorting"), contentFilter.getSorting());
-            predicates.add(sorting);
-        }
-
-        if(contentFilter.getDeleted() != null) {
-            Predicate deleted = cb.equal(from.get("deleted"), contentFilter.getDeleted());
-            predicates.add(deleted);
-        }
-
-        if(contentFilter.getActive() != null) {
-            Predicate active = cb.equal(from.get("active"), contentFilter.getActive());
-            predicates.add(active);
-        }
-
-        if(contentFilter.getCreatedBy() != null) {
-            Predicate createdBy = cb.equal(from.get("createdBy"), contentFilter.getCreatedBy());
-            predicates.add(createdBy);
-        }
-
-        if(contentFilter.getChangedBy() != null) {
-            Predicate changedBy = cb.equal(from.get("changedBy"), contentFilter.getChangedBy());
-            predicates.add(changedBy);
+            params.put("sorting", contentFilter.getSorting());
         }
 
         if(contentFilter.getTimeStartBegin() != null) {
-            Predicate timeStartBegin = cb.greaterThan(from.get("timeStart"), contentFilter.getTimeStartBegin());
-            predicates.add(timeStartBegin);
+            params.put("timeStartBegin", contentFilter.getTimeStartBegin());
         }
 
         if(contentFilter.getTimeStartEnd() != null) {
-            Predicate timeStartEnd = cb.lessThan(from.get("timeStart"), contentFilter.getTimeStartEnd());
-            predicates.add(timeStartEnd);
+            params.put("timeStartEnd", contentFilter.getTimeStartEnd());
         }
 
         if(contentFilter.getTimeEndBegin() != null) {
-            Predicate timeEndBegin = cb.greaterThan(from.get("timeEnd"), contentFilter.getTimeEndBegin());
-            predicates.add(timeEndBegin);
+            params.put("timeEndBegin", contentFilter.getTimeEndBegin());
         }
 
         if(contentFilter.getTimeEndEnd() != null) {
-            Predicate timeEndEnd = cb.lessThan(from.get("timeEnd"), contentFilter.getTimeEndEnd());
-            predicates.add(timeEndEnd);
+            params.put("timeEndEnd", contentFilter.getTimeEndEnd());
+        }
+
+        if(contentFilter.getActive() != null) {
+            params.put("active", contentFilter.getActive());
+        }
+
+        if(contentFilter.getCreatedBy() != null) {
+            params.put("createdBy", contentFilter.getCreatedBy());
         }
 
         if(contentFilter.getCreateDateBegin() != null) {
-            Predicate createDateBegin = cb.greaterThan(from.get("createDate"), contentFilter.getCreateDateBegin());
-            predicates.add(createDateBegin);
+            params.put("createDateBegin", contentFilter.getCreateDateBegin());
         }
 
         if(contentFilter.getCreateDateEnd() != null) {
-            Predicate createDateEnd = cb.lessThan(from.get("createDate"), contentFilter.getCreateDateEnd());
-            predicates.add(createDateEnd);
+            params.put("createDateEnd", contentFilter.getCreateDateEnd());
+        }
+
+        if(contentFilter.getChangedBy() != null) {
+            params.put("changedBy", contentFilter.getChangedBy());
         }
 
         if(contentFilter.getChangeDateBegin() != null) {
-            Predicate changeDateBegin = cb.greaterThan(from.get("changeDate"), contentFilter.getChangeDateBegin());
-            predicates.add(changeDateBegin);
+            params.put("changeDateBegin", contentFilter.getChangeDateBegin());
         }
 
         if(contentFilter.getChangeDateEnd() != null) {
-            Predicate changeDateEnd = cb.lessThan(from.get("changeDate"), contentFilter.getChangeDateEnd());
-            predicates.add(changeDateEnd);
+            params.put("changeDateEnd", contentFilter.getChangeDateEnd());
         }
 
-        cq.select(from).where(cb.and(predicates.toArray(Predicate[]::new)));
-        TypedQuery<Content> q = entityManager.createQuery(cq);
+        if(contentFilter.getDeleted() != null) {
+            params.put("deleted", contentFilter.getDeleted());
+        }
 
-        // set limit
-        if(contentFilter.getLimit() != null)
-            q.setMaxResults(contentFilter.getLimit());
+        if(contentFilter.getStart() != null) {
+            params.put("start", contentFilter.getStart());
+        }
 
-        // set start position
-        if(contentFilter.getStart() != null)
-            q.setFirstResult(contentFilter.getStart());
 
-        // get result
-        return q.getResultList();
+
+        if(!sqlParams.isEmpty()) {
+            sql.append(" WHERE ");
+
+            for(Map.Entry<String, String> entry : sqlParams.entrySet()) {
+                sql.append(entry.getValue());
+
+                if(!entry.equals(sqlParams.entrySet().toArray()[sqlParams.size() - 1]))
+                    sql.append(" AND ");
+            }
+        }
+
+        if(contentFilter.getLimit() != null) {
+            params.put("limit", contentFilter.getLimit());
+            sql.append(" LIMIT :limit");
+        }
+
+        return jdbcClient.sql(sql.toString())
+                .params(params)
+                .query(Content.class)
+                .list();
     }
 
     /**
      * find content by given id
      *
-     * @param id
+     * @param contentId
      * @return
      */
     @Override
-    public Content findById(Integer id) {
-        Content content = findEntityById(id);
-
-        return content;
-    }
-
-    /**
-     * find content entity by given id
-     * @param id
-     * @return
-     */
-    private Content findEntityById(Integer id) {
-        return entityManager.find(Content.class, id);
-    }
-
-    /**
-     * check if content exists
-     *
-     * @param content
-     * @return
-     */
-    @Override
-    public boolean isContentExist(Content content) {
-        boolean found = false;
-
-        List<Content> contentEntities = entityManager.createQuery(
-                "SELECT c FROM Content c WHERE c.id = :id",
-                Content.class)
-                .setParameter("id", content.getId())
-                .getResultList();
-
-        if(contentEntities.size() == 1)
-            found = true;
-
-        return found;
+    public Content findById(ContentId contentId) {
+        return jdbcClient.sql("SELECT * FROM content WHERE id = :id")
+                .param("id", contentId.value())
+                .query(Content.class)
+                .single();
     }
 
     /**
@@ -194,7 +151,27 @@ public class ContentImpl implements ContentDao {
      */
     @Override
     public void createContent(Content content) {
-        entityManager.persist(content);
+        int update = jdbcClient.sql("INSERT INTO content(parent,name,content,type,sorting,time_start,time_end,created_by,create_date,changed_by,change_date,active,deleted) values(?,?,?,?,?,?,?,?,?,?,?,?,?)")
+                .params(
+                        List.of(
+                                content.getParent(),
+                                content.getName(),
+                                content.getContent(),
+                                content.getType(),
+                                content.getSorting(),
+                                content.getTimeStart(),
+                                content.getTimeEnd(),
+                                content.getCreatedBy(),
+                                content.getCreateDate(),
+                                content.getChangedBy(),
+                                content.getChangeDate(),
+                                content.getActive(),
+                                content.getDeleted()
+                                )
+                )
+                .update();
+
+        Assert.state(update == 1, "Failed to create content: " + content.getName());
     }
 
     /**
@@ -204,8 +181,28 @@ public class ContentImpl implements ContentDao {
      */
     @Override
     public void updateContent(Content content) {
-        // save to database
-        entityManager.merge(content);
+        int update = jdbcClient.sql("update content set parent = ?, name = ?, content = ?, type = ?, sorting = ?, time_start = ?, time_end = ?, created_by = ?, create_date = ?, changed_by = ?, change_date = ?, active = ?, deleted = ? where id = ?")
+                .params(
+                        List.of(
+                                content.getParent(),
+                                content.getName(),
+                                content.getContent(),
+                                content.getType(),
+                                content.getSorting(),
+                                content.getTimeStart(),
+                                content.getTimeEnd(),
+                                content.getCreatedBy(),
+                                content.getCreateDate(),
+                                content.getChangedBy(),
+                                content.getChangeDate(),
+                                content.getActive(),
+                                content.getDeleted(),
+                                content.getId()
+                        )
+                )
+                .update();
+
+        Assert.state(update == 1, "Failed to update content with id: " + content.getId());
     }
 
     /**
@@ -213,18 +210,18 @@ public class ContentImpl implements ContentDao {
      */
     @Override
     public void deleteAllContents() {
-        entityManager.createQuery("DELETE FROM Content").executeUpdate();
+        jdbcClient.sql("delete from content").update();
     }
 
     /**
      * delete content by given id
      *
-     * @param id
+     * @param contentId
      */
     @Override
-    public void deleteContentById(Integer id) {
-        entityManager.createQuery("DELETE FROM Content c WHERE c.id = :id")
-                .setParameter("id", id)
-                .executeUpdate();
+    public void deleteContentById(ContentId contentId) {
+        jdbcClient.sql("delete from content where id = :id")
+                .param("id", contentId.value())
+                .update();
     }
 }

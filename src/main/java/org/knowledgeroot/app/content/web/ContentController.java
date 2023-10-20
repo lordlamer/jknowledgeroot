@@ -3,10 +3,11 @@ package org.knowledgeroot.app.content.web;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.knowledgeroot.app.content.api.converter.ContentDtoConverter;
-import org.knowledgeroot.app.content.api.dto.ContentDto;
-import org.knowledgeroot.app.content.db.Content;
+import org.knowledgeroot.app.content.api.ContentDtoConverter;
+import org.knowledgeroot.app.content.api.ContentDto;
+import org.knowledgeroot.app.content.domain.Content;
 import org.knowledgeroot.app.content.domain.ContentDao;
+import org.knowledgeroot.app.content.domain.ContentId;
 import org.knowledgeroot.app.page.domain.PageDao;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -73,7 +74,7 @@ class ContentController {
         }
 
         model.addAttribute("page", pageImpl.findById(pageId));
-        model.addAttribute("content", contentImpl.findById(contentId));
+        model.addAttribute("content", contentImpl.findById(new ContentId(contentId)));
 
         return "content/edit";
     }
@@ -109,7 +110,7 @@ class ContentController {
             @PathVariable("contentId") Integer contentId,
             HttpServletResponse response
     ) {
-        contentImpl.deleteContentById(contentId);
+        contentImpl.deleteContentById(new ContentId(contentId));
 
         // trigger reload page
         response.addHeader("HX-Trigger", "reload-page");

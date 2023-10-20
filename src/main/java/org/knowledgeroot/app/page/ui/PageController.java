@@ -2,7 +2,7 @@ package org.knowledgeroot.app.page.ui;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.knowledgeroot.app.content.api.filter.ContentFilter;
+import org.knowledgeroot.app.content.domain.ContentFilter;
 import org.knowledgeroot.app.content.domain.ContentDao;
 import org.knowledgeroot.app.page.api.PageDto;
 import org.knowledgeroot.app.page.api.PageDtoConverter;

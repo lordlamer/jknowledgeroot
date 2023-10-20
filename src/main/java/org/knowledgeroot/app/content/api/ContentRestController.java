@@ -1,12 +1,11 @@
-package org.knowledgeroot.app.content.api.controller;
+package org.knowledgeroot.app.content.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.knowledgeroot.app.content.api.converter.ContentDtoConverter;
-import org.knowledgeroot.app.content.api.dto.ContentDto;
-import org.knowledgeroot.app.content.api.filter.ContentFilter;
-import org.knowledgeroot.app.content.db.Content;
+import org.knowledgeroot.app.content.domain.Content;
 import org.knowledgeroot.app.content.domain.ContentDao;
+import org.knowledgeroot.app.content.domain.ContentFilter;
+import org.knowledgeroot.app.content.domain.ContentId;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -123,7 +122,7 @@ class ContentRestController {
      */
     @RequestMapping(value = "/content/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ContentDto> getContent(@PathVariable("id") Integer id) {
-        Content content = contentImpl.findById(id);
+        Content content = contentImpl.findById(new ContentId(id));
 
         ContentDto contentDto = contentDtoConverter.convertAtoB(content);
 
@@ -144,10 +143,6 @@ class ContentRestController {
 
         Content content = contentDtoConverter.convertBtoA(contentDto);
 
-        if (contentImpl.isContentExist(content)) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
-        }
-
         contentImpl.createContent(content);
 
         HttpHeaders headers = new HttpHeaders();
@@ -167,7 +162,7 @@ class ContentRestController {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
-        Content currentContent = contentImpl.findById(id);
+        Content currentContent = contentImpl.findById(new ContentId(id));
 
         if (currentContent==null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -186,13 +181,13 @@ class ContentRestController {
      */
     @RequestMapping(value = "/content/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<ContentDto> deleteContent(@PathVariable("id") Integer id) {
-        Content content = contentImpl.findById(id);
+        Content content = contentImpl.findById(new ContentId(id));
 
         if (content == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        contentImpl.deleteContentById(id);
+        contentImpl.deleteContentById(new ContentId(id));
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

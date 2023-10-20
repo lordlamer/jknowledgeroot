@@ -1,7 +1,6 @@
-package org.knowledgeroot.app.content.api.converter;
+package org.knowledgeroot.app.content.api;
 
-import org.knowledgeroot.app.content.api.dto.ContentDto;
-import org.knowledgeroot.app.content.db.Content;
+import org.knowledgeroot.app.content.domain.Content;
 import org.knowledgeroot.app.util.Converter;
 
 public class ContentDtoConverter implements Converter<Content, ContentDto> {
@@ -29,23 +28,21 @@ public class ContentDtoConverter implements Converter<Content, ContentDto> {
 
     @Override
     public Content convertBtoA(ContentDto from) {
-        Content content = new Content();
-
-        content.setId(from.getId());
-        content.setContent(from.getContent());
-        content.setActive(from.getActive());
-        content.setParent(from.getParent());
-        content.setName(from.getName());
-        content.setType(from.getType());
-        content.setCreatedBy(from.getCreatedBy());
-        content.setCreateDate(from.getCreateDate());
-        content.setChangedBy(from.getChangedBy());
-        content.setChangeDate(from.getChangeDate());
-        content.setDeleted(from.getDeleted());
-        content.setSorting(from.getSorting());
-        content.setTimeStart(from.getTimeStart());
-        content.setTimeEnd(from.getTimeEnd());
-
-        return content;
+        return Content.builder()
+                .id(from.getId())
+                .content(from.getContent())
+                .active(from.getActive())
+                .parent(from.getParent())
+                .name(from.getName())
+                .type(from.getType())
+                .createdBy(from.getCreatedBy())
+                .createDate(from.getCreateDate())
+                .changedBy(from.getChangedBy())
+                .changeDate(from.getChangeDate())
+                .deleted(from.getDeleted())
+                .sorting(from.getSorting())
+                .timeStart(from.getTimeStart())
+                .timeEnd(from.getTimeEnd())
+                .build();
     }
 }

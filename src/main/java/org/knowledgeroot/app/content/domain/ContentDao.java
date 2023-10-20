@@ -1,8 +1,5 @@
 package org.knowledgeroot.app.content.domain;
 
-import org.knowledgeroot.app.content.api.filter.ContentFilter;
-import org.knowledgeroot.app.content.db.Content;
-
 import java.util.List;
 
 public interface ContentDao {
@@ -14,17 +11,10 @@ public interface ContentDao {
 
     /**
      * find content by given id
-     * @param id
+     * @param contentId
      * @return
      */
-    Content findById(Integer id);
-
-    /**
-     * check if content exists
-     * @param content
-     * @return
-     */
-    boolean isContentExist(Content content);
+    Content findById(ContentId contentId);
 
     /**
      * create content from domain object
@@ -45,7 +35,7 @@ public interface ContentDao {
 
     /**
      * delete content by given id
-     * @param id
+     * @param contentId
      */
-    void deleteContentById(Integer id);
+    void deleteContentById(ContentId contentId);
 }
