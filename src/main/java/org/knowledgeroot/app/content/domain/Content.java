@@ -10,8 +10,10 @@ import java.time.LocalDateTime;
 @Builder
 public class Content {
     private ContentId contentId;
+
     @NonNull
     private Integer parent;
+
     private String name;
     private String content;
     private String type;

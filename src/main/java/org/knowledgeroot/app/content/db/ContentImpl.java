@@ -28,7 +28,24 @@ public class ContentImpl implements ContentDao {
      */
     @Override
     public List<Content> listContents(ContentFilter contentFilter) {
-        StringBuilder sql = new StringBuilder("SELECT id as contentId,parent,name,content,type,sorting,time_start,time_end,active,created_by,create_date,changed_by,change_date,deleted FROM content");
+        StringBuilder sql = new StringBuilder("""
+            SELECT 
+                id as contentId,
+                parent,
+                name,
+                content,
+                type,
+                sorting,
+                time_start,
+                time_end,
+                active,
+                created_by,
+                create_date,
+                changed_by,
+                change_date,
+                deleted 
+            FROM content
+            """);
 
         Map<String, Object> params = new HashMap<>();
         Map<String, String> sqlParams = new HashMap<>();
@@ -151,7 +168,27 @@ public class ContentImpl implements ContentDao {
      */
     @Override
     public Content findById(ContentId contentId) {
-        return jdbcClient.sql("SELECT id as contentId,parent,name,content,type,sorting,time_start,time_end,active,created_by,create_date,changed_by,change_date,deleted FROM content WHERE id = :id")
+        return jdbcClient.sql("""
+                SELECT 
+                    id as contentId,
+                    parent,
+                    name,
+                    content,
+                    type,
+                    sorting,
+                    time_start,
+                    time_end,
+                    active,
+                    created_by,
+                    create_date,
+                    changed_by,
+                    change_date,
+                    deleted
+                FROM 
+                    content 
+                WHERE 
+                    id = :id
+                """)
                 .param("id", contentId.value())
                 .query(Content.class)
                 .single();
@@ -164,7 +201,25 @@ public class ContentImpl implements ContentDao {
      */
     @Override
     public void createContent(Content content) {
-        int update = jdbcClient.sql("INSERT INTO content(parent,name,content,type,sorting,time_start,time_end,created_by,create_date,changed_by,change_date,active,deleted) values(?,?,?,?,?,?,?,?,?,?,?,?,?)")
+        int update = jdbcClient.sql("""
+                        INSERT INTO 
+                            content(
+                                parent,
+                                name,
+                                content,
+                                type,
+                                sorting,
+                                time_start,
+                                time_end,
+                                created_by,
+                                create_date,
+                                changed_by,
+                                change_date,
+                                active,
+                                deleted
+                            ) 
+                            values(?,?,?,?,?,?,?,?,?,?,?,?,?)
+                        """)
                 .params(
                         List.of(
                                 content.getParent(),
@@ -194,7 +249,25 @@ public class ContentImpl implements ContentDao {
      */
     @Override
     public void updateContent(Content content) {
-        int update = jdbcClient.sql("update content set parent = ?, name = ?, content = ?, type = ?, sorting = ?, time_start = ?, time_end = ?, created_by = ?, create_date = ?, changed_by = ?, change_date = ?, active = ?, deleted = ? where id = ?")
+        int update = jdbcClient.sql("""
+                        update 
+                            content 
+                        set 
+                            parent = ?,
+                            name = ?,
+                            content = ?,
+                            type = ?,
+                            sorting = ?,
+                            time_start = ?,
+                            time_end = ?,
+                            created_by = ?,
+                            create_date = ?,
+                            changed_by = ?,
+                            change_date = ?,
+                            active = ?,
+                            deleted = ? 
+                        where id = ?
+                    """)
                 .params(
                         List.of(
                                 content.getParent(),
@@ -215,7 +288,10 @@ public class ContentImpl implements ContentDao {
                 )
                 .update();
 
-        Assert.state(update == 1, "Failed to update content with id: " + content.getContentId().value());
+        Assert.state(
+                update == 1,
+                "Failed to update content with id: " + content.getContentId().value()
+        );
     }
 
     /**
