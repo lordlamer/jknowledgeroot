@@ -1,4 +1,4 @@
-package org.knowledgeroot.app.file.api.dto;
+package org.knowledgeroot.app.file.api;
 
 import lombok.*;
 

@@ -1,13 +1,11 @@
-package org.knowledgeroot.app.file.api.controller;
+package org.knowledgeroot.app.file.api;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.knowledgeroot.app.file.api.converter.FileDtoConverter;
-import org.knowledgeroot.app.file.api.dto.FileDto;
-import org.knowledgeroot.app.file.api.filter.FileFilter;
-import org.knowledgeroot.app.file.db.File;
+import org.knowledgeroot.app.file.domain.File;
 import org.knowledgeroot.app.file.domain.FileDao;
+import org.knowledgeroot.app.file.domain.FileFilter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;

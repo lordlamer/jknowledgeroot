@@ -1,7 +1,5 @@
 package org.knowledgeroot.app.file.domain;
 
-import org.knowledgeroot.app.file.api.filter.FileFilter;
-import org.knowledgeroot.app.file.db.File;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;

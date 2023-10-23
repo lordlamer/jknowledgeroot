@@ -1,7 +1,6 @@
-package org.knowledgeroot.app.file.api.converter;
+package org.knowledgeroot.app.file.api;
 
-import org.knowledgeroot.app.file.api.dto.FileDto;
-import org.knowledgeroot.app.file.db.File;
+import org.knowledgeroot.app.file.domain.File;
 import org.knowledgeroot.app.util.Converter;
 
 public class FileDtoConverter implements Converter<File, FileDto> {
@@ -31,24 +30,22 @@ public class FileDtoConverter implements Converter<File, FileDto> {
 
     @Override
     public File convertBtoA(FileDto from) {
-        File file = new File();
-
-        file.setId(from.getId());
-        file.setActive(from.getActive());
-        file.setName(from.getName());
-        file.setParent(from.getParent());
-        file.setType(from.getType());
-        file.setSize(from.getSize());
-        file.setHash(from.getHash());
-        file.setCreateDate(from.getCreateDate());
-        file.setCreatedBy(from.getCreatedBy());
-        file.setChangedBy(from.getChangedBy());
-        file.setChangeDate(from.getChangeDate());
-        file.setDeleted(from.getDeleted());
-        file.setDownloads(from.getDownloads());
-        file.setTimeStart(from.getTimeStart());
-        file.setTimeEnd(from.getTimeEnd());
-
-        return file;
+        return File.builder()
+                .id(from.getId())
+                .active(from.getActive())
+                .name(from.getName())
+                .parent(from.getParent())
+                .type(from.getType())
+                .size(from.getSize())
+                .hash(from.getHash())
+                .createDate(from.getCreateDate())
+                .createdBy(from.getCreatedBy())
+                .changedBy(from.getChangedBy())
+                .changeDate(from.getCreateDate())
+                .deleted(from.getDeleted())
+                .downloads(from.getDownloads())
+                .timeStart(from.getTimeStart())
+                .timeEnd(from.getTimeEnd())
+                .build();
     }
 }
