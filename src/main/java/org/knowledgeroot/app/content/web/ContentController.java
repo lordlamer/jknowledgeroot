@@ -9,6 +9,7 @@ import org.knowledgeroot.app.content.domain.Content;
 import org.knowledgeroot.app.content.domain.ContentDao;
 import org.knowledgeroot.app.content.domain.ContentId;
 import org.knowledgeroot.app.page.domain.PageDao;
+import org.knowledgeroot.app.page.domain.PageId;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -29,7 +30,7 @@ class ContentController {
             @PathVariable("pageId") Integer pageId,
             Model model
     ) {
-        model.addAttribute("page", pageImpl.findById(pageId));
+        model.addAttribute("page", pageImpl.findById(new PageId(pageId)));
 
         return "content/new";
     }
@@ -73,7 +74,7 @@ class ContentController {
             model.addAttribute("fullLayout", true);
         }
 
-        model.addAttribute("page", pageImpl.findById(pageId));
+        model.addAttribute("page", pageImpl.findById(new PageId(pageId)));
         model.addAttribute("content", contentImpl.findById(new ContentId(contentId)));
 
         return "content/edit";

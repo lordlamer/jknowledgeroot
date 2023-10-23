@@ -50,6 +50,11 @@ public class ContentImpl implements ContentDao {
         Map<String, Object> params = new HashMap<>();
         Map<String, String> sqlParams = new HashMap<>();
 
+        if(contentFilter.getId() != null) {
+            params.put("id", contentFilter.getId());
+            sqlParams.put("id", "id = :id");
+        }
+
         if(contentFilter.getParent() != null) {
             params.put("parent", contentFilter.getParent());
             sqlParams.put("parent", "parent = :parent");
@@ -218,7 +223,9 @@ public class ContentImpl implements ContentDao {
                                 active,
                                 deleted
                             ) 
-                            values(?,?,?,?,?,?,?,?,?,?,?,?,?)
+                            VALUES (
+                                ?,?,?,?,?,?,?,?,?,?,?,?,?
+                            )
                         """)
                 .params(
                         List.of(

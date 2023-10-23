@@ -1,6 +1,7 @@
 package org.knowledgeroot.app.page.api;
 
-import org.knowledgeroot.app.page.db.Page;
+import org.knowledgeroot.app.page.domain.Page;
+import org.knowledgeroot.app.page.domain.PageId;
 import org.knowledgeroot.app.util.Converter;
 
 public class PageDtoConverter implements Converter<Page, PageDto> {
@@ -9,7 +10,7 @@ public class PageDtoConverter implements Converter<Page, PageDto> {
     public PageDto convertAtoB(Page from) {
         PageDto pageDto = new PageDto();
 
-        pageDto.setId(from.getId());
+        pageDto.setId(from.getPageId().value());
         pageDto.setActive(from.getActive());
         pageDto.setName(from.getName());
         pageDto.setParent(from.getParent());
@@ -36,30 +37,28 @@ public class PageDtoConverter implements Converter<Page, PageDto> {
 
     @Override
     public Page convertBtoA(PageDto from) {
-        Page page = new Page();
-
-        page.setId(from.getId());
-        page.setActive(from.getActive());
-        page.setName(from.getName());
-        page.setParent(from.getParent());
-        page.setSubtitle(from.getSubtitle());
-        page.setCreateDate(from.getCreateDate());
-        page.setCreatedBy(from.getCreatedBy());
-        page.setChangeDate(from.getChangeDate());
-        page.setChangedBy(from.getChangedBy());
-        page.setDeleted(from.getDeleted());
-        page.setDescription(from.getDescription());
-        page.setShowContentDescription(from.getShowContentDescription());
-        page.setContentCollapse(from.getContentCollapse());
-        page.setContentPosition(from.getContentPosition());
-        page.setIcon(from.getIcon());
-        page.setShowTableOfContent(from.getShowTableOfContent());
-        page.setTooltip(from.getTooltip());
-        page.setTimeStart(from.getTimeStart());
-        page.setTimeEnd(from.getTimeEnd());
-        page.setSorting(from.getSorting());
-        page.setAlias(from.getAlias());
-
-        return page;
+        return Page.builder()
+                .pageId(new PageId(from.getId()))
+                .active(from.getActive())
+                .name(from.getName())
+                .parent(from.getParent())
+                .subtitle(from.getSubtitle())
+                .createDate(from.getCreateDate())
+                .createdBy(from.getCreatedBy())
+                .changeDate(from.getChangeDate())
+                .changedBy(from.getChangedBy())
+                .deleted(from.getDeleted())
+                .description(from.getDescription())
+                .showContentDescription(from.getShowContentDescription())
+                .contentCollapse(from.getContentCollapse())
+                .contentPosition(from.getContentPosition())
+                .icon(from.getIcon())
+                .showTableOfContent(from.getShowTableOfContent())
+                .tooltip(from.getTooltip())
+                .timeStart(from.getTimeStart())
+                .timeEnd(from.getTimeEnd())
+                .sorting(from.getSorting())
+                .alias(from.getAlias())
+                .build();
     }
 }

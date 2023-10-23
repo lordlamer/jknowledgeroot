@@ -1,25 +1,26 @@
 package org.knowledgeroot.app.page.db;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.TypedQuery;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.knowledgeroot.app.page.api.PageFilter;
+import org.knowledgeroot.app.page.domain.Page;
 import org.knowledgeroot.app.page.domain.PageDao;
+import org.knowledgeroot.app.page.domain.PageFilter;
+import org.knowledgeroot.app.page.domain.PageId;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class PageImpl implements PageDao {
     private final EntityManager entityManager;
+    private final JdbcClient jdbcClient;
 
     /**
      * find pages
@@ -29,193 +30,231 @@ public class PageImpl implements PageDao {
      */
     @Override
     public List<Page> listPages(PageFilter pageFilter) {
-        // get criteria builder
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Page> cq = cb.createQuery(Page.class);
+        StringBuilder sql = new StringBuilder("""
+                SELECT 
+                    id as pageId,
+                    parent,
+                    name,
+                    subtitle,
+                    description,
+                    tooltip,
+                    icon,
+                    alias,
+                    content_collapse,
+                    content_position,
+                    show_content_description,
+                    show_table_of_content,
+                    sorting,
+                    time_start,
+                    time_end,
+                    active,
+                    created_by,
+                    create_date,
+                    changed_by,
+                    change_date,
+                    active,
+                    deleted
+                FROM
+                    page      
+        """);
 
-        Root<Page> from = cq.from(Page.class);
+        Map<String, Object> params = new HashMap<>();
+        Map<String, String> sqlParams = new HashMap<>();
 
-        List<Predicate> predicates = new ArrayList<>();
-
-        // build restrictions
-        if(pageFilter.getId() != null) {
-            Predicate id = cb.equal(from.get("id"), pageFilter.getId());
-            predicates.add(id);
+        if (pageFilter.getId() != null) {
+            sqlParams.put("id", "id = :id");
+            params.put("id", pageFilter.getId());
         }
 
-        if(pageFilter.getParent() != null) {
-            Predicate parent = cb.equal(from.get("parent"), pageFilter.getParent());
-            predicates.add(parent);
+        if (pageFilter.getParent() != null) {
+            sqlParams.put("parent", "parent = :parent");
+            params.put("parent", pageFilter.getParent());
         }
 
-        if(pageFilter.getName() != null) {
-            Predicate name = cb.like(from.get("name"), "%" + pageFilter.getName() + "%");
-            predicates.add(name);
+        if (pageFilter.getName() != null) {
+            sqlParams.put("name", "name like :name");
+            params.put("name", "%" + pageFilter.getName() + "%");
         }
 
-        if(pageFilter.getSubtitle() != null) {
-            Predicate subtitle = cb.like(from.get("subtitle"), "%" + pageFilter.getSubtitle() + "%");
-            predicates.add(subtitle);
+        if (pageFilter.getSubtitle() != null) {
+            sqlParams.put("subtitle", "subtitle like :subtitle");
+            params.put("subtitle", "%" + pageFilter.getSubtitle() + "%");
         }
 
-        if(pageFilter.getDescription() != null) {
-            Predicate description = cb.like(from.get("description"), "%" + pageFilter.getDescription() + "%");
-            predicates.add(description);
+        if (pageFilter.getDescription() != null) {
+            sqlParams.put("description", "description like :description");
+            params.put("description", "%" + pageFilter.getDescription() + "%");
         }
 
-        if(pageFilter.getTooltip() != null) {
-            Predicate tooltip = cb.like(from.get("tooltip"), "%" + pageFilter.getTooltip() + "%");
-            predicates.add(tooltip);
+        if (pageFilter.getTooltip() != null) {
+            sqlParams.put("tooltip", "tooltip like :tooltip");
+            params.put("tooltip", "%" + pageFilter.getTooltip() + "%");
         }
 
-        if(pageFilter.getIcon() != null) {
-            Predicate icon = cb.like(from.get("icon"), "%" + pageFilter.getIcon() + "%");
-            predicates.add(icon);
+        if (pageFilter.getIcon() != null) {
+            sqlParams.put("icon", "icon like :icon");
+            params.put("icon", "%" + pageFilter.getIcon() + "%");
         }
 
-        if(pageFilter.getAlias() != null) {
-            Predicate alias = cb.like(from.get("alias"), "%" + pageFilter.getAlias() + "%");
-            predicates.add(alias);
+        if (pageFilter.getAlias() != null) {
+            sqlParams.put("alias", "alias like :alias");
+            params.put("alias", "%" + pageFilter.getAlias() + "%");
         }
 
-        if(pageFilter.getContentCollapse() != null) {
-            Predicate contentCollapse = cb.equal(from.get("contentCollapse"), pageFilter.getContentCollapse());
-            predicates.add(contentCollapse);
+        if (pageFilter.getContentCollapse() != null) {
+            sqlParams.put("content_collapse", "content_collapse = :content_collapse");
+            params.put("content_collapse", pageFilter.getContentCollapse());
         }
 
-        if(pageFilter.getContentPosition() != null) {
-            Predicate contentPosition = cb.like(from.get("contentPosition"), "%" + pageFilter.getContentPosition() + "%");
-            predicates.add(contentPosition);
+        if (pageFilter.getContentPosition() != null) {
+            sqlParams.put("content_position", "content_position = :content_position");
+            params.put("content_position", pageFilter.getContentPosition());
         }
 
-        if(pageFilter.getShowContentDescription() != null) {
-            Predicate showContentDescription = cb.equal(from.get("showContentDescription"), pageFilter.getShowContentDescription());
-            predicates.add(showContentDescription);
+        if (pageFilter.getShowContentDescription() != null) {
+            sqlParams.put("show_content_description", "show_content_description = :show_content_description");
+            params.put("show_content_description", pageFilter.getShowContentDescription());
         }
 
-        if(pageFilter.getShowTableOfContent() != null) {
-            Predicate showTableOfContent = cb.equal(from.get("showTableOfContent"), pageFilter.getShowTableOfContent());
-            predicates.add(showTableOfContent);
+        if (pageFilter.getShowTableOfContent() != null) {
+            sqlParams.put("show_table_of_content", "show_table_of_content = :show_table_of_content");
+            params.put("show_table_of_content", pageFilter.getShowTableOfContent());
         }
 
-        if(pageFilter.getSorting() != null) {
-            Predicate sorting = cb.equal(from.get("sorting"), pageFilter.getSorting());
-            predicates.add(sorting);
+        if (pageFilter.getSorting() != null) {
+            sqlParams.put("sorting", "sorting = :sorting");
+            params.put("sorting", pageFilter.getSorting());
         }
 
-        if(pageFilter.getDeleted() != null) {
-            Predicate deleted = cb.equal(from.get("deleted"), pageFilter.getDeleted());
-            predicates.add(deleted);
+        if (pageFilter.getTimeStartBegin() != null) {
+            sqlParams.put("time_start_begin", "time_start >= :time_start_begin");
+            params.put("time_start_begin", pageFilter.getTimeStartBegin());
         }
 
-        if(pageFilter.getActive() != null) {
-            Predicate active = cb.equal(from.get("active"), pageFilter.getActive());
-            predicates.add(active);
+        if (pageFilter.getTimeStartEnd() != null) {
+            sqlParams.put("time_start_end", "time_start <= :time_start_end");
+            params.put("time_start_end", pageFilter.getTimeStartEnd());
         }
 
-        if(pageFilter.getCreatedBy() != null) {
-            Predicate createdBy = cb.equal(from.get("createdBy"), pageFilter.getCreatedBy());
-            predicates.add(createdBy);
+        if (pageFilter.getTimeEndBegin() != null) {
+            sqlParams.put("time_end_begin", "time_end >= :time_end_begin");
+            params.put("time_end_begin", pageFilter.getTimeEndBegin());
         }
 
-        if(pageFilter.getChangedBy() != null) {
-            Predicate changedBy = cb.equal(from.get("changedBy"), pageFilter.getChangedBy());
-            predicates.add(changedBy);
+        if (pageFilter.getTimeEndEnd() != null) {
+            sqlParams.put("time_end_end", "time_end <= :time_end_end");
+            params.put("time_end_end", pageFilter.getTimeEndEnd());
         }
 
-        if(pageFilter.getTimeStartBegin() != null) {
-            Predicate timeStartBegin = cb.greaterThan(from.get("timeStart"), pageFilter.getTimeStartBegin());
-            predicates.add(timeStartBegin);
+        if (pageFilter.getActive() != null) {
+            sqlParams.put("active", "active = :active");
+            params.put("active", pageFilter.getActive());
         }
 
-        if(pageFilter.getTimeStartEnd() != null) {
-            Predicate timeStartEnd = cb.lessThan(from.get("timeStart"), pageFilter.getTimeStartEnd());
-            predicates.add(timeStartEnd);
+        if (pageFilter.getCreatedBy() != null) {
+            sqlParams.put("created_by", "created_by = :created_by");
+            params.put("created_by", pageFilter.getCreatedBy());
         }
 
-        if(pageFilter.getTimeEndBegin() != null) {
-            Predicate timeEndBegin = cb.greaterThan(from.get("timeEnd"), pageFilter.getTimeEndBegin());
-            predicates.add(timeEndBegin);
+        if (pageFilter.getCreateDateBegin() != null) {
+            sqlParams.put("create_date_begin", "create_date >= :create_date_begin");
+            params.put("create_date_begin", pageFilter.getCreateDateBegin());
         }
 
-        if(pageFilter.getTimeEndEnd() != null) {
-            Predicate timeEndEnd = cb.lessThan(from.get("timeEnd"), pageFilter.getTimeEndEnd());
-            predicates.add(timeEndEnd);
+        if (pageFilter.getCreateDateEnd() != null) {
+            sqlParams.put("create_date_end", "create_date <= :create_date_end");
+            params.put("create_date_end", pageFilter.getCreateDateEnd());
         }
 
-        if(pageFilter.getCreateDateBegin() != null) {
-            Predicate createDateBegin = cb.greaterThan(from.get("createDate"), pageFilter.getCreateDateBegin());
-            predicates.add(createDateBegin);
+        if (pageFilter.getChangedBy() != null) {
+            sqlParams.put("changed_by", "changed_by = :changed_by");
+            params.put("changed_by", pageFilter.getChangedBy());
         }
 
-        if(pageFilter.getCreateDateEnd() != null) {
-            Predicate createDateEnd = cb.lessThan(from.get("createDate"), pageFilter.getCreateDateEnd());
-            predicates.add(createDateEnd);
+        if (pageFilter.getChangeDateBegin() != null) {
+            sqlParams.put("change_date_begin", "change_date >= :change_date_begin");
+            params.put("change_date_begin", pageFilter.getChangeDateBegin());
         }
 
-        if(pageFilter.getChangeDateBegin() != null) {
-            Predicate changeDateBegin = cb.greaterThan(from.get("changeDate"), pageFilter.getChangeDateBegin());
-            predicates.add(changeDateBegin);
+        if (pageFilter.getChangeDateEnd() != null) {
+            sqlParams.put("change_date_end", "change_date <= :change_date_end");
+            params.put("change_date_end", pageFilter.getChangeDateEnd());
         }
 
-        if(pageFilter.getChangeDateEnd() != null) {
-            Predicate changeDateEnd = cb.lessThan(from.get("changeDate"), pageFilter.getChangeDateEnd());
-            predicates.add(changeDateEnd);
+        if (pageFilter.getDeleted() != null) {
+            sqlParams.put("deleted", "deleted = :deleted");
+            params.put("deleted", pageFilter.getDeleted());
         }
 
-        cq.select(from).where(cb.and(predicates.toArray(Predicate[]::new)));
-        TypedQuery<Page> q = entityManager.createQuery(cq);
+        if(!sqlParams.isEmpty()) {
+            sql.append(" WHERE ");
 
-        // set limit
-        if(pageFilter.getLimit() != null)
-            q.setMaxResults(pageFilter.getLimit());
+            for(Map.Entry<String, String> entry : sqlParams.entrySet()) {
+                sql.append(entry.getValue());
 
-        // set start position
-        if(pageFilter.getStart() != null)
-            q.setFirstResult(pageFilter.getStart());
+                if(!entry.equals(sqlParams.entrySet().toArray()[sqlParams.size() - 1]))
+                    sql.append(" AND ");
+            }
+        }
 
-        // get result
-        return q.getResultList();
+        if(pageFilter.getLimit() != null && pageFilter.getStart() != null) {
+            params.put("limit", pageFilter.getLimit());
+            params.put("start", pageFilter.getStart());
+            sql.append(" LIMIT :start, :limit");
+        } else if(pageFilter.getLimit() != null) {
+            params.put("limit", pageFilter.getLimit());
+            sql.append(" LIMIT :limit");
+        } else if(pageFilter.getStart() != null) {
+            params.put("start", pageFilter.getStart());
+            sql.append(" LIMIT :start, 18446744073709551615");
+        }
+
+        return jdbcClient.sql(sql.toString())
+                .params(params)
+                .query(Page.class)
+                .list();
     }
 
     /**
      * find page by given id
      *
-     * @param id
+     * @param pageId
      * @return
      */
     @Override
-    public Page findById(Integer id) {
-        return findEntityById(id);
-    }
-
-    /**
-     * find page entity by given id
-     * @param id page id
-     */
-    private Page findEntityById(Integer id) {
-        return entityManager.find(Page.class, id);
-    }
-
-    /**
-     * check if page exists
-     *
-     * @param page page to check
-     */
-    @Override
-    public boolean isPageExist(Page page) {
-        boolean found = false;
-
-        List<Page> pageEntities = entityManager.createQuery(
-                "SELECT p FROM Page p WHERE p.id = :id",
-                Page.class)
-                .setParameter("id", page.getId())
-                .getResultList();
-
-        if(pageEntities.size() == 1)
-            found = true;
-
-        return found;
+    public Page findById(PageId pageId) {
+        return jdbcClient.sql("""
+                SELECT 
+                    id as pageId,
+                    parent,
+                    name,
+                    subtitle,
+                    description,
+                    tooltip,
+                    icon,
+                    alias,
+                    content_collapse,
+                    content_position,
+                    show_content_description,
+                    show_table_of_content,
+                    sorting,
+                    time_start,
+                    time_end,
+                    active,
+                    created_by,
+                    create_date,
+                    changed_by,
+                    change_date,
+                    active,
+                    deleted
+                FROM 
+                    page 
+                WHERE 
+                    id = :id
+                """)
+                .param("id", pageId.value())
+                .query(Page.class)
+                .single();
     }
 
     /**
@@ -225,7 +264,59 @@ public class PageImpl implements PageDao {
      */
     @Override
     public void createPage(Page page) {
-        entityManager.persist(page);
+        int update = jdbcClient.sql("""
+                INSERT INTO page (
+                    id,
+                    parent,
+                    name,
+                    subtitle,
+                    description,
+                    tooltip,
+                    icon,
+                    alias,
+                    content_collapse,
+                    content_position,
+                    show_content_description,
+                    show_table_of_content,
+                    sorting,
+                    time_start,
+                    time_end,
+                    active,
+                    created_by,
+                    create_date,
+                    changed_by,
+                    change_date,
+                    deleted
+                ) VALUES (
+                    ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+                )
+                """)
+                .params(
+                        page.getPageId().value(),
+                        page.getParent(),
+                        page.getName(),
+                        page.getSubtitle(),
+                        page.getDescription(),
+                        page.getTooltip(),
+                        page.getIcon(),
+                        page.getAlias(),
+                        page.getContentCollapse(),
+                        page.getContentPosition(),
+                        page.getShowContentDescription(),
+                        page.getShowTableOfContent(),
+                        page.getSorting(),
+                        page.getTimeStart(),
+                        page.getTimeEnd(),
+                        page.getActive(),
+                        page.getCreatedBy(),
+                        page.getCreateDate(),
+                        page.getChangedBy(),
+                        page.getChangeDate(),
+                        page.getDeleted()
+                )
+                .update();
+
+        Assert.state(update == 1, "Failed to create page: " + page.getName());
     }
 
     /**
@@ -235,8 +326,57 @@ public class PageImpl implements PageDao {
      */
     @Override
     public void updatePage(Page page) {
-        // save to database
-        entityManager.merge(page);
+        int update = jdbcClient.sql("""
+                UPDATE page SET
+                    parent = ?,
+                    name = ?,
+                    subtitle = ?,
+                    description = ?,
+                    tooltip = ?,
+                    icon = ?,
+                    alias = ?,
+                    content_collapse = ?,
+                    content_position = ?,
+                    show_content_description = ?,
+                    show_table_of_content = ?,
+                    sorting = ?,
+                    time_start = ?,
+                    time_end = ?,
+                    active = ?,
+                    created_by = ?,
+                    create_date = ?,
+                    changed_by = ?,
+                    change_date = ?,
+                    deleted = ?
+                WHERE
+                    id = ?
+                """)
+                .params(
+                        page.getParent(),
+                        page.getName(),
+                        page.getSubtitle(),
+                        page.getDescription(),
+                        page.getTooltip(),
+                        page.getIcon(),
+                        page.getAlias(),
+                        page.getContentCollapse(),
+                        page.getContentPosition(),
+                        page.getShowContentDescription(),
+                        page.getShowTableOfContent(),
+                        page.getSorting(),
+                        page.getTimeStart(),
+                        page.getTimeEnd(),
+                        page.getActive(),
+                        page.getCreatedBy(),
+                        page.getCreateDate(),
+                        page.getChangedBy(),
+                        page.getChangeDate(),
+                        page.getDeleted(),
+                        page.getPageId().value()
+                )
+                .update();
+
+        Assert.state(update == 1, "Failed to update page: " + page.getName());
     }
 
     /**
@@ -244,18 +384,18 @@ public class PageImpl implements PageDao {
      */
     @Override
     public void deleteAllPages() {
-        entityManager.createQuery("DELETE FROM Page").executeUpdate();
+        jdbcClient.sql("delete from page").update();
     }
 
     /**
      * delete page by given id
      *
-     * @param id page id
+     * @param pageId page id
      */
     @Override
-    public void deletePageById(Integer id) {
-        entityManager.createQuery("DELETE FROM Page p WHERE p.id = :id")
-                .setParameter("id", id)
-                .executeUpdate();
+    public void deletePageById(PageId pageId) {
+        jdbcClient.sql("delete from page where id = :id")
+                .param("id", pageId.value())
+                .update();
     }
 }

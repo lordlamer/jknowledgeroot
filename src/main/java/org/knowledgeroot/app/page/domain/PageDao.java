@@ -1,8 +1,5 @@
 package org.knowledgeroot.app.page.domain;
 
-import org.knowledgeroot.app.page.api.PageFilter;
-import org.knowledgeroot.app.page.db.Page;
-
 import java.util.List;
 
 public interface PageDao {
@@ -14,17 +11,10 @@ public interface PageDao {
 
     /**
      * find page by given id
-     * @param id
+     * @param pageId
      * @return
      */
-    Page findById(Integer id);
-
-    /**
-     * check if page exists
-     * @param page
-     * @return
-     */
-    boolean isPageExist(Page page);
+    Page findById(PageId pageId);
 
     /**
      * create page from domain object
@@ -45,7 +35,7 @@ public interface PageDao {
 
     /**
      * delete page by given id
-     * @param id
+     * @param pageId
      */
-    void deletePageById(Integer id);
+    void deletePageById(PageId pageId);
 }

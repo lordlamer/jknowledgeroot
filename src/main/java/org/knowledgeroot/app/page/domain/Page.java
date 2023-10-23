@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 public class Page {
-    private Integer id;
+    private PageId pageId;
     private Integer parent;
     private String name;
     private String subtitle;

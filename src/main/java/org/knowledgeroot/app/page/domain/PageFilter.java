@@ -1,4 +1,4 @@
-package org.knowledgeroot.app.page.api;
+package org.knowledgeroot.app.page.domain;
 
 import lombok.*;
 

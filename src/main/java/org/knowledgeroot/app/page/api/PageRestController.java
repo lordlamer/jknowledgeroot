@@ -2,8 +2,10 @@ package org.knowledgeroot.app.page.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.knowledgeroot.app.page.db.Page;
+import org.knowledgeroot.app.page.domain.Page;
 import org.knowledgeroot.app.page.domain.PageDao;
+import org.knowledgeroot.app.page.domain.PageFilter;
+import org.knowledgeroot.app.page.domain.PageId;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -134,7 +136,7 @@ public class PageRestController {
      */
     @RequestMapping(value = "/page/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PageDto> getPage(@PathVariable("id") Integer id) {
-        Page page = pageImpl.findById(id);
+        Page page = pageImpl.findById(new PageId(id));
 
         PageDto pageDto = pageDtoConverter.convertAtoB(page);
 
@@ -155,14 +157,10 @@ public class PageRestController {
 
         Page page = pageDtoConverter.convertBtoA(pageDto);
 
-        if (pageImpl.isPageExist(page)) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
-        }
-
         pageImpl.createPage(page);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(ucBuilder.path("/page/{id}").buildAndExpand(page.getId()).toUri());
+        headers.setLocation(ucBuilder.path("/page/{id}").buildAndExpand(page.getPageId().value()).toUri());
 
         return new ResponseEntity<>(headers, HttpStatus.CREATED);
     }
@@ -178,7 +176,7 @@ public class PageRestController {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
-        Page currentPage = pageImpl.findById(id);
+        Page currentPage = pageImpl.findById(new PageId(id));
 
         if (currentPage==null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -197,13 +195,13 @@ public class PageRestController {
      */
     @RequestMapping(value = "/page/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<PageDto> deletePage(@PathVariable("id") Integer id) {
-        Page page = pageImpl.findById(id);
+        Page page = pageImpl.findById(new PageId(id));
 
         if (page == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        pageImpl.deletePageById(id);
+        pageImpl.deletePageById(new PageId(id));
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

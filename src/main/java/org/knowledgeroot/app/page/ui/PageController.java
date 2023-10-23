@@ -2,12 +2,13 @@ package org.knowledgeroot.app.page.ui;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.knowledgeroot.app.content.domain.ContentFilter;
 import org.knowledgeroot.app.content.domain.ContentDao;
+import org.knowledgeroot.app.content.domain.ContentFilter;
 import org.knowledgeroot.app.page.api.PageDto;
 import org.knowledgeroot.app.page.api.PageDtoConverter;
-import org.knowledgeroot.app.page.db.Page;
+import org.knowledgeroot.app.page.domain.Page;
 import org.knowledgeroot.app.page.domain.PageDao;
+import org.knowledgeroot.app.page.domain.PageId;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -34,7 +35,7 @@ public class PageController {
             Model model,
             HttpServletResponse response
     ) {
-        model.addAttribute("page", pageImpl.findById(pageId));
+        model.addAttribute("page", pageImpl.findById(new PageId(pageId)));
 
         ContentFilter contentFilter = new ContentFilter();
         contentFilter.setParent(pageId);
@@ -54,7 +55,7 @@ public class PageController {
             Model model,
             HttpServletResponse response
     ) {
-        model.addAttribute("page", pageImpl.findById(pageId));
+        model.addAttribute("page", pageImpl.findById(new PageId(pageId)));
 
         // trigger reload sidebar
         if(trigger != null && trigger.equals("reload-sidebar"))
@@ -90,7 +91,7 @@ public class PageController {
         Page page = pageDtoConverter.convertBtoA(pageDto);
         pageImpl.updatePage(page);
 
-        return new ModelAndView("redirect:/ui/page/" + page.getId() + "?trigger=reload-sidebar");
+        return new ModelAndView("redirect:/ui/page/" + page.getPageId().value() + "?trigger=reload-sidebar");
     }
 
     @PostMapping("/ui/page/new")
@@ -116,12 +117,12 @@ public class PageController {
         Page page = pageDtoConverter.convertBtoA(pageDto);
         pageImpl.createPage(page);
 
-        return new ModelAndView("redirect:/ui/page/" + page.getId() + "?trigger=reload-sidebar");
+        return new ModelAndView("redirect:/ui/page/" + page.getPageId().value() + "?trigger=reload-sidebar");
     }
 
     @DeleteMapping("/ui/page/{pageId}")
     public ModelAndView deletePage(@PathVariable("pageId") Integer pageId) {
-        pageImpl.deletePageById(pageId);
+        pageImpl.deletePageById(new PageId(pageId));
 
         return new ModelAndView("redirect:/ui/welcome?trigger=reload-sidebar");
     }

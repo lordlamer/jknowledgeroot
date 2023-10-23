@@ -3,10 +3,12 @@ package org.knowledgeroot.app.content.domain;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Getter
+@Setter
 @Builder
 public class Content {
     private ContentId contentId;

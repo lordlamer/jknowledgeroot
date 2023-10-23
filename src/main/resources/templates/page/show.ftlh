@@ -6,14 +6,14 @@
     </ol>
 </nav>
 
-<div hx-trigger="reload-page from:body" hx-get="/ui/page/${page.id}" hx-target="#content"></div>
+<div hx-trigger="reload-page from:body" hx-get="/ui/page/${page.pageId}" hx-target="#content"></div>
 
 <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
     <button type="button" class="btn btn-outline-secondary">add new page</button>
-    <button type="button" class="btn btn-outline-secondary" hx-get="/ui/page/${page.id}/edit" hx-trigger="click" hx-target="#content" hx-push-url="true">edit page</button>
+    <button type="button" class="btn btn-outline-secondary" hx-get="/ui/page/${page.pageId}/edit" hx-trigger="click" hx-target="#content" hx-push-url="true">edit page</button>
     <button type="button" class="btn btn-outline-secondary">move page</button>
-    <button type="button" class="btn btn-outline-secondary" hx-delete="/ui/page/${page.id}" hx-trigger="click" hx-target="#content" hx-confirm="Are you sure?">delete page</button>
-    <button type="button" class="btn btn-outline-secondary" hx-get="/ui/page/${page.id}/content/new" hx-trigger="click" hx-target="#content" hx-push-url="true">add new content</button>
+    <button type="button" class="btn btn-outline-secondary" hx-delete="/ui/page/${page.pageId}" hx-trigger="click" hx-target="#content" hx-confirm="Are you sure?">delete page</button>
+    <button type="button" class="btn btn-outline-secondary" hx-get="/ui/page/${page.pageId}/content/new" hx-trigger="click" hx-target="#content" hx-push-url="true">add new content</button>
 </div>
 
 <h1>${page.name}</h1>
@@ -33,8 +33,8 @@
     <div class="collapse show" id="content-${content.contentId}">
         <div class="card-body">
             <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
-                <button type="button" class="btn btn-outline-secondary" hx-get="/ui/page/${page.id}/content/${content.contentId}/edit" hx-trigger="click" hx-push-url="true">edit</button>
-                <button type="button" class="btn btn-outline-secondary" hx-delete="/ui/page/${page.id}/content/${content.contentId}" hx-trigger="click" hx-target="#content" hx-confirm="Are you sure?">delete</button>
+                <button type="button" class="btn btn-outline-secondary" hx-get="/ui/page/${page.pageId}/content/${content.contentId}/edit" hx-trigger="click" hx-push-url="true">edit</button>
+                <button type="button" class="btn btn-outline-secondary" hx-delete="/ui/page/${page.pageId}/content/${content.contentId}" hx-trigger="click" hx-target="#content" hx-confirm="Are you sure?">delete</button>
                 <button type="button" class="btn btn-outline-secondary">move</button>
                 <button type="button" class="btn btn-outline-secondary">print</button>
                 <button type="button" class="btn btn-outline-secondary">add file</button>

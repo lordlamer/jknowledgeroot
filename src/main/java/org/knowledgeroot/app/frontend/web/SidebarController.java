@@ -1,9 +1,10 @@
 package org.knowledgeroot.app.frontend.web;
 
 import lombok.RequiredArgsConstructor;
-import org.knowledgeroot.app.page.api.PageFilter;
-import org.knowledgeroot.app.page.db.Page;
+import org.knowledgeroot.app.page.domain.Page;
 import org.knowledgeroot.app.page.domain.PageDao;
+import org.knowledgeroot.app.page.domain.PageFilter;
+import org.knowledgeroot.app.page.domain.PageId;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,7 +28,13 @@ class SidebarController {
         List<Page> pages = pageImpl.listPages(pageFilter);
 
         model.addAttribute("parentId", parent);
-        model.addAttribute("parentPage", pageImpl.findById(parent));
+
+        if(parent == 0) {
+            model.addAttribute("parentPage", null);
+        } else {
+            model.addAttribute("parentPage", pageImpl.findById(new PageId(parent)));
+        }
+
         model.addAttribute("pages", pages);
 
         return "sidebar";

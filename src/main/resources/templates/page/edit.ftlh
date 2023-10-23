@@ -1,4 +1,4 @@
-<form hx-post="/ui/page/${page.id}/edit" hx-target="#content">
+<form hx-post="/ui/page/${page.pageId}/edit" hx-target="#content">
     <div class="card" style="margin-bottom: 20px;">
         <div class="card-header">
             <ul class="nav nav-tabs card-header-tabs">
