@@ -16,6 +16,14 @@
                  stripComments="true"/>
     </changeSet>
 
+    <changeSet id="1.0.0-baseline-demo" author="lordlamer" context="development">
+        <sqlFile path="baseline/liquibase.${db.name}.create.demo.data.sql"
+                 encoding="UTF-8"
+                 relativeToChangelogFile="true"
+                 splitStatements="true"
+                 stripComments="true"/>
+    </changeSet>
+
     <changeSet id="1.0.0-tag" author="lordlamer">
         <tagDatabase tag="1.0.0"/>
     </changeSet>
