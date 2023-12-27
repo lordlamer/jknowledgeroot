@@ -266,7 +266,6 @@ public class PageImpl implements PageDao {
     public void createPage(Page page) {
         int update = jdbcClient.sql("""
                 INSERT INTO page (
-                    id,
                     parent,
                     name,
                     subtitle,
@@ -288,11 +287,10 @@ public class PageImpl implements PageDao {
                     change_date,
                     deleted
                 ) VALUES (
-                    ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+                    ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
                 )
                 """)
                 .params(
-                        page.getPageId().value(),
                         page.getParent(),
                         page.getName(),
                         page.getSubtitle(),

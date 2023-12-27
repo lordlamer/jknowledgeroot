@@ -9,7 +9,7 @@
 <div hx-trigger="reload-page from:body" hx-get="/ui/page/${page.pageId}" hx-target="#content"></div>
 
 <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
-    <button type="button" class="btn btn-outline-secondary">add new page</button>
+    <button type="button" class="btn btn-outline-secondary" hx-get="/ui/page/${page.pageId}/new" hx-trigger="click" hx-target="#content" hx-push-url="true">add new page</button>
     <button type="button" class="btn btn-outline-secondary" hx-get="/ui/page/${page.pageId}/edit" hx-trigger="click" hx-target="#content" hx-push-url="true">edit page</button>
     <button type="button" class="btn btn-outline-secondary">move page</button>
     <button type="button" class="btn btn-outline-secondary" hx-delete="/ui/page/${page.pageId}" hx-trigger="click" hx-target="#content" hx-confirm="Are you sure?">delete page</button>

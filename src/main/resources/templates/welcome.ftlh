@@ -6,3 +6,20 @@
         <button class="btn btn-primary btn-lg" type="button" hx-get="/ui/page/new" hx-target="#content">Create a Page</button>
     </div>
 </div>
+
+<div hx-ext="client-side-templates">
+    <button hx-get="http://localhost:8081/page"
+            hx-swap="innerHTML"
+            hx-target="#tester"
+            mustache-array-template="foo">
+        Click Me
+    </button>
+
+    <p id="tester">Start</p>
+
+    <template id="foo">
+        {{#data}}
+        <p> {{id}} at {{name}} is with {{createDate}}</p>
+        {{/data}}
+    </template>
+</div>

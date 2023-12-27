@@ -38,7 +38,7 @@ public class PageDtoConverter implements Converter<Page, PageDto> {
     @Override
     public Page convertBtoA(PageDto from) {
         return Page.builder()
-                .pageId(new PageId(from.getId()))
+                .pageId(from.getId() == null ? null : new PageId(from.getId()))
                 .active(from.getActive())
                 .name(from.getName())
                 .parent(from.getParent())

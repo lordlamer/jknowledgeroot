@@ -64,6 +64,22 @@ public class PageController {
         return "page/edit";
     }
 
+    @GetMapping("/ui/page/{pageId}/new")
+    public String showNewPage(
+            @PathVariable("pageId") Integer pageId,
+            @RequestParam(name = "trigger", required = false) String trigger,
+            Model model,
+            HttpServletResponse response
+    ) {
+        model.addAttribute("page", pageImpl.findById(new PageId(pageId)));
+
+        // trigger reload sidebar
+        if(trigger != null && trigger.equals("reload-sidebar"))
+            response.addHeader("HX-Trigger", "reload-sidebar");
+
+        return "page/new";
+    }
+
     @PostMapping("/ui/page/{pageId}/edit")
     public ModelAndView editPage(
             @PathVariable("pageId") Integer pageId,
@@ -97,9 +113,9 @@ public class PageController {
     @PostMapping("/ui/page/new")
     public ModelAndView createNewPage(@ModelAttribute PageDto pageDto) {
         pageDto.setCreateDate(LocalDateTime.now());
-        pageDto.setCreatedBy(0);
+        pageDto.setCreatedBy(1);
         pageDto.setChangeDate(LocalDateTime.now());
-        pageDto.setChangedBy(0);
+        pageDto.setChangedBy(1);
         pageDto.setActive(true);
         pageDto.setAlias("");
         pageDto.setTimeStart(LocalDateTime.now());
@@ -108,7 +124,10 @@ public class PageController {
         pageDto.setContentPosition("end");
         pageDto.setDeleted(false);
         pageDto.setIcon("");
-        pageDto.setParent(0);
+
+        if(pageDto.getParent() == null)
+            pageDto.setParent(0);
+
         pageDto.setShowContentDescription(true);
         pageDto.setShowTableOfContent(true);
         pageDto.setSorting(0);
@@ -117,7 +136,10 @@ public class PageController {
         Page page = pageDtoConverter.convertBtoA(pageDto);
         pageImpl.createPage(page);
 
-        return new ModelAndView("redirect:/ui/page/" + page.getPageId().value() + "?trigger=reload-sidebar");
+        if(page.getParent() != null && page.getParent() > 0)
+            return new ModelAndView("redirect:/ui/page/" + page.getParent() + "?trigger=reload-sidebar");
+        else
+            return new ModelAndView("redirect:/?trigger=reload-sidebar");
     }
 
     @DeleteMapping("/ui/page/{pageId}")

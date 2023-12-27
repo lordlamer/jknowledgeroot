@@ -15,6 +15,13 @@
         </div>
         <div class="card-body">
             <p class="card-text">
+                <#if page??>
+                <div class="mb-3">
+                    <label for="page-name" class="form-label">Parent</label>
+                    <input type="text" class="form-control" id="page-name" value="${page.name}" readonly>
+                    <input type="hidden" name="parent" value="${page.pageId}">
+                </div>
+                </#if>
                 <div class="mb-3">
                     <label for="page-name" class="form-label">Name</label>
                     <input type="text" class="form-control" id="page-name" name="name">
