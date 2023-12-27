@@ -8,7 +8,13 @@
     <meta name="author" content="Knowledgeroot Team">
 
     <!-- htmx -->
-    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.9"></script>
+
+    <!-- htmx extensions -->
+    <script src="https://unpkg.com/htmx.org/dist/ext/client-side-templates.js"></script>
+
+    <!-- mustache -->
+    <script src="https://unpkg.com/mustache@latest"></script>
 
     <!-- jQuery -->
     <!--
