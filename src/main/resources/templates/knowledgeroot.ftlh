@@ -59,19 +59,19 @@
             flex-wrap: nowrap;
             height: 100vh;
             height: -webkit-fill-available;
-            max-height: 100vh;
+            //max-height: 100vh;
             overflow-x: auto;
-            overflow-y: hidden;
+            //overflow-y: hidden;
         }
 
         .main {
+            flex: 1 1 auto;
             display: flex;
             flex-wrap: nowrap;
-            height: 100vh;
-            height: -webkit-fill-available;
-            max-height: 100vh;
+            height: 100%;
+            //max-height: 100vh;
             overflow-x: auto;
-            overflow-y: visible;
+            //overflow-y: hidden;
         }
 
     </style>
