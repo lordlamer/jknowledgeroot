@@ -43,8 +43,8 @@ class ContentController {
         contentDto.setActive(true);
         contentDto.setCreateDate(LocalDateTime.now());
         contentDto.setChangeDate(LocalDateTime.now());
-        contentDto.setCreatedBy(0);
-        contentDto.setChangedBy(0);
+        contentDto.setCreatedBy(1);
+        contentDto.setChangedBy(1);
         contentDto.setParent(pageId);
         contentDto.setDeleted(false);
         contentDto.setSorting(1);

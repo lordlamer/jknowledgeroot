@@ -30,7 +30,7 @@ public class ContentDtoConverter implements Converter<Content, ContentDto> {
     @Override
     public Content convertBtoA(ContentDto from) {
         return Content.builder()
-                .contentId(new ContentId(from.getId()))
+                .contentId(from.getId() != null ? new ContentId(from.getId()) : null)
                 .content(from.getContent())
                 .active(from.getActive())
                 .parent(from.getParent())
