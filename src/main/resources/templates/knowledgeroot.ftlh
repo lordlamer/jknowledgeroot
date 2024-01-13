@@ -58,7 +58,7 @@
             height: 100vh;
             height: -webkit-fill-available;
             //max-height: 100vh;
-            overflow-x: auto;
+            //overflow-x: auto;
             //overflow-y: hidden;
         }
 
@@ -136,7 +136,7 @@
 
         </div>
 
-        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+        <main role="main" class="col-md-9" style="margin-bottom: 20px;">
             <div class="" style="padding-top: 20px;" id="content" hx-get="/ui/welcome" hx-trigger="load" hx-target="#content">
 
             </div>
