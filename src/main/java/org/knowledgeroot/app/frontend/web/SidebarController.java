@@ -17,8 +17,20 @@ import java.util.List;
 class SidebarController {
     private final PageDao pageImpl;
 
+    /**
+     * Show sidebar
+     *
+     * @param model
+     * @param parent
+     * @param pageId
+     * @return
+     */
     @RequestMapping("/ui/sidebar")
-    public String index(Model model, @RequestParam(name = "parent", required = false) Integer parent) {
+    public String index(
+            Model model,
+            @RequestParam(name = "parent", required = false) Integer parent,
+            @RequestParam(name = "singlePage", required = false) Integer singlePage
+    ) {
         if(parent == null)
             parent = 0;
 
@@ -31,6 +43,11 @@ class SidebarController {
 
         if(parent == 0) {
             model.addAttribute("parentPage", null);
+            if(singlePage != null) {
+                model.addAttribute("singlePage", pageImpl.findById(new PageId(singlePage)));
+            } else {
+                model.addAttribute("singlePage", null);
+            }
         } else {
             model.addAttribute("parentPage", pageImpl.findById(new PageId(parent)));
         }

@@ -8,7 +8,7 @@
     <meta name="author" content="Knowledgeroot Team">
 
     <!-- htmx -->
-    <script src="https://unpkg.com/htmx.org@1.9.9"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
     <!-- htmx extensions -->
     <script src="https://unpkg.com/htmx.org/dist/ext/client-side-templates.js"></script>
@@ -17,9 +17,7 @@
     <script src="https://unpkg.com/mustache@latest"></script>
 
     <!-- jQuery -->
-    <!--
     <script src="webjars/jquery/jquery.min.js"></script>
-    -->
 
     <!-- Bootstrap -->
     <link rel="stylesheet" href="webjars/bootstrap/css/bootstrap.min.css">
@@ -77,7 +75,7 @@
     </style>
 
 </head>
-<body>
+<body cds-theme="light">
 <!-- https://cssgradient.io/ -->
 <nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-dark" style="background-image: linear-gradient(15deg, #13547a 0%, #80d0c7 100%)" x-style="background: rgb(181,28,103); background: linear-gradient(90deg, rgba(181,28,103,1) 0%, rgba(181,28,103,1) 39%, rgba(0,168,255,1) 100%);" aria-label="Main navigation">
     <div class="container-fluid">
@@ -136,14 +134,12 @@
 
         <div class="flex-shrink-0 p-3 bg-white" style="width: 280px;" id="sidebar" hx-get="/ui/sidebar" hx-trigger="load, reload-sidebar from:body" hx-target="#sidebar">
 
-
         </div>
-
 
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
             <div class="" style="padding-top: 20px;" id="content" hx-get="/ui/welcome" hx-trigger="load" hx-target="#content">
 
-            </div><!--/span-->
+            </div>
         </main>
     </div>
 </div>
