@@ -326,7 +326,6 @@ public class PageImpl implements PageDao {
     public void updatePage(Page page) {
         int update = jdbcClient.sql("""
                 UPDATE page SET
-                    parent = ?,
                     name = ?,
                     subtitle = ?,
                     description = ?,
@@ -341,8 +340,6 @@ public class PageImpl implements PageDao {
                     time_start = ?,
                     time_end = ?,
                     active = ?,
-                    created_by = ?,
-                    create_date = ?,
                     changed_by = ?,
                     change_date = ?,
                     deleted = ?
@@ -350,7 +347,6 @@ public class PageImpl implements PageDao {
                     id = ?
                 """)
                 .params(
-                        page.getParent(),
                         page.getName(),
                         page.getSubtitle(),
                         page.getDescription(),
@@ -365,8 +361,6 @@ public class PageImpl implements PageDao {
                         page.getTimeStart(),
                         page.getTimeEnd(),
                         page.getActive(),
-                        page.getCreatedBy(),
-                        page.getCreateDate(),
                         page.getChangedBy(),
                         page.getChangeDate(),
                         page.getDeleted(),

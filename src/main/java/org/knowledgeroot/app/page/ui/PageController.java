@@ -86,10 +86,8 @@ public class PageController {
             @ModelAttribute PageDto pageDto
     ) {
         pageDto.setId(pageId);
-        pageDto.setCreateDate(LocalDateTime.now());
-        pageDto.setCreatedBy(0);
         pageDto.setChangeDate(LocalDateTime.now());
-        pageDto.setChangedBy(0);
+        pageDto.setChangedBy(1);
         pageDto.setActive(true);
         pageDto.setAlias("");
         pageDto.setTimeStart(LocalDateTime.now());
@@ -98,7 +96,7 @@ public class PageController {
         pageDto.setContentPosition("end");
         pageDto.setDeleted(false);
         pageDto.setIcon("");
-        pageDto.setParent(0);
+        pageDto.setParent(null);
         pageDto.setShowContentDescription(true);
         pageDto.setShowTableOfContent(true);
         pageDto.setSorting(0);
