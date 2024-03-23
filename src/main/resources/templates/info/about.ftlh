@@ -5,13 +5,13 @@
     <div class="card-body">
         <h5 class="card-title">Knowledgeroot Knowledgebase</h5>
 
-        <p class="card-text">Version: 2.0 (20220103)</p>
+        <p class="card-text">Version: 2.0 (2024-dev)</p>
         <p class="card-text">Homepage: <a href="http://www.knowledgeroot.org" target="_blank">http://www.knowledgeroot.org</a></p>
 
         <h3>License</h3>
         <hr>
         <pre>
-Copyright (c) 2022, Frank Habermann <lordlamer@lordlamer.de>
+Copyright (c) 2024, Frank Habermann <lordlamer@lordlamer.de>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
