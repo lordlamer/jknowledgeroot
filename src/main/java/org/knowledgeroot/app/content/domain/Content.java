@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import org.knowledgeroot.app.sanitizer.Sanitizer;
 
 import java.time.LocalDateTime;
 
@@ -28,5 +29,16 @@ public class Content {
     private Integer changedBy;
     private LocalDateTime changeDate;
     private Boolean deleted;
+
+    public void setContent(String content) {
+        this.content = Sanitizer.sanitize(content);
+    }
+
+    public static class ContentBuilder {
+        public ContentBuilder content(String content) {
+            this.content = Sanitizer.sanitize(content);
+            return this;
+        }
+    }
 }
 
