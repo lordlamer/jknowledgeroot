@@ -26,6 +26,10 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
+    <!-- CKEditor -->
+    <script src="https://cdn.ckeditor.com/ckeditor5/41.2.1/classic/ckeditor.js"></script>
+    <!-- <script src="https://cdn.ckeditor.com/ckeditor5/41.2.1/super-build/ckeditor.js"></script> -->
+
     <!-- vuejs -->
     <!--
     <script src="https://unpkg.com/vue@next"></script>
@@ -121,8 +125,8 @@
                     </ul>
                 </li>
             </ul>
-            <form class="d-flex" hx-get="/search" hx-target="#content">
-                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+            <form class="d-flex" hx-get="/search" hx-target="#content" hx-push-url="true" method="get">
+                <input class="form-control me-2" type="text" name="q" placeholder="Search" aria-label="Search">
                 <button class="btn btn-outline-success" type="submit">Search</button>
             </form>
         </div>

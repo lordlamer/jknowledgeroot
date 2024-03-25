@@ -39,9 +39,11 @@
                 <button type="button" class="btn btn-outline-secondary">print</button>
                 <button type="button" class="btn btn-outline-secondary">add file</button>
             </div>
-            <p class="card-text">
+            <div class="card-text">
+                <#noautoesc>
                 ${content.content}
-            </p>
+                </#noautoesc>
+            </div>
 
             <ul class="list-group">
                 <li class="list-group-item list-group-item-light">
