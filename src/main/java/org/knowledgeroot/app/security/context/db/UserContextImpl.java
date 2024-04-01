@@ -16,7 +16,7 @@ class UserContextImpl implements UserContextDao {
 
     @Override
     public UserDetails getUserDetails(String name) {
-        return jdbcClient.sql("SELECT * FROM user WHERE login = :login")
+        return jdbcClient.sql("SELECT * FROM user WHERE login = :login AND active = 1 AND deleted = 0")
                 .param("login", name)
                 .query((rs, rowNum) -> UserDetails.builder()
                         .userId(rs.getString("id"))
@@ -24,7 +24,7 @@ class UserContextImpl implements UserContextDao {
                         .email(rs.getString("email"))
                         .firstName(rs.getString("first_name"))
                         .surName(rs.getString("last_name"))
-                        .role(UserDetails.Role.ADMIN)
+                        .role(rs.getBoolean("admin") ? UserDetails.Role.ADMIN : UserDetails.Role.USER)
                         .language(rs.getString("language"))
                         .build()
                 ).optional().orElseThrow(() -> new UserNotFoundException("User not found"));

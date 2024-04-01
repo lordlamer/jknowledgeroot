@@ -1,8 +1,11 @@
 -- Dump for Postgresql with demo data
 
 -- user
-INSERT INTO `user` (first_name, last_name, login, email, password, language, timezone, active, created_by, create_date, changed_by, change_date, deleted)
-VALUES ('knowledgeroot', 'admin', 'admin', 'admin@localhost', '$2$1000$E556111996CF452E$B3EB80BC13DED8B02A2F09E505AED75737D4AF45D9A599623D39CD518771C306', 'en_US', 'Europe/Berlin', true, 0, '2012-10-01 22:00:00', 0, '2012-10-01 22:00:00', false);
+INSERT INTO `user` (first_name, last_name, login, email, password, admin, language, timezone, active, created_by, create_date, changed_by, change_date, deleted)
+VALUES ('knowledgeroot', 'admin', 'admin', 'admin@localhost', '$2$1000$E556111996CF452E$B3EB80BC13DED8B02A2F09E505AED75737D4AF45D9A599623D39CD518771C306', true, 'en_US', 'Europe/Berlin', true, 0, '2012-10-01 22:00:00', 0, '2012-10-01 22:00:00', false);
+
+INSERT INTO `user` (first_name, last_name, login, email, password, admin, language, timezone, active, created_by, create_date, changed_by, change_date, deleted)
+VALUES ('knowledgeroot', 'user', 'user', 'user@localhost', '$2$1000$E556111996CF452E$B3EB80BC13DED8B02A2F09E505AED75737D4AF45D9A599623D39CD518771C306', false, 'en_US', 'Europe/Berlin', true, 0, '2012-10-01 22:00:00', 0, '2012-10-01 22:00:00', false);
 
 -- group
 INSERT INTO `group` (name, description, active, created_by, create_date, changed_by, change_date, deleted)

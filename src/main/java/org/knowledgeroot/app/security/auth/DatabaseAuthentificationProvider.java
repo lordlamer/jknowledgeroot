@@ -48,13 +48,21 @@ public class DatabaseAuthentificationProvider implements AuthenticationProvider 
         if (PasswordHasher.verify(password, dbPassword)) {
             log.info("Login success for user: {}", login);
 
-            // build spring auth object for session
-            List<GrantedAuthority> grantedAuths = new ArrayList<>();
-            grantedAuths.add(new SimpleGrantedAuthority("ROLE_USER"));
-            grantedAuths.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-
             // get user details
             UserDetails userDetails = userContext.getUserContextForLogin(login);
+
+            // build spring auth object for session
+            List<GrantedAuthority> grantedAuths = new ArrayList<>();
+
+            // add admin role if user is admin
+            if(userDetails.isAdmin()) {
+                grantedAuths.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            }
+
+            // add user role if user is user or admin
+            if(userDetails.isUser() || userDetails.isAdmin()) {
+                grantedAuths.add(new SimpleGrantedAuthority("ROLE_USER"));
+            }
 
             // create auth object
             userAuth = new KnowledgerootUserToken(userDetails, grantedAuths);
