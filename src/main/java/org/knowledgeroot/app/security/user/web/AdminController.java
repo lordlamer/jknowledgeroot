@@ -1,4 +1,4 @@
-package org.knowledgeroot.app.security.user.ui;
+package org.knowledgeroot.app.security.user.web;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
