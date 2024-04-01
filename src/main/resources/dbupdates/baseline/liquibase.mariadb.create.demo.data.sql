@@ -2,7 +2,7 @@
 
 -- user
 INSERT INTO `user` (first_name, last_name, login, email, password, language, timezone, active, created_by, create_date, changed_by, change_date, deleted)
-VALUES ('knowledgeroot', 'admin', 'admin', 'admin@localhost', '$5$100$c4d60033$3997ea4e9be21d976ae54355c29a27f56a776607e8c3e7ad99a120d14a5ae9d69730e08595d0a0576bfd248d30c52aa6f9ed8e1581d307d469be3fe960325814', 'en_US', 'Europe/Berlin', true, 0, '2012-10-01 22:00:00', 0, '2012-10-01 22:00:00', false);
+VALUES ('knowledgeroot', 'admin', 'admin', 'admin@localhost', '$2$1000$E556111996CF452E$B3EB80BC13DED8B02A2F09E505AED75737D4AF45D9A599623D39CD518771C306', 'en_US', 'Europe/Berlin', true, 0, '2012-10-01 22:00:00', 0, '2012-10-01 22:00:00', false);
 
 -- group
 INSERT INTO `group` (name, description, active, created_by, create_date, changed_by, change_date, deleted)

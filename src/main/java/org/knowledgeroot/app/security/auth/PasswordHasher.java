@@ -47,7 +47,7 @@ public class PasswordHasher {
 	 *
 	 * @author fhabermann
 	 */
-	public static enum HASH_METHOD {
+	public enum HASH_METHOD {
 		SHA1("SHA-1"),
 		SHA256("SHA-256"),
 		SHA384("SHA-384"),
@@ -92,7 +92,7 @@ public class PasswordHasher {
 		 *
 		 * @return
 		 */
-		private final int indexOf() {
+		private int indexOf() {
 			return ordinal() + 1;
 		}
 

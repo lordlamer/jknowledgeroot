@@ -1,13 +1,33 @@
 package org.knowledgeroot.app.security.auth;
 
-//@Component
-//@Slf4j
-/*
-public class DatabaseAuthentificationProvider implements AuthenticationProvider {
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.knowledgeroot.app.security.context.domain.UserContext;
+import org.knowledgeroot.app.security.context.domain.UserDetails;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.stereotype.Component;
 
-    private static final String AUTH_SQL = "select `password` from `user` WHERE BINARY lower(`login`)=?";
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Database authentication provider
+ */
+@Component
+@Slf4j
+@RequiredArgsConstructor
+public class DatabaseAuthentificationProvider implements AuthenticationProvider {
+    private final JdbcTemplate jdbcTemplate;
+    private final UserContext userContext;
+
+    private static final String AUTH_SQL = "select `password` from `user` WHERE BINARY lower(`login`)=? AND active=1 AND deleted=0";
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
@@ -31,7 +51,13 @@ public class DatabaseAuthentificationProvider implements AuthenticationProvider 
             // build spring auth object for session
             List<GrantedAuthority> grantedAuths = new ArrayList<>();
             grantedAuths.add(new SimpleGrantedAuthority("ROLE_USER"));
-            userAuth = new UsernamePasswordAuthenticationToken(login, password, grantedAuths);
+            grantedAuths.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+
+            // get user details
+            UserDetails userDetails = userContext.getUserContextForLogin(login);
+
+            // create auth object
+            userAuth = new KnowledgerootUserToken(userDetails, grantedAuths);
         } else {
             log.info("Login failed for user: {}", login);
         }
@@ -44,4 +70,3 @@ public class DatabaseAuthentificationProvider implements AuthenticationProvider 
         return authentication.equals(UsernamePasswordAuthenticationToken.class);
     }
 }
- */

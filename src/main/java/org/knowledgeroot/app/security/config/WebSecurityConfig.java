@@ -1,5 +1,7 @@
 package org.knowledgeroot.app.security.config;
 
+import lombok.RequiredArgsConstructor;
+import org.knowledgeroot.app.security.auth.DatabaseAuthentificationProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,7 +12,10 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class WebSecurityConfig {
+    private final DatabaseAuthentificationProvider authProvider;
+
     @Bean
     protected SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         // configure login
@@ -38,36 +43,8 @@ public class WebSecurityConfig {
         ;
     }
 
-    //@Autowired
-    /*
-    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-        //auth.authenticationProvider(authProvider);
-
-        // memory auth
-        auth
-                .inMemoryAuthentication()
-                .withUser("user").password(passwordEncoder().encode("password")).roles("USER")
-                .and()
-                .withUser("admin").password(passwordEncoder().encode("password")).roles("ADMIN");
-*/
-
     @Autowired
-    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-        //auth.authenticationProvider(authProvider);
-
-        // memory auth
-        auth
-                .inMemoryAuthentication()
-                .withUser("user").password("{noop}password").roles("USER")
-                .and()
-                .withUser("admin").password("{noop}password").roles("ADMIN");
-
+    public void configureGlobal(AuthenticationManagerBuilder auth) {
+        auth.authenticationProvider(authProvider);
     }
-
-    /*
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-     */
 }
