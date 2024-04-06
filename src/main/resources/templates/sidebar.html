@@ -1,0 +1,44 @@
+<th:block th:if="${parentId == 0}">
+    <th:block th:if="${singlePage}">
+        <li class="list-group-item" style="border:0;" th:id="'nav-page-' + ${singlePage.pageId}">
+            <a href="javascript:;" th:attr="hx-get='/ui/sidebar?parent=' + ${singlePage.pageId}, hx-target='#nav-page-' + ${singlePage.pageId}, hx-swap='outerHTML'">
+                <span class="tree-indicator"></span><i class="bi bi-chevron-right"></i>
+            </a>
+            <a href="javascript:;" th:attr="hx-get='/ui/page/' + ${singlePage.pageId}, hx-target='#content', hx-push-url='true'" th:text="${singlePage.name}"></a>
+        </li>
+    </th:block>
+    <th:block th:unless="${singlePage}">
+        <ul class="list-group">
+            <li class="list-group-item" style="border:0;" th:each="page : ${pages}" th:id="'nav-page-' + ${page.pageId}">
+                <a href="javascript:;" th:attr="hx-get='/ui/sidebar?parent=' + ${page.pageId}, hx-target='#nav-page-' + ${page.pageId}, hx-swap='outerHTML'">
+                    <span class="tree-indicator"></span><i class="bi bi-chevron-right"></i>
+                </a>
+                <a href="javascript:;" th:attr="hx-get='/ui/page/' + ${page.pageId}, hx-target='#content', hx-push-url='true'" th:text="${page.name}"></a>
+            </li>
+        </ul>
+    </th:block>
+</th:block>
+
+<th:block th:unless="${parentId == 0}">
+    <li class="list-group-item" style="border:0;" th:id="'nav-page-' + ${parentPage.pageId}">
+        <th:block th:if="${parentPage.parent == 0}">
+            <a href="javascript:;" th:attr="hx-get='/ui/sidebar?singlePage=' + ${parentPage.pageId}, hx-target='#nav-page-' + ${parentPage.pageId}, hx-swap='outerHTML'">
+                <span class="tree-indicator"></span><i class="bi bi-chevron-down"></i>
+            </a>
+        </th:block>
+        <th:block th:unless="${parentPage.parent == 0}">
+            <a href="javascript:;" th:attr="hx-get='/ui/sidebar?parent=' + ${parentPage.parent}, hx-target='#nav-page-' + ${parentPage.parent}, hx-swap='outerHTML'">
+                <span class="tree-indicator"></span><i class="bi bi-chevron-down"></i>
+            </a>
+        </th:block>
+        <a href="javascript:;" th:attr="hx-get='/ui/page/' + ${parentPage.pageId}, hx-target='#content', hx-push-url='true'" th:text="${parentPage.name}"></a>
+        <ul class="tree-node" style="padding-left:0px;">
+            <li class="list-group-item" style="border:0;" th:each="page : ${pages}" th:id="'nav-page-' + ${page.pageId}">
+                <a href="javascript:;" th:attr="hx-get='/ui/sidebar?parent=' + ${page.pageId}, hx-target='#nav-page-' + ${page.pageId}, hx-swap='outerHTML'">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+                <a href="javascript:;" th:attr="hx-get='/ui/page/' + ${page.pageId}, hx-target='#content', hx-push-url='true'" th:text="${page.name}"></a>
+            </li>
+        </ul>
+    </li>
+</th:block>

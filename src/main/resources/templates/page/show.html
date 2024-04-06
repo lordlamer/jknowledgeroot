@@ -1,0 +1,59 @@
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#">Home</a></li>
+        <li class="breadcrumb-item"><a href="#">Library</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Data</li>
+    </ol>
+</nav>
+
+<div hx-trigger="reload-page from:body" th:hx-get="'/ui/page/' + ${page.pageId}" hx-target="#content"></div>
+
+<div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
+    <button type="button" class="btn btn-outline-secondary" th:hx-get="'/ui/page/' + ${page.pageId} + '/new'" hx-trigger="click" hx-target="#content" hx-push-url="true">add new page</button>
+    <button type="button" class="btn btn-outline-secondary" th:hx-get="'/ui/page/' + ${page.pageId} + '/edit'" hx-trigger="click" hx-target="#content" hx-push-url="true">edit page</button>
+    <button type="button" class="btn btn-outline-secondary">move page</button>
+    <button type="button" class="btn btn-outline-secondary" th:hx-delete="'/ui/page/' + ${page.pageId}" hx-trigger="click" hx-target="#content" hx-confirm="Are you sure?">delete page</button>
+    <button type="button" class="btn btn-outline-secondary" th:hx-get="'/ui/page/' + ${page.pageId} + '/content/new'" hx-trigger="click" hx-target="#content" hx-push-url="true">add new content</button>
+</div>
+
+<h1 th:text="${page.name}">Page name</h1>
+
+<p th:text="${page.subtitle}">Subtitle</p>
+
+<div th:each="content : ${contents}" class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+        <a data-bs-toggle="collapse" th:href="'#content-' + ${content.contentId}" aria-expanded="true" th:aria-controls="'#content-' +${content.contentId}" th:id="'content-head-' + ${content.contentId}" class="d-block ">
+            <i class="bi bi-chevron-down float-end"></i>
+            <th:block th:text="${content.name}">Content name</th:block>
+        </a>
+    </div>
+    <div class="collapse show" th:id="'#content-' +${content.contentId}">
+        <div class="card-body">
+            <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
+                <button type="button" class="btn btn-outline-secondary" th:hx-get="'/ui/page/' + ${page.pageId} + '/content/' + ${content.contentId} + '/edit'" hx-trigger="click" hx-push-url="true">edit</button>
+                <button type="button" class="btn btn-outline-secondary" th:hx-delete="'/ui/page/' + ${page.pageId} + '/content/' + ${content.contentId}" hx-trigger="click" hx-target="#content" hx-confirm="Are you sure?">delete</button>
+                <button type="button" class="btn btn-outline-secondary">move</button>
+                <button type="button" class="btn btn-outline-secondary">print</button>
+                <button type="button" class="btn btn-outline-secondary">add file</button>
+            </div>
+            <div class="card-text" th:utext="${content.content}">
+            </div>
+
+            <ul class="list-group">
+                <li class="list-group-item list-group-item-light">
+                    <a href="javascript:;"><i class="fa fa-trash" aria-hidden="true"></i></a>&nbsp;
+                    <a href="javascript:;" title="admin - 26. Jan 2009 19:17:54"><i class="fa fa-cloud-download" aria-hidden="true"></i>file1</a>
+                    [578.42 KB] [admin - 26. Jan 2009 19:17:54]
+                </li>
+                <li class="list-group-item list-group-item-light">
+                    <a href="javascript:;"><i class="fa fa-trash" aria-hidden="true"></i></a>&nbsp;
+                    <a href="javascript:;" title="admin - 26. Jan 2009 19:17:54"><i class="fa fa-cloud-download" aria-hidden="true"></i>file1</a>
+                    [578.42 KB] [admin - 26. Jan 2009 19:17:54]
+                </li>
+            </ul>
+        </div>
+        <div class="card-footer text-muted" th:text="'Last modified by ' + ${content.changedBy} + ' on ' + ${content.changeDate} + ' | created: ' + ${content.createDate} + ' by ' + ${content.createdBy}">
+            Last modified by ${content.changedBy} on ${content.changeDate} | created: ${content.createDate} by ${content.createdBy}
+        </div>
+    </div>
+</div>
