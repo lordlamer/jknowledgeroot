@@ -20,10 +20,10 @@ class SidebarController {
     /**
      * Show sidebar
      *
-     * @param model
-     * @param parent
-     * @param pageId
-     * @return
+     * @param model Model
+     * @param parent Parent page id
+     * @param singlePage Single page id
+     * @return sidebar template
      */
     @RequestMapping("/ui/sidebar")
     public String index(

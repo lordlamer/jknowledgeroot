@@ -1,5 +1,6 @@
 package org.knowledgeroot.app.login;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +24,22 @@ class LoginController {
             model.addAttribute("msg", "You've been logged out successfully.");
         }
 
+        return "login";
+    }
+
+    @GetMapping("/login/success")
+    public String loginSuccess(
+            HttpServletResponse response
+    ) {
+        response.addHeader("HX-Redirect", "/");
+        return "login";
+    }
+
+    @GetMapping("/logout/success")
+    public String logoutSuccess(
+            HttpServletResponse response
+    ) {
+        response.addHeader("HX-Redirect", "/");
         return "login";
     }
 }

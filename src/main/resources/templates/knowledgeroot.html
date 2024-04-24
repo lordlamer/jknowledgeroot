@@ -104,12 +104,18 @@
                         <i class="bi bi-person"></i> Profile
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink2">
-                        <li>
+                        <li th:if="${isguest}">
                             <a class="dropdown-item" hx-get="/login" hx-target="#content">Sign in</a>
+                        </li>
+                        <li th:if="${isuser || isadmin}">
+                            <a class="dropdown-item" hx-get="/profil" hx-target="#content">Profil</a>
+                        </li>
+                        <li th:if="${!isguest}">
+                            <a class="dropdown-item" hx-get="/logout" hx-target="#content">Logout</a>
                         </li>
                     </ul>
                 </li>
-                <li class="nav-item dropdown">
+                <li class="nav-item dropdown" th:if="${isadmin}">
                     <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-gear-fill"></i> Admin</a>
                     <ul class="dropdown-menu" aria-labelledby="dropdown01">
                         <li><a class="dropdown-item" hx-get="/admin/users" hx-target="#content">Users</a></li>
@@ -118,8 +124,8 @@
                     </ul>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-question-circle"></i></a>
-                    <ul class="dropdown-menu" aria-labelledby="dropdown01">
+                    <a class="nav-link dropdown-toggle" href="#" id="dropdown02" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-question-circle"></i></a>
+                    <ul class="dropdown-menu" aria-labelledby="dropdown02">
                         <li><a class="dropdown-item" hx-get="/help" hx-target="#content" hx-push-url="true">Help</a></li>
                         <li><a class="dropdown-item" hx-get="/about" hx-target="#content" hx-push-url="true">About</a></li>
                     </ul>
