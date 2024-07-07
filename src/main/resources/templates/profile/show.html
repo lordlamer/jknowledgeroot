@@ -1,0 +1,40 @@
+<div th:if="${updated}" class="alert alert-success alert-dismissible fade show" role="alert">
+    Profile updated
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
+<form th:hx-post="'/profile'" hx-target="#content">
+    <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="true" href="#">Profile</a>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <p class="card-text">
+            <div class="mb-3">
+                <label for="login" class="form-label">Login</label>
+                <input type="text" class="form-control" id="login" name="login" th:value="${userDetails.getLogin()}">
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">EMail</label>
+                <input type="text" class="form-control" id="email" name="email" th:value="${userDetails.getEmail()}">
+            </div>
+            <div class="mb-3">
+                <label for="first-name" class="form-label">First Name</label>
+                <input type="text" class="form-control" id="first-name" name="firstName" th:value="${userDetails.getFirstName()}">
+            </div>
+            <div class="mb-3">
+                <label for="sur-name" class="form-label">Last Name</label>
+                <input type="text" class="form-control" id="sur-name" name="surName" th:value="${userDetails.getSurName()}">
+            </div>
+            </p>
+        </div>
+    </div>
+    <div>
+        <button type="submit" class="btn btn-success">save</button>
+        <button type="button" class="btn btn-outline-secondary">cancel</button>
+    </div>
+</form>

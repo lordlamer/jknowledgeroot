@@ -108,7 +108,7 @@
                             <a class="dropdown-item" hx-get="/login" hx-target="#content">Sign in</a>
                         </li>
                         <li th:if="${isuser || isadmin}">
-                            <a class="dropdown-item" hx-get="/profil" hx-target="#content">Profil</a>
+                            <a class="dropdown-item" hx-get="/profile" hx-target="#content">Profile</a>
                         </li>
                         <li th:if="${!isguest}">
                             <a class="dropdown-item" hx-get="/logout" hx-target="#content">Logout</a>

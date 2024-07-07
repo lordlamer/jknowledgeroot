@@ -3,6 +3,12 @@ package org.knowledgeroot.app.util;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Interface for converting objects of type A to objects of type B and vice versa.
+ *
+ * @param <A> Type A
+ * @param <B> Type B
+ */
 public interface Converter<A, B> {
     B convertAtoB(A from);
 
