@@ -70,6 +70,21 @@ public class AdminController {
         return "admin/groups";
     }
 
+    @GetMapping("/admin/groups/create")
+    public String createGroup(Model model) {
+        return "admin/group/new";
+    }
+
+    @GetMapping("/admin/groups/{id}")
+    public String editGroup(@PathVariable Integer id, Model model) {
+        model.addAttribute(
+                "group",
+                groupImpl.findById(id)
+        );
+
+        return "admin/group/edit";
+    }
+
     @DeleteMapping("/admin/groups/{id}")
     public ResponseEntity<String> deleteGroup(@PathVariable Integer id, Model model) {
         log.info("Delete group with id: {}", id);
