@@ -6,8 +6,11 @@ import org.knowledgeroot.app.security.user.api.filter.GroupFilter;
 import org.knowledgeroot.app.security.user.api.filter.UserFilter;
 import org.knowledgeroot.app.security.user.domain.GroupDao;
 import org.knowledgeroot.app.security.user.domain.UserDao;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
@@ -27,6 +30,16 @@ public class AdminController {
         );
 
         return "admin/users";
+    }
+
+    @DeleteMapping("/admin/users/{id}")
+    public ResponseEntity<String> deleteUser(@PathVariable Integer id, Model model) {
+        log.info("Delete user with id: {}", id);
+
+        // delete user
+        userImpl.deleteUserById(id);
+
+        return ResponseEntity.ok().body("");
     }
 
     @RequestMapping("/admin/groups")

@@ -1,5 +1,9 @@
 <h1>Users</h1>
 
+<div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
+    <button type="button" class="btn btn-outline-success">add user</button>
+</div>
+
 <table class="table table-striped table-hover">
     <thead>
     <tr>
@@ -20,7 +24,18 @@
         <td th:text="${user.getEmail()}">E-Mail</td>
         <td th:text="${user.getActive()}">Active</td>
         <td>Admin?</td>
-        <td>Aktion</td>
+        <td>
+            <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
+                <button type="button" class="btn btn-outline-primary">edit</button>
+                <button type="button" class="btn btn-outline-danger"
+                        th:hx-delete="'/admin/users/' + ${user.getId()}"
+                        hx-confirm="Really delete?"
+                        hx-target="closest tr"
+                        hx-swap="outerHTML">
+                    delete
+                </button>
+            </div>
+        </td>
     </tr>
     </tbody>
 
