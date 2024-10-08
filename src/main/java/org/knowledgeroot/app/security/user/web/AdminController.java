@@ -2,7 +2,9 @@ package org.knowledgeroot.app.security.user.web;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.knowledgeroot.app.security.user.api.filter.GroupFilter;
 import org.knowledgeroot.app.security.user.api.filter.UserFilter;
+import org.knowledgeroot.app.security.user.domain.GroupDao;
 import org.knowledgeroot.app.security.user.domain.UserDao;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequiredArgsConstructor
 public class AdminController {
     private final UserDao userImpl;
+    private final GroupDao groupImpl;
 
     @RequestMapping("/admin/users")
     public String showUsers(Model model) {
@@ -28,6 +31,14 @@ public class AdminController {
 
     @RequestMapping("/admin/groups")
     public String showGroups(Model model) {
+
+        model.addAttribute(
+                "groups",
+                groupImpl.listGroups(
+                        new GroupFilter()
+                )
+        );
+
         return "admin/groups";
     }
 

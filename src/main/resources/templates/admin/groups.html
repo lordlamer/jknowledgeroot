@@ -1,1 +1,21 @@
-GROUPS
+<h1>Groups</h1>
+
+<table class="table table-striped table-hover">
+    <thead>
+    <tr>
+        <th scope="col">Name</th>
+        <th scope="col">Description</th>
+        <th scope="col">Active</th>
+        <th scope="col">Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="group : ${groups}">
+        <th scope="row" th:text="${group.getName()}">Name</th>
+        <td th:text="${group.getDescription()}">Description</td>
+        <td th:text="${group.getActive()}">Active</td>
+        <td>Action</td>
+    </tr>
+    </tbody>
+
+</table>
