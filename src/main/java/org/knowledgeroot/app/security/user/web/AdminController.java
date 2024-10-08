@@ -55,6 +55,16 @@ public class AdminController {
         return "admin/groups";
     }
 
+    @DeleteMapping("/admin/groups/{id}")
+    public ResponseEntity<String> deleteGroup(@PathVariable Integer id, Model model) {
+        log.info("Delete group with id: {}", id);
+
+        // delete group
+        groupImpl.deleteGroupById(id);
+
+        return ResponseEntity.ok().body("");
+    }
+
     @RequestMapping("/admin/permissions")
     public String showPermissions(Model model) {
         return "admin/permissions";
