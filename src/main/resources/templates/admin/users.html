@@ -1,1 +1,27 @@
-USERS
+<h1>Users</h1>
+
+<table class="table table-striped table-hover">
+    <thead>
+    <tr>
+        <th scope="col">Login</th>
+        <th scope="col">First</th>
+        <th scope="col">Last</th>
+        <th scope="col">E-Mail</th>
+        <th scope="col">Active</th>
+        <th scope="col">Admin</th>
+        <th scope="col">Aktion</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="user : ${users}">
+        <th scope="row" th:text="${user.getLogin()}">Login</th>
+        <td th:text="${user.getFirstName()}">First</td>
+        <td th:text="${user.getLastName()}">Last</td>
+        <td th:text="${user.getEmail()}">E-Mail</td>
+        <td th:text="${user.getActive()}">Active</td>
+        <td>Admin?</td>
+        <td>Aktion</td>
+    </tr>
+    </tbody>
+
+</table>
