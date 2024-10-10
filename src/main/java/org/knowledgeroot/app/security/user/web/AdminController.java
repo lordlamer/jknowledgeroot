@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.security.user.api.filter.GroupFilter;
 import org.knowledgeroot.app.security.user.api.filter.UserFilter;
+import org.knowledgeroot.app.security.user.db.Group;
 import org.knowledgeroot.app.security.user.domain.GroupDao;
 import org.knowledgeroot.app.security.user.domain.UserDao;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+
+import java.time.LocalDateTime;
 
 @Controller
 @Slf4j
@@ -73,6 +77,24 @@ public class AdminController {
     @GetMapping("/admin/groups/create")
     public String createGroup(Model model) {
         return "admin/group/new";
+    }
+
+    @PostMapping("/admin/groups")
+    public String saveGroup(GroupDto group) {
+
+        Group newGroup = new Group();
+        newGroup.setName(group.getName());
+        newGroup.setDescription(group.getDescription());
+        newGroup.setActive(true);
+        newGroup.setCreatedBy(1);
+        newGroup.setCreateDate(LocalDateTime.now());
+        newGroup.setChangedBy(1);
+        newGroup.setChangeDate(LocalDateTime.now());
+        newGroup.setDeleted(false);
+
+        groupImpl.createGroup(newGroup);
+
+        return "redirect:/admin/groups";
     }
 
     @GetMapping("/admin/groups/{id}")
