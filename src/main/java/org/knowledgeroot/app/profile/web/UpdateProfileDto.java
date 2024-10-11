@@ -1,4 +1,4 @@
-package org.knowledgeroot.app.profile.ui;
+package org.knowledgeroot.app.profile.web;
 
 import lombok.Builder;
 import lombok.Getter;
