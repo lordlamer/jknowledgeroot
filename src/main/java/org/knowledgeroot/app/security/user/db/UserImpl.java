@@ -9,7 +9,9 @@ import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.knowledgeroot.app.security.user.api.filter.UserFilter;
+import org.knowledgeroot.app.security.user.domain.User;
 import org.knowledgeroot.app.security.user.domain.UserDao;
+import org.knowledgeroot.app.security.user.domain.UserId;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -20,6 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserImpl implements UserDao {
     private final EntityManager entityManager;
+    private final UserEntityConverter userEntityConverter = new UserEntityConverter();
 
     /**
      * find all users
@@ -29,9 +32,9 @@ public class UserImpl implements UserDao {
     public List<User> listUsers(UserFilter userFilter) {
         // get criteria builder
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<User> cq = cb.createQuery(User.class);
+        CriteriaQuery<UserEntity> cq = cb.createQuery(UserEntity.class);
 
-        Root<User> from = cq.from(User.class);
+        Root<UserEntity> from = cq.from(UserEntity.class);
 
         List<Predicate> predicates = new ArrayList<>();
 
@@ -132,7 +135,7 @@ public class UserImpl implements UserDao {
         }
 
         cq.select(from).where(cb.and(predicates.toArray(Predicate[]::new)));
-        TypedQuery<User> q = entityManager.createQuery(cq);
+        TypedQuery<UserEntity> q = entityManager.createQuery(cq);
 
         // set limit
         if(userFilter.getLimit() != null)
@@ -143,24 +146,28 @@ public class UserImpl implements UserDao {
             q.setFirstResult(userFilter.getStart());
 
         // get result
-        return q.getResultList();
+        return userEntityConverter.convertBtoA(
+                q.getResultList()
+        );
     }
 
     /**
      * find user by given id
-     * @param id user id
+     * @param userId user id
      */
     @Override
-    public User findById(long id) {
-        return findEntityById(id);
+    public User findById(UserId userId) {
+        return userEntityConverter.convertBtoA(
+            findEntityById(userId.value())
+        );
     }
 
     /**
      * find user entity by given id
      * @param id user id
      */
-    private User findEntityById(long id) {
-        return entityManager.find(User.class, id);
+    private UserEntity findEntityById(Integer id) {
+        return entityManager.find(UserEntity.class, id);
     }
 
     /**
@@ -171,9 +178,9 @@ public class UserImpl implements UserDao {
     public boolean isUserExist(User user) {
         boolean found = false;
 
-        List<User> userEntities = entityManager.createQuery(
-                "SELECT u FROM User u WHERE u.login = :login",
-                User.class)
+        List<UserEntity> userEntities = entityManager.createQuery(
+                "SELECT u FROM UserEntity u WHERE u.login = :login",
+                UserEntity.class)
                 .setParameter("login", user.getLogin())
                 .getResultList();
 
@@ -189,7 +196,9 @@ public class UserImpl implements UserDao {
      */
     @Override
     public void createUser(User user) {
-        entityManager.persist(user);
+        entityManager.persist(
+            userEntityConverter.convertAtoB(user)
+        );
     }
 
     /**
@@ -199,7 +208,9 @@ public class UserImpl implements UserDao {
     @Override
     public void updateUser(User user) {
         // save to database
-        entityManager.merge(user);
+        entityManager.merge(
+            userEntityConverter.convertAtoB(user)
+        );
     }
 
     /**
@@ -207,17 +218,17 @@ public class UserImpl implements UserDao {
      */
     @Override
     public void deleteAllUsers() {
-        entityManager.createQuery("DELETE FROM User").executeUpdate();
+        entityManager.createQuery("DELETE FROM UserEntity").executeUpdate();
     }
 
     /**
      * delete user by id
-     * @param id user id
+     * @param userId user id
      */
     @Override
-    public void deleteUserById(long id) {
-        entityManager.createQuery("DELETE FROM User u WHERE u.id = :id")
-                .setParameter("id", id)
+    public void deleteUserById(UserId userId) {
+        entityManager.createQuery("DELETE FROM UserEntity u WHERE u.id = :id")
+                .setParameter("id", userId.value())
                 .executeUpdate();
     }
 }

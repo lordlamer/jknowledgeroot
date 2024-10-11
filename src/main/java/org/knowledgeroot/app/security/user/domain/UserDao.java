@@ -1,40 +1,42 @@
 package org.knowledgeroot.app.security.user.domain;
 
 import org.knowledgeroot.app.security.user.api.filter.UserFilter;
-import org.knowledgeroot.app.security.user.db.User;
 
 import java.util.List;
 
+/**
+ * User data access object
+ */
 public interface UserDao {
     /**
-     * find all users
-     * @return
+     * find all users by given filter
+     * @return list of users
      */
     List<User> listUsers(UserFilter userFilter);
 
     /**
      * find user by given id
-     * @param id
-     * @return
+     * @param userId user id
+     * @return user
      */
-    User findById(long id);
+    User findById(UserId userId);
 
     /**
      * check if user exists
-     * @param user
-     * @return
+     * @param user user object
+     * @return true if user exists
      */
     boolean isUserExist(User user);
 
     /**
      * create user from domain object
-     * @param user
+     * @param user user object
      */
     void createUser(User user);
 
     /**
      * update existing user
-     * @param user
+     * @param user user object
      */
     void updateUser(User user);
 
@@ -45,7 +47,7 @@ public interface UserDao {
 
     /**
      * delete user by given id
-     * @param id
+     * @param userId user id
      */
-    void deleteUserById(long id);
+    void deleteUserById(UserId userId);
 }

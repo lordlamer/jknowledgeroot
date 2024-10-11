@@ -9,7 +9,9 @@ import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.knowledgeroot.app.security.user.api.filter.GroupFilter;
+import org.knowledgeroot.app.security.user.domain.Group;
 import org.knowledgeroot.app.security.user.domain.GroupDao;
+import org.knowledgeroot.app.security.user.domain.GroupId;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -20,6 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GroupImpl implements GroupDao {
     private final EntityManager entityManager;
+    private final GroupEntityConverter groupEntityConverter = new GroupEntityConverter();
 
     /**
      * find groups
@@ -31,9 +34,9 @@ public class GroupImpl implements GroupDao {
     public List<Group> listGroups(GroupFilter groupFilter) {
         // get criteria builder
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Group> cq = cb.createQuery(Group.class);
+        CriteriaQuery<GroupEntity> cq = cb.createQuery(GroupEntity.class);
 
-        Root<Group> from = cq.from(Group.class);
+        Root<GroupEntity> from = cq.from(GroupEntity.class);
 
         List<Predicate> predicates = new ArrayList<>();
 
@@ -114,7 +117,7 @@ public class GroupImpl implements GroupDao {
         }
 
         cq.select(from).where(cb.and(predicates.toArray(Predicate[]::new)));
-        TypedQuery<Group> q = entityManager.createQuery(cq);
+        TypedQuery<GroupEntity> q = entityManager.createQuery(cq);
 
         // set limit
         if(groupFilter.getLimit() != null)
@@ -125,31 +128,34 @@ public class GroupImpl implements GroupDao {
             q.setFirstResult(groupFilter.getStart());
 
         // get result
-        return q.getResultList();
+        return groupEntityConverter.convertBtoA(
+            q.getResultList()
+        );
     }
 
     /**
      * find group by given id
      *
-     * @param id
-     * @return
+     * @param groupId group id
+     * @return group
      */
     @Override
-    public Group findById(long id) {
-
-        return findEntityById(id);
+    public Group findById(GroupId groupId) {
+        return groupEntityConverter.convertBtoA(
+            findEntityById(groupId.value())
+        );
     }
 
     /**
      * find group entity by given id
      * @param id group id
      */
-    private Group findEntityById(long id) {
-        return entityManager.find(Group.class, id);
+    private GroupEntity findEntityById(Integer id) {
+        return entityManager.find(GroupEntity.class, id);
     }
 
     /**
-     * check if group exists
+     * check if group exists by its name
      *
      * @param group group to check
      */
@@ -157,9 +163,9 @@ public class GroupImpl implements GroupDao {
     public boolean isGroupExist(Group group) {
         boolean found = false;
 
-        List<Group> groupEntities = entityManager.createQuery(
-                "SELECT u FROM Group g WHERE g.name = :name",
-                Group.class)
+        List<GroupEntity> groupEntities = entityManager.createQuery(
+                "SELECT u FROM GroupEntity g WHERE g.name = :name",
+                GroupEntity.class)
                 .setParameter("name", group.getName())
                 .getResultList();
 
@@ -176,7 +182,9 @@ public class GroupImpl implements GroupDao {
      */
     @Override
     public void createGroup(Group group) {
-        entityManager.persist(group);
+        entityManager.persist(
+            groupEntityConverter.convertAtoB(group)
+        );
     }
 
     /**
@@ -187,7 +195,9 @@ public class GroupImpl implements GroupDao {
     @Override
     public void updateGroup(Group group) {
         // save to database
-        entityManager.merge(group);
+        entityManager.merge(
+            groupEntityConverter.convertAtoB(group)
+        );
     }
 
     /**
@@ -195,18 +205,18 @@ public class GroupImpl implements GroupDao {
      */
     @Override
     public void deleteAllGroups() {
-        entityManager.createQuery("DELETE FROM Group").executeUpdate();
+        entityManager.createQuery("DELETE FROM GroupEntity").executeUpdate();
     }
 
     /**
      * delete group by given id
      *
-     * @param id group id
+     * @param groupId group id
      */
     @Override
-    public void deleteGroupById(long id) {
-        entityManager.createQuery("DELETE FROM Group g WHERE g.id = :id")
-                .setParameter("id", id)
+    public void deleteGroupById(GroupId groupId) {
+        entityManager.createQuery("DELETE FROM GroupEntity g WHERE g.id = :id")
+                .setParameter("id", groupId.value())
                 .executeUpdate();
     }
 }

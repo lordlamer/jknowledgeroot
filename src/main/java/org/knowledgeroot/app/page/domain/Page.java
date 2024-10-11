@@ -3,12 +3,14 @@ package org.knowledgeroot.app.page.domain;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
 @Builder
+@ToString
 public class Page {
     private PageId pageId;
     private Integer parent;

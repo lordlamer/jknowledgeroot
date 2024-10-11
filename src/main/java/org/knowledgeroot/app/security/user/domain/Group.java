@@ -9,8 +9,9 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class Group {
-    private Integer id;
+    private GroupId id;
     private String name;
     private String description;
     private LocalDateTime timeStart;

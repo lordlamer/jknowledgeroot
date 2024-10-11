@@ -5,8 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.security.user.api.converter.UserDtoConverter;
 import org.knowledgeroot.app.security.user.api.dto.UserDto;
 import org.knowledgeroot.app.security.user.api.filter.UserFilter;
-import org.knowledgeroot.app.security.user.db.User;
+import org.knowledgeroot.app.security.user.domain.User;
 import org.knowledgeroot.app.security.user.domain.UserDao;
+import org.knowledgeroot.app.security.user.domain.UserId;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -123,8 +124,8 @@ public class UserRestController {
      * @param id user id
      */
     @RequestMapping(value = "/user/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UserDto> getUser(@PathVariable("id") long id) {
-        User user = userImpl.findById(id);
+    public ResponseEntity<UserDto> getUser(@PathVariable("id") Integer id) {
+        User user = userImpl.findById(new UserId(id));
 
         UserDto userDto = userDtoConverter.convertAtoB(user);
 
@@ -163,12 +164,12 @@ public class UserRestController {
      * @param userDto user to update
      */
     @RequestMapping(value = "/user/{id}", method = RequestMethod.PUT)
-    public ResponseEntity<UserDto> updateUser(@PathVariable("id") long id, @RequestBody UserDto userDto) {
+    public ResponseEntity<UserDto> updateUser(@PathVariable("id") Integer id, @RequestBody UserDto userDto) {
         if(id != userDto.getId()) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
-        User currentUser = userImpl.findById(id);
+        User currentUser = userImpl.findById(new UserId(id));
 
         if (currentUser==null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -188,14 +189,14 @@ public class UserRestController {
      * @param id user id
      */
     @RequestMapping(value = "/user/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<UserDto> deleteUser(@PathVariable("id") long id) {
-        User user = userImpl.findById(id);
+    public ResponseEntity<UserDto> deleteUser(@PathVariable("id") Integer id) {
+        User user = userImpl.findById(new UserId(id));
 
         if (user == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        userImpl.deleteUserById(id);
+        userImpl.deleteUserById(new UserId(id));
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

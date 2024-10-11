@@ -1,9 +1,6 @@
 package org.knowledgeroot.app.content.domain;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Setter;
+import lombok.*;
 import org.knowledgeroot.app.sanitizer.Sanitizer;
 
 import java.time.LocalDateTime;
@@ -11,6 +8,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Builder
+@ToString
 public class Content {
     private ContentId contentId;
 

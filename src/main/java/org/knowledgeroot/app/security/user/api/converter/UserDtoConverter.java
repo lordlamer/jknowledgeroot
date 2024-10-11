@@ -1,7 +1,8 @@
 package org.knowledgeroot.app.security.user.api.converter;
 
 import org.knowledgeroot.app.security.user.api.dto.UserDto;
-import org.knowledgeroot.app.security.user.db.User;
+import org.knowledgeroot.app.security.user.domain.User;
+import org.knowledgeroot.app.security.user.domain.UserId;
 import org.knowledgeroot.app.util.Converter;
 
 public class UserDtoConverter implements Converter<User, UserDto> {
@@ -10,7 +11,7 @@ public class UserDtoConverter implements Converter<User, UserDto> {
     public UserDto convertAtoB(User from) {
         UserDto userDto = new UserDto();
 
-        userDto.setId(from.getId());
+        userDto.setId(from.getId().value());
         userDto.setActive(from.getActive());
         userDto.setEmail(from.getEmail());
         userDto.setLogin(from.getLogin());
@@ -34,7 +35,7 @@ public class UserDtoConverter implements Converter<User, UserDto> {
     public User convertBtoA(UserDto from) {
         User user = new User();
 
-        user.setId(from.getId());
+        user.setId(new UserId(from.getId()));
         user.setActive(from.getActive());
         user.setEmail(from.getEmail());
         user.setLogin(from.getLogin());

@@ -9,8 +9,9 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class User {
-    private Integer id;
+    private UserId id;
     private String firstName;
     private String lastName;
     private String login;

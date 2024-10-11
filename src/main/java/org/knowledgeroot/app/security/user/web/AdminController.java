@@ -4,9 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.security.user.api.filter.GroupFilter;
 import org.knowledgeroot.app.security.user.api.filter.UserFilter;
-import org.knowledgeroot.app.security.user.db.Group;
-import org.knowledgeroot.app.security.user.domain.GroupDao;
-import org.knowledgeroot.app.security.user.domain.UserDao;
+import org.knowledgeroot.app.security.user.domain.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -24,6 +22,9 @@ public class AdminController {
     private final UserDao userImpl;
     private final GroupDao groupImpl;
 
+    /**
+     * get all users
+     */
     @GetMapping("/admin/users")
     public String showUsers(Model model) {
         model.addAttribute(
@@ -36,31 +37,45 @@ public class AdminController {
         return "admin/users";
     }
 
+    /**
+     * create new user form
+     */
     @GetMapping("/admin/users/create")
     public String createUser(Model model) {
         return "admin/user/new";
     }
 
+    /**
+     * show user edit form
+     * @param id user id
+     */
     @GetMapping("/admin/users/{id}")
     public String editUser(@PathVariable Integer id, Model model) {
         model.addAttribute(
                 "user",
-                userImpl.findById(id)
+                userImpl.findById(new UserId(id))
         );
 
         return "admin/user/edit";
     }
 
+    /**
+     * delete user
+     * @param id user id
+     */
     @DeleteMapping("/admin/users/{id}")
     public ResponseEntity<String> deleteUser(@PathVariable Integer id, Model model) {
         log.info("Delete user with id: {}", id);
 
         // delete user
-        userImpl.deleteUserById(id);
+        userImpl.deleteUserById(new UserId(id));
 
         return ResponseEntity.ok().body("");
     }
 
+    /**
+     * show all groups
+     */
     @GetMapping("/admin/groups")
     public String showGroups(Model model) {
 
@@ -74,49 +89,68 @@ public class AdminController {
         return "admin/groups";
     }
 
+    /**
+     * create new group form
+     */
     @GetMapping("/admin/groups/create")
     public String createGroup(Model model) {
         return "admin/group/new";
     }
 
+    /**
+     * save new group and redirect to group list
+     * @param group group object
+     */
     @PostMapping("/admin/groups")
     public String saveGroup(GroupDto group) {
 
-        Group newGroup = new Group();
-        newGroup.setName(group.getName());
-        newGroup.setDescription(group.getDescription());
-        newGroup.setActive(true);
-        newGroup.setCreatedBy(1);
-        newGroup.setCreateDate(LocalDateTime.now());
-        newGroup.setChangedBy(1);
-        newGroup.setChangeDate(LocalDateTime.now());
-        newGroup.setDeleted(false);
+        Group newGroup = Group.builder()
+                .name(group.getName())
+                .description(group.getDescription())
+                .active(true)
+                .createdBy(1)
+                .createDate(LocalDateTime.now())
+                .changedBy(1)
+                .changeDate(LocalDateTime.now())
+                .deleted(false)
+                .build();
 
         groupImpl.createGroup(newGroup);
 
         return "redirect:/admin/groups";
     }
 
+    /**
+     * show group edit form
+     * @param id group id
+     */
     @GetMapping("/admin/groups/{id}")
     public String editGroup(@PathVariable Integer id, Model model) {
         model.addAttribute(
                 "group",
-                groupImpl.findById(id)
+                groupImpl.findById(new GroupId(id))
         );
 
         return "admin/group/edit";
     }
 
+    /**
+     * delete group
+     * @param id group id
+     */
     @DeleteMapping("/admin/groups/{id}")
     public ResponseEntity<String> deleteGroup(@PathVariable Integer id, Model model) {
         log.info("Delete group with id: {}", id);
 
         // delete group
-        groupImpl.deleteGroupById(id);
+        groupImpl.deleteGroupById(new GroupId(id));
 
         return ResponseEntity.ok().body("");
     }
 
+    /**
+     * show permissions
+     */
     @GetMapping("/admin/permissions")
     public String showPermissions(Model model) {
         return "admin/permissions";

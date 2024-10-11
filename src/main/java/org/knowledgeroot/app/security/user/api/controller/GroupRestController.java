@@ -5,8 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.security.user.api.converter.GroupDtoConverter;
 import org.knowledgeroot.app.security.user.api.dto.GroupDto;
 import org.knowledgeroot.app.security.user.api.filter.GroupFilter;
-import org.knowledgeroot.app.security.user.db.Group;
+import org.knowledgeroot.app.security.user.domain.Group;
 import org.knowledgeroot.app.security.user.domain.GroupDao;
+import org.knowledgeroot.app.security.user.domain.GroupId;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -115,8 +116,8 @@ public class GroupRestController {
      * @param id group id
      */
     @RequestMapping(value = "/group/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<GroupDto> getGroup(@PathVariable("id") long id) {
-        Group group = groupImpl.findById(id);
+    public ResponseEntity<GroupDto> getGroup(@PathVariable("id") Integer id) {
+        Group group = groupImpl.findById(new GroupId(id));
 
         GroupDto groupDto = groupDtoConverter.convertAtoB(group);
 
@@ -155,12 +156,12 @@ public class GroupRestController {
      * @param groupDto group object
      */
     @RequestMapping(value = "/group/{id}", method = RequestMethod.PUT)
-    public ResponseEntity<GroupDto> updateGroup(@PathVariable("id") long id, @RequestBody GroupDto groupDto) {
+    public ResponseEntity<GroupDto> updateGroup(@PathVariable("id") Integer id, @RequestBody GroupDto groupDto) {
         if(id != groupDto.getId()) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
-        Group currentGroup = groupImpl.findById(id);
+        Group currentGroup = groupImpl.findById(new GroupId(id));
 
         if (currentGroup==null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -180,14 +181,14 @@ public class GroupRestController {
      * @param id group id
      */
     @RequestMapping(value = "/group/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<GroupDto> deleteGroup(@PathVariable("id") long id) {
-        Group group = groupImpl.findById(id);
+    public ResponseEntity<GroupDto> deleteGroup(@PathVariable("id") Integer id) {
+        Group group = groupImpl.findById(new GroupId(id));
 
         if (group == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        groupImpl.deleteGroupById(id);
+        groupImpl.deleteGroupById(new GroupId(id));
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

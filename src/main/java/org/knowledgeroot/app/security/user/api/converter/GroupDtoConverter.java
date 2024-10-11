@@ -1,7 +1,8 @@
 package org.knowledgeroot.app.security.user.api.converter;
 
 import org.knowledgeroot.app.security.user.api.dto.GroupDto;
-import org.knowledgeroot.app.security.user.db.Group;
+import org.knowledgeroot.app.security.user.domain.Group;
+import org.knowledgeroot.app.security.user.domain.GroupId;
 import org.knowledgeroot.app.util.Converter;
 
 public class GroupDtoConverter implements Converter<Group, GroupDto> {
@@ -10,7 +11,7 @@ public class GroupDtoConverter implements Converter<Group, GroupDto> {
     public GroupDto convertAtoB(Group from) {
         GroupDto groupDto = new GroupDto();
 
-        groupDto.setId(from.getId());
+        groupDto.setId(from.getId().value());
         groupDto.setName(from.getName());
         groupDto.setDescription(from.getDescription());
         groupDto.setCreatedBy(from.getCreatedBy());
@@ -29,7 +30,7 @@ public class GroupDtoConverter implements Converter<Group, GroupDto> {
     public Group convertBtoA(GroupDto from) {
         Group group = new Group();
 
-        group.setId(from.getId());
+        group.setId(new GroupId(from.getId()));
         group.setName(from.getName());
         group.setDescription(from.getDescription());
         group.setCreatedBy(from.getCreatedBy());
