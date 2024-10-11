@@ -21,6 +21,10 @@
     </div>
     <div>
         <button type="submit" class="btn btn-success">save</button>
-        <button type="button" class="btn btn-outline-secondary">cancel</button>
+        <button type="button" class="btn btn-outline-secondary"
+                hx-get="/admin/groups" hx-target="#content"
+        >
+            cancel
+        </button>
     </div>
 </form>
