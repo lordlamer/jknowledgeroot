@@ -120,6 +120,22 @@ public class AdminController {
         return "redirect:/admin/groups";
     }
 
+    @PostMapping("/admin/groups/{id}")
+    public String updateGroup(@PathVariable Integer id, GroupDto groupDto) {
+        // load group
+        Group group = groupImpl.findById(new GroupId(id));
+
+        // update group
+        group.setName(groupDto.getName());
+        group.setDescription(groupDto.getDescription());
+
+        groupImpl.updateGroup(group);
+
+        log.debug("Group updated: {}", group);
+
+        return "redirect:/admin/groups";
+    }
+
     /**
      * show group edit form
      * @param id group id
