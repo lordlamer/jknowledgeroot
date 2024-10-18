@@ -20,8 +20,11 @@ class UserEntityConverter implements Converter<User, UserEntity> {
         userEntity.setFirstName(from.getFirstName());
         userEntity.setLastName(from.getLastName());
         userEntity.setLogin(from.getLogin());
+        userEntity.setEmail(from.getEmail());
         userEntity.setPassword(from.getPassword());
         userEntity.setActive(from.getActive());
+        userEntity.setLanguage(from.getLanguage());
+        userEntity.setTimezone(from.getTimezone());
         userEntity.setCreatedBy(from.getCreatedBy());
         userEntity.setCreateDate(from.getCreateDate());
         userEntity.setChangedBy(from.getChangedBy());
@@ -38,8 +41,11 @@ class UserEntityConverter implements Converter<User, UserEntity> {
                 .firstName(from.getFirstName())
                 .lastName(from.getLastName())
                 .login(from.getLogin())
+                .email(from.getEmail())
                 .password(from.getPassword())
                 .active(from.getActive())
+                .language(from.getLanguage())
+                .timezone(from.getTimezone())
                 .createdBy(from.getCreatedBy())
                 .createDate(from.getCreateDate())
                 .changedBy(from.getChangedBy())

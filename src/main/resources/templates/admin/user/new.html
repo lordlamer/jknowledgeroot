@@ -1,1 +1,42 @@
-new user
+<form hx-post="/admin/users" hx-target="#content">
+    <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="true" href="#">Create new user</a>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <p class="card-text">
+            <div class="mb-3">
+                <label for="login" class="form-label">Login</label>
+                <input type="text" class="form-control" id="login" name="login" value="">
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">E-Mail</label>
+                <input type="email" class="form-control" id="email" name="email" value="">
+            </div>
+            <div class="mb-3">
+                <label for="firstname" class="form-label">Firstname</label>
+                <input type="text" class="form-control" id="firstname" name="firstName" value="">
+            </div>
+            <div class="mb-3">
+                <label for="lastname" class="form-label">Lastname</label>
+                <input type="text" class="form-control" id="lastname" name="lastName" value="">
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" name="password" value="">
+            </div>
+        </div>
+    </div>
+    <div>
+        <button type="submit" class="btn btn-success">save</button>
+        <button type="button" class="btn btn-outline-secondary"
+                hx-get="/admin/users" hx-target="#content"
+        >
+            cancel
+        </button>
+    </div>
+</form>

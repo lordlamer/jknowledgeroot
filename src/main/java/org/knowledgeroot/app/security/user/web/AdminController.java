@@ -2,6 +2,7 @@ package org.knowledgeroot.app.security.user.web;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.knowledgeroot.app.security.auth.PasswordHasher;
 import org.knowledgeroot.app.security.user.api.filter.GroupFilter;
 import org.knowledgeroot.app.security.user.api.filter.UserFilter;
 import org.knowledgeroot.app.security.user.domain.*;
@@ -43,6 +44,39 @@ public class AdminController {
     @GetMapping("/admin/users/create")
     public String createUser(Model model) {
         return "admin/user/new";
+    }
+
+    @PostMapping("/admin/users")
+    public String saveUser(UserDto user) {
+        log.debug("Create new user: {}", user);
+
+        User newUser = User.builder()
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .login(user.getLogin())
+                .email(user.getEmail())
+                .password(
+                        PasswordHasher.hash(
+                                user.getPassword(),
+                                PasswordHasher.HASH_METHOD.SHA256,
+                                1000
+                        )
+                )
+                .language("en_US")
+                .timezone("UTC")
+                .timeStart(LocalDateTime.now())
+                .timeEnd(LocalDateTime.now())
+                .active(true)
+                .createdBy(1)
+                .createDate(LocalDateTime.now())
+                .changedBy(1)
+                .changeDate(LocalDateTime.now())
+                .deleted(false)
+                .build();
+
+        userImpl.createUser(newUser);
+
+        return "redirect:/admin/users";
     }
 
     /**
@@ -103,6 +137,7 @@ public class AdminController {
      */
     @PostMapping("/admin/groups")
     public String saveGroup(GroupDto group) {
+        log.debug("Create new group: {}", group);
 
         Group newGroup = Group.builder()
                 .name(group.getName())
