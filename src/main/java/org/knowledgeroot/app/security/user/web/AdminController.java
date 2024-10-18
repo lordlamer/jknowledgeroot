@@ -93,6 +93,35 @@ public class AdminController {
         return "admin/user/edit";
     }
 
+    @PostMapping("/admin/users/{id}")
+    public String updateUser(@PathVariable Integer id, UserDto userDto) {
+        // load user
+        User user = userImpl.findById(new UserId(id));
+
+        // update user
+        user.setFirstName(userDto.getFirstName());
+        user.setLastName(userDto.getLastName());
+        user.setLogin(userDto.getLogin());
+        user.setEmail(userDto.getEmail());
+
+        // update password if new password is set
+        if(userDto.getPassword() != null && !userDto.getPassword().isEmpty()) {
+            user.setPassword(
+                    PasswordHasher.hash(
+                            userDto.getPassword(),
+                            PasswordHasher.HASH_METHOD.SHA256,
+                            1000
+                    )
+            );
+        }
+
+        userImpl.updateUser(user);
+
+        log.debug("User updated: {}", user);
+
+        return "redirect:/admin/users";
+    }
+
     /**
      * delete user
      * @param id user id
