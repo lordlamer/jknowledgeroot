@@ -17,8 +17,8 @@
             <p class="card-text">
                 <div class="mb-3" th:if="${page}">
                     <label for="page-name" class="form-label">Parent</label>
-                    <input type="text" class="form-control" id="parent-page" th:value="${page.name}" readonly>
-                    <input type="hidden" name="parent" th:value="${page.pageId}">
+                    <input type="text" class="form-control" id="parent-page" th:value="${page.getName()}" readonly>
+                    <input type="hidden" name="parent" th:value="${page.getPageId()}">
                 </div>
                 <div class="mb-3">
                     <label for="page-name" class="form-label">Name</label>
@@ -56,7 +56,7 @@
     <div>
         <button type="submit" class="btn btn-success">create</button>
         <button type="button" class="btn btn-outline-secondary"
-        th:hx-get="'/ui/page/' + ${page.pageId}" hx-target="#content"
+        th:hx-get="'/ui/page/' + ${page.getPageId()}" hx-target="#content"
         >cancel</button>
     </div>
 </form>
