@@ -316,4 +316,32 @@ public class ContentImpl implements ContentDao {
                 .param("id", contentId.value())
                 .update();
     }
+
+    @Override
+    public List<Content> searchContent(String searchQuery) {
+        return jdbcClient.sql("""
+                SELECT 
+                    id as contentId,
+                    parent,
+                    name,
+                    content,
+                    type,
+                    sorting,
+                    time_start,
+                    time_end,
+                    active,
+                    created_by,
+                    create_date,
+                    changed_by,
+                    change_date,
+                    deleted
+                FROM 
+                    content 
+                WHERE 
+                    name like :searchQuery OR content like :searchQuery
+                """)
+                .param("searchQuery", "%" + searchQuery + "%")
+                .query(Content.class)
+                .list();
+    }
 }

@@ -38,4 +38,11 @@ public interface ContentDao {
      * @param contentId
      */
     void deleteContentById(ContentId contentId);
+
+    /**
+     * search for content by given query
+     * @param searchQuery
+     * @return
+     */
+    List<Content> searchContent(String searchQuery);
 }

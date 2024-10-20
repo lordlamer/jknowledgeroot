@@ -1,1 +1,25 @@
-SEARCH
+<h1 th:text="'Search for: ' + ${searchQuery}">Search for: xxx</h1>
+
+<div th:if="${contents.size() == 0}" class="alert alert-info" role="alert">
+    No content found for search query: <strong th:text="${searchQuery}">xxx</strong>
+</div>
+
+<div th:each="content : ${contents}" class="card" style="margin-bottom: 20px;">
+
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item">
+                <a class="nav-link active" aria-current="true"
+                   href="#"
+                   th:hx-get="'/ui/page/' + ${content.getParent()}"
+                   hx-target="#content"
+                   th:text="${content.getName()}">Title</a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="card-body">
+        <p class="card-text" th:utext="${content.getContent()}">Text</p>
+    </div>
+
+</div>
