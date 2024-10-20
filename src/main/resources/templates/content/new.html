@@ -25,7 +25,9 @@
     </div>
     <div>
         <button type="submit" class="btn btn-success">create</button>
-        <button type="button" class="btn btn-outline-secondary">cancel</button>
+        <button type="button" class="btn btn-outline-secondary"
+        th:hx-get="'/ui/page/' + ${page.pageId}" hx-target="#content"
+        >cancel</button>
     </div>
 </form>
 
