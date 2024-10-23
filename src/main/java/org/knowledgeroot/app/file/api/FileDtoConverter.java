@@ -10,7 +10,6 @@ public class FileDtoConverter implements Converter<File, FileDto> {
         FileDto fileDto = new FileDto();
 
         fileDto.setId(from.getId());
-        fileDto.setActive(from.getActive());
         fileDto.setName(from.getName());
         fileDto.setParent(from.getParent());
         fileDto.setType(from.getType());
@@ -22,8 +21,6 @@ public class FileDtoConverter implements Converter<File, FileDto> {
         fileDto.setChangeDate(from.getCreateDate());
         fileDto.setDeleted(from.getDeleted());
         fileDto.setDownloads(from.getDownloads());
-        fileDto.setTimeStart(from.getTimeStart());
-        fileDto.setTimeEnd(from.getTimeEnd());
 
         return fileDto;
     }
@@ -32,7 +29,6 @@ public class FileDtoConverter implements Converter<File, FileDto> {
     public File convertBtoA(FileDto from) {
         return File.builder()
                 .id(from.getId())
-                .active(from.getActive())
                 .name(from.getName())
                 .parent(from.getParent())
                 .type(from.getType())
@@ -44,8 +40,6 @@ public class FileDtoConverter implements Converter<File, FileDto> {
                 .changeDate(from.getCreateDate())
                 .deleted(from.getDeleted())
                 .downloads(from.getDownloads())
-                .timeStart(from.getTimeStart())
-                .timeEnd(from.getTimeEnd())
                 .build();
     }
 }
