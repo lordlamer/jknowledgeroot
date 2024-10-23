@@ -6,6 +6,8 @@ import org.knowledgeroot.app.content.domain.Content;
 import org.knowledgeroot.app.content.domain.ContentDao;
 import org.knowledgeroot.app.content.domain.ContentFilter;
 import org.knowledgeroot.app.content.domain.ContentId;
+import org.knowledgeroot.app.file.domain.FileDao;
+import org.knowledgeroot.app.file.domain.FileFilter;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -19,6 +21,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ContentImpl implements ContentDao {
     private final JdbcClient jdbcClient;
+    private final FileDao fileImpl;
 
     /**
      * find all contents
@@ -159,10 +162,54 @@ public class ContentImpl implements ContentDao {
             sql.append(" LIMIT :start, 18446744073709551615");
         }
 
-        return jdbcClient.sql(sql.toString())
+        // execute query
+        List<Content> contents = jdbcClient.sql(sql.toString())
                 .params(params)
-                .query(Content.class)
+                .query(
+                        (rs, rowNum) ->
+                                Content.builder()
+                                .contentId(new ContentId(rs.getInt("contentId")))
+                                .parent(rs.getInt("parent"))
+                                .name(rs.getString("name"))
+                                .content(rs.getString("content"))
+                                .type(rs.getString("type"))
+                                .sorting(rs.getInt("sorting"))
+                                .timeStart(rs.getTimestamp("time_start").toLocalDateTime())
+                                .timeEnd(rs.getTimestamp("time_end").toLocalDateTime())
+                                .active(rs.getBoolean("active"))
+                                .createdBy(rs.getInt("created_by"))
+                                .createDate(rs.getTimestamp("create_date").toLocalDateTime())
+                                .changedBy(rs.getInt("changed_by"))
+                                .changeDate(rs.getTimestamp("change_date").toLocalDateTime())
+                                .deleted(rs.getBoolean("deleted"))
+                                .files(null)
+                                .build()
+                )
                 .list();
+
+        // add files to contents
+        contents = addFilesToContents(contents);
+
+        return contents;
+    }
+
+    /**
+     * add files to contents
+     * @param contents
+     * @return
+     */
+    private List<Content> addFilesToContents(List<Content> contents) {
+        for(Content content : contents) {
+            content.setFiles(
+                    fileImpl.listFiles(
+                            FileFilter.builder()
+                                    .contentId(content.getContentId())
+                                    .build()
+                    )
+            );
+        }
+
+        return contents;
     }
 
     /**

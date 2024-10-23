@@ -1,9 +1,11 @@
 package org.knowledgeroot.app.content.domain;
 
 import lombok.*;
+import org.knowledgeroot.app.file.domain.File;
 import org.knowledgeroot.app.sanitizer.Sanitizer;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -27,6 +29,8 @@ public class Content {
     private Integer changedBy;
     private LocalDateTime changeDate;
     private Boolean deleted;
+
+    private List<File> files;
 
     public void setContent(String content) {
         this.content = Sanitizer.sanitize(content);
