@@ -105,4 +105,9 @@ class FileController {
             }
         }
     }
+
+    @DeleteMapping("/ui/file/{id}")
+    public @ResponseBody void deleteFile(@PathVariable("id") Integer fileId) {
+        fileDao.deleteFileById(fileId);
+    }
 }

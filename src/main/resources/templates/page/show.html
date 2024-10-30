@@ -41,7 +41,9 @@
 
             <ul class="list-group">
                 <li th:each="file : ${content.getFiles()}" class="list-group-item list-group-item-light">
-                    <a href="javascript:;"><i class="fa fa-trash" aria-hidden="true"></i></a>&nbsp;
+                    <a th:hx-delete="'/ui/file/' + ${file.getId()}" hx-trigger="click" hx-target="closest li" hx-swap="outerHTML" hx-confirm="Are you sure?">
+                        <i class="bi bi-trash"></i>
+                    </a>&nbsp;
                     <a th:href="'/ui/file/' + ${file.getId()} + '/download/' + ${file.getName()}"
                        th:title="${file.getCreatedBy()} + ' - ' + ${file.getCreateDate()}">
                         <i class="fa fa-cloud-download" aria-hidden="true"></i>
