@@ -10,8 +10,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
+/**
+ * File system storage implementation of the file storage.
+ */
 @Component
-public class FileSystemStorage implements FileStorage {
+class FileSystemStorage implements FileStorage {
     private final Path storageLocation;
 
     public FileSystemStorage(@Value("${file.storage-dir}") String storageDir) {

@@ -3,7 +3,6 @@ package org.knowledgeroot.app.file.db;
 import org.knowledgeroot.app.file.domain.File;
 import org.knowledgeroot.app.file.domain.FileDao;
 import org.knowledgeroot.app.file.domain.FileFilter;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -17,6 +16,9 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * File data access object implementation.
+ */
 @Repository
 public class FileImpl implements FileDao {
     private final JdbcTemplate jdbcTemplate;
@@ -39,7 +41,7 @@ public class FileImpl implements FileDao {
         return file;
     };
 
-    public FileImpl(JdbcTemplate jdbcTemplate, @Qualifier("minioStorage") FileStorage fileStorage) {
+    public FileImpl(JdbcTemplate jdbcTemplate, FileStorage fileStorage) {
         this.jdbcTemplate = jdbcTemplate;
         this.fileStorage = fileStorage;
     }

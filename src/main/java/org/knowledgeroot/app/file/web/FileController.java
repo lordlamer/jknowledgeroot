@@ -26,6 +26,13 @@ class FileController {
     private final FileDao fileDao;
     private final ContentDao contentDao;
 
+    /**
+     * Upload a file to the server
+     *
+     * @param file      The file to upload
+     * @param contentId The contentId to which the file belongs
+     * @return A ModelAndView that redirects to the page where the file was uploaded
+     */
     @PostMapping(
             value = "/ui/file",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
@@ -55,6 +62,13 @@ class FileController {
         }
     }
 
+    /**
+     * Download a file from the server
+     *
+     * @param response The HttpServletResponse object
+     * @param fileId   The ID of the file to download
+     * @param filename The name of the file to download
+     */
     @GetMapping("/ui/file/{id}/download/{filename}")
     public void downloadFile(
             HttpServletResponse response,
@@ -106,6 +120,11 @@ class FileController {
         }
     }
 
+    /**
+     * Delete a file from the server
+     *
+     * @param fileId The ID of the file to delete
+     */
     @DeleteMapping("/ui/file/{id}")
     public @ResponseBody void deleteFile(@PathVariable("id") Integer fileId) {
         fileDao.deleteFileById(fileId);

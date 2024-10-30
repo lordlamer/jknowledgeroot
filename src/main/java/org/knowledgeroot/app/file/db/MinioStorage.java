@@ -6,8 +6,11 @@ import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
 
+/**
+ * Minio storage implementation of the file storage.
+ */
 @Component
-public class MinioStorage implements FileStorage {
+class MinioStorage implements FileStorage {
     private final MinioClient minioClient;
     private final String bucket;
 
