@@ -36,6 +36,9 @@ spring.thymeleaf.prefix=classpath:/templates/
 logging.level.root=INFO
 #logging.level.org.springframework.security=TRACE
 
+# define storage driver - minio or file
+knowledgeroot.storage.driver=minio
+
 # file storage
 # local file system
 file.storage-dir=./storage
