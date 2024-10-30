@@ -242,7 +242,26 @@ public class ContentImpl implements ContentDao {
                     id = :id
                 """)
                 .param("id", contentId.value())
-                .query(Content.class)
+                .query(
+                        (rs, rowNum) ->
+                                Content.builder()
+                                .contentId(new ContentId(rs.getInt("contentId")))
+                                .parent(rs.getInt("parent"))
+                                .name(rs.getString("name"))
+                                .content(rs.getString("content"))
+                                .type(rs.getString("type"))
+                                .sorting(rs.getInt("sorting"))
+                                .timeStart(rs.getTimestamp("time_start").toLocalDateTime())
+                                .timeEnd(rs.getTimestamp("time_end").toLocalDateTime())
+                                .active(rs.getBoolean("active"))
+                                .createdBy(rs.getInt("created_by"))
+                                .createDate(rs.getTimestamp("create_date").toLocalDateTime())
+                                .changedBy(rs.getInt("changed_by"))
+                                .changeDate(rs.getTimestamp("change_date").toLocalDateTime())
+                                .deleted(rs.getBoolean("deleted"))
+                                .files(null)
+                                .build()
+                )
                 .single();
     }
 

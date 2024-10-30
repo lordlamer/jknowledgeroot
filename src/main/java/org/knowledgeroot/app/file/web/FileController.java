@@ -3,6 +3,8 @@ package org.knowledgeroot.app.file.web;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.knowledgeroot.app.content.domain.ContentDao;
+import org.knowledgeroot.app.content.domain.ContentId;
 import org.knowledgeroot.app.file.domain.File;
 import org.knowledgeroot.app.file.domain.FileDao;
 import org.springframework.http.HttpStatus;
@@ -12,6 +14,7 @@ import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.ModelAndView;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -21,12 +24,13 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 class FileController {
     private final FileDao fileDao;
+    private final ContentDao contentDao;
 
     @PostMapping(
             value = "/ui/file",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
-    public @ResponseBody String uploadFile(
+    public @ResponseBody ModelAndView uploadFile(
             @RequestParam("file") MultipartFile file,
             @RequestParam("contentId") Integer contentId) {
         try {
@@ -34,10 +38,16 @@ class FileController {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is empty");
             }
 
+            // save file
             fileDao.createFile(file, contentId);
 
-            return "File uploaded successfully: " + file.getOriginalFilename() + " Filesize: " + file.getSize();
+            // get content with contentId to get pageId
+            Integer pageId = contentDao.findById(new ContentId(contentId)).getParent();
+
+            // redirect to page with contentId
+            return new ModelAndView("redirect:/ui/page/" + pageId);
         } catch (Exception e) {
+            log.error("Fehler beim Hochladen der Datei: {}", e.getMessage(), e);
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "Could not upload file: " + e.getMessage()
