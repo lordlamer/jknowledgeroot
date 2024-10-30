@@ -24,6 +24,9 @@ public class FileImpl implements FileDao {
     private final JdbcTemplate jdbcTemplate;
     private final FileStorage fileStorage;
 
+    /**
+     * Row mapper for file entity.
+     */
     private final RowMapper<File> fileMapper = (rs, rowNum) -> {
         File file = new File();
         file.setId(rs.getInt("id"));
@@ -41,6 +44,12 @@ public class FileImpl implements FileDao {
         return file;
     };
 
+    /**
+     * Constructor.
+     *
+     * @param jdbcTemplate JDBC template
+     * @param fileStorage  file storage
+     */
     public FileImpl(JdbcTemplate jdbcTemplate, FileStorage fileStorage) {
         this.jdbcTemplate = jdbcTemplate;
         this.fileStorage = fileStorage;

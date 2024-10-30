@@ -6,6 +6,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
+/**
+ * Configuration for the storage implementation.
+ */
 @Configuration
 @RequiredArgsConstructor
 class StorageConfig {
