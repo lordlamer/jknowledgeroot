@@ -224,7 +224,6 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
                     <excludes>
-                        <exclude>application.properties</exclude>
                         <exclude>logback.xml</exclude>
                     </excludes>
                 </configuration>
