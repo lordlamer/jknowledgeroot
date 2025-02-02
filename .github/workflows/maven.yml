@@ -7,7 +7,7 @@ on:
     branches: [ "master" ]
 
 env:
-  DOCKER_IMAGE_NAME: dein-dockerhub-username/dein-image-name
+  DOCKER_IMAGE_NAME: lordlamer/knowledgeroot
   DOCKER_IMAGE_TAG: ${{ github.sha }}
 
 jobs:
