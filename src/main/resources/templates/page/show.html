@@ -13,78 +13,8 @@
     <button type="button" class="btn btn-outline-secondary" th:hx-get="'/ui/page/' + ${page.pageId} + '/edit'" hx-trigger="click" hx-target="#content" hx-push-url="true">edit page</button>
     <button type="button" class="btn btn-outline-secondary">move page</button>
     <button type="button" class="btn btn-outline-secondary" th:hx-delete="'/ui/page/' + ${page.pageId}" hx-trigger="click" hx-target="#content" hx-confirm="Are you sure?">delete page</button>
-    <button type="button" class="btn btn-outline-secondary" th:hx-get="'/ui/page/' + ${page.pageId} + '/content/new'" hx-trigger="click" hx-target="#content" hx-push-url="true">add new content</button>
 </div>
 
 <h1 th:text="${page.name}">Page name</h1>
 
-<p th:text="${page.subtitle}">Subtitle</p>
-
-<div th:each="content : ${contents}" class="card" style="margin-bottom: 20px;">
-    <div class="card-header">
-        <a data-bs-toggle="collapse" th:href="'#content-' + ${content.contentId}" aria-expanded="true" th:aria-controls="'#content-' +${content.contentId}" th:id="'content-head-' + ${content.contentId}" class="d-block ">
-            <i class="bi bi-chevron-down float-end"></i>
-            <th:block th:text="${content.name}">Content name</th:block>
-        </a>
-    </div>
-    <div class="collapse show" th:id="'#content-' +${content.contentId}">
-        <div class="card-body">
-            <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
-                <button type="button" class="btn btn-outline-secondary" th:hx-get="'/ui/page/' + ${page.pageId} + '/content/' + ${content.contentId} + '/edit'" hx-trigger="click" hx-push-url="true">edit</button>
-                <button type="button" class="btn btn-outline-secondary" th:hx-delete="'/ui/page/' + ${page.pageId} + '/content/' + ${content.contentId}" hx-trigger="click" hx-target="#content" hx-confirm="Are you sure?">delete</button>
-                <button type="button" class="btn btn-outline-secondary">move</button>
-                <button type="button" class="btn btn-outline-secondary">print</button>
-                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" th:data-bs-target="'#fileUploadModalForContent' + ${content.getContentId()}">add file</button>
-            </div>
-            <div class="card-text" th:utext="${content.content}">
-            </div>
-
-            <ul class="list-group">
-                <li th:each="file : ${content.getFiles()}" class="list-group-item list-group-item-light">
-                    <a th:hx-delete="'/ui/file/' + ${file.getId()}" hx-trigger="click" hx-target="closest li" hx-swap="outerHTML" hx-confirm="Are you sure?">
-                        <i class="bi bi-trash"></i>
-                    </a>&nbsp;
-                    <a th:href="'/ui/file/' + ${file.getId()} + '/download/' + ${file.getName()}"
-                       th:title="${file.getCreatedBy()} + ' - ' + ${file.getCreateDate()}">
-                        <i class="fa fa-cloud-download" aria-hidden="true"></i>
-                        <th:block th:text="${file.getName()}">filename</th:block>
-                    </a>
-                    [<th:block th:text="${file.getSize()}">578.42 KB</th:block>] [<th:block th:text="${file.getCreatedBy()}">admin</th:block> - <th:block th:text="${file.getCreateDate()}">26. Jan 2009 19:17:54</th:block>]
-                </li>
-            </ul>
-
-            <!-- Modal -->
-            <div class="modal fade" th:id="'fileUploadModalForContent' + ${content.getContentId()}" tabindex="-1" th:aria-labelledby="'fileUploadModalForContentLabel' + ${content.getContentId()}" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <form hx-encoding='multipart/form-data' hx-post='/ui/file'>
-                            <div class="modal-header">
-                                <h1 class="modal-title fs-5" th:id="'fileUploadModalForContentLabel' + ${content.getContentId()}">File upload</h1>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-
-                                    <input type='hidden' name='contentId' th:value='${content.getContentId()}'>
-
-                                    <div class="mb-3">
-                                        <label for="fileInput" class="form-label">Choose a file for upload</label>
-                                        <div class="input-group">
-                                            <input type="file" class="form-control" id="fileInput" name="file" required>
-                                        </div>
-                                    </div>
-
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Upload</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="card-footer text-muted" th:text="'Last modified by ' + ${content.changedBy} + ' on ' + ${content.changeDate} + ' | created: ' + ${content.createDate} + ' by ' + ${content.createdBy}">
-            Last modified by ${content.changedBy} on ${content.changeDate} | created: ${content.createDate} by ${content.createdBy}
-        </div>
-    </div>
-</div>
+<p th:text="${page.content}">Page Content</p>

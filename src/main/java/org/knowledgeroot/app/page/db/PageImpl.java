@@ -203,6 +203,7 @@ public class PageImpl implements PageDao {
                 INSERT INTO page (
                     parent,
                     name,
+                    content,
                     time_start,
                     time_end,
                     active,
