@@ -9,5 +9,5 @@ import org.knowledgeroot.app.page.domain.PageId;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FileFilter {
-    private PageId contentId;
+    private PageId pageId;
 }

@@ -2,6 +2,8 @@ package org.knowledgeroot.app.page.db;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.knowledgeroot.app.file.domain.FileDao;
+import org.knowledgeroot.app.file.domain.FileFilter;
 import org.knowledgeroot.app.page.domain.Page;
 import org.knowledgeroot.app.page.domain.PageDao;
 import org.knowledgeroot.app.page.domain.PageFilter;
@@ -18,6 +20,7 @@ import java.util.Map;
 @Transactional
 @RequiredArgsConstructor
 public class PageImpl implements PageDao {
+    private final FileDao fileImpl;
     private final JdbcClient jdbcClient;
 
     /**
@@ -153,10 +156,32 @@ public class PageImpl implements PageDao {
             sql.append(" LIMIT :start, 18446744073709551615");
         }
 
-        return jdbcClient.sql(sql.toString())
+        List<Page> pages = jdbcClient.sql(sql.toString())
                 .params(params)
-                .query(Page.class)
+                .query(
+                        (rs, rowNum) ->
+                                Page.builder()
+                                        .pageId(new PageId(rs.getInt("pageId")))
+                                        .parent(rs.getInt("parent"))
+                                        .name(rs.getString("name"))
+                                        .content(rs.getString("content"))
+                                        .timeStart(rs.getTimestamp("time_start").toLocalDateTime())
+                                        .timeEnd(rs.getTimestamp("time_end").toLocalDateTime())
+                                        .active(rs.getBoolean("active"))
+                                        .createdBy(rs.getInt("created_by"))
+                                        .createDate(rs.getTimestamp("create_date").toLocalDateTime())
+                                        .changedBy(rs.getInt("changed_by"))
+                                        .changeDate(rs.getTimestamp("change_date").toLocalDateTime())
+                                        .active(rs.getBoolean("active"))
+                                        .deleted(rs.getBoolean("deleted"))
+                                        .build()
+                )
                 .list();
+
+        // add files to pages
+        addFilesToPages(pages);
+
+        return pages;
     }
 
     /**
@@ -167,7 +192,7 @@ public class PageImpl implements PageDao {
      */
     @Override
     public Page findById(PageId pageId) {
-        return jdbcClient.sql("""
+        Page page = jdbcClient.sql("""
                 SELECT 
                     id as pageId,
                     parent,
@@ -188,8 +213,30 @@ public class PageImpl implements PageDao {
                     id = :id
                 """)
                 .param("id", pageId.value())
-                .query(Page.class)
+                .query(
+                        (rs, rowNum) ->
+                                Page.builder()
+                                        .pageId(new PageId(rs.getInt("pageId")))
+                                        .parent(rs.getInt("parent"))
+                                        .name(rs.getString("name"))
+                                        .content(rs.getString("content"))
+                                        .timeStart(rs.getTimestamp("time_start").toLocalDateTime())
+                                        .timeEnd(rs.getTimestamp("time_end").toLocalDateTime())
+                                        .active(rs.getBoolean("active"))
+                                        .createdBy(rs.getInt("created_by"))
+                                        .createDate(rs.getTimestamp("create_date").toLocalDateTime())
+                                        .changedBy(rs.getInt("changed_by"))
+                                        .changeDate(rs.getTimestamp("change_date").toLocalDateTime())
+                                        .active(rs.getBoolean("active"))
+                                        .deleted(rs.getBoolean("deleted"))
+                                        .build()
+                )
                 .single();
+
+        // add files to page
+        addFilesToPage(page);
+
+        return page;
     }
 
     /**
@@ -292,7 +339,7 @@ public class PageImpl implements PageDao {
 
     @Override
     public List<Page> searchContent(String searchQuery) {
-        return jdbcClient.sql("""
+        List<Page> pages = jdbcClient.sql("""
                 SELECT 
                     id as pageId,
                     parent,
@@ -315,5 +362,42 @@ public class PageImpl implements PageDao {
                 .param("searchQuery", "%" + searchQuery + "%")
                 .query(Page.class)
                 .list();
+
+        // add files to pages
+        addFilesToPages(pages);
+
+        return pages;
+    }
+
+    /**
+     * add files to pages
+     * @param pages
+     * @return
+     */
+    private List<Page> addFilesToPages(List<Page> pages) {
+        for(Page page : pages) {
+            page.setFiles(
+                addFilesToPage(page).getFiles()
+            );
+        }
+
+        return pages;
+    }
+
+    /**
+     * add files to page
+     * @param page
+     * @return
+     */
+    private Page addFilesToPage(Page page) {
+        page.setFiles(
+                fileImpl.listFiles(
+                        FileFilter.builder()
+                                .pageId(page.getPageId())
+                                .build()
+                )
+        );
+
+        return page;
     }
 }

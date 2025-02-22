@@ -1,11 +1,11 @@
 package org.knowledgeroot.app.page.domain;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
+import org.knowledgeroot.app.file.domain.File;
+import org.knowledgeroot.app.sanitizer.Sanitizer;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -13,7 +13,10 @@ import java.time.LocalDateTime;
 @ToString
 public class Page {
     private PageId pageId;
+
+    @NonNull
     private Integer parent;
+
     private String name;
     private String content;
     private LocalDateTime timeStart;
@@ -24,4 +27,16 @@ public class Page {
     private Integer changedBy;
     private LocalDateTime changeDate;
     private Boolean deleted;
+    private List<File> files;
+
+    public void setContent(String content) {
+        this.content = Sanitizer.sanitize(content);
+    }
+
+    public static class PageBuilder {
+        public PageBuilder content(String content) {
+            this.content = Sanitizer.sanitize(content);
+            return this;
+        }
+    }
 }

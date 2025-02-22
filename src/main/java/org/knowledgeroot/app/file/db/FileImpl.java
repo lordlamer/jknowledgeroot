@@ -58,9 +58,9 @@ public class FileImpl implements FileDao {
     @Override
     public List<File> listFiles(FileFilter fileFilter) {
         String sql = "SELECT * FROM file WHERE deleted = false";
-        if (fileFilter != null && fileFilter.getContentId() != null) {
-            sql += " AND parent = ?";
-            return jdbcTemplate.query(sql, fileMapper, fileFilter.getContentId().value());
+        if (fileFilter != null && fileFilter.getPageId() != null) {
+            sql += " AND page_id = ?";
+            return jdbcTemplate.query(sql, fileMapper, fileFilter.getPageId().value());
         }
         return jdbcTemplate.query(sql, fileMapper);
     }
