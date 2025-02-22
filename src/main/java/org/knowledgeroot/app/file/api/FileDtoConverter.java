@@ -11,7 +11,7 @@ public class FileDtoConverter implements Converter<File, FileDto> {
 
         fileDto.setId(from.getId());
         fileDto.setName(from.getName());
-        fileDto.setParent(from.getParent());
+        fileDto.setPageId(from.getPageId());
         fileDto.setType(from.getType());
         fileDto.setSize(from.getSize());
         fileDto.setHash(from.getHash());
@@ -30,7 +30,7 @@ public class FileDtoConverter implements Converter<File, FileDto> {
         return File.builder()
                 .id(from.getId())
                 .name(from.getName())
-                .parent(from.getParent())
+                .pageId(from.getPageId())
                 .type(from.getType())
                 .size(from.getSize())
                 .hash(from.getHash())

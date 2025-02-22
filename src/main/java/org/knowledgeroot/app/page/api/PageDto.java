@@ -14,16 +14,7 @@ public class PageDto {
     private Integer id;
     private Integer parent;
     private String name;
-    private String subtitle;
-    private String description;
-    private String tooltip;
-    private String icon;
-    private String alias;
-    private Boolean contentCollapse;
-    private String contentPosition;
-    private Boolean showContentDescription;
-    private Boolean showTableOfContent;
-    private Integer sorting;
+    private String content;
 
     @JsonFormat
             (shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")

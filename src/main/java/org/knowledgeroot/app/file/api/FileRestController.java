@@ -39,7 +39,7 @@ class FileRestController {
     @RequestMapping(value = "/file", method = RequestMethod.GET)
     public ResponseEntity<List<FileDto>> listAllFiles(
             @RequestParam(name = "id", required = false) Integer id,
-            @RequestParam(name = "parent", required = false) Integer parent,
+            @RequestParam(name = "page_id", required = false) Integer pageId,
 
 
             @RequestParam(name = "time_start.begin", required = false) String timeStartBegin,

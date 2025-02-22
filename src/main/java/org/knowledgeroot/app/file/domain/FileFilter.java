@@ -1,7 +1,7 @@
 package org.knowledgeroot.app.file.domain;
 
 import lombok.*;
-import org.knowledgeroot.app.content.domain.ContentId;
+import org.knowledgeroot.app.page.domain.PageId;
 
 @Getter
 @Setter
@@ -9,5 +9,5 @@ import org.knowledgeroot.app.content.domain.ContentId;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FileFilter {
-    private ContentId contentId;
+    private PageId contentId;
 }

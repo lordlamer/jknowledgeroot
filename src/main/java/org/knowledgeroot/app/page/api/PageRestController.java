@@ -36,16 +36,7 @@ public class PageRestController {
             @RequestParam(name = "id", required = false) Integer id,
             @RequestParam(name = "parent", required = false) Integer parent,
             @RequestParam(name = "name", required = false) String name,
-            @RequestParam(name = "subtitle", required = false) String subtitle,
-            @RequestParam(name = "description", required = false) String description,
-            @RequestParam(name = "tooltip", required = false) String tooltip,
-            @RequestParam(name = "icon", required = false) String icon,
-            @RequestParam(name = "alias", required = false) String alias,
-            @RequestParam(name = "content_collapse", required = false) Boolean contentCollapse,
-            @RequestParam(name = "content_position", required = false) String contentPosition,
-            @RequestParam(name = "show_content_description", required = false) Boolean showContentDescription,
-            @RequestParam(name = "show_table_of_content", required = false) Boolean showTableOfContent,
-            @RequestParam(name = "sorting", required = false) Integer sorting,
+            @RequestParam(name = "content", required = false) String content,
 
             @RequestParam(name = "time_start.begin", required = false) String timeStartBegin,
             @RequestParam(name = "time_start.end", required = false) String timeStartEnd,
@@ -70,16 +61,7 @@ public class PageRestController {
         pageFilter.setId(id);
         pageFilter.setParent(parent);
         pageFilter.setName(name);
-        pageFilter.setSubtitle(subtitle);
-        pageFilter.setDescription(description);
-        pageFilter.setTooltip(tooltip);
-        pageFilter.setIcon(icon);
-        pageFilter.setAlias(alias);
-        pageFilter.setContentCollapse(contentCollapse);
-        pageFilter.setContentPosition(contentPosition);
-        pageFilter.setShowContentDescription(showContentDescription);
-        pageFilter.setShowTableOfContent(showTableOfContent);
-        pageFilter.setSorting(sorting);
+        pageFilter.setContent(content);
 
         pageFilter.setActive(active);
         pageFilter.setCreatedBy(createdBy);

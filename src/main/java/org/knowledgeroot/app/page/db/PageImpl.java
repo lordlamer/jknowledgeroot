@@ -1,6 +1,5 @@
 package org.knowledgeroot.app.page.db;
 
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.knowledgeroot.app.page.domain.Page;
@@ -19,7 +18,6 @@ import java.util.Map;
 @Transactional
 @RequiredArgsConstructor
 public class PageImpl implements PageDao {
-    private final EntityManager entityManager;
     private final JdbcClient jdbcClient;
 
     /**
@@ -35,16 +33,7 @@ public class PageImpl implements PageDao {
                     id as pageId,
                     parent,
                     name,
-                    subtitle,
-                    description,
-                    tooltip,
-                    icon,
-                    alias,
-                    content_collapse,
-                    content_position,
-                    show_content_description,
-                    show_table_of_content,
-                    sorting,
+                    content,
                     time_start,
                     time_end,
                     active,
@@ -76,54 +65,9 @@ public class PageImpl implements PageDao {
             params.put("name", "%" + pageFilter.getName() + "%");
         }
 
-        if (pageFilter.getSubtitle() != null) {
-            sqlParams.put("subtitle", "subtitle like :subtitle");
-            params.put("subtitle", "%" + pageFilter.getSubtitle() + "%");
-        }
-
-        if (pageFilter.getDescription() != null) {
-            sqlParams.put("description", "description like :description");
-            params.put("description", "%" + pageFilter.getDescription() + "%");
-        }
-
-        if (pageFilter.getTooltip() != null) {
-            sqlParams.put("tooltip", "tooltip like :tooltip");
-            params.put("tooltip", "%" + pageFilter.getTooltip() + "%");
-        }
-
-        if (pageFilter.getIcon() != null) {
-            sqlParams.put("icon", "icon like :icon");
-            params.put("icon", "%" + pageFilter.getIcon() + "%");
-        }
-
-        if (pageFilter.getAlias() != null) {
-            sqlParams.put("alias", "alias like :alias");
-            params.put("alias", "%" + pageFilter.getAlias() + "%");
-        }
-
-        if (pageFilter.getContentCollapse() != null) {
-            sqlParams.put("content_collapse", "content_collapse = :content_collapse");
-            params.put("content_collapse", pageFilter.getContentCollapse());
-        }
-
-        if (pageFilter.getContentPosition() != null) {
-            sqlParams.put("content_position", "content_position = :content_position");
-            params.put("content_position", pageFilter.getContentPosition());
-        }
-
-        if (pageFilter.getShowContentDescription() != null) {
-            sqlParams.put("show_content_description", "show_content_description = :show_content_description");
-            params.put("show_content_description", pageFilter.getShowContentDescription());
-        }
-
-        if (pageFilter.getShowTableOfContent() != null) {
-            sqlParams.put("show_table_of_content", "show_table_of_content = :show_table_of_content");
-            params.put("show_table_of_content", pageFilter.getShowTableOfContent());
-        }
-
-        if (pageFilter.getSorting() != null) {
-            sqlParams.put("sorting", "sorting = :sorting");
-            params.put("sorting", pageFilter.getSorting());
+        if (pageFilter.getContent() != null) {
+            sqlParams.put("content", "content like :description");
+            params.put("content", "%" + pageFilter.getContent() + "%");
         }
 
         if (pageFilter.getTimeStartBegin() != null) {
@@ -228,16 +172,7 @@ public class PageImpl implements PageDao {
                     id as pageId,
                     parent,
                     name,
-                    subtitle,
-                    description,
-                    tooltip,
-                    icon,
-                    alias,
-                    content_collapse,
-                    content_position,
-                    show_content_description,
-                    show_table_of_content,
-                    sorting,
+                    content,
                     time_start,
                     time_end,
                     active,
@@ -268,16 +203,6 @@ public class PageImpl implements PageDao {
                 INSERT INTO page (
                     parent,
                     name,
-                    subtitle,
-                    description,
-                    tooltip,
-                    icon,
-                    alias,
-                    content_collapse,
-                    content_position,
-                    show_content_description,
-                    show_table_of_content,
-                    sorting,
                     time_start,
                     time_end,
                     active,
@@ -287,22 +212,13 @@ public class PageImpl implements PageDao {
                     change_date,
                     deleted
                 ) VALUES (
-                    ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+                    ?,?,?,?,?,?,?,?,?,?,?
                 )
                 """)
                 .params(
                         page.getParent(),
                         page.getName(),
-                        page.getSubtitle(),
-                        page.getDescription(),
-                        page.getTooltip(),
-                        page.getIcon(),
-                        page.getAlias(),
-                        page.getContentCollapse(),
-                        page.getContentPosition(),
-                        page.getShowContentDescription(),
-                        page.getShowTableOfContent(),
-                        page.getSorting(),
+                        page.getContent(),
                         page.getTimeStart(),
                         page.getTimeEnd(),
                         page.getActive(),
@@ -327,16 +243,7 @@ public class PageImpl implements PageDao {
         int update = jdbcClient.sql("""
                 UPDATE page SET
                     name = ?,
-                    subtitle = ?,
-                    description = ?,
-                    tooltip = ?,
-                    icon = ?,
-                    alias = ?,
-                    content_collapse = ?,
-                    content_position = ?,
-                    show_content_description = ?,
-                    show_table_of_content = ?,
-                    sorting = ?,
+                    content = ?,
                     time_start = ?,
                     time_end = ?,
                     active = ?,
@@ -348,16 +255,7 @@ public class PageImpl implements PageDao {
                 """)
                 .params(
                         page.getName(),
-                        page.getSubtitle(),
-                        page.getDescription(),
-                        page.getTooltip(),
-                        page.getIcon(),
-                        page.getAlias(),
-                        page.getContentCollapse(),
-                        page.getContentPosition(),
-                        page.getShowContentDescription(),
-                        page.getShowTableOfContent(),
-                        page.getSorting(),
+                        page.getContent(),
                         page.getTimeStart(),
                         page.getTimeEnd(),
                         page.getActive(),
@@ -389,5 +287,32 @@ public class PageImpl implements PageDao {
         jdbcClient.sql("delete from page where id = :id")
                 .param("id", pageId.value())
                 .update();
+    }
+
+    @Override
+    public List<Page> searchContent(String searchQuery) {
+        return jdbcClient.sql("""
+                SELECT 
+                    id as pageId,
+                    parent,
+                    name,
+                    content,
+                    time_start,
+                    time_end,
+                    active,
+                    created_by,
+                    create_date,
+                    changed_by,
+                    change_date,
+                    active,
+                    deleted
+                FROM 
+                    page 
+                WHERE 
+                    content like :searchQuery
+                """)
+                .param("searchQuery", "%" + searchQuery + "%")
+                .query(Page.class)
+                .list();
     }
 }
