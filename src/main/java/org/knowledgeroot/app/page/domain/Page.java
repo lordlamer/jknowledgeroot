@@ -13,10 +13,7 @@ import java.util.List;
 @ToString
 public class Page {
     private PageId pageId;
-
-    @NonNull
     private Integer parent;
-
     private String name;
     private String content;
     private LocalDateTime timeStart;
