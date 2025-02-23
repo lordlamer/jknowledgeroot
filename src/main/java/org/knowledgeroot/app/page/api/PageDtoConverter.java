@@ -14,23 +14,14 @@ public class PageDtoConverter implements Converter<Page, PageDto> {
         pageDto.setActive(from.getActive());
         pageDto.setName(from.getName());
         pageDto.setParent(from.getParent());
-        pageDto.setSubtitle(from.getSubtitle());
+        pageDto.setContent(from.getContent());
         pageDto.setCreateDate(from.getCreateDate());
         pageDto.setCreatedBy(from.getCreatedBy());
         pageDto.setChangeDate(from.getChangeDate());
         pageDto.setChangedBy(from.getChangedBy());
         pageDto.setDeleted(from.getDeleted());
-        pageDto.setDescription(from.getDescription());
-        pageDto.setShowContentDescription(from.getShowContentDescription());
-        pageDto.setContentCollapse(from.getContentCollapse());
-        pageDto.setContentPosition(from.getContentPosition());
-        pageDto.setIcon(from.getIcon());
-        pageDto.setShowTableOfContent(from.getShowTableOfContent());
-        pageDto.setTooltip(from.getTooltip());
         pageDto.setTimeStart(from.getTimeStart());
         pageDto.setTimeEnd(from.getTimeEnd());
-        pageDto.setSorting(from.getSorting());
-        pageDto.setAlias(from.getAlias());
 
         return pageDto;
     }
@@ -42,23 +33,14 @@ public class PageDtoConverter implements Converter<Page, PageDto> {
                 .active(from.getActive())
                 .name(from.getName())
                 .parent(from.getParent())
-                .subtitle(from.getSubtitle())
+                .content(from.getContent())
                 .createDate(from.getCreateDate())
                 .createdBy(from.getCreatedBy())
                 .changeDate(from.getChangeDate())
                 .changedBy(from.getChangedBy())
                 .deleted(from.getDeleted())
-                .description(from.getDescription())
-                .showContentDescription(from.getShowContentDescription())
-                .contentCollapse(from.getContentCollapse())
-                .contentPosition(from.getContentPosition())
-                .icon(from.getIcon())
-                .showTableOfContent(from.getShowTableOfContent())
-                .tooltip(from.getTooltip())
                 .timeStart(from.getTimeStart())
                 .timeEnd(from.getTimeEnd())
-                .sorting(from.getSorting())
-                .alias(from.getAlias())
                 .build();
     }
 }

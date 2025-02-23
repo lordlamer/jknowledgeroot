@@ -3,8 +3,6 @@ package org.knowledgeroot.app.file.web;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.knowledgeroot.app.content.domain.ContentDao;
-import org.knowledgeroot.app.content.domain.ContentId;
 import org.knowledgeroot.app.file.domain.File;
 import org.knowledgeroot.app.file.domain.FileDao;
 import org.springframework.http.HttpStatus;
@@ -24,13 +22,12 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 class FileController {
     private final FileDao fileDao;
-    private final ContentDao contentDao;
 
     /**
      * Upload a file to the server
      *
      * @param file      The file to upload
-     * @param contentId The contentId to which the file belongs
+     * @param pageId The pageId to which the file belongs
      * @return A ModelAndView that redirects to the page where the file was uploaded
      */
     @PostMapping(
@@ -39,17 +36,14 @@ class FileController {
     )
     public @ResponseBody ModelAndView uploadFile(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("contentId") Integer contentId) {
+            @RequestParam("pageId") Integer pageId) {
         try {
             if (file.isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is empty");
             }
 
             // save file
-            fileDao.createFile(file, contentId);
-
-            // get content with contentId to get pageId
-            Integer pageId = contentDao.findById(new ContentId(contentId)).getParent();
+            fileDao.createFile(file, pageId);
 
             // redirect to page with contentId
             return new ModelAndView("redirect:/ui/page/" + pageId);

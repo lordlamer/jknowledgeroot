@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class File {
     private Integer id;
-    private Integer parent;
+    private Integer pageId;
     private String hash;
     private String name;
     private Integer size;

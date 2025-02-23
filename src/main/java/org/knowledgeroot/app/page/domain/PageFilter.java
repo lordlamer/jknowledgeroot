@@ -13,16 +13,7 @@ public class PageFilter {
     private Integer id;
     private Integer parent;
     private String name;
-    private String subtitle;
-    private String description;
-    private String tooltip;
-    private String icon;
-    private String alias;
-    private Boolean contentCollapse;
-    private String contentPosition;
-    private Boolean showContentDescription;
-    private Boolean showTableOfContent;
-    private Integer sorting;
+    private String content;
 
     private LocalDateTime timeStartBegin;
     private LocalDateTime timeStartEnd;

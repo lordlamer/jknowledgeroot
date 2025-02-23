@@ -1,8 +1,9 @@
 package org.knowledgeroot.app.page.db;
 
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.knowledgeroot.app.file.domain.FileDao;
+import org.knowledgeroot.app.file.domain.FileFilter;
 import org.knowledgeroot.app.page.domain.Page;
 import org.knowledgeroot.app.page.domain.PageDao;
 import org.knowledgeroot.app.page.domain.PageFilter;
@@ -19,7 +20,7 @@ import java.util.Map;
 @Transactional
 @RequiredArgsConstructor
 public class PageImpl implements PageDao {
-    private final EntityManager entityManager;
+    private final FileDao fileImpl;
     private final JdbcClient jdbcClient;
 
     /**
@@ -35,16 +36,7 @@ public class PageImpl implements PageDao {
                     id as pageId,
                     parent,
                     name,
-                    subtitle,
-                    description,
-                    tooltip,
-                    icon,
-                    alias,
-                    content_collapse,
-                    content_position,
-                    show_content_description,
-                    show_table_of_content,
-                    sorting,
+                    content,
                     time_start,
                     time_end,
                     active,
@@ -76,54 +68,9 @@ public class PageImpl implements PageDao {
             params.put("name", "%" + pageFilter.getName() + "%");
         }
 
-        if (pageFilter.getSubtitle() != null) {
-            sqlParams.put("subtitle", "subtitle like :subtitle");
-            params.put("subtitle", "%" + pageFilter.getSubtitle() + "%");
-        }
-
-        if (pageFilter.getDescription() != null) {
-            sqlParams.put("description", "description like :description");
-            params.put("description", "%" + pageFilter.getDescription() + "%");
-        }
-
-        if (pageFilter.getTooltip() != null) {
-            sqlParams.put("tooltip", "tooltip like :tooltip");
-            params.put("tooltip", "%" + pageFilter.getTooltip() + "%");
-        }
-
-        if (pageFilter.getIcon() != null) {
-            sqlParams.put("icon", "icon like :icon");
-            params.put("icon", "%" + pageFilter.getIcon() + "%");
-        }
-
-        if (pageFilter.getAlias() != null) {
-            sqlParams.put("alias", "alias like :alias");
-            params.put("alias", "%" + pageFilter.getAlias() + "%");
-        }
-
-        if (pageFilter.getContentCollapse() != null) {
-            sqlParams.put("content_collapse", "content_collapse = :content_collapse");
-            params.put("content_collapse", pageFilter.getContentCollapse());
-        }
-
-        if (pageFilter.getContentPosition() != null) {
-            sqlParams.put("content_position", "content_position = :content_position");
-            params.put("content_position", pageFilter.getContentPosition());
-        }
-
-        if (pageFilter.getShowContentDescription() != null) {
-            sqlParams.put("show_content_description", "show_content_description = :show_content_description");
-            params.put("show_content_description", pageFilter.getShowContentDescription());
-        }
-
-        if (pageFilter.getShowTableOfContent() != null) {
-            sqlParams.put("show_table_of_content", "show_table_of_content = :show_table_of_content");
-            params.put("show_table_of_content", pageFilter.getShowTableOfContent());
-        }
-
-        if (pageFilter.getSorting() != null) {
-            sqlParams.put("sorting", "sorting = :sorting");
-            params.put("sorting", pageFilter.getSorting());
+        if (pageFilter.getContent() != null) {
+            sqlParams.put("content", "content like :description");
+            params.put("content", "%" + pageFilter.getContent() + "%");
         }
 
         if (pageFilter.getTimeStartBegin() != null) {
@@ -209,10 +156,32 @@ public class PageImpl implements PageDao {
             sql.append(" LIMIT :start, 18446744073709551615");
         }
 
-        return jdbcClient.sql(sql.toString())
+        List<Page> pages = jdbcClient.sql(sql.toString())
                 .params(params)
-                .query(Page.class)
+                .query(
+                        (rs, rowNum) ->
+                                Page.builder()
+                                        .pageId(new PageId(rs.getInt("pageId")))
+                                        .parent(rs.getInt("parent"))
+                                        .name(rs.getString("name"))
+                                        .content(rs.getString("content"))
+                                        .timeStart(rs.getTimestamp("time_start").toLocalDateTime())
+                                        .timeEnd(rs.getTimestamp("time_end").toLocalDateTime())
+                                        .active(rs.getBoolean("active"))
+                                        .createdBy(rs.getInt("created_by"))
+                                        .createDate(rs.getTimestamp("create_date").toLocalDateTime())
+                                        .changedBy(rs.getInt("changed_by"))
+                                        .changeDate(rs.getTimestamp("change_date").toLocalDateTime())
+                                        .active(rs.getBoolean("active"))
+                                        .deleted(rs.getBoolean("deleted"))
+                                        .build()
+                )
                 .list();
+
+        // add files to pages
+        addFilesToPages(pages);
+
+        return pages;
     }
 
     /**
@@ -223,21 +192,12 @@ public class PageImpl implements PageDao {
      */
     @Override
     public Page findById(PageId pageId) {
-        return jdbcClient.sql("""
+        Page page = jdbcClient.sql("""
                 SELECT 
                     id as pageId,
                     parent,
                     name,
-                    subtitle,
-                    description,
-                    tooltip,
-                    icon,
-                    alias,
-                    content_collapse,
-                    content_position,
-                    show_content_description,
-                    show_table_of_content,
-                    sorting,
+                    content,
                     time_start,
                     time_end,
                     active,
@@ -253,8 +213,30 @@ public class PageImpl implements PageDao {
                     id = :id
                 """)
                 .param("id", pageId.value())
-                .query(Page.class)
+                .query(
+                        (rs, rowNum) ->
+                                Page.builder()
+                                        .pageId(new PageId(rs.getInt("pageId")))
+                                        .parent(rs.getInt("parent"))
+                                        .name(rs.getString("name"))
+                                        .content(rs.getString("content"))
+                                        .timeStart(rs.getTimestamp("time_start").toLocalDateTime())
+                                        .timeEnd(rs.getTimestamp("time_end").toLocalDateTime())
+                                        .active(rs.getBoolean("active"))
+                                        .createdBy(rs.getInt("created_by"))
+                                        .createDate(rs.getTimestamp("create_date").toLocalDateTime())
+                                        .changedBy(rs.getInt("changed_by"))
+                                        .changeDate(rs.getTimestamp("change_date").toLocalDateTime())
+                                        .active(rs.getBoolean("active"))
+                                        .deleted(rs.getBoolean("deleted"))
+                                        .build()
+                )
                 .single();
+
+        // add files to page
+        addFilesToPage(page);
+
+        return page;
     }
 
     /**
@@ -268,16 +250,7 @@ public class PageImpl implements PageDao {
                 INSERT INTO page (
                     parent,
                     name,
-                    subtitle,
-                    description,
-                    tooltip,
-                    icon,
-                    alias,
-                    content_collapse,
-                    content_position,
-                    show_content_description,
-                    show_table_of_content,
-                    sorting,
+                    content,
                     time_start,
                     time_end,
                     active,
@@ -287,22 +260,13 @@ public class PageImpl implements PageDao {
                     change_date,
                     deleted
                 ) VALUES (
-                    ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+                    ?,?,?,?,?,?,?,?,?,?,?
                 )
                 """)
                 .params(
                         page.getParent(),
                         page.getName(),
-                        page.getSubtitle(),
-                        page.getDescription(),
-                        page.getTooltip(),
-                        page.getIcon(),
-                        page.getAlias(),
-                        page.getContentCollapse(),
-                        page.getContentPosition(),
-                        page.getShowContentDescription(),
-                        page.getShowTableOfContent(),
-                        page.getSorting(),
+                        page.getContent(),
                         page.getTimeStart(),
                         page.getTimeEnd(),
                         page.getActive(),
@@ -327,16 +291,7 @@ public class PageImpl implements PageDao {
         int update = jdbcClient.sql("""
                 UPDATE page SET
                     name = ?,
-                    subtitle = ?,
-                    description = ?,
-                    tooltip = ?,
-                    icon = ?,
-                    alias = ?,
-                    content_collapse = ?,
-                    content_position = ?,
-                    show_content_description = ?,
-                    show_table_of_content = ?,
-                    sorting = ?,
+                    content = ?,
                     time_start = ?,
                     time_end = ?,
                     active = ?,
@@ -348,16 +303,7 @@ public class PageImpl implements PageDao {
                 """)
                 .params(
                         page.getName(),
-                        page.getSubtitle(),
-                        page.getDescription(),
-                        page.getTooltip(),
-                        page.getIcon(),
-                        page.getAlias(),
-                        page.getContentCollapse(),
-                        page.getContentPosition(),
-                        page.getShowContentDescription(),
-                        page.getShowTableOfContent(),
-                        page.getSorting(),
+                        page.getContent(),
                         page.getTimeStart(),
                         page.getTimeEnd(),
                         page.getActive(),
@@ -389,5 +335,69 @@ public class PageImpl implements PageDao {
         jdbcClient.sql("delete from page where id = :id")
                 .param("id", pageId.value())
                 .update();
+    }
+
+    @Override
+    public List<Page> searchContent(String searchQuery) {
+        List<Page> pages = jdbcClient.sql("""
+                SELECT 
+                    id as pageId,
+                    parent,
+                    name,
+                    content,
+                    time_start,
+                    time_end,
+                    active,
+                    created_by,
+                    create_date,
+                    changed_by,
+                    change_date,
+                    active,
+                    deleted
+                FROM 
+                    page 
+                WHERE 
+                    content like :searchQuery
+                """)
+                .param("searchQuery", "%" + searchQuery + "%")
+                .query(Page.class)
+                .list();
+
+        // add files to pages
+        addFilesToPages(pages);
+
+        return pages;
+    }
+
+    /**
+     * add files to pages
+     * @param pages
+     * @return
+     */
+    private List<Page> addFilesToPages(List<Page> pages) {
+        for(Page page : pages) {
+            page.setFiles(
+                addFilesToPage(page).getFiles()
+            );
+        }
+
+        return pages;
+    }
+
+    /**
+     * add files to page
+     * @param page
+     * @return
+     */
+    private Page addFilesToPage(Page page) {
+        page.setFiles(
+                fileImpl.listFiles(
+                        FileFilter.builder()
+                                .pageId(page.getPageId())
+                                .build()
+                )
+        );
+
+        return page;
     }
 }

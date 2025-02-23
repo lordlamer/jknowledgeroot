@@ -38,4 +38,11 @@ public interface PageDao {
      * @param pageId
      */
     void deletePageById(PageId pageId);
+
+    /**
+     * search for content on pages
+     * @param searchQuery
+     * @return
+     */
+    List<Page> searchContent(String searchQuery);
 }

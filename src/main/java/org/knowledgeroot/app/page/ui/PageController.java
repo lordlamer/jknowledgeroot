@@ -2,8 +2,6 @@ package org.knowledgeroot.app.page.ui;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.knowledgeroot.app.content.domain.ContentDao;
-import org.knowledgeroot.app.content.domain.ContentFilter;
 import org.knowledgeroot.app.page.api.PageDto;
 import org.knowledgeroot.app.page.api.PageDtoConverter;
 import org.knowledgeroot.app.page.domain.Page;
@@ -20,7 +18,6 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class PageController {
     private final PageDao pageImpl;
-    private final ContentDao contentImpl;
     private final PageDtoConverter pageDtoConverter = new PageDtoConverter();
 
     @GetMapping("/ui/page/new")
@@ -36,10 +33,6 @@ public class PageController {
             HttpServletResponse response
     ) {
         model.addAttribute("page", pageImpl.findById(new PageId(pageId)));
-
-        ContentFilter contentFilter = new ContentFilter();
-        contentFilter.setParent(pageId);
-        model.addAttribute("contents", contentImpl.listContents(contentFilter));
 
         // trigger reload sidebar
         if(trigger != null && trigger.equals("reload-sidebar"))
@@ -89,18 +82,11 @@ public class PageController {
         pageDto.setChangeDate(LocalDateTime.now());
         pageDto.setChangedBy(1);
         pageDto.setActive(true);
-        pageDto.setAlias("");
+        pageDto.setContent(pageDto.getContent());
         pageDto.setTimeStart(LocalDateTime.now());
         pageDto.setTimeEnd(LocalDateTime.now());
-        pageDto.setContentCollapse(false);
-        pageDto.setContentPosition("end");
         pageDto.setDeleted(false);
-        pageDto.setIcon("");
         pageDto.setParent(null);
-        pageDto.setShowContentDescription(true);
-        pageDto.setShowTableOfContent(true);
-        pageDto.setSorting(0);
-        pageDto.setTooltip("");
 
         Page page = pageDtoConverter.convertBtoA(pageDto);
         pageImpl.updatePage(page);
@@ -115,21 +101,13 @@ public class PageController {
         pageDto.setChangeDate(LocalDateTime.now());
         pageDto.setChangedBy(1);
         pageDto.setActive(true);
-        pageDto.setAlias("");
+        pageDto.setContent(pageDto.getContent());
         pageDto.setTimeStart(LocalDateTime.now());
         pageDto.setTimeEnd(LocalDateTime.now());
-        pageDto.setContentCollapse(false);
-        pageDto.setContentPosition("end");
         pageDto.setDeleted(false);
-        pageDto.setIcon("");
 
         if(pageDto.getParent() == null)
             pageDto.setParent(0);
-
-        pageDto.setShowContentDescription(true);
-        pageDto.setShowTableOfContent(true);
-        pageDto.setSorting(0);
-        pageDto.setTooltip("");
 
         Page page = pageDtoConverter.convertBtoA(pageDto);
         pageImpl.createPage(page);

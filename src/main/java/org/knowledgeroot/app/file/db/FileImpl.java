@@ -30,7 +30,7 @@ public class FileImpl implements FileDao {
     private final RowMapper<File> fileMapper = (rs, rowNum) -> {
         File file = new File();
         file.setId(rs.getInt("id"));
-        file.setParent(rs.getInt("parent"));
+        file.setPageId(rs.getInt("page_id"));
         file.setHash(rs.getString("hash"));
         file.setName(rs.getString("name"));
         file.setSize(rs.getInt("size"));
@@ -58,9 +58,9 @@ public class FileImpl implements FileDao {
     @Override
     public List<File> listFiles(FileFilter fileFilter) {
         String sql = "SELECT * FROM file WHERE deleted = false";
-        if (fileFilter != null && fileFilter.getContentId() != null) {
-            sql += " AND parent = ?";
-            return jdbcTemplate.query(sql, fileMapper, fileFilter.getContentId().value());
+        if (fileFilter != null && fileFilter.getPageId() != null) {
+            sql += " AND page_id = ?";
+            return jdbcTemplate.query(sql, fileMapper, fileFilter.getPageId().value());
         }
         return jdbcTemplate.query(sql, fileMapper);
     }
@@ -72,7 +72,7 @@ public class FileImpl implements FileDao {
     }
 
     @Override
-    public void createFile(MultipartFile file, Integer parentContent) {
+    public void createFile(MultipartFile file, Integer pageId) {
         try {
             // Generate MD5 hash
             MessageDigest md = MessageDigest.getInstance("MD5");
@@ -87,12 +87,12 @@ public class FileImpl implements FileDao {
 
             // Store metadata in database
             String sql = """
-                INSERT INTO file (parent, hash, name, size, type, created_by, create_date, changed_by, change_date)
+                INSERT INTO file (page_id, hash, name, size, type, created_by, create_date, changed_by, change_date)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
             jdbcTemplate.update(sql,
-                    parentContent,
+                    pageId,
                     hash,
                     file.getOriginalFilename(),
                     file.getSize(),
