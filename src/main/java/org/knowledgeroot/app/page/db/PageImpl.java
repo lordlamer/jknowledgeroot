@@ -358,7 +358,24 @@ public class PageImpl implements PageDao {
                     content like :searchQuery
                 """)
                 .param("searchQuery", "%" + searchQuery + "%")
-                .query(Page.class)
+                .query(
+                        (rs, rowNum) ->
+                                Page.builder()
+                                        .pageId(new PageId(rs.getInt("pageId")))
+                                        .parent(rs.getInt("parent"))
+                                        .name(rs.getString("name"))
+                                        .content(rs.getString("content"))
+                                        .timeStart(rs.getTimestamp("time_start").toLocalDateTime())
+                                        .timeEnd(rs.getTimestamp("time_end").toLocalDateTime())
+                                        .active(rs.getBoolean("active"))
+                                        .createdBy(rs.getInt("created_by"))
+                                        .createDate(rs.getTimestamp("create_date").toLocalDateTime())
+                                        .changedBy(rs.getInt("changed_by"))
+                                        .changeDate(rs.getTimestamp("change_date").toLocalDateTime())
+                                        .active(rs.getBoolean("active"))
+                                        .deleted(rs.getBoolean("deleted"))
+                                        .build()
+                )
                 .list();
 
         // add files to pages
