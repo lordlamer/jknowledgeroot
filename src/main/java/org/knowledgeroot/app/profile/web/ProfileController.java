@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.profile.domain.MyProfile;
 import org.knowledgeroot.app.profile.domain.MyProfileDao;
+import org.knowledgeroot.app.security.context.domain.UserContext;
+import org.knowledgeroot.app.security.context.domain.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequiredArgsConstructor
 class ProfileController {
     private final MyProfileDao myProfileDao;
+    private final UserContext userContext;
 
     /**
      * Show profile page
@@ -32,6 +35,12 @@ class ProfileController {
             @RequestParam(name = "updated", required = false) boolean updated,
             Model model
     ) {
+        UserDetails userDetails = userContext.getUserContext();
+
+        if(userDetails.isGuest()) {
+            return "redirect:/login";
+        }
+
         model.addAttribute("userDetails", myProfileDao.findMyProfile());
         model.addAttribute("updated", updated);
 
@@ -47,6 +56,13 @@ class ProfileController {
     @PostMapping("/profile")
     public String updateProfile(@ModelAttribute UpdateProfileDto updateProfileDto) {
         log.info("Update profile: {}", updateProfileDto);
+
+        UserDetails userDetails = userContext.getUserContext();
+
+        if(userDetails.isGuest()) {
+            log.info("Guest user tried to update profile");
+            return "redirect:/login";
+        }
 
         MyProfile updateProfile = MyProfile.builder()
                 .login(updateProfileDto.getLogin())

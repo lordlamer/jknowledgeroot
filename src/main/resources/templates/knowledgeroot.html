@@ -104,22 +104,22 @@
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink2">
                         <li th:if="${isguest}">
-                            <a class="dropdown-item" hx-get="/login" hx-target="#content">Sign in</a>
+                            <a class="dropdown-item" hx-get="/login" hx-target="#content" hx-push-url="true">Sign in</a>
                         </li>
                         <li th:if="${isuser || isadmin}">
-                            <a class="dropdown-item" hx-get="/profile" hx-target="#content">Profile</a>
+                            <a class="dropdown-item" hx-get="/profile" hx-target="#content" hx-push-url="true">Profile</a>
                         </li>
                         <li th:if="${!isguest}">
-                            <a class="dropdown-item" hx-get="/logout" hx-target="#content">Logout</a>
+                            <a class="dropdown-item" hx-get="/logout" hx-target="#content" hx-push-url="true">Logout</a>
                         </li>
                     </ul>
                 </li>
                 <li class="nav-item dropdown" th:if="${isadmin}">
                     <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-gear-fill"></i> Admin</a>
                     <ul class="dropdown-menu" aria-labelledby="dropdown01">
-                        <li><a class="dropdown-item" hx-get="/admin/users" hx-target="#content">Users</a></li>
-                        <li><a class="dropdown-item" hx-get="/admin/groups" hx-target="#content">Groups</a></li>
-                        <li><a class="dropdown-item" hx-get="/admin/permissions" hx-target="#content">Permissions</a></li>
+                        <li><a class="dropdown-item" hx-get="/admin/users" hx-target="#content" hx-push-url="true">Users</a></li>
+                        <li><a class="dropdown-item" hx-get="/admin/groups" hx-target="#content" hx-push-url="true">Groups</a></li>
+                        <li><a class="dropdown-item" hx-get="/admin/permissions" hx-target="#content" hx-push-url="true">Permissions</a></li>
                     </ul>
                 </li>
                 <li class="nav-item dropdown">
