@@ -45,4 +45,11 @@ public interface PageDao {
      * @return
      */
     List<Page> searchContent(String searchQuery);
+
+    /**
+     * Get page hierarchy from root to current page for breadcrumb navigation
+     * @param pageId ID of the current page
+     * @return List of pages ordered from root to current page
+     */
+    List<Page> getPageHierarchy(PageId pageId);
 }

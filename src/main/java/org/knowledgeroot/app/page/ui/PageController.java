@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -32,7 +33,12 @@ public class PageController {
             Model model,
             HttpServletResponse response
     ) {
-        model.addAttribute("page", pageImpl.findById(new PageId(pageId)));
+        PageId pid = new PageId(pageId);
+        Page page = pageImpl.findById(pid);
+        List<Page> hierarchy = pageImpl.getPageHierarchy(pid);
+
+        model.addAttribute("page", page);
+        model.addAttribute("breadcrumb", hierarchy);
 
         // trigger reload sidebar
         if(trigger != null && trigger.equals("reload-sidebar"))

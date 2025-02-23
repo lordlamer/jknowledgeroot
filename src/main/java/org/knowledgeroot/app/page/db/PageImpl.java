@@ -12,9 +12,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @Transactional
@@ -367,6 +365,46 @@ public class PageImpl implements PageDao {
         addFilesToPages(pages);
 
         return pages;
+    }
+
+    @Override
+    public List<Page> getPageHierarchy(PageId pageId) {
+        List<Page> hierarchy = new ArrayList<>();
+        Set<Integer> visitedIds = new HashSet<>();  // Für Erkennung von Zirkelbezügen
+
+        // Get current page
+        Page currentPage = findById(pageId);
+        if (currentPage == null || currentPage.getDeleted()) {
+            return hierarchy;
+        }
+
+        // Add current page to hierarchy and mark as visited
+        hierarchy.add(currentPage);
+        visitedIds.add(currentPage.getPageId().value());
+
+        // Recursively get all parents
+        int parentId = currentPage.getParent();
+        while (parentId != 0) {  // 0 indicates root level
+            // Prüfe auf Zirkelbezüge
+            if (visitedIds.contains(parentId)) {
+                // Log warning about circular reference
+                System.err.println("Circular reference detected in page hierarchy at page ID: " + parentId);
+                break;
+            }
+
+            Page parentPage = findById(new PageId(parentId));
+            // Prüfe ob Parent existiert und nicht gelöscht ist
+            if (parentPage == null || parentPage.getDeleted()) {
+                break;
+            }
+
+            // Add parent to beginning of list to maintain root->leaf order
+            hierarchy.add(0, parentPage);
+            visitedIds.add(parentId);
+            parentId = parentPage.getParent();
+        }
+
+        return hierarchy;
     }
 
     /**
