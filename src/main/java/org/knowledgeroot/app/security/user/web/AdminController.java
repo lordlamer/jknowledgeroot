@@ -1,5 +1,6 @@
 package org.knowledgeroot.app.security.user.web;
 
+import io.github.wimdeblauwe.htmx.spring.boot.mvc.HtmxRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.security.auth.PasswordHasher;
@@ -27,13 +28,20 @@ public class AdminController {
      * get all users
      */
     @GetMapping("/admin/users")
-    public String showUsers(Model model) {
+    public String showUsers(
+            Model model,
+            HtmxRequest htmxRequest
+    ) {
         model.addAttribute(
                 "users",
                 userImpl.listUsers(
                         new UserFilter()
                 )
         );
+
+        if(htmxRequest.isHtmxRequest()) {
+            return "admin/users :: body";
+        }
 
         return "admin/users";
     }
@@ -42,7 +50,11 @@ public class AdminController {
      * create new user form
      */
     @GetMapping("/admin/users/create")
-    public String createUser(Model model) {
+    public String createUser(HtmxRequest htmxRequest) {
+        if(htmxRequest.isHtmxRequest()) {
+            return "admin/user/new :: body";
+        }
+
         return "admin/user/new";
     }
 
@@ -84,11 +96,19 @@ public class AdminController {
      * @param id user id
      */
     @GetMapping("/admin/users/{id}")
-    public String editUser(@PathVariable Integer id, Model model) {
+    public String editUser(
+            @PathVariable Integer id,
+            Model model,
+            HtmxRequest htmxRequest
+    ) {
         model.addAttribute(
                 "user",
                 userImpl.findById(new UserId(id))
         );
+
+        if(htmxRequest.isHtmxRequest()) {
+            return "admin/user/edit :: body";
+        }
 
         return "admin/user/edit";
     }
@@ -140,7 +160,10 @@ public class AdminController {
      * show all groups
      */
     @GetMapping("/admin/groups")
-    public String showGroups(Model model) {
+    public String showGroups(
+            Model model,
+            HtmxRequest htmxRequest
+    ) {
 
         model.addAttribute(
                 "groups",
@@ -149,6 +172,10 @@ public class AdminController {
                 )
         );
 
+        if(htmxRequest.isHtmxRequest()) {
+            return "admin/groups :: body";
+        }
+
         return "admin/groups";
     }
 
@@ -156,7 +183,11 @@ public class AdminController {
      * create new group form
      */
     @GetMapping("/admin/groups/create")
-    public String createGroup(Model model) {
+    public String createGroup(HtmxRequest htmxRequest) {
+        if (htmxRequest.isHtmxRequest()) {
+            return "admin/group/new :: body";
+        }
+
         return "admin/group/new";
     }
 
@@ -205,11 +236,19 @@ public class AdminController {
      * @param id group id
      */
     @GetMapping("/admin/groups/{id}")
-    public String editGroup(@PathVariable Integer id, Model model) {
+    public String editGroup(
+            @PathVariable Integer id,
+            Model model,
+            HtmxRequest htmxRequest
+    ) {
         model.addAttribute(
                 "group",
                 groupImpl.findById(new GroupId(id))
         );
+
+        if(htmxRequest.isHtmxRequest()) {
+            return "admin/group/edit :: body";
+        }
 
         return "admin/group/edit";
     }
@@ -232,7 +271,11 @@ public class AdminController {
      * show permissions
      */
     @GetMapping("/admin/permissions")
-    public String showPermissions(Model model) {
+    public String showPermissions(HtmxRequest htmxRequest) {
+        if (htmxRequest.isHtmxRequest()) {
+            return "admin/permissions :: body";
+        }
+
         return "admin/permissions";
     }
 }

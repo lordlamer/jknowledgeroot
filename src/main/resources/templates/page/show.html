@@ -1,125 +1,134 @@
-<div class="d-flex justify-content-between align-items-center">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item">
-                <a href="/"
-                   hx-get="/"
-                   hx-trigger="click"
-                   hx-target="#content"
-                   hx-push-url="true">Home</a>
-            </li>
-            <th:block th:each="crumb : ${breadcrumb}">
-                <li th:if="${!crumb.pageId.equals(page.pageId)}" class="breadcrumb-item">
-                    <a th:href="'/ui/page/' + ${crumb.pageId.value()}"
-                       th:hx-get="'/ui/page/' + ${crumb.pageId.value()}"
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
+<head>
+    <title>Knowledgeroot</title>
+</head>
+<body>
+    <div class="d-flex justify-content-between align-items-center">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a href="/"
+                       hx-get="/"
                        hx-trigger="click"
                        hx-target="#content"
-                       hx-push-url="true"
-                       th:text="${crumb.name}">Page name</a>
+                       hx-push-url="true">Home</a>
                 </li>
-                <li th:if="${crumb.pageId.equals(page.pageId)}"
-                    class="breadcrumb-item active"
-                    aria-current="page"
-                    th:text="${crumb.name}">
-                    Current page
+                <th:block th:each="crumb : ${breadcrumb}">
+                    <li th:if="${!crumb.pageId.equals(page.pageId)}" class="breadcrumb-item">
+                        <a th:href="'/ui/page/' + ${crumb.pageId.value()}"
+                           th:hx-get="'/ui/page/' + ${crumb.pageId.value()}"
+                           hx-trigger="click"
+                           hx-target="#content"
+                           hx-push-url="true"
+                           th:text="${crumb.name}">Page name</a>
+                    </li>
+                    <li th:if="${crumb.pageId.equals(page.pageId)}"
+                        class="breadcrumb-item active"
+                        aria-current="page"
+                        th:text="${crumb.name}">
+                        Current page
+                    </li>
+                </th:block>
+            </ol>
+        </nav>
+
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-three-dots"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <a class="dropdown-item" href="#"
+                       th:hx-get="'/ui/page/' + ${page.pageId} + '/new'"
+                       hx-trigger="click"
+                       hx-target="#content"
+                       hx-push-url="true">
+                        Add new page
+                    </a>
                 </li>
-            </th:block>
-        </ol>
-    </nav>
-
-    <div class="dropdown">
-        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-three-dots"></i>
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end">
-            <li>
-                <a class="dropdown-item" href="#"
-                   th:hx-get="'/ui/page/' + ${page.pageId} + '/new'"
-                   hx-trigger="click"
-                   hx-target="#content"
-                   hx-push-url="true">
-                    Add new page
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item" href="#"
-                   th:hx-get="'/ui/page/' + ${page.pageId} + '/edit'"
-                   hx-trigger="click"
-                   hx-target="#content"
-                   hx-push-url="true">
-                    Edit page
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item" href="#">
-                    Move page
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#fileUploadModal">
-                    Upload file
-                </a>
-            </li>
-            <li>
-                <hr class="dropdown-divider">
-            </li>
-            <li>
-                <a class="dropdown-item text-danger" href="#"
-                   th:hx-delete="'/ui/page/' + ${page.pageId}"
-                   hx-trigger="click"
-                   hx-target="#content"
-                   hx-confirm="Are you sure?">
-                    Delete page
-                </a>
-            </li>
-        </ul>
-    </div>
-</div>
-
-<div hx-trigger="reload-page from:body" th:hx-get="'/ui/page/' + ${page.pageId}" hx-target="#content"></div>
-
-<h1 class="mt-4" th:text="${page.name}">Page name</h1>
-
-<p th:utext="${page.content}">Page Content</p>
-
-<ul class="list-group">
-    <li th:each="file : ${page.getFiles()}" class="list-group-item list-group-item-light">
-        <a th:hx-delete="'/ui/file/' + ${file.getId()}" hx-trigger="click" hx-target="closest li" hx-swap="outerHTML" hx-confirm="Are you sure?">
-            <i class="bi bi-trash"></i>
-        </a>&nbsp;
-        <a th:href="'/ui/file/' + ${file.getId()} + '/download/' + ${file.getName()}"
-           th:title="${file.getCreatedBy()} + ' - ' + ${file.getCreateDate()}">
-            <i class="fa fa-cloud-download" aria-hidden="true"></i>
-            <th:block th:text="${file.getName()}">filename</th:block>
-        </a>
-        [<th:block th:text="${file.getSize()}">578.42 KB</th:block>] [<th:block th:text="${file.getCreatedBy()}">admin</th:block> - <th:block th:text="${file.getCreateDate()}">26. Jan 2009 19:17:54</th:block>]
-    </li>
-</ul>
-
-<!-- Modal für File Upload -->
-<div class="modal fade" id="fileUploadModal" tabindex="-1" aria-labelledby="fileUploadModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form hx-encoding='multipart/form-data' hx-post='/ui/file'>
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="fileUploadModalLabel">File upload</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <input type='hidden' name='pageId' th:value='${page.pageId}'>
-
-                    <div class="mb-3">
-                        <label for="fileInput" class="form-label">Choose a file for upload</label>
-                        <div class="input-group">
-                            <input type="file" class="form-control" id="fileInput" name="file" required>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Upload</button>
-                </div>
-            </form>
+                <li>
+                    <a class="dropdown-item" href="#"
+                       th:hx-get="'/ui/page/' + ${page.pageId} + '/edit'"
+                       hx-trigger="click"
+                       hx-target="#content"
+                       hx-push-url="true">
+                        Edit page
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="#">
+                        Move page
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#fileUploadModal">
+                        Upload file
+                    </a>
+                </li>
+                <li>
+                    <hr class="dropdown-divider">
+                </li>
+                <li>
+                    <a class="dropdown-item text-danger" href="#"
+                       th:hx-delete="'/ui/page/' + ${page.pageId}"
+                       hx-trigger="click"
+                       hx-target="#content"
+                       hx-confirm="Are you sure?">
+                        Delete page
+                    </a>
+                </li>
+            </ul>
         </div>
     </div>
-</div>
+
+    <div hx-trigger="reload-page from:body" th:hx-get="'/ui/page/' + ${page.pageId}" hx-target="#content"></div>
+
+    <h1 class="mt-4" th:text="${page.name}">Page name</h1>
+
+    <p th:utext="${page.content}">Page Content</p>
+
+    <ul class="list-group">
+        <li th:each="file : ${page.getFiles()}" class="list-group-item list-group-item-light">
+            <a th:hx-delete="'/ui/file/' + ${file.getId()}" hx-trigger="click" hx-target="closest li" hx-swap="outerHTML" hx-confirm="Are you sure?">
+                <i class="bi bi-trash"></i>
+            </a>&nbsp;
+            <a th:href="'/ui/file/' + ${file.getId()} + '/download/' + ${file.getName()}"
+               th:title="${file.getCreatedBy()} + ' - ' + ${file.getCreateDate()}">
+                <i class="fa fa-cloud-download" aria-hidden="true"></i>
+                <th:block th:text="${file.getName()}">filename</th:block>
+            </a>
+            [<th:block th:text="${file.getSize()}">578.42 KB</th:block>] [<th:block th:text="${file.getCreatedBy()}">admin</th:block> - <th:block th:text="${file.getCreateDate()}">26. Jan 2009 19:17:54</th:block>]
+        </li>
+    </ul>
+
+    <!-- Modal für File Upload -->
+    <div class="modal fade" id="fileUploadModal" tabindex="-1" aria-labelledby="fileUploadModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form hx-encoding='multipart/form-data' hx-post='/ui/file'>
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="fileUploadModalLabel">File upload</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type='hidden' name='pageId' th:value='${page.pageId}'>
+
+                        <div class="mb-3">
+                            <label for="fileInput" class="form-label">Choose a file for upload</label>
+                            <div class="input-group">
+                                <input type="file" class="form-control" id="fileInput" name="file" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Upload</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

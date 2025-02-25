@@ -1,5 +1,6 @@
 package org.knowledgeroot.app.page.ui;
 
+import io.github.wimdeblauwe.htmx.spring.boot.mvc.HtmxRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.knowledgeroot.app.page.api.PageDto;
@@ -22,7 +23,11 @@ public class PageController {
     private final PageDtoConverter pageDtoConverter = new PageDtoConverter();
 
     @GetMapping("/ui/page/new")
-    public String showNewPage(Model model) {
+    public String showNewPage(HtmxRequest htmxRequest) {
+        if(htmxRequest.isHtmxRequest()) {
+            return "page/new :: body";
+        }
+
         return "page/new";
     }
 
@@ -31,7 +36,8 @@ public class PageController {
             @PathVariable("pageId") Integer pageId,
             @RequestParam(name = "trigger", required = false) String trigger,
             Model model,
-            HttpServletResponse response
+            HttpServletResponse response,
+            HtmxRequest htmxRequest
     ) {
         PageId pid = new PageId(pageId);
         Page page = pageImpl.findById(pid);
@@ -44,6 +50,10 @@ public class PageController {
         if(trigger != null && trigger.equals("reload-sidebar"))
             response.addHeader("HX-Trigger", "reload-sidebar");
 
+        if(htmxRequest.isHtmxRequest()) {
+            return "page/show :: body";
+        }
+
         return "page/show";
     }
 
@@ -52,13 +62,18 @@ public class PageController {
             @PathVariable("pageId") Integer pageId,
             @RequestParam(name = "trigger", required = false) String trigger,
             Model model,
-            HttpServletResponse response
+            HttpServletResponse response,
+            HtmxRequest htmxRequest
     ) {
         model.addAttribute("page", pageImpl.findById(new PageId(pageId)));
 
         // trigger reload sidebar
         if(trigger != null && trigger.equals("reload-sidebar"))
             response.addHeader("HX-Trigger", "reload-sidebar");
+
+        if(htmxRequest.isHtmxRequest()) {
+            return "page/edit :: body";
+        }
 
         return "page/edit";
     }
@@ -68,13 +83,18 @@ public class PageController {
             @PathVariable("pageId") Integer pageId,
             @RequestParam(name = "trigger", required = false) String trigger,
             Model model,
-            HttpServletResponse response
+            HttpServletResponse response,
+            HtmxRequest htmxRequest
     ) {
         model.addAttribute("page", pageImpl.findById(new PageId(pageId)));
 
         // trigger reload sidebar
         if(trigger != null && trigger.equals("reload-sidebar"))
             response.addHeader("HX-Trigger", "reload-sidebar");
+
+        if(htmxRequest.isHtmxRequest()) {
+            return "page/new :: body";
+        }
 
         return "page/new";
     }

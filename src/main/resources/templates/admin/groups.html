@@ -1,50 +1,58 @@
-<h1>Groups</h1>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
+<head>
+    <title>Knowledgeroot Groups</title>
+</head>
+<body>
+    <h1>Groups</h1>
 
-<div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
-    <button type="button" class="btn btn-outline-success"
-            hx-get="/admin/groups/create"
-            hx-trigger="click"
-            hx-target="#content"
-            hx-push-url="true"
-    >
-        add group
-    </button>
-</div>
+    <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
+        <button type="button" class="btn btn-outline-success"
+                hx-get="/admin/groups/create"
+                hx-trigger="click"
+                hx-target="#content"
+                hx-push-url="true"
+        >
+            add group
+        </button>
+    </div>
 
-<table class="table table-striped table-hover">
-    <thead>
-    <tr>
-        <th scope="col">Name</th>
-        <th scope="col">Description</th>
-        <th scope="col">Active</th>
-        <th scope="col">Action</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="group : ${groups}">
-        <th scope="row" th:text="${group.getName()}">Name</th>
-        <td th:text="${group.getDescription()}">Description</td>
-        <td th:text="${group.getActive()}">Active</td>
-        <td>
-            <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
-                <button type="button" class="btn btn-outline-primary"
-                        th:hx-get="'/admin/groups/' + ${group.getId()}"
-                        hx-trigger="click"
-                        hx-target="#content"
-                        hx-push-url="true"
-                >
-                    edit
-                </button>
-                <button type="button" class="btn btn-outline-danger"
-                        th:hx-delete="'/admin/groups/' + ${group.getId()}"
-                        hx-confirm="Really delete?"
-                        hx-target="closest tr"
-                        hx-swap="outerHTML">
-                    delete
-                </button>
-            </div>
-        </td>
-    </tr>
-    </tbody>
+    <table class="table table-striped table-hover">
+        <thead>
+        <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Description</th>
+            <th scope="col">Active</th>
+            <th scope="col">Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="group : ${groups}">
+            <th scope="row" th:text="${group.getName()}">Name</th>
+            <td th:text="${group.getDescription()}">Description</td>
+            <td th:text="${group.getActive()}">Active</td>
+            <td>
+                <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
+                    <button type="button" class="btn btn-outline-primary"
+                            th:hx-get="'/admin/groups/' + ${group.getId()}"
+                            hx-trigger="click"
+                            hx-target="#content"
+                            hx-push-url="true"
+                    >
+                        edit
+                    </button>
+                    <button type="button" class="btn btn-outline-danger"
+                            th:hx-delete="'/admin/groups/' + ${group.getId()}"
+                            hx-confirm="Really delete?"
+                            hx-target="closest tr"
+                            hx-swap="outerHTML">
+                        delete
+                    </button>
+                </div>
+            </td>
+        </tr>
+        </tbody>
 
-</table>
+    </table>
+</body>
+</html>

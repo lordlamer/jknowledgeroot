@@ -1,18 +1,25 @@
-<div th:if="${error}" class="alert alert-danger" role="alert">
-    Login failed
-</div>
-
-<form hx-post="/logmein">
-    <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
-
-    <div class="form-floating">
-        <input type="text" class="form-control" id="floatingInput" placeholder="login" name="username">
-        <label for="floatingInput">Login</label>
-    </div>
-    <div class="form-floating">
-        <input type="password" class="form-control" id="floatingPassword" placeholder="password" name="password">
-        <label for="floatingPassword">Password</label>
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
+<head>
+    <title>Knowledgeroot Login</title>
+</head>
+<body>
+    <div th:if="${error}" class="alert alert-danger" role="alert">
+        Login failed
     </div>
 
-    <button class="btn btn-primary w-100 py-2" type="submit">Sign in</button>
-</form>
+    <form hx-post="/logmein">
+        <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
+        <div class="form-floating">
+            <input type="text" class="form-control" id="floatingInput" placeholder="login" name="username">
+            <label for="floatingInput">Login</label>
+        </div>
+        <div class="form-floating">
+            <input type="password" class="form-control" id="floatingPassword" placeholder="password" name="password">
+            <label for="floatingPassword">Password</label>
+        </div>
+        <button class="btn btn-primary w-100 py-2" type="submit">Sign in</button>
+    </form>
+</body>
+</html>

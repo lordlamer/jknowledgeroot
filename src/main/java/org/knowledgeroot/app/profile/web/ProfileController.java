@@ -1,5 +1,6 @@
 package org.knowledgeroot.app.profile.web;
 
+import io.github.wimdeblauwe.htmx.spring.boot.mvc.HtmxRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.profile.domain.MyProfile;
@@ -33,7 +34,8 @@ class ProfileController {
     @GetMapping("/profile")
     public String showProfile(
             @RequestParam(name = "updated", required = false) boolean updated,
-            Model model
+            Model model,
+            HtmxRequest htmxRequest
     ) {
         UserDetails userDetails = userContext.getUserContext();
 
@@ -43,6 +45,10 @@ class ProfileController {
 
         model.addAttribute("userDetails", myProfileDao.findMyProfile());
         model.addAttribute("updated", updated);
+
+        if (htmxRequest.isHtmxRequest()) {
+            return "profile/show :: body";
+        }
 
         return "profile/show";
     }

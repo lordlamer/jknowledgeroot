@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content)">
 
     <meta charset="utf-8">
-    <title>Knowledgeroot</title>
+    <title th:replace="${title}">Knowledgeroot</title>
     <meta name="description" content="Knowledgeroot Knowledgebase">
     <meta name="author" content="Knowledgeroot Team">
 
@@ -146,8 +145,8 @@
         </div>
 
         <main role="main" class="col-md-9" style="margin-bottom: 20px;">
-            <div class="" style="padding-top: 20px;" id="content" hx-get="/ui/welcome" hx-trigger="load" hx-target="#content">
-
+            <div style="padding-top: 20px;" id="content">
+                <div th:replace="${content}">Content</div>
             </div>
         </main>
     </div>

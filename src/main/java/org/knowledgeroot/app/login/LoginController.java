@@ -1,5 +1,7 @@
 package org.knowledgeroot.app.login;
 
+import io.github.wimdeblauwe.htmx.spring.boot.mvc.HtmxRequest;
+import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxRedirect;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -12,7 +14,8 @@ class LoginController {
     public String login(
             @RequestParam(value = "error", required = false) String error,
             @RequestParam(value = "logout", required = false) String logout,
-            Model model
+            Model model,
+            HtmxRequest htmxRequest
     ) {
         if (error != null) {
             model.addAttribute("error", true);
@@ -24,22 +27,26 @@ class LoginController {
             model.addAttribute("msg", "You've been logged out successfully.");
         }
 
+        if(htmxRequest.isHtmxRequest()) {
+            return "login :: body";
+        }
+
         return "login";
     }
 
+    @HxRedirect("/")
     @GetMapping("/login/success")
     public String loginSuccess(
             HttpServletResponse response
     ) {
-        response.addHeader("HX-Redirect", "/");
         return "login";
     }
 
+    @HxRedirect("/")
     @GetMapping("/logout/success")
     public String logoutSuccess(
             HttpServletResponse response
     ) {
-        response.addHeader("HX-Redirect", "/");
         return "login";
     }
 }

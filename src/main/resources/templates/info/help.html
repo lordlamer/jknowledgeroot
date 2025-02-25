@@ -1,10 +1,19 @@
-<div class="card">
-    <div class="card-header">
-        Help
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
+<head>
+    <title>Knowledgeroot Help</title>
+</head>
+<body>
+    <div class="card">
+        <div class="card-header">
+            Help
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Get Help for Knowledgeroot</h5>
+            <p class="card-text">See the docs...</p>
+            <a href="#" class="btn btn-primary">Open Docs</a>
+        </div>
     </div>
-    <div class="card-body">
-        <h5 class="card-title">Get Help for Knowledgeroot</h5>
-        <p class="card-text">See the docs...</p>
-        <a href="#" class="btn btn-primary">Open Docs</a>
-    </div>
-</div>
+</body>
+</html>

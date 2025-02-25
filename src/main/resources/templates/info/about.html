@@ -1,16 +1,23 @@
-<div class="card">
-    <div class="card-header">
-        About Knowledgeroot
-    </div>
-    <div class="card-body">
-        <h5 class="card-title">Knowledgeroot Knowledgebase</h5>
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
+<head>
+    <title>About Knowledgeroot</title>
+</head>
+<body>
+    <div class="card">
+        <div class="card-header">
+            About Knowledgeroot
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Knowledgeroot Knowledgebase</h5>
 
-        <p class="card-text">Version: 2.0 (2025-dev)</p>
-        <p class="card-text">Homepage: <a href="http://www.knowledgeroot.org" target="_blank">http://www.knowledgeroot.org</a></p>
+            <p class="card-text">Version: 2.0 (2025-dev)</p>
+            <p class="card-text">Homepage: <a href="http://www.knowledgeroot.org" target="_blank">http://www.knowledgeroot.org</a></p>
 
-        <h3>License</h3>
-        <hr>
-        <pre>
+            <h3>License</h3>
+            <hr>
+            <pre>
 Copyright (c) 2025, Frank Habermann <lordlamer@lordlamer.de>
 All rights reserved.
 
@@ -38,6 +45,8 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
 ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-			</pre>
+                </pre>
+        </div>
     </div>
-</div>
+</body>
+</html>
