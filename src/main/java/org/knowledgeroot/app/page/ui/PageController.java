@@ -6,7 +6,15 @@ import lombok.RequiredArgsConstructor;
 import org.knowledgeroot.app.page.api.PageDto;
 import org.knowledgeroot.app.page.api.PageDtoConverter;
 import org.knowledgeroot.app.page.domain.*;
+import org.knowledgeroot.app.security.user.domain.UserDao;
+import org.knowledgeroot.app.security.user.domain.GroupDao;
+import org.knowledgeroot.app.security.user.domain.*;
+import org.knowledgeroot.app.security.user.api.filter.UserFilter;
+import org.knowledgeroot.app.security.user.api.filter.GroupFilter;
 import org.springframework.http.HttpStatus;
+
+import java.util.HashMap;
+import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,6 +29,8 @@ import java.util.List;
 public class PageController {
     private final PageDao pageImpl;
     private final PagePermissionDao pagePermissionImpl;
+    private final UserDao userImpl;
+    private final GroupDao groupImpl;
     private final PageDtoConverter pageDtoConverter = new PageDtoConverter();
 
     @GetMapping("/ui/page/new")
@@ -331,16 +341,37 @@ public class PageController {
     @GetMapping("/api/users")
     @ResponseBody
     public ResponseEntity<?> getUsers() {
-        // Hier würden Sie eine Methode aufrufen, die alle Benutzer zurückgibt
-        // Beispiel-Implementierung (in der Praxis würden Sie eine Benutzer-DAO verwenden)
-        return ResponseEntity.ok("[{\"id\":1,\"firstName\":\"Admin\",\"lastName\":\"User\"},{\"id\":2,\"firstName\":\"Test\",\"lastName\":\"User\"}]");
+        try {
+            var users = userImpl.listUsers(new UserFilter());
+            var userList = users.stream()
+                .map(user -> Map.of(
+                    "id", user.getId().value(),
+                    "firstName", user.getFirstName(),
+                    "lastName", user.getLastName()
+                ))
+                .toList();
+            return ResponseEntity.ok(userList);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Error retrieving users: " + e.getMessage());
+        }
     }
 
     @GetMapping("/api/groups")
     @ResponseBody
     public ResponseEntity<?> getGroups() {
-        // Hier würden Sie eine Methode aufrufen, die alle Gruppen zurückgibt
-        // Beispiel-Implementierung (in der Praxis würden Sie eine Gruppen-DAO verwenden)
-        return ResponseEntity.ok("[{\"id\":1,\"name\":\"Administrators\"},{\"id\":2,\"name\":\"Editors\"}]");
+        try {
+            var groups = groupImpl.listGroups(new GroupFilter());
+            var groupList = groups.stream()
+                .map(group -> Map.of(
+                    "id", group.getId().value(),
+                    "name", group.getName()
+                ))
+                .toList();
+            return ResponseEntity.ok(groupList);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Error retrieving groups: " + e.getMessage());
+        }
     }
 }

@@ -87,7 +87,7 @@
                             <h5 class="mb-0">Neue Berechtigung hinzufügen</h5>
                         </div>
                         <div class="card-body">
-                            <form id="new-permission-form" th:hx-post="'/ui/page/' + ${page.pageId} + '/permission'" hx-target="#permissions-content">
+                            <form id="new-permission-form" th:hx-post="'/ui/page/' + ${page.pageId} + '/permission'" hx-target="#permissions-content" onsubmit="return validatePermissionForm(event)">
                                 <div class="row g-3 mb-3">
                                     <div class="col-md-4">
                                         <label for="role-type" class="form-label">Rollentyp</label>
@@ -183,6 +183,19 @@
                     console.error('Fehler beim Laden der Rollen:', error);
                 });
         }
+    }
+
+    // Validierung des Berechtigungsformulars
+    function validatePermissionForm(event) {
+        const roleType = document.getElementById('role-type').value;
+        const roleId = document.getElementById('role-id').value;
+
+        if (roleType !== 'guest' && !roleId) {
+            alert('Bitte wählen Sie einen Benutzer oder eine Gruppe aus.');
+            event.preventDefault();
+            return false;
+        }
+        return true;
     }
 
     // Wenn das Dokument geladen wird
