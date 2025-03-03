@@ -2,219 +2,372 @@
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
 <head>
-    <title>Knowledgeroot :: edit page</title>
+    <title>Knowledgeroot :: Seite bearbeiten</title>
 </head>
 <body>
-    <form th:hx-post="'/ui/page/' + ${page.pageId} + '/edit'" hx-target="#content">
-        <div class="card" style="margin-bottom: 20px;">
-            <div class="card-header">
-                <ul class="nav nav-tabs card-header-tabs">
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="true" href="#">Site</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Permissions</a>
-                    </li>
-                </ul>
-            </div>
-            <div class="card-body">
-                <p class="card-text">
-                <div class="mb-3">
-                    <label for="page-name" class="form-label">Name</label>
-                    <input type="text" class="form-control" id="page-name" name="name" th:value="${page.name}">
+<form th:hx-post="'/ui/page/' + ${page.pageId} + '/edit'" hx-target="#content" onsubmit="saveEditorContentToTextarea()">
+    <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" id="pageTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="site-tab" data-bs-toggle="tab" data-bs-target="#site-content"
+                            type="button" role="tab" aria-controls="site-content" aria-selected="true">
+                        Seite
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="permissions-tab" data-bs-toggle="tab" data-bs-target="#permissions-content"
+                            type="button" role="tab" aria-controls="permissions-content" aria-selected="false">
+                        Berechtigungen
+                    </button>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="tab-content" id="pageTabContent">
+                <!-- Tab für Seiteninhalt -->
+                <div class="tab-pane fade show active" id="site-content" role="tabpanel" aria-labelledby="site-tab">
+                    <div class="mb-3">
+                        <label for="page-name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="page-name" name="name" th:value="${page.name}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="page-content" class="form-label">Inhalt</label>
+                        <textarea class="form-control" id="page-content" rows="3" name="content"><th:block th:text="${page.content}">Content</th:block></textarea>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label for="page-content" class="form-label">Description</label>
-                    <textarea class="form-control" id="page-content" rows="3" name="content"><th:block th:text="${page.content}">Content</th:block></textarea>
+
+                <!-- Tab für Berechtigungen -->
+                <div class="tab-pane fade" id="permissions-content" role="tabpanel" aria-labelledby="permissions-tab">
+                    <!-- Vorhandene Berechtigungen anzeigen -->
+                    <div class="table-responsive" th:if="${permissions}">
+                        <table class="table table-striped">
+                            <thead>
+                            <tr>
+                                <th>Rolle</th>
+                                <th>Typ</th>
+                                <th>Berechtigung</th>
+                                <th>Aktionen</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="perm : ${permissions}">
+                                <td th:text="${perm.roleName}">Benutzer/Gruppe</td>
+                                <td th:text="${perm.roleType.value}">Typ</td>
+                                <td>
+                                    <select class="form-select permission-select"
+                                            th:id="'perm-level-' + ${perm.id}"
+                                            th:attr="data-perm-id=${perm.id}"
+                                            th:hx-put="'/ui/page/' + ${page.pageId} + '/permission/' + ${perm.id}">
+                                        <option value="none" th:selected="${perm.permissionLevel.value == 'none'}">Keine</option>
+                                        <option value="view" th:selected="${perm.permissionLevel.value == 'view'}">Anzeigen</option>
+                                        <option value="edit" th:selected="${perm.permissionLevel.value == 'edit'}">Bearbeiten</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-danger btn-sm"
+                                            th:hx-delete="'/ui/page/' + ${page.pageId} + '/permission/' + ${perm.id}"
+                                            hx-confirm="Möchten Sie diese Berechtigung wirklich löschen?">
+                                        <i class="bi bi-trash"></i> Löschen
+                                    </button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Keine Berechtigungen vorhanden -->
+                    <div class="alert alert-info" th:if="${permissions == null || permissions.isEmpty()}">
+                        <p>Keine Berechtigungen definiert.</p>
+                    </div>
+
+                    <!-- Neue Berechtigung hinzufügen -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="mb-0">Neue Berechtigung hinzufügen</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="new-permission-form" th:hx-post="'/ui/page/' + ${page.pageId} + '/permission'" hx-target="#permissions-content">
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-4">
+                                        <label for="role-type" class="form-label">Rollentyp</label>
+                                        <select class="form-select" id="role-type" name="roleType" required>
+                                            <option value="user">Benutzer</option>
+                                            <option value="group">Gruppe</option>
+                                            <option value="guest">Gast</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="role-id" class="form-label">Auswählen</label>
+                                        <select class="form-select" id="role-id" name="roleId">
+                                            <option value="" disabled selected>Bitte wählen...</option>
+                                            <!-- Diese Optionen werden dynamisch per JavaScript gefüllt -->
+                                        </select>
+                                        <input type="hidden" name="roleId" id="role-id-hidden" value="">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="permission-level" class="form-label">Berechtigung</label>
+                                        <select class="form-select" id="permission-level" name="permissionLevel" required>
+                                            <option value="none">Keine</option>
+                                            <option value="view">Anzeigen</option>
+                                            <option value="edit">Bearbeiten</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Hinzufügen</button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-                </p>
             </div>
         </div>
-        <div>
-            <button type="submit" class="btn btn-success">save</button>
-            <button type="button" class="btn btn-outline-secondary"
-            th:hx-get="'/ui/page/' + ${page.getPageId()}" hx-target="#content"
-            >cancel</button>
-        </div>
-    </form>
+    </div>
+    <div>
+        <button type="submit" class="btn btn-success">Speichern</button>
+        <button type="button" class="btn btn-outline-secondary"
+                th:hx-get="'/ui/page/' + ${page.getPageId()}"
+                hx-target="#content"
+                hx-push-url="true">Abbrechen</button>
+    </div>
+</form>
 
-    <script>
-        // global variable to store the editor instance
-        var editor;
+<script>
+    // global variable to store the editor instance
+    var editor;
 
-        /**
-         * Save the content of the editor to the textarea.
-         * This is used before htmx form submit
-         */
-        function saveEditorContentToTextarea() {
-            // debug output
-            console.log(editor.getData());
+    /**
+     * Save the content of the editor to the textarea.
+     * This is used before htmx form submit
+     */
+    function saveEditorContentToTextarea() {
+        // debug output
+        console.log(editor.getData());
 
-            // save the content to the textarea
-            document.getElementById('page-content').value = editor.getData();
+        // save the content to the textarea
+        document.getElementById('page-content').value = editor.getData();
+    }
+
+    // Funktion zum Laden der verfügbaren Rollen basierend auf der Rollentyp-Auswahl
+    function loadRoles() {
+        const roleType = document.getElementById('role-type').value;
+        const roleSelect = document.getElementById('role-id');
+        const roleIdHidden = document.getElementById('role-id-hidden');
+
+        // Leere die aktuelle Auswahl
+        roleSelect.innerHTML = '<option value="" disabled selected>Bitte wählen...</option>';
+        roleIdHidden.value = '';
+
+        if (roleType === 'guest') {
+            // Für Gäste gibt es keine Auswahl
+            roleSelect.disabled = true;
+            roleIdHidden.value = '';
+        } else {
+            roleSelect.disabled = false;
+
+            // AJAX-Aufruf, um verfügbare Benutzer oder Gruppen zu laden
+            const url = roleType === 'user' ? '/api/users' : '/api/groups';
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = roleType === 'user'
+                            ? `${item.firstName} ${item.lastName}`
+                            : item.name;
+                        roleSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Fehler beim Laden der Rollen:', error);
+                });
+        }
+    }
+
+    // Wenn das Dokument geladen wird
+    document.addEventListener('DOMContentLoaded', function() {
+        // Rollentyp-Change-Event-Listener
+        const roleTypeSelect = document.getElementById('role-type');
+        if (roleTypeSelect) {
+            roleTypeSelect.addEventListener('change', loadRoles);
+
+            // Initial ausführen
+            loadRoles();
         }
 
+        // Rollenauswahl-Change-Event-Listener
+        const roleSelect = document.getElementById('role-id');
+        if (roleSelect) {
+            roleSelect.addEventListener('change', function() {
+                document.getElementById('role-id-hidden').value = this.value;
+            });
+        }
 
-        // create the editor
-        ClassicEditor
-            .create( document.querySelector( '#page-content' ),
-                {
-                    // https://ckeditor.com/docs/ckeditor5/latest/features/toolbar/toolbar.html#extended-toolbar-configuration-format
-                    toolbar: {
-                        items: [
-                            'exportPDF','exportWord', '|',
-                            'findAndReplace', 'selectAll', '|',
-                            'heading', '|',
-                            'bold', 'italic', 'strikethrough', 'underline', 'code', 'subscript', 'superscript', 'removeFormat', '|',
-                            'bulletedList', 'numberedList', 'todoList', '|',
-                            'outdent', 'indent', '|',
-                            'undo', 'redo',
-                            '-',
-                            'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', 'highlight', '|',
-                            'alignment', '|',
-                            'link', 'uploadImage', 'blockQuote', 'insertTable', 'mediaEmbed', 'codeBlock', 'htmlEmbed', '|',
-                            'specialCharacters', 'horizontalLine', 'pageBreak', '|',
-                            'textPartLanguage', '|',
-                            'sourceEditing'
-                        ],
-                        shouldNotGroupWhenFull: true
+        // Permission-Select-Change-Event-Listener für vorhandene Berechtigungen
+        document.querySelectorAll('.permission-select').forEach(select => {
+            select.addEventListener('change', function() {
+                const permId = this.getAttribute('data-perm-id');
+                const pageId = document.querySelector('form').getAttribute('hx-post').split('/')[3];
+                const url = `/ui/page/${pageId}/permission/${permId}`;
+                const level = this.value;
+
+                fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    // Changing the language of the interface requires loading the language file using the <script> tag.
-                    // language: 'es',
-                    list: {
-                        properties: {
-                            styles: true,
-                            startIndex: true,
-                            reversed: true
+                    body: `permissionLevel=${level}`
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            // Erfolgreiche Aktualisierung
+                            console.log('Berechtigung aktualisiert');
+                        } else {
+                            // Fehler
+                            console.error('Fehler beim Aktualisieren der Berechtigung');
                         }
-                    },
-                    // https://ckeditor.com/docs/ckeditor5/latest/features/headings.html#configuration
-                    heading: {
-                        options: [
-                            { model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
-                            { model: 'heading1', view: 'h1', title: 'Heading 1', class: 'ck-heading_heading1' },
-                            { model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
-                            { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' },
-                            { model: 'heading4', view: 'h4', title: 'Heading 4', class: 'ck-heading_heading4' },
-                            { model: 'heading5', view: 'h5', title: 'Heading 5', class: 'ck-heading_heading5' },
-                            { model: 'heading6', view: 'h6', title: 'Heading 6', class: 'ck-heading_heading6' }
-                        ]
-                    },
-                    // https://ckeditor.com/docs/ckeditor5/latest/features/editor-placeholder.html#using-the-editor-configuration
-                    placeholder: 'Welcome to CKEditor 5!',
-                    // https://ckeditor.com/docs/ckeditor5/latest/features/font.html#configuring-the-font-family-feature
-                    fontFamily: {
-                        options: [
-                            'default',
-                            'Arial, Helvetica, sans-serif',
-                            'Courier New, Courier, monospace',
-                            'Georgia, serif',
-                            'Lucida Sans Unicode, Lucida Grande, sans-serif',
-                            'Tahoma, Geneva, sans-serif',
-                            'Times New Roman, Times, serif',
-                            'Trebuchet MS, Helvetica, sans-serif',
-                            'Verdana, Geneva, sans-serif'
-                        ],
-                        supportAllValues: true
-                    },
-                    // https://ckeditor.com/docs/ckeditor5/latest/features/font.html#configuring-the-font-size-feature
-                    fontSize: {
-                        options: [ 10, 12, 14, 'default', 18, 20, 22 ],
-                        supportAllValues: true
-                    },
-                    // Be careful with the setting below. It instructs CKEditor to accept ALL HTML markup.
-                    // https://ckeditor.com/docs/ckeditor5/latest/features/general-html-support.html#enabling-all-html-features
-                    htmlSupport: {
-                        allow: [
-                            {
-                                name: /.*/,
-                                attributes: true,
-                                classes: true,
-                                styles: true
-                            }
-                        ]
-                    },
-                    // Be careful with enabling previews
-                    // https://ckeditor.com/docs/ckeditor5/latest/features/html-embed.html#content-previews
-                    htmlEmbed: {
-                        showPreviews: true
-                    },
-                    // https://ckeditor.com/docs/ckeditor5/latest/features/link.html#custom-link-attributes-decorators
-                    link: {
-                        decorators: {
-                            addTargetToExternalLinks: true,
-                            defaultProtocol: 'https://',
-                            toggleDownloadable: {
-                                mode: 'manual',
-                                label: 'Downloadable',
-                                attributes: {
-                                    download: 'file'
-                                }
-                            }
-                        }
-                    },
-                    // https://ckeditor.com/docs/ckeditor5/latest/features/mentions.html#configuration
-                    mention: {
-                        feeds: [
-                            {
-                                marker: '@',
-                                feed: [
-                                    '@apple', '@bears', '@brownie', '@cake', '@cake', '@candy', '@canes', '@chocolate', '@cookie', '@cotton', '@cream',
-                                    '@cupcake', '@danish', '@donut', '@dragée', '@fruitcake', '@gingerbread', '@gummi', '@ice', '@jelly-o',
-                                    '@liquorice', '@macaroon', '@marzipan', '@oat', '@pie', '@plum', '@pudding', '@sesame', '@snaps', '@soufflé',
-                                    '@sugar', '@sweet', '@topping', '@wafer'
-                                ],
-                                minimumCharacters: 1
-                            }
-                        ]
-                    },
-                    // The "superbuild" contains more premium features that require additional configuration, disable them below.
-                    // Do not turn them on unless you read the documentation and know how to configure them and setup the editor.
-                    removePlugins: [
-                        // These two are commercial, but you can try them out without registering to a trial.
-                        // 'ExportPdf',
-                        // 'ExportWord',
-                        'AIAssistant',
-                        'CKBox',
-                        'CKFinder',
-                        'EasyImage',
-                        // This sample uses the Base64UploadAdapter to handle image uploads as it requires no configuration.
-                        // https://ckeditor.com/docs/ckeditor5/latest/features/images/image-upload/base64-upload-adapter.html
-                        // Storing images as Base64 is usually a very bad idea.
-                        // Replace it on production website with other solutions:
-                        // https://ckeditor.com/docs/ckeditor5/latest/features/images/image-upload/image-upload.html
-                        // 'Base64UploadAdapter',
-                        'RealTimeCollaborativeComments',
-                        'RealTimeCollaborativeTrackChanges',
-                        'RealTimeCollaborativeRevisionHistory',
-                        'PresenceList',
-                        'Comments',
-                        'TrackChanges',
-                        'TrackChangesData',
-                        'RevisionHistory',
-                        'Pagination',
-                        'WProofreader',
-                        // Careful, with the Mathtype plugin CKEditor will not load when loading this sample
-                        // from a local file system (file://) - load this site via HTTP server if you enable MathType.
-                        'MathType',
-                        // The following features are part of the Productivity Pack and require additional license.
-                        'SlashCommand',
-                        'Template',
-                        'DocumentOutline',
-                        'FormatPainter',
-                        'TableOfContents',
-                        'PasteFromOfficeEnhanced',
-                        'CaseChange'
-                    ]
+                    })
+                    .catch(error => {
+                        console.error('Netzwerkfehler:', error);
+                    });
+            });
+        });
+    });
+
+    // CKEditor initialisieren
+    ClassicEditor
+        .create(document.querySelector('#page-content'), {
+            // Editor-Konfiguration wie im Original-Template...
+            toolbar: {
+                items: [
+                    'exportPDF','exportWord', '|',
+                    'findAndReplace', 'selectAll', '|',
+                    'heading', '|',
+                    'bold', 'italic', 'strikethrough', 'underline', 'code', 'subscript', 'superscript', 'removeFormat', '|',
+                    'bulletedList', 'numberedList', 'todoList', '|',
+                    'outdent', 'indent', '|',
+                    'undo', 'redo',
+                    '-',
+                    'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', 'highlight', '|',
+                    'alignment', '|',
+                    'link', 'uploadImage', 'blockQuote', 'insertTable', 'mediaEmbed', 'codeBlock', 'htmlEmbed', '|',
+                    'specialCharacters', 'horizontalLine', 'pageBreak', '|',
+                    'textPartLanguage', '|',
+                    'sourceEditing'
+                ],
+                shouldNotGroupWhenFull: true
+            },
+            // Rest der Konfiguration wie im Original-Template...
+            list: {
+                properties: {
+                    styles: true,
+                    startIndex: true,
+                    reversed: true
                 }
-            )
-            .then( newEditor => {
-                // save the editor instance in a global variable
-                editor = newEditor;
-            } )
-            .catch( error => {
-                console.error( error );
-            } );
-    </script>
+            },
+            heading: {
+                options: [
+                    { model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
+                    { model: 'heading1', view: 'h1', title: 'Heading 1', class: 'ck-heading_heading1' },
+                    { model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
+                    { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' },
+                    { model: 'heading4', view: 'h4', title: 'Heading 4', class: 'ck-heading_heading4' },
+                    { model: 'heading5', view: 'h5', title: 'Heading 5', class: 'ck-heading_heading5' },
+                    { model: 'heading6', view: 'h6', title: 'Heading 6', class: 'ck-heading_heading6' }
+                ]
+            },
+            placeholder: 'Willkommen bei CKEditor 5!',
+            fontFamily: {
+                options: [
+                    'default',
+                    'Arial, Helvetica, sans-serif',
+                    'Courier New, Courier, monospace',
+                    'Georgia, serif',
+                    'Lucida Sans Unicode, Lucida Grande, sans-serif',
+                    'Tahoma, Geneva, sans-serif',
+                    'Times New Roman, Times, serif',
+                    'Trebuchet MS, Helvetica, sans-serif',
+                    'Verdana, Geneva, sans-serif'
+                ],
+                supportAllValues: true
+            },
+            fontSize: {
+                options: [ 10, 12, 14, 'default', 18, 20, 22 ],
+                supportAllValues: true
+            },
+            htmlSupport: {
+                allow: [
+                    {
+                        name: /.*/,
+                        attributes: true,
+                        classes: true,
+                        styles: true
+                    }
+                ]
+            },
+            htmlEmbed: {
+                showPreviews: true
+            },
+            link: {
+                decorators: {
+                    addTargetToExternalLinks: true,
+                    defaultProtocol: 'https://',
+                    toggleDownloadable: {
+                        mode: 'manual',
+                        label: 'Downloadable',
+                        attributes: {
+                            download: 'file'
+                        }
+                    }
+                }
+            },
+            mention: {
+                feeds: [
+                    {
+                        marker: '@',
+                        feed: [
+                            '@apple', '@bears', '@brownie', '@cake', '@cake', '@candy', '@canes', '@chocolate', '@cookie', '@cotton', '@cream',
+                            '@cupcake', '@danish', '@donut', '@dragée', '@fruitcake', '@gingerbread', '@gummi', '@ice', '@jelly-o',
+                            '@liquorice', '@macaroon', '@marzipan', '@oat', '@pie', '@plum', '@pudding', '@sesame', '@snaps', '@soufflé',
+                            '@sugar', '@sweet', '@topping', '@wafer'
+                        ],
+                        minimumCharacters: 1
+                    }
+                ]
+            },
+            removePlugins: [
+                'AIAssistant',
+                'CKBox',
+                'CKFinder',
+                'EasyImage',
+                'RealTimeCollaborativeComments',
+                'RealTimeCollaborativeTrackChanges',
+                'RealTimeCollaborativeRevisionHistory',
+                'PresenceList',
+                'Comments',
+                'TrackChanges',
+                'TrackChangesData',
+                'RevisionHistory',
+                'Pagination',
+                'WProofreader',
+                'MathType',
+                'SlashCommand',
+                'Template',
+                'DocumentOutline',
+                'FormatPainter',
+                'TableOfContents',
+                'PasteFromOfficeEnhanced',
+                'CaseChange'
+            ]
+        })
+        .then(newEditor => {
+            // Editor-Instanz in einer globalen Variable speichern
+            editor = newEditor;
+        })
+        .catch(error => {
+            console.error(error);
+        });
+</script>
 </body>
 </html>

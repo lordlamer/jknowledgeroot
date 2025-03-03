@@ -70,3 +70,40 @@ INSERT INTO acl (role_id, resource, action, `right`) VALUES ('U_1', 'page_3', 'p
 INSERT INTO acl (role_id, resource, action, `right`) VALUES ('U_1', 'page_3', 'new_content', 'allow');
 INSERT INTO acl (role_id, resource, action, `right`) VALUES ('U_0', 'page_1', 'show', 'allow');
 INSERT INTO acl (role_id, resource, action, `right`) VALUES ('U_0', 'page_1', 'new_content', 'allow');
+
+
+-- Berechtigungen für Admin-Benutzer (ID 1) auf Seite "first" (ID 1)
+INSERT INTO page_permission (page_id, role_type, role_id, permission_level, created_by, create_date, changed_by, change_date)
+VALUES (1, 'user', 1, 'edit', 1, NOW(), 1, NOW());
+
+-- Berechtigungen für Admin-Benutzer (ID 1) auf Seite "second" (ID 2)
+INSERT INTO page_permission (page_id, role_type, role_id, permission_level, created_by, create_date, changed_by, change_date)
+VALUES (2, 'user', 1, 'edit', 1, NOW(), 1, NOW());
+
+-- Berechtigungen für Admin-Benutzer (ID 1) auf Seite "third" (ID 3)
+INSERT INTO page_permission (page_id, role_type, role_id, permission_level, created_by, create_date, changed_by, change_date)
+VALUES (3, 'user', 1, 'edit', 1, NOW(), 1, NOW());
+
+-- Berechtigungen für Admin-Gruppe (ID 1) auf Seite "first" (ID 1)
+INSERT INTO page_permission (page_id, role_type, role_id, permission_level, created_by, create_date, changed_by, change_date)
+VALUES (1, 'group', 1, 'edit', 1, NOW(), 1, NOW());
+
+-- Berechtigungen für Benutzer "user" (ID 2) auf Seite "first" (ID 1) - nur anzeigen
+INSERT INTO page_permission (page_id, role_type, role_id, permission_level, created_by, create_date, changed_by, change_date)
+VALUES (1, 'user', 2, 'view', 1, NOW(), 1, NOW());
+
+-- Berechtigungen für Gruppe "users" (ID 2) auf Seite "second" (ID 2) - nur anzeigen
+INSERT INTO page_permission (page_id, role_type, role_id, permission_level, created_by, create_date, changed_by, change_date)
+VALUES (2, 'group', 2, 'view', 1, NOW(), 1, NOW());
+
+-- Berechtigungen für Gäste auf Seite "first" (ID 1)
+INSERT INTO page_permission (page_id, role_type, role_id, permission_level, created_by, create_date, changed_by, change_date)
+VALUES (1, 'guest', NULL, 'view', 1, NOW(), 1, NOW());
+
+-- Berechtigungen für Gäste auf Seite "second" (ID 2)
+INSERT INTO page_permission (page_id, role_type, role_id, permission_level, created_by, create_date, changed_by, change_date)
+VALUES (2, 'guest', NULL, 'view', 1, NOW(), 1, NOW());
+
+-- Berechtigungen für Gäste auf Seite "third" (ID 3) - keine Rechte
+INSERT INTO page_permission (page_id, role_type, role_id, permission_level, created_by, create_date, changed_by, change_date)
+VALUES (3, 'guest', NULL, 'none', 1, NOW(), 1, NOW());
