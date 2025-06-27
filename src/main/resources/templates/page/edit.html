@@ -57,17 +57,16 @@
                                 <td>
                                     <select class="form-select permission-select"
                                             th:id="'perm-level-' + ${perm.id}"
-                                            th:attr="data-perm-id=${perm.id}"
-                                            th:hx-put="'/ui/page/' + ${page.pageId} + '/permission/' + ${perm.id}">
+                                            th:attr="data-perm-id=${perm.id},data-original-level=${perm.permissionLevel.value}">
                                         <option value="none" th:selected="${perm.permissionLevel.value == 'none'}">Keine</option>
                                         <option value="view" th:selected="${perm.permissionLevel.value == 'view'}">Anzeigen</option>
                                         <option value="edit" th:selected="${perm.permissionLevel.value == 'edit'}">Bearbeiten</option>
                                     </select>
                                 </td>
                                 <td>
-                                    <button type="button" class="btn btn-danger btn-sm"
-                                            th:hx-delete="'/ui/page/' + ${page.pageId} + '/permission/' + ${perm.id}"
-                                            hx-confirm="Möchten Sie diese Berechtigung wirklich löschen?">
+                                    <button type="button" class="btn btn-danger btn-sm delete-permission-btn"
+                                            th:attr="data-perm-id=${perm.id}"
+                                            onclick="markPermissionForDeletion(this)">
                                         <i class="bi bi-trash"></i> Löschen
                                     </button>
                                 </td>
@@ -87,7 +86,7 @@
                             <h5 class="mb-0">Neue Berechtigung hinzufügen</h5>
                         </div>
                         <div class="card-body">
-                            <form id="new-permission-form" th:hx-post="'/ui/page/' + ${page.pageId} + '/permission'" hx-target="#permissions-content" onsubmit="return validatePermissionForm(event)">
+                            <div id="new-permission-form">
                                 <div class="row g-3 mb-3">
                                     <div class="col-md-4">
                                         <label for="role-type" class="form-label">Rollentyp</label>
@@ -99,11 +98,11 @@
                                     </div>
                                     <div class="col-md-4">
                                         <label for="role-id" class="form-label">Auswählen</label>
-                                        <select class="form-select" id="role-id" name="roleId">
+                                        <select class="form-select" id="role-id">
                                             <option value="" disabled selected>Bitte wählen...</option>
                                             <!-- Diese Optionen werden dynamisch per JavaScript gefüllt -->
                                         </select>
-                                        <input type="hidden" name="roleId" id="role-id-hidden" value="">
+                                        <input type="hidden" id="role-id-hidden" name="roleId" value="">
                                     </div>
                                     <div class="col-md-4">
                                         <label for="permission-level" class="form-label">Berechtigung</label>
@@ -114,8 +113,9 @@
                                         </select>
                                     </div>
                                 </div>
-                                <button type="submit" class="btn btn-primary">Hinzufügen</button>
-                            </form>
+                                <button type="button" class="btn btn-primary" id="add-permission-btn" 
+                                        onclick="addPermissionLocally()">Hinzufügen</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -135,6 +135,13 @@
     // global variable to store the editor instance
     var editor;
 
+    // Global variables to track permission changes
+    var permissionChanges = {
+        updates: {}, // permissionId -> newLevel
+        deletions: [], // array of permissionIds to delete
+        additions: [] // array of new permissions to add
+    };
+
     /**
      * Save the content of the editor to the textarea.
      * This is used before htmx form submit
@@ -145,16 +152,80 @@
 
         // save the content to the textarea
         document.getElementById('page-content').value = editor.getData();
+
+        // Add permission changes to form
+        addPermissionChangesToForm();
+    }
+
+    /**
+     * Add permission changes as hidden form fields
+     */
+    function addPermissionChangesToForm() {
+        const form = document.querySelector('form');
+
+        // Remove existing permission change fields
+        form.querySelectorAll('input[name^="permission"]').forEach(input => input.remove());
+
+        // Add permission updates
+        Object.keys(permissionChanges.updates).forEach(permId => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'permissionUpdates[' + permId + ']';
+            input.value = permissionChanges.updates[permId];
+            form.appendChild(input);
+        });
+
+        // Add permission deletions
+        permissionChanges.deletions.forEach(permId => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'permissionDeletions[]';
+            input.value = permId;
+            form.appendChild(input);
+        });
+
+        // Add permission additions
+        permissionChanges.additions.forEach((perm, index) => {
+            ['roleType', 'roleId', 'permissionLevel'].forEach(field => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'permissionAdditions[' + index + '][' + field + ']';
+                input.value = perm[field] || '';
+                form.appendChild(input);
+            });
+        });
     }
 
     // Funktion zum Laden der verfügbaren Rollen basierend auf der Rollentyp-Auswahl
     function loadRoles() {
+        // Prevent multiple simultaneous calls
+        if (window.rolesLoading) {
+            console.log('Roles already loading, skipping duplicate call');
+            return;
+        }
+
         const roleType = document.getElementById('role-type').value;
         const roleSelect = document.getElementById('role-id');
         const roleIdHidden = document.getElementById('role-id-hidden');
 
-        // Leere die aktuelle Auswahl
-        roleSelect.innerHTML = '<option value="" disabled selected>Bitte wählen...</option>';
+        if (!roleSelect || !roleIdHidden) {
+            console.warn('Role select elements not found');
+            return;
+        }
+
+        // Clear the dropdown completely
+        while (roleSelect.firstChild) {
+            roleSelect.removeChild(roleSelect.firstChild);
+        }
+
+        // Add default option
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.disabled = true;
+        defaultOption.selected = true;
+        defaultOption.textContent = 'Bitte wählen...';
+        roleSelect.appendChild(defaultOption);
+
         roleIdHidden.value = '';
 
         if (roleType === 'guest') {
@@ -163,89 +234,364 @@
             roleIdHidden.value = '';
         } else {
             roleSelect.disabled = false;
+            window.rolesLoading = true;
 
             // AJAX-Aufruf, um verfügbare Benutzer oder Gruppen zu laden
             const url = roleType === 'user' ? '/api/users' : '/api/groups';
 
             fetch(url)
-                .then(response => response.json())
+                .then(response => {
+                    console.log('API Response Status:', response.status);
+                    return response.json();
+                })
                 .then(data => {
-                    data.forEach(item => {
-                        const option = document.createElement('option');
-                        option.value = item.id;
-                        option.textContent = roleType === 'user'
-                            ? `${item.firstName} ${item.lastName}`
-                            : item.name;
-                        roleSelect.appendChild(option);
-                    });
+                    console.log('API Response Data:', data);
+
+                    // Clear again before adding new options to prevent race conditions
+                    while (roleSelect.children.length > 1) {
+                        roleSelect.removeChild(roleSelect.lastChild);
+                    }
+
+                    if (Array.isArray(data) && data.length > 0) {
+                        data.forEach(item => {
+                            const option = document.createElement('option');
+                            option.value = item.id;
+                            option.textContent = roleType === 'user'
+                                ? `${item.firstName} ${item.lastName}`
+                                : item.name;
+                            roleSelect.appendChild(option);
+                        });
+                    } else {
+                        console.warn('Keine Daten vom API erhalten oder leeres Array');
+                    }
                 })
                 .catch(error => {
                     console.error('Fehler beim Laden der Rollen:', error);
+                })
+                .finally(() => {
+                    window.rolesLoading = false;
                 });
         }
     }
 
-    // Validierung des Berechtigungsformulars
-    function validatePermissionForm(event) {
+    /**
+     * Mark a permission for deletion
+     */
+    function markPermissionForDeletion(button) {
+        if (confirm('Möchten Sie diese Berechtigung wirklich löschen?')) {
+            const permId = button.getAttribute('data-perm-id');
+            const row = button.closest('tr');
+
+            // Add to deletions array if not already there
+            if (!permissionChanges.deletions.includes(permId)) {
+                permissionChanges.deletions.push(permId);
+            }
+
+            // Remove from updates if it was there
+            delete permissionChanges.updates[permId];
+
+            // Mark row as deleted visually
+            row.style.opacity = '0.5';
+            row.style.textDecoration = 'line-through';
+            button.textContent = 'Gelöscht';
+            button.disabled = true;
+            button.classList.remove('btn-danger');
+            button.classList.add('btn-secondary');
+
+            // Disable the permission select
+            const select = row.querySelector('.permission-select');
+            if (select) {
+                select.disabled = true;
+            }
+        }
+    }
+
+    /**
+     * Add a new permission locally
+     */
+    function addPermissionLocally() {
+        if (!validatePermissionInputs()) {
+            return;
+        }
+
+        const roleType = document.getElementById('role-type').value;
+        const roleId = document.getElementById('role-id').value;
+        const permissionLevel = document.getElementById('permission-level').value;
+
+        // Get role name for display
+        let roleName = '';
+        if (roleType === 'guest') {
+            roleName = 'Gast';
+        } else {
+            const roleSelect = document.getElementById('role-id');
+            const selectedOption = roleSelect.options[roleSelect.selectedIndex];
+            roleName = selectedOption ? selectedOption.textContent : '';
+        }
+
+        // Add to additions array
+        const newPermission = {
+            roleType: roleType,
+            roleId: roleType === 'guest' ? null : roleId,
+            permissionLevel: permissionLevel,
+            roleName: roleName
+        };
+
+        permissionChanges.additions.push(newPermission);
+
+        // Add to table visually
+        addPermissionToTable(newPermission, permissionChanges.additions.length - 1);
+
+        // Clear form
+        document.getElementById('role-type').value = 'user';
+        document.getElementById('role-id').value = '';
+        document.getElementById('role-id-hidden').value = '';
+        document.getElementById('permission-level').value = 'none';
+        loadRoles(); // Reload roles for the reset role type
+    }
+
+    /**
+     * Add a permission row to the table
+     */
+    function addPermissionToTable(permission, index) {
+        const tbody = document.querySelector('#permissions-content tbody');
+        if (!tbody) return;
+
+        const row = document.createElement('tr');
+        row.classList.add('new-permission-row');
+        row.setAttribute('data-addition-index', index);
+
+        const permissionLevelText = {
+            'none': 'Keine',
+            'view': 'Anzeigen',
+            'edit': 'Bearbeiten'
+        };
+
+        row.innerHTML = `
+            <td>${permission.roleName}</td>
+            <td>${permission.roleType}</td>
+            <td>
+                <select class="form-select permission-select-new" data-addition-index="${index}">
+                    <option value="none" ${permission.permissionLevel === 'none' ? 'selected' : ''}>Keine</option>
+                    <option value="view" ${permission.permissionLevel === 'view' ? 'selected' : ''}>Anzeigen</option>
+                    <option value="edit" ${permission.permissionLevel === 'edit' ? 'selected' : ''}>Bearbeiten</option>
+                </select>
+            </td>
+            <td>
+                <button type="button" class="btn btn-danger btn-sm" onclick="removeNewPermission(${index})">
+                    <i class="bi bi-trash"></i> Löschen
+                </button>
+            </td>
+        `;
+
+        tbody.appendChild(row);
+
+        // Add event listener for the new select
+        const select = row.querySelector('.permission-select-new');
+        select.addEventListener('change', function() {
+            permissionChanges.additions[index].permissionLevel = this.value;
+        });
+    }
+
+    /**
+     * Remove a newly added permission
+     */
+    function removeNewPermission(index) {
+        // Remove from additions array
+        permissionChanges.additions.splice(index, 1);
+
+        // Remove row from table
+        const row = document.querySelector(`tr[data-addition-index="${index}"]`);
+        if (row) {
+            row.remove();
+        }
+
+        // Update indices for remaining new permissions
+        document.querySelectorAll('.new-permission-row').forEach((row, newIndex) => {
+            row.setAttribute('data-addition-index', newIndex);
+            const select = row.querySelector('.permission-select-new');
+            if (select) {
+                select.setAttribute('data-addition-index', newIndex);
+            }
+            const button = row.querySelector('button[onclick^="removeNewPermission"]');
+            if (button) {
+                button.setAttribute('onclick', `removeNewPermission(${newIndex})`);
+            }
+        });
+    }
+
+    /**
+     * Check if a user/group already has permissions defined
+     */
+    function checkForDuplicatePermission(roleType, roleId) {
+        // Check existing permissions in the table (server-side data)
+        const existingRows = document.querySelectorAll('#permissions-content tbody tr:not(.new-permission-row)');
+        for (let row of existingRows) {
+            // Skip rows that are marked for deletion
+            if (row.style.opacity === '0.5' || row.style.textDecoration === 'line-through') {
+                continue;
+            }
+
+            const rowRoleType = row.cells[1].textContent.trim();
+            const rowRoleName = row.cells[0].textContent.trim();
+
+            // For guest permissions, only check role type
+            if (roleType === 'guest' && rowRoleType === 'guest') {
+                return true;
+            }
+
+            // For user/group permissions, we need to match by the selected option text
+            if (roleType !== 'guest' && rowRoleType === roleType) {
+                const roleSelect = document.getElementById('role-id');
+                const selectedOption = roleSelect.options[roleSelect.selectedIndex];
+                const selectedRoleName = selectedOption ? selectedOption.textContent.trim() : '';
+
+                if (selectedRoleName === rowRoleName) {
+                    return true;
+                }
+            }
+        }
+
+        // Check locally added permissions that haven't been saved yet
+        for (let permission of permissionChanges.additions) {
+            if (permission.roleType === roleType) {
+                if (roleType === 'guest') {
+                    return true;
+                }
+                if (permission.roleId === roleId) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    // Validierung der Berechtigungseingaben
+    function validatePermissionInputs() {
         const roleType = document.getElementById('role-type').value;
         const roleId = document.getElementById('role-id').value;
 
         if (roleType !== 'guest' && !roleId) {
             alert('Bitte wählen Sie einen Benutzer oder eine Gruppe aus.');
-            event.preventDefault();
             return false;
         }
+
+        // Check for duplicate permissions
+        if (checkForDuplicatePermission(roleType, roleId)) {
+            if (roleType === 'guest') {
+                alert('Für Gäste wurde bereits eine Berechtigung definiert.');
+            } else {
+                const roleSelect = document.getElementById('role-id');
+                const selectedOption = roleSelect.options[roleSelect.selectedIndex];
+                const roleName = selectedOption ? selectedOption.textContent : '';
+                alert(`Für ${roleType === 'user' ? 'den Benutzer' : 'die Gruppe'} "${roleName}" wurde bereits eine Berechtigung definiert.`);
+            }
+            return false;
+        }
+
         return true;
     }
 
-    // Wenn das Dokument geladen wird
-    document.addEventListener('DOMContentLoaded', function() {
+
+    // Global variable to track if page edit has been initialized
+    var pageEditInitialized = false;
+
+    // Function to handle role selection change
+    function handleRoleSelectionChange() {
+        const roleIdHidden = document.getElementById('role-id-hidden');
+        if (roleIdHidden) {
+            roleIdHidden.value = this.value;
+        }
+    }
+
+    // Initialisierungsfunktion für die Seite
+    function initializePageEdit() {
+        // Prevent multiple initializations
+        if (pageEditInitialized) {
+            return;
+        }
+
         // Rollentyp-Change-Event-Listener
         const roleTypeSelect = document.getElementById('role-type');
         if (roleTypeSelect) {
+            // Remove existing event listeners to avoid duplicates
+            roleTypeSelect.removeEventListener('change', loadRoles);
             roleTypeSelect.addEventListener('change', loadRoles);
 
-            // Initial ausführen
+            // Initial ausführen nur beim ersten Mal
             loadRoles();
         }
 
         // Rollenauswahl-Change-Event-Listener
         const roleSelect = document.getElementById('role-id');
         if (roleSelect) {
-            roleSelect.addEventListener('change', function() {
-                document.getElementById('role-id-hidden').value = this.value;
-            });
+            // Remove existing event listeners to avoid duplicates
+            roleSelect.removeEventListener('change', handleRoleSelectionChange);
+            roleSelect.addEventListener('change', handleRoleSelectionChange);
         }
 
         // Permission-Select-Change-Event-Listener für vorhandene Berechtigungen
         document.querySelectorAll('.permission-select').forEach(select => {
-            select.addEventListener('change', function() {
-                const permId = this.getAttribute('data-perm-id');
-                const pageId = document.querySelector('form').getAttribute('hx-post').split('/')[3];
-                const url = `/ui/page/${pageId}/permission/${permId}`;
-                const level = this.value;
+            // Remove existing event listeners to avoid duplicates
+            const existingHandler = select._permissionChangeHandler;
+            if (existingHandler) {
+                select.removeEventListener('change', existingHandler);
+            }
 
-                fetch(url, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `permissionLevel=${level}`
-                })
-                    .then(response => {
-                        if (response.ok) {
-                            // Erfolgreiche Aktualisierung
-                            console.log('Berechtigung aktualisiert');
-                        } else {
-                            // Fehler
-                            console.error('Fehler beim Aktualisieren der Berechtigung');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Netzwerkfehler:', error);
-                    });
-            });
+            const handler = function() {
+                const permId = this.getAttribute('data-perm-id');
+                const originalLevel = this.getAttribute('data-original-level');
+                const newLevel = this.value;
+
+                // Track the change locally
+                if (newLevel !== originalLevel) {
+                    permissionChanges.updates[permId] = newLevel;
+                } else {
+                    // If changed back to original, remove from updates
+                    delete permissionChanges.updates[permId];
+                }
+
+                console.log('Permission change tracked locally:', permId, 'from', originalLevel, 'to', newLevel);
+            };
+
+            // Store handler reference for later removal
+            select._permissionChangeHandler = handler;
+            select.addEventListener('change', handler);
         });
+
+        // Mark as initialized
+        pageEditInitialized = true;
+    }
+
+    // Function to reset initialization flag when content changes
+    function resetPageEditInitialization() {
+        pageEditInitialized = false;
+        window.rolesLoading = false; // Reset loading flag to prevent stuck state
+    }
+
+    // Wenn das Dokument geladen wird (normale Seitenladung)
+    document.addEventListener('DOMContentLoaded', function() {
+        initializePageEdit();
+    });
+
+    // Wenn Inhalt über HTMX geladen wird
+    document.addEventListener('htmx:afterSwap', function(event) {
+        // Nur initialisieren wenn es sich um den page edit content handelt
+        if (event.detail.target && (event.detail.target.id === 'content' || event.detail.target.closest('#content'))) {
+            // Reset initialization flag for new content
+            resetPageEditInitialization();
+            initializePageEdit();
+        }
+    });
+
+    // Alternative HTMX Event für den Fall, dass afterSwap nicht ausreicht
+    document.addEventListener('htmx:load', function(event) {
+        // Nur initialisieren wenn es sich um den page edit content handelt
+        if (event.detail.elt && (event.detail.elt.id === 'content' || event.detail.elt.closest('#content'))) {
+            // Reset initialization flag for new content
+            resetPageEditInitialization();
+            initializePageEdit();
+        }
     });
 
     // CKEditor initialisieren

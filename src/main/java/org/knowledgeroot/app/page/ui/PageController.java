@@ -141,7 +141,10 @@ public class PageController {
     @PostMapping("/ui/page/{pageId}/edit")
     public ModelAndView editPage(
             @PathVariable("pageId") Integer pageId,
-            @ModelAttribute PageDto pageDto
+            @ModelAttribute PageDto pageDto,
+            @RequestParam(value = "permissionUpdates", required = false) Map<String, String> permissionUpdates,
+            @RequestParam(value = "permissionDeletions", required = false) List<String> permissionDeletions,
+            @RequestParam(value = "permissionAdditions", required = false) List<Map<String, String>> permissionAdditions
     ) {
         // Berechtigungsprüfung
         PageId pid = new PageId(pageId);
@@ -163,6 +166,61 @@ public class PageController {
 
         Page page = pageDtoConverter.convertBtoA(pageDto);
         pageImpl.updatePage(page);
+
+        // Process permission changes
+        LocalDateTime now = LocalDateTime.now();
+
+        // Handle permission updates
+        if (permissionUpdates != null && !permissionUpdates.isEmpty()) {
+            for (Map.Entry<String, String> entry : permissionUpdates.entrySet()) {
+                Integer permissionId = Integer.valueOf(entry.getKey());
+                String newLevel = entry.getValue();
+
+                PagePermission permission = PagePermission.builder()
+                        .id(permissionId)
+                        .permissionLevel(PagePermission.PermissionLevel.fromString(newLevel))
+                        .changedBy(currentUserId)
+                        .changeDate(now)
+                        .build();
+
+                pagePermissionImpl.updatePermission(permission);
+            }
+        }
+
+        // Handle permission deletions
+        if (permissionDeletions != null && !permissionDeletions.isEmpty()) {
+            for (String permissionIdStr : permissionDeletions) {
+                Integer permissionId = Integer.valueOf(permissionIdStr);
+                pagePermissionImpl.deletePermission(permissionId);
+            }
+        }
+
+        // Handle permission additions
+        if (permissionAdditions != null && !permissionAdditions.isEmpty()) {
+            for (Map<String, String> additionData : permissionAdditions) {
+                String roleType = additionData.get("roleType");
+                String roleIdStr = additionData.get("roleId");
+                String permissionLevel = additionData.get("permissionLevel");
+
+                Integer roleId = null;
+                if (roleIdStr != null && !roleIdStr.isEmpty() && !"null".equals(roleIdStr)) {
+                    roleId = Integer.valueOf(roleIdStr);
+                }
+
+                PagePermission permission = PagePermission.builder()
+                        .pageId(pid)
+                        .roleType(PagePermission.RoleType.fromString(roleType))
+                        .roleId(roleId)
+                        .permissionLevel(PagePermission.PermissionLevel.fromString(permissionLevel))
+                        .createdBy(currentUserId)
+                        .createDate(now)
+                        .changedBy(currentUserId)
+                        .changeDate(now)
+                        .build();
+
+                pagePermissionImpl.createPermission(permission);
+            }
+        }
 
         return new ModelAndView("redirect:/ui/page/" + page.getPageId().value() + "?trigger=reload-sidebar");
     }
@@ -342,7 +400,12 @@ public class PageController {
     @ResponseBody
     public ResponseEntity<?> getUsers() {
         try {
-            var users = userImpl.listUsers(new UserFilter());
+            // Create filter for active and non-deleted users
+            UserFilter filter = new UserFilter();
+            filter.setActive(true);
+            filter.setDeleted(false);
+
+            var users = userImpl.listUsers(filter);
             var userList = users.stream()
                 .map(user -> Map.of(
                     "id", user.getId().value(),
@@ -361,7 +424,12 @@ public class PageController {
     @ResponseBody
     public ResponseEntity<?> getGroups() {
         try {
-            var groups = groupImpl.listGroups(new GroupFilter());
+            // Create filter for active and non-deleted groups
+            GroupFilter filter = new GroupFilter();
+            filter.setActive(true);
+            filter.setDeleted(false);
+
+            var groups = groupImpl.listGroups(filter);
             var groupList = groups.stream()
                 .map(group -> Map.of(
                     "id", group.getId().value(),
