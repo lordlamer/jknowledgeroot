@@ -5,21 +5,182 @@
     <title>Knowledgeroot Login</title>
 </head>
 <body>
-    <div th:if="${error}" class="alert alert-danger" role="alert">
-        Login failed
-    </div>
+    <style>
+        .login-container {
+            min-height: calc(100vh - 110px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fdfdfd;
+        }
 
-    <form hx-post="/logmein">
-        <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
-        <div class="form-floating">
-            <input type="text" class="form-control" id="floatingInput" placeholder="login" name="username">
-            <label for="floatingInput">Login</label>
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            padding: 3rem;
+            width: 100%;
+            max-width: 600px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(15deg, #13547a 0%, #80d0c7 100%);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(15deg, #13547a 0%, #80d0c7 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 10px 20px rgba(19, 84, 122, 0.3);
+        }
+
+        .login-title {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 1.8rem;
+        }
+
+        .login-subtitle {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+            margin-bottom: 0;
+        }
+
+        .form-floating {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-floating > .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1rem 0.75rem;
+            height: auto;
+            transition: all 0.3s ease;
+        }
+
+        .form-floating > .form-control:focus {
+            border-color: #80d0c7;
+            box-shadow: 0 0 0 0.2rem rgba(128, 208, 199, 0.25);
+        }
+
+        .form-floating > label {
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .btn-login {
+            background: linear-gradient(15deg, #13547a 0%, #80d0c7 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 0.875rem 2rem;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(19, 84, 122, 0.3);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .alert-custom {
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(15deg, #e74c3c 0%, #f39c12 100%);
+            color: white;
+            font-weight: 500;
+        }
+
+        .input-group-icon {
+            position: relative;
+        }
+
+        .input-group-icon i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            z-index: 10;
+        }
+
+        .input-group-icon .form-control {
+            padding-left: 45px;
+        }
+
+        @media (max-width: 576px) {
+            .login-card {
+                margin: 1rem;
+                padding: 2rem;
+            }
+
+            .login-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-icon">
+                    <i class="bi bi-person-circle" style="font-size: 2.5rem; color: white;"></i>
+                </div>
+                <h1 class="login-title">Welcome Back</h1>
+                <p class="login-subtitle">Sign in to access your Knowledgeroot</p>
+            </div>
+
+            <div th:if="${error}" class="alert alert-custom" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Login failed. Please check your credentials and try again.
+            </div>
+
+            <form hx-post="/logmein">
+                <div class="form-floating input-group-icon">
+                    <i class="bi bi-person"></i>
+                    <input type="text" class="form-control" id="floatingInput" placeholder="Username" name="username" required>
+                    <label for="floatingInput">Username</label>
+                </div>
+
+                <div class="form-floating input-group-icon">
+                    <i class="bi bi-lock"></i>
+                    <input type="password" class="form-control" id="floatingPassword" placeholder="Password" name="password" required>
+                    <label for="floatingPassword">Password</label>
+                </div>
+
+                <button class="btn btn-login w-100 py-3" type="submit">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>
+                    Sign In
+                </button>
+            </form>
         </div>
-        <div class="form-floating">
-            <input type="password" class="form-control" id="floatingPassword" placeholder="password" name="password">
-            <label for="floatingPassword">Password</label>
-        </div>
-        <button class="btn btn-primary w-100 py-2" type="submit">Sign in</button>
-    </form>
+    </div>
 </body>
 </html>
