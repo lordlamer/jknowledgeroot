@@ -276,7 +276,7 @@ public class PageController {
             PageId parentId = new PageId(pageDto.getParent());
             if (!pagePermissionImpl.hasUserPermission(parentId, currentUserId, PagePermission.PermissionLevel.EDIT)) {
                 // Keine Berechtigung - umleiten
-                return new ModelAndView("redirect:/ui/welcome");
+                return new ModelAndView("redirect:/");
             }
         }
 
