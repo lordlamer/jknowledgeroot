@@ -12,6 +12,8 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -157,22 +159,49 @@ public class PageImpl implements PageDao {
         List<Page> pages = jdbcClient.sql(sql.toString())
                 .params(params)
                 .query(
-                        (rs, rowNum) ->
-                                Page.builder()
-                                        .pageId(new PageId(rs.getInt("pageId")))
-                                        .parent(rs.getInt("parent"))
-                                        .name(rs.getString("name"))
-                                        .content(rs.getString("content"))
-                                        .timeStart(rs.getTimestamp("time_start").toLocalDateTime())
-                                        .timeEnd(rs.getTimestamp("time_end").toLocalDateTime())
-                                        .active(rs.getBoolean("active"))
-                                        .createdBy(rs.getInt("created_by"))
-                                        .createDate(rs.getTimestamp("create_date").toLocalDateTime())
-                                        .changedBy(rs.getInt("changed_by"))
-                                        .changeDate(rs.getTimestamp("change_date").toLocalDateTime())
-                                        .active(rs.getBoolean("active"))
-                                        .deleted(rs.getBoolean("deleted"))
-                                        .build()
+                        (rs, rowNum) -> {
+                            // Sichere Umwandlung von Timestamp zu LocalDateTime mit Null-Prüfung
+                            LocalDateTime timeStart = null;
+                            LocalDateTime timeEnd = null;
+                            LocalDateTime createDate = null;
+                            LocalDateTime changeDate = null;
+
+                            Timestamp timestampTimeStart = rs.getTimestamp("time_start");
+                            if (timestampTimeStart != null) {
+                                timeStart = timestampTimeStart.toLocalDateTime();
+                            }
+
+                            Timestamp timestampTimeEnd = rs.getTimestamp("time_end");
+                            if (timestampTimeEnd != null) {
+                                timeEnd = timestampTimeEnd.toLocalDateTime();
+                            }
+
+                            Timestamp timestampCreateDate = rs.getTimestamp("create_date");
+                            if (timestampCreateDate != null) {
+                                createDate = timestampCreateDate.toLocalDateTime();
+                            }
+
+                            Timestamp timestampChangeDate = rs.getTimestamp("change_date");
+                            if (timestampChangeDate != null) {
+                                changeDate = timestampChangeDate.toLocalDateTime();
+                            }
+
+                            return Page.builder()
+                                    .pageId(new PageId(rs.getInt("pageId")))
+                                    .parent(rs.getInt("parent"))
+                                    .name(rs.getString("name"))
+                                    .content(rs.getString("content"))
+                                    .timeStart(timeStart)
+                                    .timeEnd(timeEnd)
+                                    .active(rs.getBoolean("active"))
+                                    .createdBy(rs.getInt("created_by"))
+                                    .createDate(createDate)
+                                    .changedBy(rs.getInt("changed_by"))
+                                    .changeDate(changeDate)
+                                    .active(rs.getBoolean("active"))
+                                    .deleted(rs.getBoolean("deleted"))
+                                    .build();
+                        }
                 )
                 .list();
 
@@ -190,7 +219,7 @@ public class PageImpl implements PageDao {
      */
     @Override
     public Page findById(PageId pageId) {
-        Page page = jdbcClient.sql("""
+        return jdbcClient.sql("""
                 SELECT 
                     id as pageId,
                     parent,
@@ -212,29 +241,51 @@ public class PageImpl implements PageDao {
                 """)
                 .param("id", pageId.value())
                 .query(
-                        (rs, rowNum) ->
-                                Page.builder()
-                                        .pageId(new PageId(rs.getInt("pageId")))
-                                        .parent(rs.getInt("parent"))
-                                        .name(rs.getString("name"))
-                                        .content(rs.getString("content"))
-                                        .timeStart(rs.getTimestamp("time_start").toLocalDateTime())
-                                        .timeEnd(rs.getTimestamp("time_end").toLocalDateTime())
-                                        .active(rs.getBoolean("active"))
-                                        .createdBy(rs.getInt("created_by"))
-                                        .createDate(rs.getTimestamp("create_date").toLocalDateTime())
-                                        .changedBy(rs.getInt("changed_by"))
-                                        .changeDate(rs.getTimestamp("change_date").toLocalDateTime())
-                                        .active(rs.getBoolean("active"))
-                                        .deleted(rs.getBoolean("deleted"))
-                                        .build()
+                        (rs, rowNum) -> {
+                            // Sichere Umwandlung von Timestamp zu LocalDateTime mit Null-Prüfung
+                            LocalDateTime timeStart = null;
+                            LocalDateTime timeEnd = null;
+                            LocalDateTime createDate = null;
+                            LocalDateTime changeDate = null;
+
+                            Timestamp timestampTimeStart = rs.getTimestamp("time_start");
+                            if (timestampTimeStart != null) {
+                                timeStart = timestampTimeStart.toLocalDateTime();
+                            }
+
+                            Timestamp timestampTimeEnd = rs.getTimestamp("time_end");
+                            if (timestampTimeEnd != null) {
+                                timeEnd = timestampTimeEnd.toLocalDateTime();
+                            }
+
+                            Timestamp timestampCreateDate = rs.getTimestamp("create_date");
+                            if (timestampCreateDate != null) {
+                                createDate = timestampCreateDate.toLocalDateTime();
+                            }
+
+                            Timestamp timestampChangeDate = rs.getTimestamp("change_date");
+                            if (timestampChangeDate != null) {
+                                changeDate = timestampChangeDate.toLocalDateTime();
+                            }
+
+                            return Page.builder()
+                                    .pageId(new PageId(rs.getInt("pageId")))
+                                    .parent(rs.getInt("parent"))
+                                    .name(rs.getString("name"))
+                                    .content(rs.getString("content"))
+                                    .timeStart(timeStart)
+                                    .timeEnd(timeEnd)
+                                    .active(rs.getBoolean("active"))
+                                    .createdBy(rs.getInt("created_by"))
+                                    .createDate(createDate)
+                                    .changedBy(rs.getInt("changed_by"))
+                                    .changeDate(changeDate)
+                                    .active(rs.getBoolean("active"))
+                                    .deleted(rs.getBoolean("deleted"))
+                                    .build();
+                        }
                 )
                 .single();
-
-        // add files to page
-        addFilesToPage(page);
-
-        return page;
     }
 
     /**

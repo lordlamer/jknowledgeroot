@@ -77,6 +77,27 @@ CREATE TABLE page (
                       FOREIGN KEY (changed_by) REFERENCES `user` (id) ON DELETE RESTRICT
 ) ENGINE=INNODB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
 
+-- table: page_permission
+CREATE TABLE page_permission (
+                                 id integer NOT NULL AUTO_INCREMENT,
+                                 page_id integer NOT NULL,
+                                 role_type ENUM('user', 'group', 'guest') NOT NULL,
+                                 role_id integer NULL,  -- NULL for guest users
+                                 permission_level ENUM('none', 'view', 'edit') DEFAULT 'none' NOT NULL,
+                                 created_by integer NOT NULL,
+                                 create_date datetime NOT NULL,
+                                 changed_by integer NOT NULL,
+                                 change_date datetime NOT NULL,
+                                 PRIMARY KEY (id),
+                                 FOREIGN KEY (page_id) REFERENCES page (id) ON DELETE CASCADE,
+                                 FOREIGN KEY (created_by) REFERENCES `user` (id) ON DELETE RESTRICT,
+                                 FOREIGN KEY (changed_by) REFERENCES `user` (id) ON DELETE RESTRICT
+) ENGINE=INNODB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
+
+-- indexes for table: page_permission
+CREATE INDEX idx_page_permission_page ON page_permission (page_id);
+CREATE INDEX idx_page_permission_role ON page_permission (role_type, role_id);
+
 -- table: page
 CREATE TABLE page_history (
                               id integer NOT NULL AUTO_INCREMENT,

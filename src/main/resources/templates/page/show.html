@@ -2,39 +2,24 @@
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
 <head>
-    <title>Knowledgeroot</title>
+    <title th:text="'Knowledgeroot :: ' + ${page.name}">Knowledgeroot :: Page</title>
 </head>
 <body>
-    <div class="d-flex justify-content-between align-items-center">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item">
-                    <a href="/"
-                       hx-get="/"
-                       hx-trigger="click"
-                       hx-target="#content"
-                       hx-push-url="true">Home</a>
-                </li>
-                <th:block th:each="crumb : ${breadcrumb}">
-                    <li th:if="${!crumb.pageId.equals(page.pageId)}" class="breadcrumb-item">
-                        <a th:href="'/ui/page/' + ${crumb.pageId.value()}"
-                           th:hx-get="'/ui/page/' + ${crumb.pageId.value()}"
-                           hx-trigger="click"
-                           hx-target="#content"
-                           hx-push-url="true"
-                           th:text="${crumb.name}">Page name</a>
-                    </li>
-                    <li th:if="${crumb.pageId.equals(page.pageId)}"
-                        class="breadcrumb-item active"
-                        aria-current="page"
-                        th:text="${crumb.name}">
-                        Current page
-                    </li>
-                </th:block>
-            </ol>
-        </nav>
+<!-- Breadcrumb-Navigation -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/ui/welcome">Home</a></li>
+        <li class="breadcrumb-item" th:each="parent, iterStat : ${breadcrumb}" th:unless="${iterStat.last}">
+            <a th:href="@{'/ui/page/' + ${parent.pageId}}" th:text="${parent.name}">Parent</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page" th:text="${page.name}">Current Page</li>
+    </ol>
+</nav>
 
-        <div class="dropdown">
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 th:text="${page.name}">Pagetitle</h1>
+    <div class="d-flex">
+        <div class="dropdown" th:if="${canEdit}">
             <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-three-dots"></i>
             </button>
@@ -82,53 +67,39 @@
             </ul>
         </div>
     </div>
+</div>
 
-    <div hx-trigger="reload-page from:body" th:hx-get="'/ui/page/' + ${page.pageId}" hx-target="#content"></div>
+<!-- page content -->
+<div class="content mb-4" th:utext="${page.content}">
+    Pagecontent...
+</div>
 
-    <h1 class="mt-4" th:text="${page.name}">Page name</h1>
-
-    <p th:utext="${page.content}">Page Content</p>
-
+<!-- file listing -->
+<div th:if="${page.files != null && !page.files.empty}" class="mb-4">
+    <h5>Attached files</h5>
     <ul class="list-group">
-        <li th:each="file : ${page.getFiles()}" class="list-group-item list-group-item-light">
-            <a th:hx-delete="'/ui/file/' + ${file.getId()}" hx-trigger="click" hx-target="closest li" hx-swap="outerHTML" hx-confirm="Are you sure?">
-                <i class="bi bi-trash"></i>
-            </a>&nbsp;
-            <a th:href="'/ui/file/' + ${file.getId()} + '/download/' + ${file.getName()}"
-               th:title="${file.getCreatedBy()} + ' - ' + ${file.getCreateDate()}">
-                <i class="fa fa-cloud-download" aria-hidden="true"></i>
-                <th:block th:text="${file.getName()}">filename</th:block>
-            </a>
-            [<th:block th:text="${file.getSize()}">578.42 KB</th:block>] [<th:block th:text="${file.getCreatedBy()}">admin</th:block> - <th:block th:text="${file.getCreateDate()}">26. Jan 2009 19:17:54</th:block>]
+        <li class="list-group-item" th:each="file : ${page.files}">
+            <a th:href="@{'/api/file/' + ${file.fileId}}" th:text="${file.name}">filename</a>
+            <span class="text-muted" th:text="'(' + ${file.type} + ', ' + ${file.size} + ' bytes)'"></span>
         </li>
     </ul>
+</div>
 
-    <!-- Modal für File Upload -->
-    <div class="modal fade" id="fileUploadModal" tabindex="-1" aria-labelledby="fileUploadModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form hx-encoding='multipart/form-data' hx-post='/ui/file'>
-                    <div class="modal-header">
-                        <h1 class="modal-title fs-5" id="fileUploadModalLabel">File upload</h1>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <input type='hidden' name='pageId' th:value='${page.pageId}'>
-
-                        <div class="mb-3">
-                            <label for="fileInput" class="form-label">Choose a file for upload</label>
-                            <div class="input-group">
-                                <input type="file" class="form-control" id="fileInput" name="file" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Upload</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+<!-- page info -->
+<div class="d-flex align-items-center text-muted small border-top pt-2 mt-5">
+    <div>
+        <span>Created by </span>
+        <strong th:text="${page.createdBy}">User</strong>
+        <span> at </span>
+        <span th:text="${#temporals.format(page.createDate, 'dd.MM.yyyy HH:mm')}">01.01.2023</span>
     </div>
+    <div class="mx-2">•</div>
+    <div>
+        <span>Changed by </span>
+        <strong th:text="${page.changedBy}">User</strong>
+        <span> at </span>
+        <span th:text="${#temporals.format(page.changeDate, 'dd.MM.yyyy HH:mm')}">01.01.2023</span>
+    </div>
+</div>
 </body>
 </html>
