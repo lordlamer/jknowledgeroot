@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.knowledgeroot.app.page.domain.PageDao;
 import org.knowledgeroot.app.page.domain.PagePermissionDao;
+import org.knowledgeroot.app.security.context.domain.UserContext;
 import org.knowledgeroot.app.security.user.domain.*;
 import org.knowledgeroot.app.security.user.api.filter.UserFilter;
 import org.knowledgeroot.app.security.user.api.filter.GroupFilter;
@@ -34,11 +35,14 @@ class PageControllerTest {
     @Mock
     private GroupDao groupImpl;
 
+    @Mock
+    private UserContext userContext;
+
     private PageController pageController;
 
     @BeforeEach
     void setUp() {
-        pageController = new PageController(pageImpl, pagePermissionImpl, userImpl, groupImpl);
+        pageController = new PageController(pageImpl, pagePermissionImpl, userImpl, groupImpl, userContext);
     }
 
     @Test

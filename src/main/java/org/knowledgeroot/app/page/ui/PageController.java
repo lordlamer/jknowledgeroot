@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.knowledgeroot.app.page.api.PageDto;
 import org.knowledgeroot.app.page.api.PageDtoConverter;
 import org.knowledgeroot.app.page.domain.*;
+import org.knowledgeroot.app.security.context.domain.UserContext;
+import org.knowledgeroot.app.security.context.domain.UserDetails;
 import org.knowledgeroot.app.security.user.api.filter.GroupFilter;
 import org.knowledgeroot.app.security.user.api.filter.UserFilter;
 import org.knowledgeroot.app.security.user.domain.GroupDao;
@@ -33,7 +35,25 @@ public class PageController {
     private final PagePermissionDao pagePermissionImpl;
     private final UserDao userImpl;
     private final GroupDao groupImpl;
+    private final UserContext userContext;
     private final PageDtoConverter pageDtoConverter = new PageDtoConverter();
+
+    /**
+     * Get the current user ID for permission checks.
+     * Returns null for guest users, which will be handled by the permission system.
+     */
+    private Integer getCurrentUserId() {
+        UserDetails currentUser = userContext.getUserContext();
+        if (currentUser.isGuest()) {
+            return null; // Guest users have no user ID
+        }
+        try {
+            return Integer.valueOf(currentUser.getUserId());
+        } catch (NumberFormatException e) {
+            // If userId is not a valid integer, treat as guest
+            return null;
+        }
+    }
 
     @GetMapping("/ui/page/new")
     public String showNewPage(HtmxRequest htmxRequest) {
@@ -60,8 +80,7 @@ public class PageController {
         model.addAttribute("breadcrumb", hierarchy);
 
         // Prüfen der Berechtigungen
-        // In einem realen System würden Sie den aktuellen Benutzer aus der Session holen
-        Integer currentUserId = 1; // Demo-Benutzer-ID
+        Integer currentUserId = getCurrentUserId();
         boolean canEdit = pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.EDIT);
         model.addAttribute("canEdit", canEdit);
 
@@ -86,7 +105,7 @@ public class PageController {
     ) {
         // Berechtigungsprüfung
         PageId pid = new PageId(pageId);
-        Integer currentUserId = 1; // Demo-Benutzer-ID
+        Integer currentUserId = getCurrentUserId();
         if (!pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.EDIT)) {
             // Keine Berechtigung - umleiten oder Fehlermeldung anzeigen
             return "redirect:/ui/page/" + pageId;
@@ -121,7 +140,7 @@ public class PageController {
     ) {
         // Berechtigungsprüfung
         PageId pid = new PageId(pageId);
-        Integer currentUserId = 1; // Demo-Benutzer-ID
+        Integer currentUserId = getCurrentUserId();
         if (!pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.EDIT)) {
             // Keine Berechtigung - umleiten oder Fehlermeldung anzeigen
             return "redirect:/ui/page/" + pageId;
@@ -152,7 +171,7 @@ public class PageController {
         List<Map<String, String>> permissionAdditions = parsePermissionAdditions(allParams);
         // Berechtigungsprüfung
         PageId pid = new PageId(pageId);
-        Integer currentUserId = 1; // Demo-Benutzer-ID
+        Integer currentUserId = getCurrentUserId();
         if (!pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.EDIT)) {
             // Keine Berechtigung - umleiten oder Fehlermeldung anzeigen
             return new ModelAndView("redirect:/ui/page/" + pageId);
@@ -243,7 +262,7 @@ public class PageController {
 
     @PostMapping("/ui/page/new")
     public ModelAndView createNewPage(@ModelAttribute PageDto pageDto) {
-        Integer currentUserId = 1; // Demo-Benutzer-ID
+        Integer currentUserId = getCurrentUserId();
 
         // Bei neuer Unterseite Berechtigungsprüfung für Parent
         if (pageDto.getParent() != null && pageDto.getParent() > 0) {
@@ -283,7 +302,7 @@ public class PageController {
     public ModelAndView deletePage(@PathVariable("pageId") Integer pageId) {
         // Berechtigungsprüfung
         PageId pid = new PageId(pageId);
-        Integer currentUserId = 1; // Demo-Benutzer-ID
+        Integer currentUserId = getCurrentUserId();
         if (!pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.EDIT)) {
             // Keine Berechtigung - umleiten
             return new ModelAndView("redirect:/ui/page/" + pageId);
@@ -304,7 +323,7 @@ public class PageController {
     ) {
         // Berechtigungsprüfung
         PageId pid = new PageId(pageId);
-        Integer currentUserId = 1; // Demo-Benutzer-ID
+        Integer currentUserId = getCurrentUserId();
         if (!pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.EDIT)) {
             // Keine Berechtigung - umleiten
             return "redirect:/ui/page/" + pageId;
@@ -333,7 +352,7 @@ public class PageController {
     ) {
         // Berechtigungsprüfung
         PageId pid = new PageId(pageId);
-        Integer currentUserId = 1; // Demo-Benutzer-ID
+        Integer currentUserId = getCurrentUserId();
         if (!pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.EDIT)) {
             // Keine Berechtigung - umleiten
             return "redirect:/ui/page/" + pageId;
@@ -370,7 +389,7 @@ public class PageController {
     ) {
         // Berechtigungsprüfung
         PageId pid = new PageId(pageId);
-        Integer currentUserId = 1; // Demo-Benutzer-ID
+        Integer currentUserId = getCurrentUserId();
         if (!pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.EDIT)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Keine Berechtigung");
         }
@@ -395,7 +414,7 @@ public class PageController {
     ) {
         // Berechtigungsprüfung
         PageId pid = new PageId(pageId);
-        Integer currentUserId = 1; // Demo-Benutzer-ID
+        Integer currentUserId = getCurrentUserId();
         if (!pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.EDIT)) {
             return "redirect:/ui/page/" + pageId;
         }

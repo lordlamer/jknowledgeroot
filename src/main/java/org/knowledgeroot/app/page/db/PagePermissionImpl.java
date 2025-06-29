@@ -67,6 +67,11 @@ public class PagePermissionImpl implements PagePermissionDao {
 
     @Override
     public boolean hasUserPermission(PageId pageId, Integer userId, PagePermission.PermissionLevel minPermissionLevel) {
+        // Special handling for guest users (userId = null means guest)
+        if (userId == null) {
+            return hasGuestPermission(pageId, minPermissionLevel);
+        }
+
         // 1. Check direct user permissions
         Integer directCount = jdbcClient.sql("""
                 SELECT COUNT(*) FROM page_permission
@@ -108,7 +113,38 @@ public class PagePermissionImpl implements PagePermissionDao {
                 .query(Integer.class)
                 .single();
 
-        return groupCount > 0;
+        if (groupCount > 0) {
+            return true;
+        }
+
+        // 3. Fall back to guest permissions if no user/group permissions found
+        return hasGuestPermission(pageId, minPermissionLevel);
+    }
+
+    /**
+     * Check if guest users have specific permission for a page
+     * @param pageId The page ID
+     * @param minPermissionLevel Minimum required permission level
+     * @return true if guests have permission, false otherwise
+     */
+    private boolean hasGuestPermission(PageId pageId, PagePermission.PermissionLevel minPermissionLevel) {
+        Integer guestCount = jdbcClient.sql("""
+                SELECT COUNT(*) FROM page_permission
+                WHERE page_id = :pageId
+                AND role_type = 'guest'
+                AND role_id IS NULL
+                AND CASE
+                    WHEN :minLevel = 'edit' THEN permission_level = 'edit'
+                    WHEN :minLevel = 'view' THEN permission_level IN ('view', 'edit')
+                    ELSE 0
+                END
+                """)
+                .param("pageId", pageId.value())
+                .param("minLevel", minPermissionLevel.getValue())
+                .query(Integer.class)
+                .single();
+
+        return guestCount > 0;
     }
 
     @Override
