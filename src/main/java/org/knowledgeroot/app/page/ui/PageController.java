@@ -73,14 +73,21 @@ public class PageController {
             HtmxRequest htmxRequest
     ) {
         PageId pid = new PageId(pageId);
+        Integer currentUserId = getCurrentUserId();
+
+        // Berechtigungsprüfung für das Anzeigen der Seite
+        if (!pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.VIEW)) {
+            // Keine Berechtigung - umleiten zur Startseite
+            return "redirect:/";
+        }
+
         Page page = pageImpl.findById(pid);
         List<Page> hierarchy = pageImpl.getPageHierarchy(pid);
 
         model.addAttribute("page", page);
         model.addAttribute("breadcrumb", hierarchy);
 
-        // Prüfen der Berechtigungen
-        Integer currentUserId = getCurrentUserId();
+        // Prüfen der Bearbeitungsberechtigungen
         boolean canEdit = pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.EDIT);
         model.addAttribute("canEdit", canEdit);
 
