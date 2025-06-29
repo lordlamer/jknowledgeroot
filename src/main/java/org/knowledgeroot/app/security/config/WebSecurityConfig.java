@@ -26,21 +26,19 @@ public class WebSecurityConfig {
 
                     auth.anyRequest().permitAll();
                 })
-                .formLogin()
-                .loginPage("/login")
-                .failureUrl("/login?error")
-                .loginProcessingUrl("/logmein")
-                .defaultSuccessUrl("/login/success")
-                .usernameParameter("username")
-                .passwordParameter("password")
-                .and()
-                .logout()
-                .logoutSuccessUrl("/logout/success")
-                .and()
-                .csrf()
-                .disable()
-                .build()
-        ;
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .failureUrl("/login?error")
+                        .loginProcessingUrl("/logmein")
+                        .defaultSuccessUrl("/login/success")
+                        .usernameParameter("username")
+                        .passwordParameter("password")
+                )
+                .logout(logout -> logout
+                        .logoutSuccessUrl("/logout/success")
+                )
+                .csrf(csrf -> csrf.disable())
+                .build();
     }
 
     @Autowired

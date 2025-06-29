@@ -194,11 +194,6 @@
             <artifactId>ckeditor__ckeditor5-build-classic</artifactId>
             <version>40.1.0</version>
         </dependency>
-        <dependency>
-            <groupId>org.webjars.npm</groupId>
-            <artifactId>bootstrap-icons</artifactId>
-            <version>1.11.3</version>
-        </dependency>
 
         <!-- Generate fake data - great for demos and testing! -->
         <dependency>
