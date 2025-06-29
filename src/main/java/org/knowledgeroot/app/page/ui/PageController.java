@@ -6,23 +6,25 @@ import lombok.RequiredArgsConstructor;
 import org.knowledgeroot.app.page.api.PageDto;
 import org.knowledgeroot.app.page.api.PageDtoConverter;
 import org.knowledgeroot.app.page.domain.*;
-import org.knowledgeroot.app.security.user.domain.UserDao;
-import org.knowledgeroot.app.security.user.domain.GroupDao;
-import org.knowledgeroot.app.security.user.domain.*;
-import org.knowledgeroot.app.security.user.api.filter.UserFilter;
 import org.knowledgeroot.app.security.user.api.filter.GroupFilter;
+import org.knowledgeroot.app.security.user.api.filter.UserFilter;
+import org.knowledgeroot.app.security.user.domain.GroupDao;
+import org.knowledgeroot.app.security.user.domain.UserDao;
 import org.springframework.http.HttpStatus;
-
-import java.util.HashMap;
-import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Controller
 @RequiredArgsConstructor
@@ -142,10 +144,12 @@ public class PageController {
     public ModelAndView editPage(
             @PathVariable("pageId") Integer pageId,
             @ModelAttribute PageDto pageDto,
-            @RequestParam(value = "permissionUpdates", required = false) Map<String, String> permissionUpdates,
-            @RequestParam(value = "permissionDeletions", required = false) List<String> permissionDeletions,
-            @RequestParam(value = "permissionAdditions", required = false) List<Map<String, String>> permissionAdditions
+            @RequestParam MultiValueMap<String, String> allParams
     ) {
+        // Parse permission parameters manually from form data
+        Map<String, String> permissionUpdates = parsePermissionUpdates(allParams);
+        List<String> permissionDeletions = parsePermissionDeletions(allParams);
+        List<Map<String, String>> permissionAdditions = parsePermissionAdditions(allParams);
         // Berechtigungsprüfung
         PageId pid = new PageId(pageId);
         Integer currentUserId = 1; // Demo-Benutzer-ID
@@ -190,8 +194,20 @@ public class PageController {
         // Handle permission deletions
         if (permissionDeletions != null && !permissionDeletions.isEmpty()) {
             for (String permissionIdStr : permissionDeletions) {
-                Integer permissionId = Integer.valueOf(permissionIdStr);
-                pagePermissionImpl.deletePermission(permissionId);
+                // Validate permission ID string
+                if (permissionIdStr == null || permissionIdStr.trim().isEmpty() || 
+                    "null".equals(permissionIdStr) || "undefined".equals(permissionIdStr)) {
+                    System.err.println("Invalid permission ID for deletion: " + permissionIdStr);
+                    continue; // Skip invalid permission IDs
+                }
+
+                try {
+                    Integer permissionId = Integer.valueOf(permissionIdStr.trim());
+                    pagePermissionImpl.deletePermission(permissionId);
+                } catch (NumberFormatException e) {
+                    System.err.println("Failed to parse permission ID for deletion: " + permissionIdStr + " - " + e.getMessage());
+                    // Continue with other deletions instead of failing the entire operation
+                }
             }
         }
 
@@ -441,5 +457,59 @@ public class PageController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Error retrieving groups: " + e.getMessage());
         }
+    }
+
+    // Helper methods to parse permission parameters from form data
+    private Map<String, String> parsePermissionUpdates(MultiValueMap<String, String> allParams) {
+        Map<String, String> updates = new HashMap<>();
+        Pattern pattern = Pattern.compile("permissionUpdates\\[(\\d+)\\]");
+
+        for (String key : allParams.keySet()) {
+            Matcher matcher = pattern.matcher(key);
+            if (matcher.matches()) {
+                String permissionId = matcher.group(1);
+                String value = allParams.getFirst(key);
+                if (value != null) {
+                    updates.put(permissionId, value);
+                }
+            }
+        }
+        return updates;
+    }
+
+    private List<String> parsePermissionDeletions(MultiValueMap<String, String> allParams) {
+        List<String> deletions = new ArrayList<>();
+        List<String> values = allParams.get("permissionDeletions[]");
+        if (values != null) {
+            deletions.addAll(values);
+        }
+        return deletions;
+    }
+
+    private List<Map<String, String>> parsePermissionAdditions(MultiValueMap<String, String> allParams) {
+        List<Map<String, String>> additions = new ArrayList<>();
+        Map<Integer, Map<String, String>> additionsByIndex = new HashMap<>();
+
+        Pattern pattern = Pattern.compile("permissionAdditions\\[(\\d+)\\]\\[(\\w+)\\]");
+
+        for (String key : allParams.keySet()) {
+            Matcher matcher = pattern.matcher(key);
+            if (matcher.matches()) {
+                int index = Integer.parseInt(matcher.group(1));
+                String field = matcher.group(2);
+                String value = allParams.getFirst(key);
+
+                additionsByIndex.computeIfAbsent(index, k -> new HashMap<>()).put(field, value);
+            }
+        }
+
+        // Convert to list in order
+        for (int i = 0; i < additionsByIndex.size(); i++) {
+            if (additionsByIndex.containsKey(i)) {
+                additions.add(additionsByIndex.get(i));
+            }
+        }
+
+        return additions;
     }
 }

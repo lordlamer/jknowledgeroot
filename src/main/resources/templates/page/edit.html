@@ -5,7 +5,7 @@
     <title>Knowledgeroot :: Seite bearbeiten</title>
 </head>
 <body>
-<form th:hx-post="'/ui/page/' + ${page.pageId} + '/edit'" hx-target="#content" onsubmit="saveEditorContentToTextarea()">
+<form th:hx-post="'/ui/page/' + ${page.pageId} + '/edit'" hx-target="#content">
     <div class="card" style="margin-bottom: 20px;">
         <div class="card-header">
             <ul class="nav nav-tabs card-header-tabs" id="pageTabs" role="tablist">
@@ -142,59 +142,6 @@
         additions: [] // array of new permissions to add
     };
 
-    /**
-     * Save the content of the editor to the textarea.
-     * This is used before htmx form submit
-     */
-    function saveEditorContentToTextarea() {
-        // debug output
-        console.log(editor.getData());
-
-        // save the content to the textarea
-        document.getElementById('page-content').value = editor.getData();
-
-        // Add permission changes to form
-        addPermissionChangesToForm();
-    }
-
-    /**
-     * Add permission changes as hidden form fields
-     */
-    function addPermissionChangesToForm() {
-        const form = document.querySelector('form');
-
-        // Remove existing permission change fields
-        form.querySelectorAll('input[name^="permission"]').forEach(input => input.remove());
-
-        // Add permission updates
-        Object.keys(permissionChanges.updates).forEach(permId => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'permissionUpdates[' + permId + ']';
-            input.value = permissionChanges.updates[permId];
-            form.appendChild(input);
-        });
-
-        // Add permission deletions
-        permissionChanges.deletions.forEach(permId => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'permissionDeletions[]';
-            input.value = permId;
-            form.appendChild(input);
-        });
-
-        // Add permission additions
-        permissionChanges.additions.forEach((perm, index) => {
-            ['roleType', 'roleId', 'permissionLevel'].forEach(field => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'permissionAdditions[' + index + '][' + field + ']';
-                input.value = perm[field] || '';
-                form.appendChild(input);
-            });
-        });
-    }
 
     // Funktion zum Laden der verfügbaren Rollen basierend auf der Rollentyp-Auswahl
     function loadRoles() {
@@ -281,6 +228,13 @@
         if (confirm('Möchten Sie diese Berechtigung wirklich löschen?')) {
             const permId = button.getAttribute('data-perm-id');
             const row = button.closest('tr');
+
+            // Validate permission ID
+            if (!permId || permId === 'null' || permId === 'undefined') {
+                console.error('Invalid permission ID for deletion:', permId);
+                alert('Fehler: Ungültige Berechtigungs-ID. Die Berechtigung kann nicht gelöscht werden.');
+                return;
+            }
 
             // Add to deletions array if not already there
             if (!permissionChanges.deletions.includes(permId)) {
@@ -593,6 +547,50 @@
             initializePageEdit();
         }
     });
+
+    // HTMX event handler to add permission data before form submission
+    document.addEventListener('htmx:configRequest', function(event) {
+        // Check if this is the page edit form
+        if (event.detail.elt && event.detail.elt.tagName === 'FORM' && 
+            event.detail.elt.getAttribute('hx-post') && 
+            event.detail.elt.getAttribute('hx-post').includes('/edit')) {
+
+            // Save editor content to textarea
+            if (typeof editor !== 'undefined' && editor) {
+                document.getElementById('page-content').value = editor.getData();
+            }
+
+            // Add permission changes to form data
+            addPermissionChangesToFormData(event.detail.parameters);
+        }
+    });
+
+    // Function to add permission changes to HTMX form data
+    function addPermissionChangesToFormData(parameters) {
+        // Add permission updates
+        Object.keys(permissionChanges.updates).forEach(permId => {
+            parameters['permissionUpdates[' + permId + ']'] = permissionChanges.updates[permId];
+        });
+
+        // Add permission deletions
+        permissionChanges.deletions.forEach(permId => {
+            if (!parameters['permissionDeletions[]']) {
+                parameters['permissionDeletions[]'] = [];
+            }
+            if (Array.isArray(parameters['permissionDeletions[]'])) {
+                parameters['permissionDeletions[]'].push(permId);
+            } else {
+                parameters['permissionDeletions[]'] = [parameters['permissionDeletions[]'], permId];
+            }
+        });
+
+        // Add permission additions
+        permissionChanges.additions.forEach((perm, index) => {
+            ['roleType', 'roleId', 'permissionLevel'].forEach(field => {
+                parameters['permissionAdditions[' + index + '][' + field + ']'] = perm[field] || '';
+            });
+        });
+    }
 
     // CKEditor initialisieren
     ClassicEditor
