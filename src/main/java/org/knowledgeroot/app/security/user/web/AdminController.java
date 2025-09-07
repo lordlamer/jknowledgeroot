@@ -74,6 +74,7 @@ public class AdminController {
                                 1000
                         )
                 )
+                .admin(Boolean.TRUE.equals(user.getAdmin()))
                 .language("en_US")
                 .timezone("UTC")
                 .timeStart(LocalDateTime.now())
@@ -123,6 +124,7 @@ public class AdminController {
         user.setLastName(userDto.getLastName());
         user.setLogin(userDto.getLogin());
         user.setEmail(userDto.getEmail());
+        user.setAdmin(Boolean.TRUE.equals(userDto.getAdmin()));
 
         // update password if new password is set
         if(userDto.getPassword() != null && !userDto.getPassword().isEmpty()) {

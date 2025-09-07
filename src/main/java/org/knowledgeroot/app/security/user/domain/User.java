@@ -17,6 +17,7 @@ public class User {
     private String login;
     private String email;
     private String password;
+    private Boolean admin;
     private String language;
     private String timezone;
     private LocalDateTime timeStart;

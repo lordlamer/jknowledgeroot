@@ -33,6 +33,9 @@ public class UserEntity {
     @Column(name = "password", nullable = false)
     private String password;
 
+    @Column(name = "admin", nullable = false)
+    private Boolean admin;
+
     @Column(name = "language", nullable = false)
     private String language;
 

@@ -15,4 +15,5 @@ class UserDto {
     private String login;
     private String email;
     private String password;
+    private Boolean admin;
 }

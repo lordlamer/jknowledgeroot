@@ -35,6 +35,12 @@
                     <label for="password" class="form-label">New Password</label>
                     <input type="password" class="form-control" id="password" name="password" value="">
                 </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" value="true" id="admin" name="admin" th:checked="${user.getAdmin()}">
+                    <label class="form-check-label" for="admin">
+                        Admin
+                    </label>
+                </div>
             </div>
         </div>
         <div>

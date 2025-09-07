@@ -27,6 +27,7 @@ public class UserDtoConverter implements Converter<User, UserDto> {
         userDto.setTimezone(from.getTimezone());
         userDto.setTimeStart(from.getTimeStart());
         userDto.setTimeEnd(from.getTimeEnd());
+        userDto.setAdmin(from.getAdmin());
 
         return userDto;
     }
@@ -51,6 +52,7 @@ public class UserDtoConverter implements Converter<User, UserDto> {
         user.setTimezone(from.getTimezone());
         user.setTimeStart(from.getTimeStart());
         user.setTimeEnd(from.getTimeEnd());
+        user.setAdmin(from.getAdmin());
 
         return user;
     }

@@ -36,7 +36,7 @@
             <td th:text="${user.getLastName()}">Last</td>
             <td th:text="${user.getEmail()}">E-Mail</td>
             <td th:text="${user.getActive()}">Active</td>
-            <td>Admin?</td>
+            <td th:text="${user.getAdmin()} ? 'Yes' : 'No'">Admin</td>
             <td>
                 <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
                     <button type="button" class="btn btn-outline-primary"
