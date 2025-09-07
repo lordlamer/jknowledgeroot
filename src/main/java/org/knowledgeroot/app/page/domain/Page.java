@@ -20,8 +20,10 @@ public class Page {
     private LocalDateTime timeEnd;
     private Boolean active;
     private Integer createdBy;
+    private String createdByLogin;
     private LocalDateTime  createDate;
     private Integer changedBy;
+    private String changedByLogin;
     private LocalDateTime changeDate;
     private Boolean deleted;
     private List<File> files;

@@ -223,23 +223,27 @@ public class PageImpl implements PageDao {
     public Page findById(PageId pageId) {
         return jdbcClient.sql("""
                 SELECT 
-                    id as pageId,
-                    parent,
-                    name,
-                    content,
-                    time_start,
-                    time_end,
-                    active,
-                    created_by,
-                    create_date,
-                    changed_by,
-                    change_date,
-                    active,
-                    deleted
+                    p.id as pageId,
+                    p.parent,
+                    p.name,
+                    p.content,
+                    p.time_start,
+                    p.time_end,
+                    p.active,
+                    p.created_by,
+                    cu.login as created_by_login,
+                    p.create_date,
+                    p.changed_by,
+                    uu.login as changed_by_login,
+                    p.change_date,
+                    p.active,
+                    p.deleted
                 FROM 
-                    page 
+                    page p
+                LEFT JOIN user cu ON cu.id = p.created_by
+                LEFT JOIN user uu ON uu.id = p.changed_by
                 WHERE 
-                    id = :id
+                    p.id = :id
                 """)
                 .param("id", pageId.value())
                 .query(
@@ -279,8 +283,10 @@ public class PageImpl implements PageDao {
                                     .timeEnd(timeEnd)
                                     .active(rs.getBoolean("active"))
                                     .createdBy(rs.getObject("created_by") != null ? rs.getInt("created_by") : null)
+                                    .createdByLogin(rs.getString("created_by_login"))
                                     .createDate(createDate)
                                     .changedBy(rs.getObject("changed_by") != null ? rs.getInt("changed_by") : null)
+                                    .changedByLogin(rs.getString("changed_by_login"))
                                     .changeDate(changeDate)
                                     .active(rs.getBoolean("active"))
                                     .deleted(rs.getBoolean("deleted"))

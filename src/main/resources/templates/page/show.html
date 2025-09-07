@@ -75,7 +75,7 @@
 </div>
 
 <!-- file listing -->
-<div th:if="${page.files != null && !page.files.empty}" class="mb-4">
+<div th:if="${page.files != null and !#lists.isEmpty(page.files)}" class="mb-4">
     <h5>Attached files</h5>
     <ul class="list-group">
         <li class="list-group-item" th:each="file : ${page.files}">
@@ -89,14 +89,14 @@
 <div class="d-flex align-items-center text-muted small border-top pt-2 mt-5">
     <div>
         <span>Created by </span>
-        <strong th:text="${page.createdBy}">User</strong>
+        <strong th:text="${page.createdByLogin != null ? page.createdByLogin : (page.createdBy != null ? page.createdBy : 'gast')}">User</strong>
         <span> at </span>
         <span th:text="${#temporals.format(page.createDate, 'dd.MM.yyyy HH:mm')}">01.01.2023</span>
     </div>
     <div class="mx-2">•</div>
     <div>
         <span>Changed by </span>
-        <strong th:text="${page.changedBy}">User</strong>
+        <strong th:text="${page.changedByLogin != null ? page.changedByLogin : (page.changedBy != null ? page.changedBy : 'gast')}">User</strong>
         <span> at </span>
         <span th:text="${#temporals.format(page.changeDate, 'dd.MM.yyyy HH:mm')}">01.01.2023</span>
     </div>
