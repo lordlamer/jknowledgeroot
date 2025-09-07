@@ -20,7 +20,7 @@ public interface PageDao {
      * create page from domain object
      * @param page
      */
-    void createPage(Page page);
+    int createPage(Page page);
 
     /**
      * update existing page

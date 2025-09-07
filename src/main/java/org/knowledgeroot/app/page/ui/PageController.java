@@ -40,18 +40,18 @@ public class PageController {
 
     /**
      * Get the current user ID for permission checks.
-     * Returns null for guest users, which will be handled by the permission system.
+     * Returns 0 for guest users to satisfy database constraints.
      */
     private Integer getCurrentUserId() {
         UserDetails currentUser = userContext.getUserContext();
         if (currentUser.isGuest()) {
-            return null; // Guest users have no user ID
+            return 0; // Guest users get ID 0 to satisfy database constraints
         }
         try {
             return Integer.valueOf(currentUser.getUserId());
         } catch (NumberFormatException e) {
             // If userId is not a valid integer, treat as guest
-            return null;
+            return 0;
         }
     }
 
@@ -96,6 +96,8 @@ public class PageController {
             response.addHeader("HX-Trigger", "reload-sidebar");
 
         if(htmxRequest.isHtmxRequest()) {
+            response.addHeader("HX-Push-Url", "/ui/page/" + pageId);
+
             return "page/show :: body";
         }
 
@@ -268,7 +270,9 @@ public class PageController {
     }
 
     @PostMapping("/ui/page/new")
-    public ModelAndView createNewPage(@ModelAttribute PageDto pageDto) {
+    public ModelAndView createNewPage(
+            @ModelAttribute PageDto pageDto
+    ) {
         Integer currentUserId = getCurrentUserId();
 
         // Bei neuer Unterseite Berechtigungsprüfung für Parent
@@ -294,15 +298,13 @@ public class PageController {
             pageDto.setParent(0);
 
         Page page = pageDtoConverter.convertBtoA(pageDto);
-        pageImpl.createPage(page);
+        int newPageId = pageImpl.createPage(page);
 
         // Standardberechtigungen erstellen
-        pagePermissionImpl.createDefaultPermissions(page.getPageId(), page.getCreatedBy());
+        pagePermissionImpl.createDefaultPermissions(new PageId(newPageId), page.getCreatedBy());
 
-        if(page.getParent() != null && page.getParent() > 0)
-            return new ModelAndView("redirect:/ui/page/" + page.getParent() + "?trigger=reload-sidebar");
-        else
-            return new ModelAndView("redirect:/?trigger=reload-sidebar");
+        // Redirect to the new page
+        return new ModelAndView("redirect:/ui/page/" + newPageId + "?trigger=reload-sidebar");
     }
 
     @DeleteMapping("/ui/page/{pageId}")

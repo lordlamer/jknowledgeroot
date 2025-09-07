@@ -1,5 +1,9 @@
 -- Dump for Postgresql with demo data
 
+-- guest user (ID 0) for guest-created content and system operations
+INSERT INTO `user` (id, first_name, last_name, login, email, password, admin, language, timezone, active, created_by, create_date, changed_by, change_date, deleted)
+VALUES (0, 'Guest', 'User', 'guest', 'guest@localhost', '', false, 'en_US', 'Europe/Berlin', true, 0, '2012-10-01 22:00:00', 0, '2012-10-01 22:00:00', false);
+
 -- user
 INSERT INTO `user` (first_name, last_name, login, email, password, admin, language, timezone, active, created_by, create_date, changed_by, change_date, deleted)
 VALUES ('knowledgeroot', 'admin', 'admin', 'admin@localhost', '$2$1000$E556111996CF452E$B3EB80BC13DED8B02A2F09E505AED75737D4AF45D9A599623D39CD518771C306', true, 'en_US', 'Europe/Berlin', true, 0, '2012-10-01 22:00:00', 0, '2012-10-01 22:00:00', false);

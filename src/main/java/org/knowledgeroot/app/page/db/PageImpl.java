@@ -9,6 +9,8 @@ import org.knowledgeroot.app.page.domain.PageDao;
 import org.knowledgeroot.app.page.domain.PageFilter;
 import org.knowledgeroot.app.page.domain.PageId;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -294,7 +296,9 @@ public class PageImpl implements PageDao {
      * @param page page to create
      */
     @Override
-    public void createPage(Page page) {
+    public int createPage(Page page) {
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
         int update = jdbcClient.sql("""
                 INSERT INTO page (
                     parent,
@@ -325,9 +329,11 @@ public class PageImpl implements PageDao {
                         page.getChangeDate(),
                         page.getDeleted()
                 )
-                .update();
+                .update(keyHolder);
 
         Assert.state(update == 1, "Failed to create page: " + page.getName());
+
+        return keyHolder.getKey().intValue();
     }
 
     /**
