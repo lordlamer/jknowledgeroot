@@ -119,7 +119,7 @@
                     <!-- Help dropdown -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="dropdown02" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-question-circle"></i></a>
-                        <ul class="dropdown-menu" aria-labelledby="dropdown02">
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown02">
                             <li><a class="dropdown-item" hx-get="/help" hx-target="#content" hx-push-url="true">Help</a></li>
                             <li><a class="dropdown-item" hx-get="/about" hx-target="#content" hx-push-url="true">About</a></li>
                         </ul>
@@ -129,7 +129,7 @@
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink2" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-person"></i>
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink2">
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink2">
                             <li th:if="${isguest}">
                                 <a class="dropdown-item" hx-get="/login" hx-target="#content" hx-push-url="true">Sign in</a>
                             </li>
