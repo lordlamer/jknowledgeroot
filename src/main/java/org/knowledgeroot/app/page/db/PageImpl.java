@@ -422,22 +422,37 @@ public class PageImpl implements PageDao {
                 """)
                 .param("searchQuery", "%" + searchQuery + "%")
                 .query(
-                        (rs, rowNum) ->
-                                Page.builder()
-                                        .pageId(new PageId(rs.getInt("pageId")))
-                                        .parent(rs.getInt("parent"))
-                                        .name(rs.getString("name"))
-                                        .content(rs.getString("content"))
-                                        .timeStart(rs.getTimestamp("time_start").toLocalDateTime())
-                                        .timeEnd(rs.getTimestamp("time_end").toLocalDateTime())
-                                        .active(rs.getBoolean("active"))
-                                        .createdBy(rs.getInt("created_by"))
-                                        .createDate(rs.getTimestamp("create_date").toLocalDateTime())
-                                        .changedBy(rs.getInt("changed_by"))
-                                        .changeDate(rs.getTimestamp("change_date").toLocalDateTime())
-                                        .active(rs.getBoolean("active"))
-                                        .deleted(rs.getBoolean("deleted"))
-                                        .build()
+                        (rs, rowNum) -> {
+                            // Safe conversion of nullable timestamps to LocalDateTime
+                            Timestamp tsStart = rs.getTimestamp("time_start");
+                            Timestamp tsEnd = rs.getTimestamp("time_end");
+                            Timestamp tsCreate = rs.getTimestamp("create_date");
+                            Timestamp tsChange = rs.getTimestamp("change_date");
+
+                            LocalDateTime timeStart = tsStart != null ? tsStart.toLocalDateTime() : null;
+                            LocalDateTime timeEnd = tsEnd != null ? tsEnd.toLocalDateTime() : null;
+                            LocalDateTime createDate = tsCreate != null ? tsCreate.toLocalDateTime() : null;
+                            LocalDateTime changeDate = tsChange != null ? tsChange.toLocalDateTime() : null;
+
+                            Integer createdBy = rs.getObject("created_by") != null ? rs.getInt("created_by") : null;
+                            Integer changedBy = rs.getObject("changed_by") != null ? rs.getInt("changed_by") : null;
+
+                            return Page.builder()
+                                    .pageId(new PageId(rs.getInt("pageId")))
+                                    .parent(rs.getInt("parent"))
+                                    .name(rs.getString("name"))
+                                    .content(rs.getString("content"))
+                                    .timeStart(timeStart)
+                                    .timeEnd(timeEnd)
+                                    .active(rs.getBoolean("active"))
+                                    .createdBy(createdBy)
+                                    .createDate(createDate)
+                                    .changedBy(changedBy)
+                                    .changeDate(changeDate)
+                                    .active(rs.getBoolean("active"))
+                                    .deleted(rs.getBoolean("deleted"))
+                                    .build();
+                        }
                 )
                 .list();
 
