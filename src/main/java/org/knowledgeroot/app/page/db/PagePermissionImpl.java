@@ -72,6 +72,17 @@ public class PagePermissionImpl implements PagePermissionDao {
             return hasGuestPermission(pageId, minPermissionLevel);
         }
 
+        // Admins can always view and edit any page
+        Boolean isAdmin = jdbcClient.sql("""
+                SELECT admin FROM `user` WHERE id = :userId
+                """)
+                .param("userId", userId)
+                .query(Boolean.class)
+                .single();
+        if (Boolean.TRUE.equals(isAdmin)) {
+            return true;
+        }
+
         // 1. Check direct user permissions
         Integer directCount = jdbcClient.sql("""
                 SELECT COUNT(*) FROM page_permission
