@@ -210,34 +210,36 @@ public class PagePermissionImpl implements PagePermissionDao {
     public void createDefaultPermissions(PageId pageId, Integer creatorId) {
         LocalDateTime now = LocalDateTime.now();
 
-        // 1. Creator gets EDIT permissions
-        jdbcClient.sql("""
-                INSERT INTO page_permission (
-                    page_id,
-                    role_type,
-                    role_id,
-                    permission_level,
-                    created_by,
-                    create_date,
-                    changed_by,
-                    change_date
-                ) VALUES (
-                    ?,?,?,?,?,?,?,?
-                )
-                """)
-                .params(
-                        pageId.value(),
-                        PagePermission.RoleType.USER.getValue(),
-                        creatorId,
-                        PagePermission.PermissionLevel.EDIT.getValue(),
-                        creatorId,
-                        now,
-                        creatorId,
-                        now
-                )
-                .update();
+        // 1. Creator gets EDIT permissions (only if creatorId is not null)
+        if (creatorId != null) {
+            jdbcClient.sql("""
+                    INSERT INTO page_permission (
+                        page_id,
+                        role_type,
+                        role_id,
+                        permission_level,
+                        created_by,
+                        create_date,
+                        changed_by,
+                        change_date
+                    ) VALUES (
+                        ?,?,?,?,?,?,?,?
+                    )
+                    """)
+                    .params(
+                            pageId.value(),
+                            PagePermission.RoleType.USER.getValue(),
+                            creatorId,
+                            PagePermission.PermissionLevel.EDIT.getValue(),
+                            creatorId,
+                            now,
+                            creatorId,
+                            now
+                    )
+                    .update();
+        }
 
-        // 2. Guest gets VIEW permissions
+        // 2. Guest gets VIEW permissions (audit columns may be NULL)
         jdbcClient.sql("""
                 INSERT INTO page_permission (
                     page_id,

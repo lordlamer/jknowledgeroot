@@ -40,18 +40,19 @@ public class PageController {
 
     /**
      * Get the current user ID for permission checks.
-     * Returns 0 for guest users to satisfy database constraints.
+     * Returns null for guest users or unparsable IDs. Null indicates guest context
+     * and is supported by permission checks (falls back to guest permissions).
      */
     private Integer getCurrentUserId() {
         UserDetails currentUser = userContext.getUserContext();
         if (currentUser.isGuest()) {
-            return 0; // Guest users get ID 0 to satisfy database constraints
+            return null; // Guest users have no DB user id
         }
         try {
             return Integer.valueOf(currentUser.getUserId());
         } catch (NumberFormatException e) {
             // If userId is not a valid integer, treat as guest
-            return 0;
+            return null;
         }
     }
 
@@ -275,7 +276,7 @@ public class PageController {
     ) {
         Integer currentUserId = getCurrentUserId();
 
-        // Bei neuer Unterseite Berechtigungsprüfung für Parent
+        // Guests or unknown users: allow creation with NULL audit fields (DB now allows NULL)
         if (pageDto.getParent() != null && pageDto.getParent() > 0) {
             PageId parentId = new PageId(pageDto.getParent());
             if (!pagePermissionImpl.hasUserPermission(parentId, currentUserId, PagePermission.PermissionLevel.EDIT)) {

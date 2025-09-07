@@ -27,4 +27,11 @@
     <changeSet id="1.0.0-tag" author="lordlamer">
         <tagDatabase tag="1.0.0"/>
     </changeSet>
+    <changeSet id="1.0.1-guest-nullable-audit" author="junie" context="production,development">
+        <sqlFile path="changes/1.0.1-guest-nullable-audit.${db.name}.sql"
+                 encoding="UTF-8"
+                 relativeToChangelogFile="true"
+                 splitStatements="true"
+                 stripComments="true"/>
+    </changeSet>
 </databaseChangeLog>
