@@ -192,7 +192,7 @@
         <dependency>
             <groupId>org.webjars.npm</groupId>
             <artifactId>ckeditor__ckeditor5-build-classic</artifactId>
-            <version>44.3.0</version>
+            <version>40.1.0</version>
         </dependency>
 
         <!-- Generate fake data - great for demos and testing! -->
