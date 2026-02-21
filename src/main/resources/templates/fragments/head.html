@@ -1,0 +1,69 @@
+<head xmlns:th="http://www.thymeleaf.org" th:fragment="appHead(titleFragment)">
+    <meta charset="utf-8">
+    <title th:replace="${titleFragment}">Knowledgeroot</title>
+    <meta name="description" content="Knowledgeroot Knowledgebase">
+    <meta name="author" content="Knowledgeroot Team">
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}" />
+
+    <script type="text/javascript" th:src="@{/webjars/htmx.org/dist/htmx.min.js}"></script>
+    <script type="text/javascript" th:src="@{/webjars/htmx.org/dist/ext/client-side-templates.js}"></script>
+    <script type="text/javascript" th:src="@{/webjars/mustache/mustache.js}"></script>
+    <script type="text/javascript" th:src="@{/webjars/jquery/jquery.min.js}"></script>
+
+    <link th:rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}"/>
+    <script type="text/javascript" th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
+    <link th:href="@{/webjars/bootstrap-icons/font/bootstrap-icons.css}" rel="stylesheet">
+
+    <link th:href="@{/resources/css/layout.css}" rel="stylesheet">
+
+    <script type="text/javascript" th:src="@{/webjars/ckeditor__ckeditor5-build-classic/build/ckeditor.js}"></script>
+
+    <script type="text/javascript">
+        document.addEventListener('htmx:configRequest', function (event) {
+            var tokenMeta = document.querySelector('meta[name="_csrf"]');
+            var headerMeta = document.querySelector('meta[name="_csrf_header"]');
+            if (!tokenMeta || !headerMeta) {
+                return;
+            }
+            event.detail.headers[headerMeta.content] = tokenMeta.content;
+        });
+
+        function markActiveSidebarPage() {
+            var sidebar = document.getElementById('sidebar');
+            if (!sidebar) {
+                return;
+            }
+
+            var pathMatch = window.location.pathname.match(/^\/ui\/page\/(\d+)/);
+            var activePageId = pathMatch ? pathMatch[1] : null;
+
+            var links = sidebar.querySelectorAll('a.sidebar-link[data-page-id]');
+            links.forEach(function (link) {
+                link.classList.remove('active');
+                link.removeAttribute('aria-current');
+            });
+
+            if (!activePageId) {
+                return;
+            }
+
+            var activeLink = sidebar.querySelector('a.sidebar-link[data-page-id="' + activePageId + '"]');
+            if (activeLink) {
+                activeLink.classList.add('active');
+                activeLink.setAttribute('aria-current', 'page');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', markActiveSidebarPage);
+        document.addEventListener('htmx:afterSwap', function (event) {
+            if (!event.detail || !event.detail.target) {
+                return;
+            }
+            if (event.detail.target.id === 'content' || event.detail.target.id === 'sidebar') {
+                markActiveSidebarPage();
+            }
+        });
+        document.addEventListener('htmx:pushedIntoHistory', markActiveSidebarPage);
+    </script>
+</head>

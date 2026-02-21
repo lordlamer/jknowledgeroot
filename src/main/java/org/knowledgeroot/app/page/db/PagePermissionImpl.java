@@ -211,10 +211,53 @@ public class PagePermissionImpl implements PagePermissionDao {
     }
 
     @Override
+    public void updatePermissionForPage(PageId pageId, PagePermission pagePermission) {
+        int update = jdbcClient.sql("""
+                UPDATE page_permission SET
+                    permission_level = ?,
+                    changed_by = ?,
+                    change_date = ?
+                WHERE
+                    id = ?
+                    AND page_id = ?
+                """)
+                .params(
+                        pagePermission.getPermissionLevel().getValue(),
+                        pagePermission.getChangedBy(),
+                        pagePermission.getChangeDate(),
+                        pagePermission.getId(),
+                        pageId.value()
+                )
+                .update();
+
+        Assert.state(
+                update == 1,
+                "Failed to update permission with ID " + pagePermission.getId() + " for page " + pageId.value()
+        );
+    }
+
+    @Override
     public void deletePermission(Integer permissionId) {
         jdbcClient.sql("DELETE FROM page_permission WHERE id = :id")
                 .param("id", permissionId)
                 .update();
+    }
+
+    @Override
+    public void deletePermissionForPage(PageId pageId, Integer permissionId) {
+        int deleted = jdbcClient.sql("""
+                DELETE FROM page_permission
+                WHERE id = :id
+                AND page_id = :pageId
+                """)
+                .param("id", permissionId)
+                .param("pageId", pageId.value())
+                .update();
+
+        Assert.state(
+                deleted == 1,
+                "Failed to delete permission with ID " + permissionId + " for page " + pageId.value()
+        );
     }
 
     @Override

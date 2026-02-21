@@ -9,6 +9,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -89,6 +90,8 @@ class SidebarController {
                 model.addAttribute("parentPage", parentPageObj);
             } else {
                 model.addAttribute("parentPage", null);
+                model.addAttribute("pages", Collections.emptyList());
+                return "sidebar";
             }
         }
 

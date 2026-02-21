@@ -23,7 +23,7 @@ public class UserDtoConverter implements Converter<User, UserDto> {
         userDto.setChangeDate(from.getChangeDate());
         userDto.setLanguage(from.getLanguage());
         userDto.setDeleted(from.getDeleted());
-        userDto.setPassword("***");
+        userDto.setPassword(null);
         userDto.setTimezone(from.getTimezone());
         userDto.setTimeStart(from.getTimeStart());
         userDto.setTimeEnd(from.getTimeEnd());
@@ -36,7 +36,9 @@ public class UserDtoConverter implements Converter<User, UserDto> {
     public User convertBtoA(UserDto from) {
         User user = new User();
 
-        user.setId(new UserId(from.getId()));
+        if (from.getId() != null) {
+            user.setId(new UserId(from.getId()));
+        }
         user.setActive(from.getActive());
         user.setEmail(from.getEmail());
         user.setLogin(from.getLogin());

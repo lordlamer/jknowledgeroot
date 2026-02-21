@@ -1,9 +1,9 @@
-services:
+﻿services:
   mariadb:
     container_name: knowledgeroot_mariadb
     image: mariadb
     environment:
-      MARIADB_ROOT_PASSWORD: knowledgeroot
+      MARIADB_ROOT_PASSWORD: ${KR_DB_ROOT_PASSWORD:-change-me-db-root}
     volumes:
       - mariadb:/var/lib/mysql
     ports:
@@ -17,13 +17,13 @@ services:
     image: quay.io/minio/minio
     command: server --console-address ":9001" /data
     environment:
-      MINIO_ROOT_USER: minioadmin        # Zugangsdaten für Minio
-      MINIO_ROOT_PASSWORD: minioadmin    # Bitte in Produktion ändern!
+      MINIO_ROOT_USER: ${KR_MINIO_ROOT_USER:-change-me-minio-user}
+      MINIO_ROOT_PASSWORD: ${KR_MINIO_ROOT_PASSWORD:-change-me-minio-password}
     volumes:
       - minio_data:/data
     ports:
-      - "9000:9000"  # API Port
-      - "9001:9001"  # Console Port
+      - "9000:9000"
+      - "9001:9001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s

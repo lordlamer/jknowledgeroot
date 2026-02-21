@@ -60,7 +60,7 @@ public class AdminController {
 
     @PostMapping("/admin/users")
     public String saveUser(UserDto user) {
-        log.debug("Create new user: {}", user);
+        log.debug("Create new user: login={}", user.getLogin());
 
         User newUser = User.builder()
                 .firstName(user.getFirstName())
@@ -139,7 +139,7 @@ public class AdminController {
 
         userImpl.updateUser(user);
 
-        log.debug("User updated: {}", user);
+        log.debug("User updated: id={}, login={}", id, user.getLogin());
 
         return "redirect:/admin/users";
     }

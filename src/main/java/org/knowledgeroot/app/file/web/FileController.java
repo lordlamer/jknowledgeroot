@@ -5,11 +5,22 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.file.domain.File;
 import org.knowledgeroot.app.file.domain.FileDao;
+import org.knowledgeroot.app.page.domain.PageId;
+import org.knowledgeroot.app.page.domain.PagePermission;
+import org.knowledgeroot.app.page.domain.PagePermissionDao;
+import org.knowledgeroot.app.security.context.domain.UserContext;
+import org.knowledgeroot.app.security.context.domain.UserDetails;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.FileCopyUtils;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.ModelAndView;
@@ -22,13 +33,27 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 class FileController {
     private final FileDao fileDao;
+    private final PagePermissionDao pagePermissionDao;
+    private final UserContext userContext;
+
+    private Integer getCurrentUserId() {
+        UserDetails currentUser = userContext.getUserContext();
+        if (currentUser.isGuest()) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(currentUser.getUserId());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private boolean hasPagePermission(Integer pageId, PagePermission.PermissionLevel level) {
+        return pagePermissionDao.hasUserPermission(new PageId(pageId), getCurrentUserId(), level);
+    }
 
     /**
-     * Upload a file to the server
-     *
-     * @param file      The file to upload
-     * @param pageId The pageId to which the file belongs
-     * @return A ModelAndView that redirects to the page where the file was uploaded
+     * Upload a file to the server.
      */
     @PostMapping(
             value = "/ui/file",
@@ -42,26 +67,22 @@ class FileController {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is empty");
             }
 
-            // save file
-            fileDao.createFile(file, pageId);
+            if (!hasPagePermission(pageId, PagePermission.PermissionLevel.EDIT)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to upload files for this page");
+            }
 
-            // redirect to page with contentId
+            fileDao.createFile(file, pageId);
             return new ModelAndView("redirect:/ui/page/" + pageId);
+        } catch (ResponseStatusException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("Fehler beim Hochladen der Datei: {}", e.getMessage(), e);
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Could not upload file: " + e.getMessage()
-            );
+            log.error("Failed to upload file: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not upload file: " + e.getMessage());
         }
     }
 
     /**
-     * Download a file from the server
-     *
-     * @param response The HttpServletResponse object
-     * @param fileId   The ID of the file to download
-     * @param filename The name of the file to download
+     * Download a file from the server.
      */
     @GetMapping("/ui/file/{id}/download/{filename}")
     public void downloadFile(
@@ -69,58 +90,65 @@ class FileController {
             @PathVariable("id") Integer fileId,
             @PathVariable("filename") String filename
     ) {
+        File meta;
         try {
-            // Lade die Dateimetadaten
-            File meta = fileDao.findById(fileId);
+            meta = fileDao.findById(fileId);
+        } catch (EmptyResultDataAccessException e) {
+            writeError(response, HttpStatus.NOT_FOUND, "File not found");
+            return;
+        }
 
-            // Datei-Inhalt direkt über den InputStream laden
-            InputStream inputStream = fileDao.loadFile(fileId);
+        if (!hasPagePermission(meta.getPageId(), PagePermission.PermissionLevel.VIEW)) {
+            writeError(response, HttpStatus.FORBIDDEN, "Forbidden");
+            return;
+        }
 
-            // Überprüfen, ob der InputStream null ist (Datei existiert möglicherweise nicht)
+        try (InputStream inputStream = fileDao.loadFile(fileId)) {
             if (inputStream == null) {
-                response.setStatus(HttpStatus.NOT_FOUND.value());
-                response.getWriter().write("File not found");
+                writeError(response, HttpStatus.NOT_FOUND, "File not found");
                 return;
             }
 
-            // Antwort vorbereiten
-            // Mime-Typ setzen
-            response.setContentType(meta.getType());
-
-            // Dateiname im Header setzen
+            response.setContentType(meta.getType() == null ? "application/octet-stream" : meta.getType());
             response.setHeader(
                     "Content-Disposition",
-                    String.format("attachment; filename=\"%s\"", meta.getName())
+                    String.format("attachment; filename=\"%s\"", meta.getName() == null ? "download" : meta.getName())
             );
 
-            // Den Inhalt in die Antwort schreiben
             FileCopyUtils.copy(inputStream, response.getOutputStream());
-
-            // InputStream schließen
-            inputStream.close();
         } catch (Exception e) {
-            log.error("Fehler beim Herunterladen der Datei: " + e.getMessage(), e);
-
-            try {
-                // Fehlermeldung an den Benutzer senden
-                String errorMessage = "Could not download file!";
-                response.setContentType("text/plain");
-                response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-                response.getOutputStream().write(errorMessage.getBytes(StandardCharsets.UTF_8));
-                response.getOutputStream().close();
-            } catch (Exception ex) {
-                log.error("Fehler beim Senden der Fehlermeldung: " + ex.getMessage(), ex);
-            }
+            log.error("Failed to download file: {}", e.getMessage(), e);
+            writeError(response, HttpStatus.INTERNAL_SERVER_ERROR, "Could not download file!");
         }
     }
 
     /**
-     * Delete a file from the server
-     *
-     * @param fileId The ID of the file to delete
+     * Delete a file from the server.
      */
     @DeleteMapping("/ui/file/{id}")
     public @ResponseBody void deleteFile(@PathVariable("id") Integer fileId) {
+        File meta;
+        try {
+            meta = fileDao.findById(fileId);
+        } catch (EmptyResultDataAccessException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found");
+        }
+
+        if (!hasPagePermission(meta.getPageId(), PagePermission.PermissionLevel.EDIT)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to delete this file");
+        }
+
         fileDao.deleteFileById(fileId);
+    }
+
+    private void writeError(HttpServletResponse response, HttpStatus status, String message) {
+        try {
+            response.setContentType("text/plain");
+            response.setStatus(status.value());
+            response.getOutputStream().write(message.getBytes(StandardCharsets.UTF_8));
+            response.getOutputStream().close();
+        } catch (Exception ex) {
+            log.error("Failed to send error response: {}", ex.getMessage(), ex);
+        }
     }
 }

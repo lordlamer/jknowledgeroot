@@ -32,10 +32,24 @@ public interface PagePermissionDao {
     void updatePermission(PagePermission pagePermission);
 
     /**
+     * Update an existing permission but only if it belongs to the given page.
+     * @param pageId The page ID
+     * @param pagePermission The permission to update
+     */
+    void updatePermissionForPage(PageId pageId, PagePermission pagePermission);
+
+    /**
      * Delete a permission
      * @param permissionId The permission ID
      */
     void deletePermission(Integer permissionId);
+
+    /**
+     * Delete a permission but only if it belongs to the given page.
+     * @param pageId The page ID
+     * @param permissionId The permission ID
+     */
+    void deletePermissionForPage(PageId pageId, Integer permissionId);
 
     /**
      * Create default permissions for a new page

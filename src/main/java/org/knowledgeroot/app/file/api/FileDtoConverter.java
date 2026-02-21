@@ -18,7 +18,7 @@ public class FileDtoConverter implements Converter<File, FileDto> {
         fileDto.setCreateDate(from.getCreateDate());
         fileDto.setCreatedBy(from.getCreatedBy());
         fileDto.setChangedBy(from.getChangedBy());
-        fileDto.setChangeDate(from.getCreateDate());
+        fileDto.setChangeDate(from.getChangeDate());
         fileDto.setDeleted(from.getDeleted());
         fileDto.setDownloads(from.getDownloads());
 
@@ -37,7 +37,7 @@ public class FileDtoConverter implements Converter<File, FileDto> {
                 .createDate(from.getCreateDate())
                 .createdBy(from.getCreatedBy())
                 .changedBy(from.getChangedBy())
-                .changeDate(from.getCreateDate())
+                .changeDate(from.getChangeDate())
                 .deleted(from.getDeleted())
                 .downloads(from.getDownloads())
                 .build();

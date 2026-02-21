@@ -2,6 +2,7 @@ package org.knowledgeroot.app.security.user.api.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.knowledgeroot.app.security.auth.PasswordHasher;
 import org.knowledgeroot.app.security.user.api.converter.UserDtoConverter;
 import org.knowledgeroot.app.security.user.api.dto.UserDto;
 import org.knowledgeroot.app.security.user.api.filter.UserFilter;
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @Slf4j
@@ -29,6 +31,17 @@ public class UserRestController {
     private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss";
 
     private final UserDtoConverter userDtoConverter = new UserDtoConverter();
+
+    private String toPasswordHash(String plainPassword) {
+        if (plainPassword == null) {
+            return null;
+        }
+        String normalized = plainPassword.trim();
+        if (normalized.isEmpty() || "***".equals(normalized)) {
+            return null;
+        }
+        return PasswordHasher.hash(normalized, PasswordHasher.HASH_METHOD.SHA256, 1000);
+    }
 
     /**
      * get all users
@@ -145,6 +158,11 @@ public class UserRestController {
     public ResponseEntity<Void> createUser(@RequestBody UserDto userDto, UriComponentsBuilder ucBuilder) {
 
         User user = userDtoConverter.convertBtoA(userDto);
+        String passwordHash = toPasswordHash(userDto.getPassword());
+        if (passwordHash == null) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        user.setPassword(passwordHash);
 
         if (userImpl.isUserExist(user)) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
@@ -165,7 +183,7 @@ public class UserRestController {
      */
     @RequestMapping(value = "/user/{id}", method = RequestMethod.PUT)
     public ResponseEntity<UserDto> updateUser(@PathVariable("id") Integer id, @RequestBody UserDto userDto) {
-        if(id != userDto.getId()) {
+        if(!Objects.equals(id, userDto.getId())) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
@@ -175,9 +193,15 @@ public class UserRestController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        currentUser = userDtoConverter.convertBtoA(userDto);
+        User updatedUser = userDtoConverter.convertBtoA(userDto);
+        String passwordHash = toPasswordHash(userDto.getPassword());
+        if (passwordHash != null) {
+            updatedUser.setPassword(passwordHash);
+        } else {
+            updatedUser.setPassword(currentUser.getPassword());
+        }
 
-        userImpl.updateUser(currentUser);
+        userImpl.updateUser(updatedUser);
 
         return new ResponseEntity<>(userDto, HttpStatus.OK);
     }

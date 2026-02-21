@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @Slf4j
@@ -157,7 +158,7 @@ public class GroupRestController {
      */
     @RequestMapping(value = "/group/{id}", method = RequestMethod.PUT)
     public ResponseEntity<GroupDto> updateGroup(@PathVariable("id") Integer id, @RequestBody GroupDto groupDto) {
-        if(id != groupDto.getId()) {
+        if(!Objects.equals(id, groupDto.getId())) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 

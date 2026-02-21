@@ -5,9 +5,11 @@ import org.knowledgeroot.app.security.auth.DatabaseAuthentificationProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -18,13 +20,44 @@ public class WebSecurityConfig {
 
     @Bean
     protected SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // configure login
         return http
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/ui/admin/**").hasRole("ADMIN");
-                    auth.requestMatchers("/admin/**").hasRole("ADMIN");
+                    auth.requestMatchers(
+                            "/",
+                            "/favicon.ico",
+                            "/webjars/**",
+                            "/resources/**",
+                            "/login",
+                            "/login/success",
+                            "/logout/success",
+                            "/ui/welcome",
+                            "/ui/sidebar",
+                            "/ui/page/**",
+                            "/ui/file/**",
+                            "/search",
+                            "/help",
+                            "/about"
+                    ).permitAll();
 
-                    auth.anyRequest().permitAll();
+                    auth.requestMatchers("/ui/admin/**", "/admin/**").hasRole("ADMIN");
+
+                    auth.requestMatchers("/user/**", "/group/**").hasRole("ADMIN");
+
+                    auth.requestMatchers(HttpMethod.GET, "/page/**", "/file/**")
+                            .hasAnyRole("USER", "ADMIN");
+                    auth.requestMatchers(HttpMethod.GET, "/download/**")
+                            .hasAnyRole("USER", "ADMIN");
+                    auth.requestMatchers(HttpMethod.POST, "/page/**", "/file/**")
+                            .hasRole("ADMIN");
+                    auth.requestMatchers(HttpMethod.PUT, "/page/**", "/file/**")
+                            .hasRole("ADMIN");
+                    auth.requestMatchers(HttpMethod.DELETE, "/page/**", "/file/**")
+                            .hasRole("ADMIN");
+
+                    auth.requestMatchers("/api/**").hasAnyRole("USER", "ADMIN");
+                    auth.requestMatchers("/profile/**").authenticated();
+
+                    auth.anyRequest().authenticated();
                 })
                 .formLogin(form -> form
                         .loginPage("/login")
@@ -33,11 +66,15 @@ public class WebSecurityConfig {
                         .defaultSuccessUrl("/login/success")
                         .usernameParameter("username")
                         .passwordParameter("password")
+                        .permitAll()
                 )
                 .logout(logout -> logout
                         .logoutSuccessUrl("/logout/success")
+                        .permitAll()
                 )
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                )
                 .build();
     }
 

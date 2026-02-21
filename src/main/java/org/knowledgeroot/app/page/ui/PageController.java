@@ -216,7 +216,7 @@ public class PageController {
                         .changeDate(now)
                         .build();
 
-                pagePermissionImpl.updatePermission(permission);
+                pagePermissionImpl.updatePermissionForPage(pid, permission);
             }
         }
 
@@ -232,7 +232,7 @@ public class PageController {
 
                 try {
                     Integer permissionId = Integer.valueOf(permissionIdStr.trim());
-                    pagePermissionImpl.deletePermission(permissionId);
+                    pagePermissionImpl.deletePermissionForPage(pid, permissionId);
                 } catch (NumberFormatException e) {
                     System.err.println("Failed to parse permission ID for deletion: " + permissionIdStr + " - " + e.getMessage());
                     // Continue with other deletions instead of failing the entire operation
@@ -411,7 +411,7 @@ public class PageController {
                 .changeDate(LocalDateTime.now())
                 .build();
 
-        pagePermissionImpl.updatePermission(permission);
+        pagePermissionImpl.updatePermissionForPage(pid, permission);
 
         return ResponseEntity.ok("Berechtigung aktualisiert");
     }
@@ -429,7 +429,7 @@ public class PageController {
             return "redirect:/ui/page/" + pageId;
         }
 
-        pagePermissionImpl.deletePermission(permissionId);
+        pagePermissionImpl.deletePermissionForPage(pid, permissionId);
 
         // Berechtigungen neu laden
         List<PagePermission> permissions = pagePermissionImpl.listPermissionsByPageId(pid);

@@ -6,21 +6,30 @@ import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.file.domain.File;
 import org.knowledgeroot.app.file.domain.FileDao;
 import org.knowledgeroot.app.file.domain.FileFilter;
+import org.knowledgeroot.app.page.domain.PageId;
+import org.knowledgeroot.app.page.domain.PagePermission;
+import org.knowledgeroot.app.page.domain.PagePermissionDao;
+import org.knowledgeroot.app.security.context.domain.UserContext;
+import org.knowledgeroot.app.security.context.domain.UserDetails;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.FileCopyUtils;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
@@ -28,183 +37,188 @@ import java.util.List;
 @RequiredArgsConstructor
 class FileRestController {
     private final FileDao fileImpl;
-
-    private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss";
+    private final PagePermissionDao pagePermissionDao;
+    private final UserContext userContext;
 
     private final FileDtoConverter fileDtoConverter = new FileDtoConverter();
 
-    /**
-     * get all files
-     */
-    @RequestMapping(value = "/file", method = RequestMethod.GET)
-    public ResponseEntity<List<FileDto>> listAllFiles(
-            @RequestParam(name = "id", required = false) Integer id,
-            @RequestParam(name = "page_id", required = false) Integer pageId,
-
-
-            @RequestParam(name = "time_start.begin", required = false) String timeStartBegin,
-            @RequestParam(name = "time_start.end", required = false) String timeStartEnd,
-            @RequestParam(name = "time_end.begin", required = false) String timeEndBegin,
-            @RequestParam(name = "time_end.end", required = false) String timeEndEnd,
-            @RequestParam(name = "active", required = false) Boolean active,
-            @RequestParam(name = "created_by", required = false) Integer createdBy,
-            @RequestParam(name = "create_date.begin", required = false) String  createDateBegin,
-            @RequestParam(name = "create_date.end", required = false) String  createDateEnd,
-            @RequestParam(name = "changed_by", required = false) Integer changedBy,
-            @RequestParam(name = "change_date.begin", required = false) String changeDateBegin,
-            @RequestParam(name = "change_date.end", required = false) String changeDateEnd,
-            @RequestParam(name = "deleted", required = false) Boolean deleted,
-            @RequestParam(name = "start", required = false) Integer start,
-            @RequestParam(name = "limit", required = false) Integer limit
-    ) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dateFormat);
-
-        FileFilter fileFilter = new FileFilter();
-
-        // set filter values
-
-
-        // get filtered user list
-        List<File> files = fileImpl.listFiles(fileFilter);
-
-        // map to dto
-        List<FileDto> fileDtos = fileDtoConverter.convertAtoB(files);
-
-        // check for entries
-        if(fileDtos.isEmpty()){
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    private Integer getCurrentUserId() {
+        UserDetails currentUser = userContext.getUserContext();
+        if (currentUser == null || currentUser.isGuest()) {
+            return null;
         }
+        try {
+            return Integer.valueOf(currentUser.getUserId());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
 
-        return new ResponseEntity<>(fileDtos, HttpStatus.OK);
+    private boolean hasPermission(Integer pageId, PagePermission.PermissionLevel minLevel) {
+        return pagePermissionDao.hasUserPermission(new PageId(pageId), getCurrentUserId(), minLevel);
     }
 
     /**
-     * get single file meta data by id
-     * @param id file id
+     * Get files (optionally filtered by id or page_id).
      */
-    @RequestMapping(value = "/file/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/file", method = org.springframework.web.bind.annotation.RequestMethod.GET)
+    public ResponseEntity<List<FileDto>> listAllFiles(
+            @RequestParam(name = "id", required = false) Integer id,
+            @RequestParam(name = "page_id", required = false) Integer pageId
+    ) {
+        try {
+            List<File> files;
+
+            if (id != null) {
+                File file = fileImpl.findById(id);
+                files = List.of(file);
+            } else {
+                FileFilter filter = FileFilter.builder()
+                        .pageId(pageId == null ? null : new PageId(pageId))
+                        .build();
+                files = fileImpl.listFiles(filter);
+            }
+
+            List<FileDto> fileDtos = files.stream()
+                    .filter(file -> hasPermission(file.getPageId(), PagePermission.PermissionLevel.VIEW))
+                    .map(fileDtoConverter::convertAtoB)
+                    .toList();
+
+            if (id != null && !files.isEmpty() && fileDtos.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            }
+
+            if (fileDtos.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+
+            return new ResponseEntity<>(fileDtos, HttpStatus.OK);
+        } catch (EmptyResultDataAccessException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    /**
+     * Get single file metadata by id.
+     */
+    @RequestMapping(value = "/file/{id}", method = org.springframework.web.bind.annotation.RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<FileDto> getFile(@PathVariable("id") long id) {
-        File file = fileImpl.findById(id);
-
-        FileDto fileDto = fileDtoConverter.convertAtoB(file);
-
-        if (fileDto == null) {
+        File file;
+        try {
+            file = fileImpl.findById(id);
+        } catch (EmptyResultDataAccessException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        return new ResponseEntity<>(fileDto, HttpStatus.OK);
+        if (!hasPermission(file.getPageId(), PagePermission.PermissionLevel.VIEW)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
+        return new ResponseEntity<>(fileDtoConverter.convertAtoB(file), HttpStatus.OK);
     }
 
     /**
-     * download file
-     *
-     * @param response http response
-     * @param fileId file id
-     * @param filename file name
+     * Download file content.
      */
-    @RequestMapping(value="download/{id}/{filename}", method = RequestMethod.GET)
+    @GetMapping(value = {"/file/{id}/download/{filename}", "/download/{id}/{filename}"})
     public void downloadFile(
             HttpServletResponse response,
             @PathVariable("id") Integer fileId,
             @PathVariable("filename") String filename
     ) {
+        File meta;
         try {
-            // load file meta informations
-            File meta = fileImpl.findById(fileId);
+            meta = fileImpl.findById(fileId);
+        } catch (EmptyResultDataAccessException e) {
+            writeError(response, HttpStatus.NOT_FOUND, "File not found");
+            return;
+        }
 
-            // load file from storage
-            java.io.File file = new java.io.File("foo"); // test only
-            //java.io.File file = storageService.loadFile(fileId);
+        if (!hasPermission(meta.getPageId(), PagePermission.PermissionLevel.VIEW)) {
+            writeError(response, HttpStatus.FORBIDDEN, "Forbidden");
+            return;
+        }
 
-            // prepare response
-            // set mime type
-            response.setContentType(meta.getType());
+        try (InputStream inputStream = fileImpl.loadFile(fileId)) {
+            if (inputStream == null) {
+                writeError(response, HttpStatus.NOT_FOUND, "File not found");
+                return;
+            }
 
-            // set filename
+            response.setContentType(meta.getType() == null ? "application/octet-stream" : meta.getType());
             response.setHeader(
                     "Content-Disposition",
-                    String.format("attachment; filename=\"" + meta.getName() +"\"")
+                    String.format("attachment; filename=\"%s\"", meta.getName() == null ? "download" : meta.getName())
             );
 
-            // set content length
-            response.setContentLength((int)file.length());
-
-            // push file content
-            InputStream inputStream = new BufferedInputStream(new FileInputStream(file));
             FileCopyUtils.copy(inputStream, response.getOutputStream());
         } catch (Exception e) {
-            log.error(e.getMessage());
-
-            try {
-                // show error message to user
-                String errorMessage = "Could not download file!";
-                OutputStream outputStream = response.getOutputStream();
-                outputStream.write(errorMessage.getBytes(StandardCharsets.UTF_8));
-                outputStream.close();
-            } catch (Exception ex) {
-                log.error(ex.getMessage());
-            }
+            log.error("Could not download file {}: {}", fileId, e.getMessage(), e);
+            writeError(response, HttpStatus.INTERNAL_SERVER_ERROR, "Could not download file!");
         }
     }
 
     /**
-     * create file
-     *
-     * @param files multipart files
-     * @param parentContent parent content id
-     * @param ucBuilder uri component builder
+     * Create files for a page.
      */
-    @RequestMapping(value = "/file", method = RequestMethod.POST)
+    @PostMapping(value = "/file")
     public ResponseEntity<Void> createFile(
             @RequestParam("file") MultipartFile[] files,
             @RequestParam Integer parentContent,
             UriComponentsBuilder ucBuilder
     ) {
-        // create all files
-        for(MultipartFile file : files) {
-            /*
-            if (fileService.isFileExist(file)) {
-                return new ResponseEntity<Void>(HttpStatus.CONFLICT);
-            }
-            */
+        if (!hasPermission(parentContent, PagePermission.PermissionLevel.EDIT)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
 
+        for (MultipartFile file : files) {
+            if (file == null || file.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
             fileImpl.createFile(file, parentContent);
         }
 
         HttpHeaders headers = new HttpHeaders();
-
-        /*
-        if(files.length == 1)
-            headers.setLocation(ucBuilder.path("/file/{id}").buildAndExpand(file.getId()).toUri());
-        */
-
         return new ResponseEntity<>(headers, HttpStatus.CREATED);
     }
 
     /**
-     * delete file by id
-     * @param id file id
+     * Delete file by id.
      */
-    @RequestMapping(value = "/file/{id}", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/file/{id}")
     public ResponseEntity<FileDto> deleteFile(@PathVariable("id") long id) {
-        File file = fileImpl.findById(id);
-
-        if (file == null) {
+        File file;
+        try {
+            file = fileImpl.findById(id);
+        } catch (EmptyResultDataAccessException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        fileImpl.deleteFileById(id);
+        if (!hasPermission(file.getPageId(), PagePermission.PermissionLevel.EDIT)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
 
+        fileImpl.deleteFileById(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     /**
-     * delete all files
+     * Dangerous bulk endpoint is disabled.
      */
-    @RequestMapping(value = "/file", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/file")
     public ResponseEntity<FileDto> deleteAllFiles() {
-        fileImpl.deleteAllFiles();
+        return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
+    }
 
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    private void writeError(HttpServletResponse response, HttpStatus status, String message) {
+        try {
+            OutputStream outputStream = response.getOutputStream();
+            response.setStatus(status.value());
+            response.setContentType("text/plain");
+            outputStream.write(message.getBytes(StandardCharsets.UTF_8));
+            outputStream.close();
+        } catch (Exception ex) {
+            log.error("Could not write error response: {}", ex.getMessage(), ex);
+        }
     }
 }

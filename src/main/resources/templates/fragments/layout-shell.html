@@ -1,0 +1,17 @@
+<div xmlns:th="http://www.thymeleaf.org"
+     class="container-fluid"
+     th:fragment="mainShell(contentFragment)">
+    <div class="row main app-main">
+        <aside class="flex-shrink-0 p-3 bg-white app-sidebar"
+               id="sidebar"
+               hx-get="/ui/sidebar"
+               hx-trigger="load, reload-sidebar from:body"
+               hx-target="#sidebar"></aside>
+
+        <main role="main" class="col-md-9 app-main-content">
+            <div class="app-content" id="content">
+                <div th:replace="${contentFragment}">Content</div>
+            </div>
+        </main>
+    </div>
+</div>

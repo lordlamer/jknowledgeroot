@@ -30,7 +30,9 @@ public class GroupDtoConverter implements Converter<Group, GroupDto> {
     public Group convertBtoA(GroupDto from) {
         Group group = new Group();
 
-        group.setId(new GroupId(from.getId()));
+        if (from.getId() != null) {
+            group.setId(new GroupId(from.getId()));
+        }
         group.setName(from.getName());
         group.setDescription(from.getDescription());
         group.setCreatedBy(from.getCreatedBy());

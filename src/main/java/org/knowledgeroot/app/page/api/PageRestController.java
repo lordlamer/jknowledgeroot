@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @Slf4j
@@ -154,7 +155,7 @@ public class PageRestController {
      */
     @RequestMapping(value = "/page/{id}", method = RequestMethod.PUT)
     public ResponseEntity<PageDto> updatePage(@PathVariable("id") Integer id, @RequestBody PageDto pageDto) {
-        if(id != pageDto.getId()) {
+        if(!Objects.equals(id, pageDto.getId())) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
