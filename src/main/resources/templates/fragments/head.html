@@ -20,6 +20,8 @@
     <script type="text/javascript" th:src="@{/webjars/ckeditor__ckeditor5-build-classic/build/ckeditor.js}"></script>
 
     <script type="text/javascript">
+        var SIDEBAR_STATE_KEY = 'kr.sidebar.expanded';
+
         document.addEventListener('htmx:configRequest', function (event) {
             var tokenMeta = document.querySelector('meta[name="_csrf"]');
             var headerMeta = document.querySelector('meta[name="_csrf_header"]');
@@ -28,6 +30,116 @@
             }
             event.detail.headers[headerMeta.content] = tokenMeta.content;
         });
+
+        function getExpandedSidebarNodeIds() {
+            var sidebar = document.getElementById('sidebar');
+            if (!sidebar) {
+                return [];
+            }
+
+            var expandedNodes = sidebar.querySelectorAll('li.sidebar-node > ul.sidebar-children');
+            var ids = [];
+            for (var i = 0; i < expandedNodes.length; i++) {
+                var parentNode = expandedNodes[i].parentElement;
+                if (!parentNode || !parentNode.id || parentNode.id.indexOf('nav-page-') !== 0) {
+                    continue;
+                }
+                ids.push(parentNode.id.substring('nav-page-'.length));
+            }
+            return ids;
+        }
+
+        function persistSidebarTreeState() {
+            try {
+                sessionStorage.setItem(SIDEBAR_STATE_KEY, JSON.stringify(getExpandedSidebarNodeIds()));
+            } catch (error) {
+                // ignore storage errors (private mode, quota, etc.)
+            }
+        }
+
+        function loadSidebarTreeState() {
+            try {
+                var raw = sessionStorage.getItem(SIDEBAR_STATE_KEY);
+                if (!raw) {
+                    return [];
+                }
+                var parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function expandSidebarNodesSequentially(nodeIds, index) {
+            if (!nodeIds || index >= nodeIds.length) {
+                markActiveSidebarPage();
+                persistSidebarTreeState();
+                return;
+            }
+
+            var nodeId = nodeIds[index];
+            var targetId = 'nav-page-' + nodeId;
+            var node = document.getElementById(targetId);
+            if (!node) {
+                expandSidebarNodesSequentially(nodeIds, index + 1);
+                return;
+            }
+
+            var toggle = node.querySelector('button.sidebar-toggle');
+            if (!toggle) {
+                expandSidebarNodesSequentially(nodeIds, index + 1);
+                return;
+            }
+
+            // If the icon points right, node is collapsed and must be expanded.
+            if (!toggle.querySelector('i.bi-chevron-right')) {
+                expandSidebarNodesSequentially(nodeIds, index + 1);
+                return;
+            }
+
+            var hxGet = toggle.getAttribute('hx-get');
+            if (!hxGet || !window.htmx) {
+                expandSidebarNodesSequentially(nodeIds, index + 1);
+                return;
+            }
+
+            var done = false;
+            var timeoutId = null;
+
+            function continueRestore() {
+                if (done) {
+                    return;
+                }
+                done = true;
+                if (timeoutId !== null) {
+                    window.clearTimeout(timeoutId);
+                }
+                document.body.removeEventListener('htmx:afterSwap', onAfterSwap);
+                expandSidebarNodesSequentially(nodeIds, index + 1);
+            }
+
+            function onAfterSwap(event) {
+                if (!event.detail || !event.detail.target) {
+                    return;
+                }
+                if (event.detail.target.id === targetId) {
+                    continueRestore();
+                }
+            }
+
+            document.body.addEventListener('htmx:afterSwap', onAfterSwap);
+            timeoutId = window.setTimeout(continueRestore, 1500);
+            htmx.ajax('GET', hxGet, { target: '#' + targetId, swap: 'outerHTML' });
+        }
+
+        function restoreSidebarTreeState() {
+            var expandedNodeIds = loadSidebarTreeState();
+            if (!expandedNodeIds.length) {
+                markActiveSidebarPage();
+                return;
+            }
+            expandSidebarNodesSequentially(expandedNodeIds, 0);
+        }
 
         function markActiveSidebarPage() {
             var sidebar = document.getElementById('sidebar');
@@ -56,11 +168,30 @@
         }
 
         document.addEventListener('DOMContentLoaded', markActiveSidebarPage);
+        document.addEventListener('htmx:beforeRequest', function (event) {
+            if (!event.detail || !event.detail.target) {
+                return;
+            }
+            if (event.detail.target.id === 'sidebar') {
+                persistSidebarTreeState();
+            }
+        });
+
         document.addEventListener('htmx:afterSwap', function (event) {
             if (!event.detail || !event.detail.target) {
                 return;
             }
-            if (event.detail.target.id === 'content' || event.detail.target.id === 'sidebar') {
+            if (event.detail.target.id === 'sidebar') {
+                restoreSidebarTreeState();
+                return;
+            }
+
+            if (event.detail.target.id === 'content') {
+                markActiveSidebarPage();
+            }
+
+            if (event.detail.target.id.indexOf('nav-page-') === 0) {
+                persistSidebarTreeState();
                 markActiveSidebarPage();
             }
         });
