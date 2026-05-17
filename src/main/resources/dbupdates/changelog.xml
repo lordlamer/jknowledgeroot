@@ -48,4 +48,11 @@
                  splitStatements="true"
                  stripComments="true"/>
     </changeSet>
+    <changeSet id="1.0.4-tag-unique-name" author="claude" context="production,development">
+        <sqlFile path="changes/1.0.4-tag-unique-name.${db.name}.sql"
+                 encoding="UTF-8"
+                 relativeToChangelogFile="true"
+                 splitStatements="true"
+                 stripComments="true"/>
+    </changeSet>
 </databaseChangeLog>

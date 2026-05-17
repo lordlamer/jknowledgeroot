@@ -22,6 +22,9 @@
 <header class="kr-page-header">
     <div class="kr-page-title-wrap">
         <h1 class="kr-page-title" th:text="${page.name}">Page title</h1>
+        <div class="kr-page-labels" th:if="${labels != null and !#lists.isEmpty(labels)}">
+            <span class="kr-tag" th:each="label : ${labels}" th:text="${label}">label</span>
+        </div>
     </div>
     <div class="kr-page-actions" th:if="${canStar} or ${canEdit}">
         <th:block th:if="${canStar}" th:insert="~{page/star-button :: button}"></th:block>

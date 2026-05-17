@@ -68,6 +68,14 @@
                         <input type="text" class="form-control" id="page-name" name="name" required>
                     </div>
                     <div class="mb-3">
+                        <label for="page-labels" class="form-label">Labels</label>
+                        <input type="text" class="form-control" id="page-labels" name="labels"
+                               placeholder="comma-separated, e.g. engineering, public, v2">
+                        <div class="form-text" style="color:var(--kr-text-3); font-size:11.5px; margin-top:4px;">
+                            Up to 32 labels, 64 characters each. Separate with commas.
+                        </div>
+                    </div>
+                    <div class="mb-3">
                         <label for="page-content" class="form-label">Inhalt</label>
                         <textarea class="form-control" id="page-content" rows="3" name="content"></textarea>
                     </div>

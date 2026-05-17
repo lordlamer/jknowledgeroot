@@ -35,6 +35,7 @@ public class PageController {
     private final PagePermissionDao pagePermissionImpl;
     private final PageStarDao pageStarDao;
     private final PageCommentDao pageCommentDao;
+    private final PageLabelDao pageLabelDao;
     private final UserDao userImpl;
     private final GroupDao groupImpl;
     private final UserContext userContext;
@@ -56,6 +57,25 @@ public class PageController {
             // If userId is not a valid integer, treat as guest
             return null;
         }
+    }
+
+    /**
+     * Parse a comma-separated label string into a list of labels. Returns an
+     * empty list (never null) — callers can replace the page's full label set
+     * by always calling setForPage with the result.
+     */
+    private List<String> parseLabels(String labelsJoined) {
+        if (labelsJoined == null || labelsJoined.isBlank()) {
+            return List.of();
+        }
+        List<String> out = new ArrayList<>();
+        for (String part : labelsJoined.split(",")) {
+            String trimmed = part.trim();
+            if (!trimmed.isEmpty()) {
+                out.add(trimmed);
+            }
+        }
+        return out;
     }
 
     @GetMapping("/ui/page/new")
@@ -99,6 +119,9 @@ public class PageController {
         model.addAttribute("canStar", canStar);
         model.addAttribute("pageId", pageId);
         model.addAttribute("starred", canStar && pageStarDao.isStarred(currentUserId, pid));
+
+        // Labels
+        model.addAttribute("labels", pageLabelDao.listForPage(pid));
 
         // Comments (anyone can read; only logged-in users see the composer)
         UserDetails currentUser = userContext.getUserContext();
@@ -147,6 +170,7 @@ public class PageController {
 
         model.addAttribute("page", page);
         model.addAttribute("permissions", permissions);
+        model.addAttribute("labelsJoined", String.join(", ", pageLabelDao.listForPage(pid)));
 
         // trigger reload sidebar
         if(trigger != null && trigger.equals("reload-sidebar"))
@@ -192,6 +216,7 @@ public class PageController {
     public ModelAndView editPage(
             @PathVariable("pageId") Integer pageId,
             @ModelAttribute PageDto pageDto,
+            @RequestParam(name = "labels", required = false) String labelsJoined,
             @RequestParam MultiValueMap<String, String> allParams
     ) {
         // Parse permission parameters manually from form data
@@ -218,6 +243,9 @@ public class PageController {
 
         Page page = pageDtoConverter.convertBtoA(pageDto);
         pageImpl.updatePage(page);
+
+        // Save labels (replace full set)
+        pageLabelDao.setForPage(pid, parseLabels(labelsJoined));
 
         // Process permission changes
         LocalDateTime now = LocalDateTime.now();
@@ -291,7 +319,8 @@ public class PageController {
 
     @PostMapping("/ui/page/new")
     public ModelAndView createNewPage(
-            @ModelAttribute PageDto pageDto
+            @ModelAttribute PageDto pageDto,
+            @RequestParam(name = "labels", required = false) String labelsJoined
     ) {
         Integer currentUserId = getCurrentUserId();
 
@@ -322,6 +351,9 @@ public class PageController {
 
         // Standardberechtigungen erstellen
         pagePermissionImpl.createDefaultPermissions(new PageId(newPageId), page.getCreatedBy());
+
+        // Save labels
+        pageLabelDao.setForPage(new PageId(newPageId), parseLabels(labelsJoined));
 
         // Redirect to the new page
         return new ModelAndView("redirect:/ui/page/" + newPageId + "?trigger=reload-sidebar");

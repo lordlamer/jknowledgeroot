@@ -724,6 +724,14 @@ body.kr-dark .kr-btn.danger:hover { background: #3a1e1e; border-color: #5a2d2d; 
     margin: 0 0 18px;
 }
 
+/* Labels shown below the page title */
+.kr-page-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
 /* Tags */
 .kr-tag {
     display: inline-flex;
