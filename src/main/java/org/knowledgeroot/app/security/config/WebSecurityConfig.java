@@ -63,7 +63,7 @@ public class WebSecurityConfig {
                         .loginPage("/login")
                         .failureUrl("/login?error")
                         .loginProcessingUrl("/logmein")
-                        .defaultSuccessUrl("/login/success")
+                        .defaultSuccessUrl("/login/success", true)
                         .usernameParameter("username")
                         .passwordParameter("password")
                         .permitAll()

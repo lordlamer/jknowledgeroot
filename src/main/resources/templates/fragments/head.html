@@ -6,6 +6,10 @@
     <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}" />
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+
     <script type="text/javascript" th:src="@{/webjars/htmx.org/dist/htmx.min.js}"></script>
     <script type="text/javascript" th:src="@{/webjars/htmx.org/dist/ext/client-side-templates.js}"></script>
     <script type="text/javascript" th:src="@{/webjars/mustache/mustache.js}"></script>
@@ -18,6 +22,16 @@
     <link th:href="@{/resources/css/layout.css}" rel="stylesheet">
 
     <script type="text/javascript" th:src="@{/webjars/ckeditor__ckeditor5-build-classic/build/ckeditor.js}"></script>
+
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('kr.theme') === 'dark') {
+                    document.documentElement.classList.add('kr-dark-preload');
+                }
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
 
     <script type="text/javascript">
         var SIDEBAR_STATE_KEY = 'kr.sidebar.expanded';
@@ -172,7 +186,7 @@
             if (!event.detail || !event.detail.target) {
                 return;
             }
-            if (event.detail.target.id === 'sidebar') {
+            if (event.detail.target.id === 'sidebar' || event.detail.target.id === 'sidebar-tree') {
                 persistSidebarTreeState();
             }
         });
@@ -181,7 +195,7 @@
             if (!event.detail || !event.detail.target) {
                 return;
             }
-            if (event.detail.target.id === 'sidebar') {
+            if (event.detail.target.id === 'sidebar' || event.detail.target.id === 'sidebar-tree') {
                 restoreSidebarTreeState();
                 return;
             }
@@ -196,5 +210,73 @@
             }
         });
         document.addEventListener('htmx:pushedIntoHistory', markActiveSidebarPage);
+
+        // Theme toggle
+        var KR_THEME_KEY = 'kr.theme';
+        function applyKrTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('kr-dark');
+            } else {
+                document.body.classList.remove('kr-dark');
+            }
+            var btn = document.getElementById('krThemeBtn');
+            if (btn) {
+                btn.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+                var sun = btn.querySelector('.kr-ico-sun');
+                var moon = btn.querySelector('.kr-ico-moon');
+                if (sun && moon) {
+                    sun.style.display = theme === 'dark' ? 'none' : '';
+                    moon.style.display = theme === 'dark' ? '' : 'none';
+                }
+            }
+        }
+        function initKrTheme() {
+            var stored = null;
+            try { stored = localStorage.getItem(KR_THEME_KEY); } catch (e) {}
+            applyKrTheme(stored === 'dark' ? 'dark' : 'light');
+            document.documentElement.classList.remove('kr-dark-preload');
+        }
+        function toggleKrTheme() {
+            var dark = !document.body.classList.contains('kr-dark');
+            try { localStorage.setItem(KR_THEME_KEY, dark ? 'dark' : 'light'); } catch (e) {}
+            applyKrTheme(dark ? 'dark' : 'light');
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            initKrTheme();
+            var btn = document.getElementById('krThemeBtn');
+            if (btn) {
+                btn.addEventListener('click', toggleKrTheme);
+            }
+
+            var sbBtn = document.getElementById('krSidebarToggle');
+            if (sbBtn) {
+                sbBtn.addEventListener('click', function () {
+                    var sb = document.getElementById('sidebar');
+                    if (sb) sb.classList.toggle('collapsed');
+                });
+            }
+
+            var treeFilter = document.getElementById('krTreeFilter');
+            if (treeFilter) {
+                treeFilter.addEventListener('input', function (e) {
+                    var q = e.target.value.trim().toLowerCase();
+                    var sb = document.getElementById('sidebar');
+                    if (!sb) return;
+                    sb.querySelectorAll('.sidebar-node').forEach(function (node) {
+                        var link = node.querySelector(':scope > .sidebar-node-row .sidebar-link');
+                        if (!link) return;
+                        var text = (link.textContent || '').toLowerCase();
+                        if (!q || text.indexOf(q) !== -1) {
+                            node.style.display = '';
+                        } else {
+                            node.style.display = 'none';
+                        }
+                    });
+                });
+            }
+        });
     </script>
+    <style>
+        html.kr-dark-preload body { background: #0a0a0a; color: #fafafa; }
+    </style>
 </head>

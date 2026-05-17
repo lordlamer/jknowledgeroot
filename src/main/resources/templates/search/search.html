@@ -5,30 +5,42 @@
     <title>Knowledgeroot Search</title>
 </head>
 <body>
-    <h1 th:text="'Search for: ' + ${searchQuery}">Search for: xxx</h1>
+<div class="kr-page-wrap">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb" style="padding-left:0; padding-right:0">
+            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Search</li>
+        </ol>
+    </nav>
 
-    <div th:if="${pages.size() == 0}" class="alert alert-info" role="alert">
+    <h1 class="kr-page-title" style="margin-top:10px">
+        Results for <span class="kr-search-emph" th:text="${searchQuery}">query</span>
+    </h1>
+    <p class="kr-page-subtitle" th:text="${pages.size()} + ' results'">0 results</p>
+
+    <div class="kr-search-filters">
+        <a href="#" class="kr-chip on" th:text="'All · ' + ${pages.size()}">All · 0</a>
+        <a href="#" class="kr-chip" th:text="'Pages · ' + ${pages.size()}">Pages · 0</a>
+        <a href="#" class="kr-chip">Attachments · 0</a>
+        <a href="#" class="kr-chip">Comments · 0</a>
+    </div>
+
+    <div th:if="${pages.size() == 0}" class="alert kr-alert-info" role="alert">
         No content found for search query: <strong th:text="${searchQuery}">xxx</strong>
     </div>
 
-    <div th:each="page : ${pages}" class="card" style="margin-bottom: 20px;">
-
-        <div class="card-header">
-            <ul class="nav nav-tabs card-header-tabs">
-                <li class="nav-item">
-                    <a class="nav-link active" aria-current="true"
-                       href="#"
-                       th:hx-get="'/ui/page/' + ${page.getPageId()}"
-                       hx-target="#content"
-                       th:text="${page.getName()}">Title</a>
-                </li>
-            </ul>
-        </div>
-
-        <div class="card-body">
-            <p class="card-text" th:utext="${page.getContent()}">Text</p>
-        </div>
-
+    <div>
+        <a th:each="page : ${pages}"
+           class="kr-result"
+           href="#"
+           th:attr="hx-get='/ui/page/' + ${page.getPageId()}"
+           hx-target="#content" hx-push-url="true"
+           style="display:block; text-decoration:none; color:inherit;">
+            <div class="kr-r-crumb">Page</div>
+            <h3 class="kr-r-title" th:text="${page.getName()}">Title</h3>
+            <div class="kr-r-snip" th:utext="${page.getContent()}">Snippet…</div>
+        </a>
     </div>
+</div>
 </body>
 </html>

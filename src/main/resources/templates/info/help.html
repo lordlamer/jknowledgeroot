@@ -5,15 +5,25 @@
     <title>Knowledgeroot Help</title>
 </head>
 <body>
-    <div class="card">
-        <div class="card-header">
-            Help
+<div class="kr-page-wrap" style="max-width:900px">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb" style="padding-left:0; padding-right:0">
+            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Help</li>
+        </ol>
+    </nav>
+
+    <header class="kr-page-header" style="padding:12px 0 20px">
+        <div class="kr-page-title-wrap">
+            <h1 class="kr-page-title">Help</h1>
+            <p class="kr-page-subtitle" style="margin:0">Get help for Knowledgeroot.</p>
         </div>
-        <div class="card-body">
-            <h5 class="card-title">Get Help for Knowledgeroot</h5>
-            <p class="card-text">See the docs...</p>
-            <a href="#" class="btn btn-primary">Open Docs</a>
-        </div>
-    </div>
+    </header>
+
+    <section class="kr-content">
+        <p>See the docs for guides, API references, and runbooks.</p>
+        <a href="#" class="kr-btn primary">Open docs</a>
+    </section>
+</div>
 </body>
 </html>

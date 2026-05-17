@@ -1,46 +1,52 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
-<head>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: appHead(~{::title})}">
     <title>Knowledgeroot Login</title>
 </head>
-<body>
-<div class="auth-wrapper">
-    <section class="auth-card" aria-labelledby="login-title">
-        <div class="auth-header">
-            <div class="auth-icon" aria-hidden="true">
-                <i class="bi bi-person-circle"></i>
-            </div>
-            <h1 class="auth-title" id="login-title">Sign In</h1>
-            <p class="auth-subtitle">Welcome back to Knowledgeroot</p>
+<body class="kr-login-page" th:fragment="body">
+<div class="kr-login-shell">
+    <div class="kr-login-left">
+        <a class="kr-login-brand" href="/ui/welcome">
+            <span class="kr-brand-mark">K</span>
+            <span class="kr-brand-name">Knowledgeroot<span class="kr-dot">.</span></span>
+        </a>
+        <div class="kr-login-hero">
+            <h1>Your team's knowledge, at home.</h1>
+            <p>A calm, structured place to write docs, store runbooks, and keep what matters to your team searchable and versioned.</p>
         </div>
+        <div style="color:var(--kr-text-3); font-size:12px">© Knowledgeroot</div>
+    </div>
+    <div class="kr-login-right">
+        <form class="kr-login-card" method="post" action="/logmein">
+            <h2>Sign in</h2>
+            <p class="kr-sub">Welcome back. Please enter your credentials.</p>
 
-        <div th:if="${error}" class="alert alert-danger auth-alert" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            Login failed. Please check your credentials.
-        </div>
-
-        <div th:if="${msg}" class="alert alert-info auth-alert" role="status" th:text="${msg}"></div>
-
-        <form method="post" action="/logmein" class="auth-form">
-            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-
-            <div class="form-floating auth-field">
-                <input type="text" class="form-control" id="floatingInput" placeholder="Username" name="username" required autofocus>
-                <label for="floatingInput">Username</label>
+            <div th:if="${error}" class="kr-login-alert" role="alert">
+                <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                Login failed. Please check your credentials.
             </div>
+            <div th:if="${msg}" class="kr-login-info" role="status" th:text="${msg}"></div>
 
-            <div class="form-floating auth-field">
-                <input type="password" class="form-control" id="floatingPassword" placeholder="Password" name="password" required>
-                <label for="floatingPassword">Password</label>
+            <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+            <div class="kr-field">
+                <label for="loginUsername">Username or email</label>
+                <input type="text" id="loginUsername" name="username" placeholder="admin" autocomplete="username" required autofocus>
             </div>
-
-            <button class="btn auth-submit w-100" type="submit">
-                <i class="bi bi-box-arrow-in-right me-2"></i>
-                Sign In
+            <div class="kr-field">
+                <label for="loginPassword">Password</label>
+                <input type="password" id="loginPassword" name="password" autocomplete="current-password" required>
+            </div>
+            <div class="kr-check">
+                <input type="checkbox" id="remember" name="remember-me" value="true">
+                <label for="remember">Keep me signed in</label>
+            </div>
+            <button class="kr-btn primary" type="submit">
+                <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+                Sign in
             </button>
         </form>
-    </section>
+    </div>
 </div>
 </body>
 </html>

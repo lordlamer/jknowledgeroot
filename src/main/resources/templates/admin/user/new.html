@@ -1,56 +1,62 @@
+<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
 <head>
     <title>Knowledgeroot :: new user</title>
 </head>
 <body>
-    <form hx-post="/admin/users" hx-target="#content">
-        <div class="card" style="margin-bottom: 20px;">
-            <div class="card-header">
-                <ul class="nav nav-tabs card-header-tabs">
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="true" href="#">Create new user</a>
-                    </li>
-                </ul>
+<form hx-post="/admin/users" hx-target="#content">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
+            <li class="breadcrumb-item">Admin</li>
+            <li class="breadcrumb-item"><a href="#" hx-get="/admin/users" hx-target="#content" hx-push-url="true">Users</a></li>
+            <li class="breadcrumb-item active" aria-current="page">New user</li>
+        </ol>
+    </nav>
+
+    <header class="kr-page-header">
+        <div class="kr-page-title-wrap">
+            <h1 class="kr-page-title">Create new user</h1>
+            <p class="kr-page-subtitle" style="margin:0">Add a new account to the workspace.</p>
+        </div>
+        <div class="kr-page-actions">
+            <button type="button" class="kr-btn"
+                    hx-get="/admin/users" hx-target="#content" hx-push-url="true">Cancel</button>
+            <button type="submit" class="kr-btn accent">Create user</button>
+        </div>
+    </header>
+
+    <div class="kr-editor-pane">
+        <div class="kr-form-row">
+            <div class="kr-field">
+                <label for="login">Login</label>
+                <input type="text" id="login" name="login" value="">
             </div>
-            <div class="card-body">
-                <p class="card-text">
-                <div class="mb-3">
-                    <label for="login" class="form-label">Login</label>
-                    <input type="text" class="form-control" id="login" name="login" value="">
-                </div>
-                <div class="mb-3">
-                    <label for="email" class="form-label">E-Mail</label>
-                    <input type="email" class="form-control" id="email" name="email" value="">
-                </div>
-                <div class="mb-3">
-                    <label for="firstname" class="form-label">Firstname</label>
-                    <input type="text" class="form-control" id="firstname" name="firstName" value="">
-                </div>
-                <div class="mb-3">
-                    <label for="lastname" class="form-label">Lastname</label>
-                    <input type="text" class="form-control" id="lastname" name="lastName" value="">
-                </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="password" name="password" value="">
-                </div>
-                <div class="form-check mb-3">
-                    <input class="form-check-input" type="checkbox" value="true" id="admin" name="admin">
-                    <label class="form-check-label" for="admin">
-                        Admin
-                    </label>
-                </div>
+            <div class="kr-field">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" name="email" value="">
             </div>
         </div>
-        <div>
-            <button type="submit" class="btn btn-success">save</button>
-            <button type="button" class="btn btn-outline-secondary"
-                    hx-get="/admin/users" hx-target="#content"
-            >
-                cancel
-            </button>
+        <div class="kr-form-row">
+            <div class="kr-field">
+                <label for="firstname">First name</label>
+                <input type="text" id="firstname" name="firstName" value="">
+            </div>
+            <div class="kr-field">
+                <label for="lastname">Last name</label>
+                <input type="text" id="lastname" name="lastName" value="">
+            </div>
         </div>
-    </form>
+        <div class="kr-field">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" value="">
+        </div>
+        <div class="kr-field" style="display:flex; align-items:center; gap:8px">
+            <input class="form-check-input" type="checkbox" value="true" id="admin" name="admin">
+            <label for="admin" style="margin:0">Admin</label>
+        </div>
+    </div>
+</form>
 </body>
 </html>

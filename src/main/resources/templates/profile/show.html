@@ -5,45 +5,50 @@
     <title>Knowledgeroot Profile</title>
 </head>
 <body>
-    <div th:if="${updated}" class="alert alert-success alert-dismissible fade show" role="alert">
-        Profile updated
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
+<form th:hx-post="'/profile'" hx-target="#content">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Profile</li>
+        </ol>
+    </nav>
 
-    <form th:hx-post="'/profile'" hx-target="#content">
-        <div class="card" style="margin-bottom: 20px;">
-            <div class="card-header">
-                <ul class="nav nav-tabs card-header-tabs">
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="true" href="#">Profile</a>
-                    </li>
-                </ul>
+    <header class="kr-page-header">
+        <div class="kr-page-title-wrap">
+            <h1 class="kr-page-title">Profile</h1>
+            <p class="kr-page-subtitle" style="margin:0">Manage your account details.</p>
+        </div>
+        <div class="kr-page-actions">
+            <button type="submit" class="kr-btn accent">Save changes</button>
+        </div>
+    </header>
+
+    <div class="kr-editor-pane">
+        <div th:if="${updated}" class="alert kr-alert-info" role="alert" style="margin-bottom:16px">
+            Profile updated.
+        </div>
+
+        <div class="kr-form-row">
+            <div class="kr-field">
+                <label for="login">Login</label>
+                <input type="text" id="login" name="login" th:value="${userDetails.getLogin()}">
             </div>
-            <div class="card-body">
-                <p class="card-text">
-                <div class="mb-3">
-                    <label for="login" class="form-label">Login</label>
-                    <input type="text" class="form-control" id="login" name="login" th:value="${userDetails.getLogin()}">
-                </div>
-                <div class="mb-3">
-                    <label for="email" class="form-label">EMail</label>
-                    <input type="text" class="form-control" id="email" name="email" th:value="${userDetails.getEmail()}">
-                </div>
-                <div class="mb-3">
-                    <label for="first-name" class="form-label">First Name</label>
-                    <input type="text" class="form-control" id="first-name" name="firstName" th:value="${userDetails.getFirstName()}">
-                </div>
-                <div class="mb-3">
-                    <label for="sur-name" class="form-label">Last Name</label>
-                    <input type="text" class="form-control" id="sur-name" name="surName" th:value="${userDetails.getSurName()}">
-                </div>
-                </p>
+            <div class="kr-field">
+                <label for="email">E-mail</label>
+                <input type="text" id="email" name="email" th:value="${userDetails.getEmail()}">
             </div>
         </div>
-        <div>
-            <button type="submit" class="btn btn-success">save</button>
-            <button type="button" class="btn btn-outline-secondary">cancel</button>
+        <div class="kr-form-row">
+            <div class="kr-field">
+                <label for="first-name">First name</label>
+                <input type="text" id="first-name" name="firstName" th:value="${userDetails.getFirstName()}">
+            </div>
+            <div class="kr-field">
+                <label for="sur-name">Last name</label>
+                <input type="text" id="sur-name" name="surName" th:value="${userDetails.getSurName()}">
+            </div>
         </div>
-    </form>
+    </div>
+</form>
 </body>
 </html>

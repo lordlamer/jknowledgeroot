@@ -5,101 +5,101 @@
     <title th:text="'Knowledgeroot :: ' + ${page.name}">Knowledgeroot :: Page</title>
 </head>
 <body>
-<!-- Breadcrumb-Navigation -->
+
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/ui/welcome">Home</a></li>
+        <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
         <li class="breadcrumb-item" th:each="parent, iterStat : ${breadcrumb}" th:unless="${iterStat.last}">
-            <a th:href="@{'/ui/page/' + ${parent.pageId}}" th:text="${parent.name}">Parent</a>
+            <a th:href="@{'/ui/page/' + ${parent.pageId}}"
+               th:attr="hx-get='/ui/page/' + ${parent.pageId}"
+               hx-target="#content" hx-push-url="true"
+               th:text="${parent.name}">Parent</a>
         </li>
         <li class="breadcrumb-item active" aria-current="page" th:text="${page.name}">Current Page</li>
     </ol>
 </nav>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 th:text="${page.name}">Pagetitle</h1>
-    <div class="d-flex">
-        <div class="dropdown" th:if="${canEdit}">
-            <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-three-dots"></i>
+<header class="kr-page-header">
+    <div class="kr-page-title-wrap">
+        <h1 class="kr-page-title" th:text="${page.name}">Page title</h1>
+        <div class="kr-page-meta">
+            <span class="kr-tag accent" th:if="${breadcrumb != null and !#lists.isEmpty(breadcrumb) and breadcrumb.size() > 1}"
+                  th:text="${breadcrumb[0].name}">Section</span>
+            <span class="kr-dotsep">·</span>
+            <span>
+                Updated
+                <b th:text="${#temporals.format(page.changeDate, 'dd.MM.yyyy HH:mm')}">2 days ago</b>
+                by
+                <b th:text="${page.changedByLogin != null ? page.changedByLogin : (page.changedBy != null ? page.changedBy : 'gast')}">admin</b>
+            </span>
+        </div>
+    </div>
+    <div class="kr-page-actions" th:if="${canEdit}">
+        <a class="kr-btn" href="#" title="Star">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
+            Star
+        </a>
+        <a class="kr-btn" href="#" title="Share">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+            Share
+        </a>
+        <a class="kr-btn primary" href="#"
+           th:attr="hx-get='/ui/page/' + ${page.pageId} + '/edit'"
+           hx-target="#content" hx-push-url="true">Edit</a>
+
+        <div class="dropdown">
+            <button class="kr-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="More" title="More" style="padding:6px 9px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
-                <li>
-                    <a class="dropdown-item" href="#"
-                       th:hx-get="'/ui/page/' + ${page.pageId} + '/new'"
-                       hx-trigger="click"
-                       hx-target="#content"
-                       hx-push-url="true">
-                        Add new page
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item" href="#"
-                       th:hx-get="'/ui/page/' + ${page.pageId} + '/edit'"
-                       hx-trigger="click"
-                       hx-target="#content"
-                       hx-push-url="true">
-                        Edit page
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item" href="#">
-                        Move page
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#fileUploadModal">
-                        Upload file
-                    </a>
-                </li>
-                <li>
-                    <hr class="dropdown-divider">
-                </li>
-                <li>
-                    <a class="dropdown-item text-danger" href="#"
-                       th:hx-delete="'/ui/page/' + ${page.pageId}"
-                       hx-trigger="click"
-                       hx-target="#content"
-                       hx-confirm="Are you sure?">
-                        Delete page
-                    </a>
-                </li>
+                <li><a class="dropdown-item" href="#"
+                       th:attr="hx-get='/ui/page/' + ${page.pageId} + '/new'"
+                       hx-target="#content" hx-push-url="true">Add sub-page</a></li>
+                <li><a class="dropdown-item" href="#"
+                       th:attr="hx-get='/ui/page/' + ${page.pageId} + '/edit'"
+                       hx-target="#content" hx-push-url="true">Edit page</a></li>
+                <li><a class="dropdown-item" href="#">Move page</a></li>
+                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#fileUploadModal">Upload file</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="#"
+                       th:attr="hx-delete='/ui/page/' + ${page.pageId}"
+                       hx-target="#content" hx-confirm="Are you sure?">Delete page</a></li>
             </ul>
         </div>
     </div>
-</div>
+</header>
 
-<!-- page content -->
-<div class="content mb-4" th:utext="${page.content}">
-    Pagecontent...
-</div>
+<section class="kr-content-area">
+    <article class="kr-content" th:utext="${page.content}">Pagecontent…</article>
 
-<!-- file listing -->
-<div th:if="${page.files != null and !#lists.isEmpty(page.files)}" class="mb-4">
-    <h5>Attached files</h5>
-    <ul class="list-group">
-        <li class="list-group-item" th:each="file : ${page.files}">
-            <a th:href="@{'/api/file/' + ${file.fileId}}" th:text="${file.name}">filename</a>
-            <span class="text-muted" th:text="'(' + ${file.type} + ', ' + ${file.size} + ' bytes)'"></span>
-        </li>
-    </ul>
-</div>
+    <div th:if="${page.files != null and !#lists.isEmpty(page.files)}" style="margin-top:28px">
+        <h3 style="font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--kr-text-3); margin:0 0 10px">Attachments</h3>
+        <div class="kr-attach-row">
+            <a th:each="file : ${page.files}" class="kr-attach-card" th:href="@{'/api/file/' + ${file.fileId}}">
+                <span class="kr-attach-ico" th:text="${file.type != null ? #strings.toUpperCase(file.type) : 'FILE'}">PDF</span>
+                <span>
+                    <span class="kr-n" th:text="${file.name}">filename</span>
+                    <span class="kr-s" th:text="${file.size} + ' bytes'">size</span>
+                </span>
+            </a>
+        </div>
+    </div>
+</section>
 
-<!-- page info -->
-<div class="d-flex align-items-center text-muted small border-top pt-2 mt-5">
-    <div>
-        <span>Created by </span>
+<footer class="kr-page-foot">
+    <span>
+        Created by
         <strong th:text="${page.createdByLogin != null ? page.createdByLogin : (page.createdBy != null ? page.createdBy : 'gast')}">User</strong>
-        <span> at </span>
+        at
         <span th:text="${#temporals.format(page.createDate, 'dd.MM.yyyy HH:mm')}">01.01.2023</span>
-    </div>
-    <div class="mx-2">•</div>
-    <div>
-        <span>Changed by </span>
+    </span>
+    <span class="kr-dotsep">·</span>
+    <span>
+        Changed by
         <strong th:text="${page.changedByLogin != null ? page.changedByLogin : (page.changedBy != null ? page.changedBy : 'gast')}">User</strong>
-        <span> at </span>
+        at
         <span th:text="${#temporals.format(page.changeDate, 'dd.MM.yyyy HH:mm')}">01.01.2023</span>
-    </div>
-</div>
+    </span>
+</footer>
 </body>
 </html>

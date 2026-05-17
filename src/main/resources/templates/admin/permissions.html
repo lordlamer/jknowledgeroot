@@ -1,9 +1,27 @@
+<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
 <head>
     <title>Knowledgeroot Permissions</title>
 </head>
 <body>
-PERMISSIONS
+<div class="kr-page-wrap">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb" style="padding-left:0; padding-right:0">
+            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
+            <li class="breadcrumb-item">Admin</li>
+            <li class="breadcrumb-item active" aria-current="page">Permissions</li>
+        </ol>
+    </nav>
+    <header class="kr-page-header" style="padding:12px 0 20px">
+        <div class="kr-page-title-wrap">
+            <h1 class="kr-page-title" style="font-size:24px">Permissions</h1>
+            <p class="kr-page-subtitle" style="margin:0">Manage workspace-wide permissions.</p>
+        </div>
+    </header>
+    <div class="alert kr-alert-info" role="alert">
+        No global permissions to display yet.
+    </div>
+</div>
 </body>
 </html>

@@ -1,14 +1,40 @@
 <div xmlns:th="http://www.thymeleaf.org"
-     class="container-fluid"
+     class="container-fluid p-0"
      th:fragment="mainShell(contentFragment)">
-    <div class="row main app-main">
-        <aside class="flex-shrink-0 p-3 bg-white app-sidebar"
-               id="sidebar"
-               hx-get="/ui/sidebar"
-               hx-trigger="load, reload-sidebar from:body"
-               hx-target="#sidebar"></aside>
+    <div class="app-main">
+        <aside class="app-sidebar" id="sidebar" aria-label="Page navigation">
+            <div class="kr-sidebar-tabs" role="tablist">
+                <button class="kr-sidebar-tab active" type="button" role="tab" aria-selected="true">Pages</button>
+                <button class="kr-sidebar-tab" type="button" role="tab" aria-selected="false">Recent</button>
+                <button class="kr-sidebar-tab" type="button" role="tab" aria-selected="false">Starred</button>
+            </div>
+            <div class="kr-tree-search">
+                <div class="kr-tree-search-wrap">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                    <input class="kr-tree-search-input" id="krTreeFilter" type="search" placeholder="Filter pages…" aria-label="Filter pages">
+                </div>
+            </div>
+            <div class="kr-sidebar-scroll">
+                <div class="kr-tree-section-title">
+                    Workspace
+                    <button type="button" class="add" title="Add root page" aria-label="Add root page"
+                            hx-get="/ui/page/new" hx-target="#content" hx-push-url="true">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                    </button>
+                </div>
+                <div id="sidebar-tree"
+                     hx-get="/ui/sidebar"
+                     hx-trigger="load, reload-sidebar from:body"
+                     hx-target="#sidebar-tree"></div>
+            </div>
+            <div class="kr-sidebar-footer">
+                <span class="kr-online-dot" aria-hidden="true"></span>
+                <span>online</span>
+                <span style="margin-left:auto"><kbd>⌘</kbd> <kbd>/</kbd></span>
+            </div>
+        </aside>
 
-        <main role="main" class="col-md-9 app-main-content">
+        <main role="main" class="app-main-content">
             <div class="app-content" id="content">
                 <div th:replace="${contentFragment}">Content</div>
             </div>

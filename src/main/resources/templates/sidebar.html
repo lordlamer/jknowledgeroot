@@ -1,65 +1,92 @@
+<th:block xmlns:th="http://www.thymeleaf.org">
+
+<!-- Root listing (no parent context) -->
 <th:block th:if="${parentId == 0}">
+
+    <!-- collapse-a-single-node (after closing it) replacement: render this node by itself -->
     <th:block th:if="${singlePage != null}">
-        <li class="list-group-item sidebar-node" th:id="'nav-page-' + ${singlePage.pageId}">
-            <button class="btn btn-link btn-sm p-0 me-1 sidebar-toggle"
-                    type="button"
-                    th:attr="hx-get='/ui/sidebar?parent=' + ${singlePage.pageId}, hx-target='#nav-page-' + ${singlePage.pageId}, hx-swap='outerHTML', aria-label='Expand page'">
-                <i class="bi bi-chevron-right"></i>
-            </button>
-            <a class="sidebar-link"
-               th:attr="href='/ui/page/' + ${singlePage.pageId}, hx-get='/ui/page/' + ${singlePage.pageId}, hx-target='#content', hx-push-url='true', data-page-id=${singlePage.pageId}"
-               th:text="${singlePage.name}"></a>
+        <li class="sidebar-node" th:id="'nav-page-' + ${singlePage.pageId}">
+            <div class="sidebar-node-row">
+                <button class="sidebar-toggle"
+                        type="button"
+                        th:attr="hx-get='/ui/sidebar?parent=' + ${singlePage.pageId}, hx-target='#nav-page-' + ${singlePage.pageId}, hx-swap='outerHTML', aria-label='Expand page'">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+                <span class="sidebar-node-ico" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </span>
+                <a class="sidebar-link"
+                   th:attr="href='/ui/page/' + ${singlePage.pageId}, hx-get='/ui/page/' + ${singlePage.pageId}, hx-target='#content', hx-push-url='true', data-page-id=${singlePage.pageId}"
+                   th:text="${singlePage.name}"></a>
+            </div>
         </li>
     </th:block>
 
+    <!-- top-level workspace listing -->
     <th:block th:if="${singlePage == null}">
-        <ul class="list-group sidebar-tree">
-            <li class="list-group-item sidebar-node" th:each="page : ${pages}" th:id="'nav-page-' + ${page.pageId}">
-                <button class="btn btn-link btn-sm p-0 me-1 sidebar-toggle"
-                        type="button"
-                        th:attr="hx-get='/ui/sidebar?parent=' + ${page.pageId}, hx-target='#nav-page-' + ${page.pageId}, hx-swap='outerHTML', aria-label='Expand page'">
-                    <i class="bi bi-chevron-right"></i>
-                </button>
-                <a class="sidebar-link"
-                   th:attr="href='/ui/page/' + ${page.pageId}, hx-get='/ui/page/' + ${page.pageId}, hx-target='#content', hx-push-url='true', data-page-id=${page.pageId}"
-                   th:text="${page.name}"></a>
+        <ul class="sidebar-tree">
+            <li class="sidebar-node" th:each="page : ${pages}" th:id="'nav-page-' + ${page.pageId}">
+                <div class="sidebar-node-row">
+                    <button class="sidebar-toggle"
+                            type="button"
+                            th:attr="hx-get='/ui/sidebar?parent=' + ${page.pageId}, hx-target='#nav-page-' + ${page.pageId}, hx-swap='outerHTML', aria-label='Expand page'">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                    <span class="sidebar-node-ico" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </span>
+                    <a class="sidebar-link"
+                       th:attr="href='/ui/page/' + ${page.pageId}, hx-get='/ui/page/' + ${page.pageId}, hx-target='#content', hx-push-url='true', data-page-id=${page.pageId}"
+                       th:text="${page.name}"></a>
+                </div>
             </li>
         </ul>
     </th:block>
 </th:block>
 
+<!-- Expanded node with children -->
 <th:block th:if="${parentId != 0 and parentPage != null}">
-    <li class="list-group-item sidebar-node" th:id="'nav-page-' + ${parentPage.pageId}">
-        <th:block th:if="${parentPage.parent == 0}">
-            <button class="btn btn-link btn-sm p-0 me-1 sidebar-toggle"
-                    type="button"
-                    th:attr="hx-get='/ui/sidebar?singlePage=' + ${parentPage.pageId}, hx-target='#nav-page-' + ${parentPage.pageId}, hx-swap='outerHTML', aria-label='Collapse page'">
-                <i class="bi bi-chevron-down"></i>
-            </button>
-        </th:block>
-        <th:block th:unless="${parentPage.parent == 0}">
-            <button class="btn btn-link btn-sm p-0 me-1 sidebar-toggle"
-                    type="button"
-                    th:attr="hx-get='/ui/sidebar?parent=' + ${parentPage.parent}, hx-target='#nav-page-' + ${parentPage.parent}, hx-swap='outerHTML', aria-label='Collapse page'">
-                <i class="bi bi-chevron-down"></i>
-            </button>
-        </th:block>
-
-        <a class="sidebar-link"
-           th:attr="href='/ui/page/' + ${parentPage.pageId}, hx-get='/ui/page/' + ${parentPage.pageId}, hx-target='#content', hx-push-url='true', data-page-id=${parentPage.pageId}"
-           th:text="${parentPage.name}"></a>
-
-        <ul class="list-group sidebar-children">
-            <li class="list-group-item sidebar-node" th:each="page : ${pages}" th:id="'nav-page-' + ${page.pageId}">
-                <button class="btn btn-link btn-sm p-0 me-1 sidebar-toggle"
+    <li class="sidebar-node" th:id="'nav-page-' + ${parentPage.pageId}">
+        <div class="sidebar-node-row">
+            <th:block th:if="${parentPage.parent == 0}">
+                <button class="sidebar-toggle"
                         type="button"
-                        th:attr="hx-get='/ui/sidebar?parent=' + ${page.pageId}, hx-target='#nav-page-' + ${page.pageId}, hx-swap='outerHTML', aria-label='Expand page'">
-                    <i class="bi bi-chevron-right"></i>
+                        th:attr="hx-get='/ui/sidebar?singlePage=' + ${parentPage.pageId}, hx-target='#nav-page-' + ${parentPage.pageId}, hx-swap='outerHTML', aria-label='Collapse page'">
+                    <i class="bi bi-chevron-down"></i>
                 </button>
-                <a class="sidebar-link"
-                   th:attr="href='/ui/page/' + ${page.pageId}, hx-get='/ui/page/' + ${page.pageId}, hx-target='#content', hx-push-url='true', data-page-id=${page.pageId}"
-                   th:text="${page.name}"></a>
+            </th:block>
+            <th:block th:unless="${parentPage.parent == 0}">
+                <button class="sidebar-toggle"
+                        type="button"
+                        th:attr="hx-get='/ui/sidebar?parent=' + ${parentPage.parent}, hx-target='#nav-page-' + ${parentPage.parent}, hx-swap='outerHTML', aria-label='Collapse page'">
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+            </th:block>
+            <span class="sidebar-node-ico" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            </span>
+            <a class="sidebar-link"
+               th:attr="href='/ui/page/' + ${parentPage.pageId}, hx-get='/ui/page/' + ${parentPage.pageId}, hx-target='#content', hx-push-url='true', data-page-id=${parentPage.pageId}"
+               th:text="${parentPage.name}"></a>
+        </div>
+
+        <ul class="sidebar-children">
+            <li class="sidebar-node" th:each="page : ${pages}" th:id="'nav-page-' + ${page.pageId}">
+                <div class="sidebar-node-row">
+                    <button class="sidebar-toggle"
+                            type="button"
+                            th:attr="hx-get='/ui/sidebar?parent=' + ${page.pageId}, hx-target='#nav-page-' + ${page.pageId}, hx-swap='outerHTML', aria-label='Expand page'">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                    <span class="sidebar-node-ico" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </span>
+                    <a class="sidebar-link"
+                       th:attr="href='/ui/page/' + ${page.pageId}, hx-get='/ui/page/' + ${page.pageId}, hx-target='#content', hx-push-url='true', data-page-id=${page.pageId}"
+                       th:text="${page.name}"></a>
+                </div>
             </li>
         </ul>
     </li>
+</th:block>
 </th:block>

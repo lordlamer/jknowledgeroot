@@ -1,64 +1,75 @@
+<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
 <head>
     <title>Knowledgeroot Users</title>
 </head>
 <body>
-    <h1>Users</h1>
+<div class="kr-page-wrap" style="max-width:1200px">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb" style="padding-left:0; padding-right:0">
+            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
+            <li class="breadcrumb-item">Admin</li>
+            <li class="breadcrumb-item active" aria-current="page">Users</li>
+        </ol>
+    </nav>
 
-    <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
-        <button type="button" class="btn btn-outline-success"
-                hx-get="/admin/users/create"
-                hx-trigger="click"
-                hx-target="#content"
-                hx-push-url="true"
-        >
-            add user
-        </button>
-    </div>
+    <header class="kr-page-header" style="padding:12px 0 20px">
+        <div class="kr-page-title-wrap">
+            <h1 class="kr-page-title" style="font-size:24px">Users</h1>
+            <p class="kr-page-subtitle" style="margin:0" th:text="${users.size()} + ' users'">0 users</p>
+        </div>
+        <div class="kr-page-actions">
+            <button type="button" class="kr-btn accent"
+                    hx-get="/admin/users/create" hx-target="#content" hx-push-url="true">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                Add user
+            </button>
+        </div>
+    </header>
 
-    <table class="table table-striped table-hover">
+    <table class="kr-tbl">
         <thead>
         <tr>
             <th scope="col">Login</th>
-            <th scope="col">First</th>
-            <th scope="col">Last</th>
-            <th scope="col">E-Mail</th>
-            <th scope="col">Active</th>
-            <th scope="col">Admin</th>
-            <th scope="col">Aktion</th>
+            <th scope="col">Name</th>
+            <th scope="col">E-mail</th>
+            <th scope="col">Status</th>
+            <th scope="col">Role</th>
+            <th scope="col" style="text-align:right">Actions</th>
         </tr>
         </thead>
         <tbody>
         <tr th:each="user : ${users}">
-            <th scope="row" th:text="${user.getLogin()}">Login</th>
-            <td th:text="${user.getFirstName()}">First</td>
-            <td th:text="${user.getLastName()}">Last</td>
-            <td th:text="${user.getEmail()}">E-Mail</td>
-            <td th:text="${user.getActive()}">Active</td>
-            <td th:text="${user.getAdmin()} ? 'Yes' : 'No'">Admin</td>
             <td>
-                <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
-                    <button type="button" class="btn btn-outline-primary"
-                            th:hx-get="'/admin/users/' + ${user.getId()}"
-                            hx-trigger="click"
-                            hx-target="#content"
-                            hx-push-url="true"
-                    >
-                        edit
-                    </button>
-                    <button type="button" class="btn btn-outline-danger"
-                            th:hx-delete="'/admin/users/' + ${user.getId()}"
-                            hx-confirm="Really delete?"
-                            hx-target="closest tr"
-                            hx-swap="outerHTML">
-                        delete
-                    </button>
+                <div style="display:flex; align-items:center; gap:10px">
+                    <span class="kr-avatar" aria-hidden="true"
+                          th:text="${user.getLogin() != null and user.getLogin().length() > 0 ? #strings.toUpperCase(user.getLogin().substring(0,1)) : '?'}">A</span>
+                    <b th:text="${user.getLogin()}">login</b>
                 </div>
+            </td>
+            <td th:text="${user.getFirstName()} + ' ' + ${user.getLastName()}">Name</td>
+            <td style="color:var(--kr-text-2)" th:text="${user.getEmail()}">email@x</td>
+            <td>
+                <span class="kr-pill active" th:if="${user.getActive()}">Active</span>
+                <span class="kr-pill inactive" th:unless="${user.getActive()}">Inactive</span>
+            </td>
+            <td>
+                <span class="kr-pill admin" th:if="${user.getAdmin()}">Admin</span>
+                <span style="color:var(--kr-text-3)" th:unless="${user.getAdmin()}">Member</span>
+            </td>
+            <td class="actions">
+                <button type="button" class="kr-btn sm"
+                        th:attr="hx-get='/admin/users/' + ${user.getId()}"
+                        hx-target="#content" hx-push-url="true">Edit</button>
+                <button type="button" class="kr-btn sm danger"
+                        th:attr="hx-delete='/admin/users/' + ${user.getId()}"
+                        hx-confirm="Really delete?"
+                        hx-target="closest tr" hx-swap="outerHTML">Delete</button>
             </td>
         </tr>
         </tbody>
-
     </table>
+</div>
 </body>
 </html>

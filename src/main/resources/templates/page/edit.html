@@ -5,26 +5,55 @@
     <title>Knowledgeroot :: Seite bearbeiten</title>
 </head>
 <body>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
+        <li class="breadcrumb-item"><a th:href="@{'/ui/page/' + ${page.pageId}}"
+                                       th:attr="hx-get='/ui/page/' + ${page.pageId}"
+                                       hx-target="#content" hx-push-url="true"
+                                       th:text="${page.name}">Page</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Editing</li>
+    </ol>
+</nav>
+
 <form th:hx-post="'/ui/page/' + ${page.pageId} + '/edit'" hx-target="#content">
-    <div class="card" style="margin-bottom: 20px;">
-        <div class="card-header">
-            <ul class="nav nav-tabs card-header-tabs" id="pageTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="site-tab" data-bs-toggle="tab" data-bs-target="#site-content"
-                            type="button" role="tab" aria-controls="site-content" aria-selected="true">
-                        Seite
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="permissions-tab" data-bs-toggle="tab" data-bs-target="#permissions-content"
-                            type="button" role="tab" aria-controls="permissions-content" aria-selected="false">
-                        Berechtigungen
-                    </button>
-                </li>
-            </ul>
+
+    <header class="kr-page-header">
+        <div class="kr-page-title-wrap">
+            <h1 class="kr-page-title">Edit page</h1>
+            <div class="kr-page-meta">
+                <span class="kr-pill active">Draft</span>
+                <span class="kr-dotsep">·</span>
+                <span th:text="'Editing ' + ${page.name}">Editing page</span>
+            </div>
         </div>
-        <div class="card-body">
-            <div class="tab-content" id="pageTabContent">
+        <div class="kr-page-actions">
+            <button type="button" class="kr-btn"
+                    th:attr="hx-get='/ui/page/' + ${page.getPageId()}"
+                    hx-target="#content" hx-push-url="true">Cancel</button>
+            <button type="submit" class="kr-btn accent">Save changes</button>
+        </div>
+    </header>
+
+    <ul class="kr-editor-tabs nav nav-tabs" id="pageTabs" role="tablist" style="list-style:none; margin:0;">
+        <li class="nav-item" role="presentation">
+            <button class="kr-editor-tab nav-link active" id="site-tab" data-bs-toggle="tab" data-bs-target="#site-content"
+                    type="button" role="tab" aria-controls="site-content" aria-selected="true">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Page
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="kr-editor-tab nav-link" id="permissions-tab" data-bs-toggle="tab" data-bs-target="#permissions-content"
+                    type="button" role="tab" aria-controls="permissions-content" aria-selected="false">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Permissions
+            </button>
+        </li>
+    </ul>
+
+    <div class="kr-editor-pane">
+        <div class="tab-content" id="pageTabContent">
                 <!-- Tab für Seiteninhalt -->
                 <div class="tab-pane fade show active" id="site-content" role="tabpanel" aria-labelledby="site-tab">
                     <div class="mb-3">
@@ -121,13 +150,12 @@
                 </div>
             </div>
         </div>
-    </div>
-    <div>
-        <button type="submit" class="btn btn-success">Speichern</button>
-        <button type="button" class="btn btn-outline-secondary"
+    <div style="padding:0 28px 24px; display:flex; gap:8px">
+        <button type="submit" class="kr-btn accent">Save changes</button>
+        <button type="button" class="kr-btn"
                 th:hx-get="'/ui/page/' + ${page.getPageId()}"
                 hx-target="#content"
-                hx-push-url="true">Abbrechen</button>
+                hx-push-url="true">Cancel</button>
     </div>
 </form>
 

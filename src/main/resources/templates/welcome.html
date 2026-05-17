@@ -5,23 +5,20 @@
     <title>Welcome to Knowledgeroot</title>
 </head>
 <body>
-    <!-- Hero Section with subtle styling -->
-    <div class="p-5 mb-4 text-center bg-light rounded-3" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
-        <div class="mb-3">
-            <i class="bi bi-book text-primary" style="font-size: 3rem; opacity: 0.8;"></i>
-        </div>
-        <h1 class="display-5 mb-3 fw-bold">Welcome to Knowledgeroot</h1>
-        <p class="lead mb-4 text-muted" style="max-width: 500px; margin: 0 auto;">
-            Your personal knowledge management system. Organize and discover your knowledge effortlessly.
-        </p>
-        <div class="d-flex gap-2 justify-content-center flex-wrap">
-            <button class="btn btn-primary btn-lg" type="button" hx-get="/ui/page/new" hx-target="#content" hx-push-url="true">
-                <i class="bi bi-plus-circle me-2"></i>Create Your First Page
-            </button>
-            <button class="btn btn-outline-secondary" type="button" onclick="document.querySelector('input[name=q]').focus()">
-                <i class="bi bi-search me-2"></i>Search
-            </button>
-        </div>
+<div class="kr-welcome">
+    <div class="kr-welcome-mark" aria-hidden="true">K</div>
+    <h1>Your team's knowledge, at home.</h1>
+    <p>A calm, structured place to write docs, store runbooks, and keep what matters to your team searchable and versioned.</p>
+    <div class="kr-cta">
+        <button class="kr-btn primary" type="button" hx-get="/ui/page/new" hx-target="#content" hx-push-url="true">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            Create your first page
+        </button>
+        <button class="kr-btn" type="button" onclick="document.querySelector('.kr-search-input')?.focus();">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            Search
+        </button>
     </div>
+</div>
 </body>
 </html>

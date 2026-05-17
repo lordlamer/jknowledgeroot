@@ -5,20 +5,28 @@
     <title>About Knowledgeroot</title>
 </head>
 <body>
-    <div class="card">
-        <div class="card-header">
-            About Knowledgeroot
+<div class="kr-page-wrap" style="max-width:900px">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb" style="padding-left:0; padding-right:0">
+            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">About</li>
+        </ol>
+    </nav>
+
+    <header class="kr-page-header" style="padding:12px 0 20px">
+        <div class="kr-page-title-wrap">
+            <h1 class="kr-page-title">About Knowledgeroot</h1>
+            <p class="kr-page-subtitle" style="margin:0">Knowledgeroot Knowledgebase · Version 2.0 (2025-dev)</p>
         </div>
-        <div class="card-body">
-            <h5 class="card-title">Knowledgeroot Knowledgebase</h5>
+    </header>
 
-            <p class="card-text">Version: 2.0 (2025-dev)</p>
-            <p class="card-text">Homepage: <a href="http://www.knowledgeroot.org" target="_blank">http://www.knowledgeroot.org</a></p>
-
-            <h3>License</h3>
-            <hr>
-            <pre>
-Copyright (c) 2025, Frank Habermann <lordlamer@lordlamer.de>
+    <section class="kr-content">
+        <p>
+            Homepage:
+            <a href="http://www.knowledgeroot.org" target="_blank" rel="noopener">http://www.knowledgeroot.org</a>
+        </p>
+        <h2>License</h2>
+        <pre>Copyright (c) 2025, Frank Habermann &lt;lordlamer@lordlamer.de&gt;
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -31,9 +39,9 @@ are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer in the documentation
       and/or other materials provided with the distribution.
 
-    * Neither the name of Frank Habermann <lordlamer@lordlamer.de> nor the names of its
-      contributors may be used to endorse or promote products derived from this
-      software without specific prior written permission.
+    * Neither the name of Frank Habermann &lt;lordlamer@lordlamer.de&gt; nor the names
+      of its contributors may be used to endorse or promote products derived
+      from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -45,8 +53,8 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
 ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-                </pre>
-        </div>
-    </div>
+</pre>
+    </section>
+</div>
 </body>
 </html>
