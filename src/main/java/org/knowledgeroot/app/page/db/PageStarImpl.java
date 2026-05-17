@@ -11,7 +11,9 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -85,5 +87,19 @@ public class PageStarImpl implements PageStarDao {
         return pages.stream()
                 .filter(p -> pagePermissionDao.hasUserPermission(p.getPageId(), userId, PagePermission.PermissionLevel.VIEW))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Set<Integer> listStarredPageIds(Integer userId) {
+        if (userId == null) {
+            return Set.of();
+        }
+        List<Integer> ids = jdbcClient.sql("""
+                SELECT page_id FROM user_page_star WHERE user_id = :userId
+                """)
+                .param("userId", userId)
+                .query(Integer.class)
+                .list();
+        return new HashSet<>(ids);
     }
 }

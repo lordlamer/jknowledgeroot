@@ -14,6 +14,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 
 @Controller
@@ -26,6 +27,7 @@ public class PageStarController {
     @PostMapping("/ui/page/{pageId}/star")
     public String starPage(
             @PathVariable("pageId") Integer pageId,
+            @RequestParam(name = "from", required = false) String from,
             Model model,
             HttpServletResponse response
     ) {
@@ -41,12 +43,13 @@ public class PageStarController {
         model.addAttribute("pageId", pageId);
         model.addAttribute("starred", true);
         response.addHeader("HX-Trigger", "reload-stars");
-        return "page/star-button :: button";
+        return resolveFragment(from);
     }
 
     @DeleteMapping("/ui/page/{pageId}/star")
     public String unstarPage(
             @PathVariable("pageId") Integer pageId,
+            @RequestParam(name = "from", required = false) String from,
             Model model,
             HttpServletResponse response
     ) {
@@ -58,7 +61,15 @@ public class PageStarController {
         model.addAttribute("pageId", pageId);
         model.addAttribute("starred", false);
         response.addHeader("HX-Trigger", "reload-stars");
-        return "page/star-button :: button";
+        return resolveFragment(from);
+    }
+
+    private String resolveFragment(String from) {
+        // "sidebar" → the small star icon in the sidebar tree row.
+        // anything else → the wide button shown in the page header.
+        return "sidebar".equals(from)
+                ? "page/star-button :: sidebar"
+                : "page/star-button :: button";
     }
 
     private Integer requireUserId() {

@@ -299,6 +299,28 @@
             var empty = (event.detail.target.textContent || '').trim() === '';
             sb.setAttribute('data-starred-empty', empty ? '1' : '0');
         });
+
+        // Copy a page link (delegated — works for dynamically-loaded sidebar entries)
+        document.addEventListener('click', function (event) {
+            var link = event.target.closest('.kr-copy-link');
+            if (!link) return;
+            event.preventDefault();
+            var id = link.getAttribute('data-page-id');
+            if (!id) return;
+            var url = window.location.origin + '/ui/page/' + id;
+            var done = function () {
+                var origHtml = link.innerHTML;
+                link.textContent = '✓ Link copied';
+                window.setTimeout(function () { link.innerHTML = origHtml; }, 1200);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(done).catch(function () {
+                    window.prompt('Copy link', url);
+                });
+            } else {
+                window.prompt('Copy link', url);
+            }
+        });
     </script>
     <style>
         html.kr-dark-preload body { background: #0a0a0a; color: #fafafa; }

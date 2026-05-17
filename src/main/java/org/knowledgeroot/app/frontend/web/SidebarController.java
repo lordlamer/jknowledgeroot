@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Controller
@@ -98,6 +99,14 @@ class SidebarController {
         }
 
         model.addAttribute("pages", visiblePages);
+
+        // Provide the set of starred page ids so the sidebar can render the
+        // filled star icon for already-starred entries.
+        Set<Integer> starredIds = currentUserId == null
+                ? Set.of()
+                : pageStarDao.listStarredPageIds(currentUserId);
+        model.addAttribute("starredIds", starredIds);
+        model.addAttribute("canStar", currentUserId != null);
 
         return "sidebar";
     }

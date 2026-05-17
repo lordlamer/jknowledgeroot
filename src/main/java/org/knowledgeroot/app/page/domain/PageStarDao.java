@@ -1,6 +1,7 @@
 package org.knowledgeroot.app.page.domain;
 
 import java.util.List;
+import java.util.Set;
 
 public interface PageStarDao {
     /**
@@ -23,4 +24,10 @@ public interface PageStarDao {
      * Only pages the user still has VIEW permission on are returned.
      */
     List<Page> listStarredPages(Integer userId);
+
+    /**
+     * Set of page ids the user has starred. Used to flag sidebar tree items
+     * without N+1 isStarred() queries.
+     */
+    Set<Integer> listStarredPageIds(Integer userId);
 }
