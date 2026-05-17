@@ -1,0 +1,52 @@
+<section xmlns:th="http://www.thymeleaf.org"
+         th:fragment="comments"
+         class="kr-comments"
+         th:id="'comments-' + ${pageId}">
+
+    <h3>
+        Comments
+        <span class="kr-c-count" th:if="${comments != null and !#lists.isEmpty(comments)}" th:text="'· ' + ${#lists.size(comments)}">· 0</span>
+    </h3>
+
+    <div th:if="${comments == null or #lists.isEmpty(comments)}" class="kr-c-empty">
+        No comments yet.
+    </div>
+
+    <div class="kr-comment" th:each="c : ${comments}" th:id="'comment-' + ${c.id}">
+        <span class="kr-avatar" aria-hidden="true" th:text="${c.authorInitial}">A</span>
+        <div class="kr-c-body">
+            <div class="kr-c-meta">
+                <span class="kr-c-who" th:text="${c.authorDisplayName}">Author</span>
+                <span class="kr-c-time" th:text="${#temporals.format(c.createDate, 'dd.MM.yyyy HH:mm')}">date</span>
+            </div>
+            <div class="kr-c-txt" th:text="${c.content}">Comment text</div>
+            <div class="kr-c-actions"
+                 th:if="${canComment and (currentIsAdmin or (currentUserId != null and currentUserId == c.userId))}">
+                <button type="button" class="kr-c-action"
+                        th:attr="hx-delete='/ui/page/' + ${pageId} + '/comments/' + ${c.id}"
+                        th:hx-target="'#comments-' + ${pageId}"
+                        hx-swap="outerHTML"
+                        hx-confirm="Delete this comment?">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <form th:if="${canComment}"
+          class="kr-comment-composer"
+          th:attr="hx-post='/ui/page/' + ${pageId} + '/comments'"
+          th:hx-target="'#comments-' + ${pageId}"
+          hx-swap="outerHTML">
+        <span class="kr-avatar" aria-hidden="true" th:text="${currentInitial}">U</span>
+        <div class="kr-c-composer-body">
+            <textarea name="content" required maxlength="4000" rows="3"
+                      placeholder="Write a comment…"></textarea>
+            <div class="kr-c-composer-actions">
+                <button type="submit" class="kr-btn accent">Comment</button>
+            </div>
+        </div>
+    </form>
+
+    <div th:unless="${canComment}" class="kr-c-signin">
+        <a href="/login">Sign in</a> to comment.
+    </div>
+</section>

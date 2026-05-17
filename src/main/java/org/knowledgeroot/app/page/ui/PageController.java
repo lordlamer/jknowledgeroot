@@ -34,6 +34,7 @@ public class PageController {
     private final PageDao pageImpl;
     private final PagePermissionDao pagePermissionImpl;
     private final PageStarDao pageStarDao;
+    private final PageCommentDao pageCommentDao;
     private final UserDao userImpl;
     private final GroupDao groupImpl;
     private final UserContext userContext;
@@ -98,6 +99,17 @@ public class PageController {
         model.addAttribute("canStar", canStar);
         model.addAttribute("pageId", pageId);
         model.addAttribute("starred", canStar && pageStarDao.isStarred(currentUserId, pid));
+
+        // Comments (anyone can read; only logged-in users see the composer)
+        UserDetails currentUser = userContext.getUserContext();
+        model.addAttribute("comments", pageCommentDao.listForPage(pid));
+        model.addAttribute("canComment", currentUserId != null);
+        model.addAttribute("currentUserId", currentUserId);
+        model.addAttribute("currentIsAdmin", currentUser.isAdmin());
+        model.addAttribute("currentInitial",
+                currentUser.isGuest() || currentUser.getLogin() == null || currentUser.getLogin().isEmpty()
+                        ? "?"
+                        : currentUser.getLogin().substring(0, 1).toUpperCase());
 
         // trigger reload sidebar
         if(trigger != null && trigger.equals("reload-sidebar"))

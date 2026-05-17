@@ -28,6 +28,10 @@ public class WebSecurityConfig {
                     auth.requestMatchers(HttpMethod.DELETE, "/ui/page/*/star").hasAnyRole("USER", "ADMIN");
                     auth.requestMatchers(                   "/ui/sidebar/starred").hasAnyRole("USER", "ADMIN");
 
+                    // Comments — anyone may read, only authenticated users may post or delete.
+                    auth.requestMatchers(HttpMethod.POST,   "/ui/page/*/comments").hasAnyRole("USER", "ADMIN");
+                    auth.requestMatchers(HttpMethod.DELETE, "/ui/page/*/comments/**").hasAnyRole("USER", "ADMIN");
+
                     auth.requestMatchers(
                             "/",
                             "/favicon.ico",
