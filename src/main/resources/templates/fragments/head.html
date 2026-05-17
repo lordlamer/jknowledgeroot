@@ -274,6 +274,30 @@
                     });
                 });
             }
+
+            // Sidebar tab switching (Pages / Starred)
+            document.querySelectorAll('.kr-sidebar-tab').forEach(function (tab) {
+                tab.addEventListener('click', function () {
+                    var name = tab.dataset.tab || 'pages';
+                    var sb = document.getElementById('sidebar');
+                    if (sb) sb.setAttribute('data-tab', name);
+                    document.querySelectorAll('.kr-sidebar-tab').forEach(function (t) {
+                        var on = t === tab;
+                        t.classList.toggle('active', on);
+                        t.setAttribute('aria-selected', on ? 'true' : 'false');
+                    });
+                });
+            });
+        });
+
+        // Track whether the starred section is empty so the Starred tab can show an empty state.
+        document.addEventListener('htmx:afterSwap', function (event) {
+            if (!event.detail || !event.detail.target) return;
+            if (event.detail.target.id !== 'sidebar-starred') return;
+            var sb = document.getElementById('sidebar');
+            if (!sb) return;
+            var empty = (event.detail.target.textContent || '').trim() === '';
+            sb.setAttribute('data-starred-empty', empty ? '1' : '0');
         });
     </script>
     <style>

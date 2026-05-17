@@ -2,11 +2,11 @@
      class="container-fluid p-0"
      th:fragment="mainShell(contentFragment)">
     <div class="app-main">
-        <aside class="app-sidebar" id="sidebar" aria-label="Page navigation">
+        <aside class="app-sidebar" id="sidebar" data-tab="pages" aria-label="Page navigation">
             <div class="kr-sidebar-tabs" role="tablist">
-                <button class="kr-sidebar-tab active" type="button" role="tab" aria-selected="true">Pages</button>
-                <button class="kr-sidebar-tab" type="button" role="tab" aria-selected="false">Recent</button>
-                <button class="kr-sidebar-tab" type="button" role="tab" aria-selected="false">Starred</button>
+                <button class="kr-sidebar-tab active" type="button" role="tab" aria-selected="true" data-tab="pages">Pages</button>
+                <button class="kr-sidebar-tab" type="button" role="tab" aria-selected="false" data-tab="starred"
+                        th:if="${isuser or isadmin}">Starred</button>
             </div>
             <div class="kr-tree-search">
                 <div class="kr-tree-search-wrap">
@@ -15,7 +15,13 @@
                 </div>
             </div>
             <div class="kr-sidebar-scroll">
-                <div class="kr-tree-section-title">
+                <div th:if="${isuser or isadmin}"
+                     id="sidebar-starred"
+                     hx-get="/ui/sidebar/starred"
+                     hx-trigger="load, reload-stars from:body"
+                     hx-target="this"
+                     hx-swap="innerHTML"></div>
+                <div class="kr-tree-section-title kr-section-workspace">
                     Workspace
                     <button type="button" class="add" title="Add root page" aria-label="Add root page"
                             hx-get="/ui/page/new" hx-target="#content" hx-push-url="true">
@@ -26,6 +32,7 @@
                      hx-get="/ui/sidebar"
                      hx-trigger="load, reload-sidebar from:body"
                      hx-target="#sidebar-tree"></div>
+                <div class="kr-sidebar-empty" id="sidebar-starred-empty">No starred pages yet — open any page and click <b>Star</b>.</div>
             </div>
             <div class="kr-sidebar-footer">
                 <span class="kr-online-dot" aria-hidden="true"></span>

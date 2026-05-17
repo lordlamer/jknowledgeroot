@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 public class PageController {
     private final PageDao pageImpl;
     private final PagePermissionDao pagePermissionImpl;
+    private final PageStarDao pageStarDao;
     private final UserDao userImpl;
     private final GroupDao groupImpl;
     private final UserContext userContext;
@@ -91,6 +92,12 @@ public class PageController {
         // Prüfen der Bearbeitungsberechtigungen
         boolean canEdit = pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.EDIT);
         model.addAttribute("canEdit", canEdit);
+
+        // Star button — only for authenticated users
+        boolean canStar = currentUserId != null;
+        model.addAttribute("canStar", canStar);
+        model.addAttribute("pageId", pageId);
+        model.addAttribute("starred", canStar && pageStarDao.isStarred(currentUserId, pid));
 
         // trigger reload sidebar
         if(trigger != null && trigger.equals("reload-sidebar"))

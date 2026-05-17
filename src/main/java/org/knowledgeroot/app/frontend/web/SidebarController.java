@@ -6,6 +6,7 @@ import org.knowledgeroot.app.security.context.domain.UserContext;
 import org.knowledgeroot.app.security.context.domain.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 class SidebarController {
     private final PageDao pageImpl;
     private final PagePermissionDao pagePermissionImpl;
+    private final PageStarDao pageStarDao;
     private final UserContext userContext;
 
     /**
@@ -98,5 +100,19 @@ class SidebarController {
         model.addAttribute("pages", visiblePages);
 
         return "sidebar";
+    }
+
+    /**
+     * Render the starred-pages section in the sidebar.
+     * Empty for guests; security config already restricts this endpoint to authenticated users.
+     */
+    @GetMapping("/ui/sidebar/starred")
+    public String starred(Model model) {
+        Integer currentUserId = getCurrentUserId();
+        List<Page> starred = currentUserId == null
+                ? Collections.emptyList()
+                : pageStarDao.listStarredPages(currentUserId);
+        model.addAttribute("starred", starred);
+        return "fragments/sidebar-starred :: starred";
     }
 }

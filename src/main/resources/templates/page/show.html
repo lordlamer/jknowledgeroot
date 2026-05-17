@@ -22,50 +22,38 @@
 <header class="kr-page-header">
     <div class="kr-page-title-wrap">
         <h1 class="kr-page-title" th:text="${page.name}">Page title</h1>
-        <div class="kr-page-meta">
-            <span class="kr-tag accent" th:if="${breadcrumb != null and !#lists.isEmpty(breadcrumb) and breadcrumb.size() > 1}"
-                  th:text="${breadcrumb[0].name}">Section</span>
-            <span class="kr-dotsep">·</span>
-            <span>
-                Updated
-                <b th:text="${#temporals.format(page.changeDate, 'dd.MM.yyyy HH:mm')}">2 days ago</b>
-                by
-                <b th:text="${page.changedByLogin != null ? page.changedByLogin : (page.changedBy != null ? page.changedBy : 'gast')}">admin</b>
-            </span>
-        </div>
     </div>
-    <div class="kr-page-actions" th:if="${canEdit}">
-        <a class="kr-btn" href="#" title="Star">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
-            Star
-        </a>
-        <a class="kr-btn" href="#" title="Share">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
-            Share
-        </a>
-        <a class="kr-btn primary" href="#"
-           th:attr="hx-get='/ui/page/' + ${page.pageId} + '/edit'"
-           hx-target="#content" hx-push-url="true">Edit</a>
+    <div class="kr-page-actions" th:if="${canStar} or ${canEdit}">
+        <th:block th:if="${canStar}" th:insert="~{page/star-button :: button}"></th:block>
+        <th:block th:if="${canEdit}">
+            <a class="kr-btn" href="#" title="Share">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+                Share
+            </a>
+            <a class="kr-btn primary" href="#"
+               th:attr="hx-get='/ui/page/' + ${page.pageId} + '/edit'"
+               hx-target="#content" hx-push-url="true">Edit</a>
 
-        <div class="dropdown">
-            <button class="kr-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="More" title="More" style="padding:6px 9px">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="#"
-                       th:attr="hx-get='/ui/page/' + ${page.pageId} + '/new'"
-                       hx-target="#content" hx-push-url="true">Add sub-page</a></li>
-                <li><a class="dropdown-item" href="#"
-                       th:attr="hx-get='/ui/page/' + ${page.pageId} + '/edit'"
-                       hx-target="#content" hx-push-url="true">Edit page</a></li>
-                <li><a class="dropdown-item" href="#">Move page</a></li>
-                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#fileUploadModal">Upload file</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item text-danger" href="#"
-                       th:attr="hx-delete='/ui/page/' + ${page.pageId}"
-                       hx-target="#content" hx-confirm="Are you sure?">Delete page</a></li>
-            </ul>
-        </div>
+            <div class="dropdown">
+                <button class="kr-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="More" title="More" style="padding:6px 9px">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#"
+                           th:attr="hx-get='/ui/page/' + ${page.pageId} + '/new'"
+                           hx-target="#content" hx-push-url="true">Add sub-page</a></li>
+                    <li><a class="dropdown-item" href="#"
+                           th:attr="hx-get='/ui/page/' + ${page.pageId} + '/edit'"
+                           hx-target="#content" hx-push-url="true">Edit page</a></li>
+                    <li><a class="dropdown-item" href="#">Move page</a></li>
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#fileUploadModal">Upload file</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#"
+                           th:attr="hx-delete='/ui/page/' + ${page.pageId}"
+                           hx-target="#content" hx-confirm="Are you sure?">Delete page</a></li>
+                </ul>
+            </div>
+        </th:block>
     </div>
 </header>
 

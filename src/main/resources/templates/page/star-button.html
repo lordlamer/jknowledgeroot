@@ -1,0 +1,25 @@
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="button">
+    <button th:if="${starred}"
+            class="kr-btn"
+            type="button"
+            th:attr="hx-delete='/ui/page/' + ${pageId} + '/star'"
+            hx-target="this" hx-swap="outerHTML"
+            title="Unstar this page"
+            style="color:#a87a00; border-color:#e8a400; background:#fff8e0">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="#e8a400" stroke="#e8a400" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/>
+        </svg>
+        Starred
+    </button>
+    <button th:unless="${starred}"
+            class="kr-btn"
+            type="button"
+            th:attr="hx-post='/ui/page/' + ${pageId} + '/star'"
+            hx-target="this" hx-swap="outerHTML"
+            title="Star this page">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/>
+        </svg>
+        Star
+    </button>
+</th:block>

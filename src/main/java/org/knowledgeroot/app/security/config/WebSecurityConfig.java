@@ -22,6 +22,12 @@ public class WebSecurityConfig {
     protected SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(auth -> {
+                    // Star endpoints — require an authenticated (non-guest) user. Must come
+                    // before the /ui/page/** permitAll rule since the first match wins.
+                    auth.requestMatchers(HttpMethod.POST,   "/ui/page/*/star").hasAnyRole("USER", "ADMIN");
+                    auth.requestMatchers(HttpMethod.DELETE, "/ui/page/*/star").hasAnyRole("USER", "ADMIN");
+                    auth.requestMatchers(                   "/ui/sidebar/starred").hasAnyRole("USER", "ADMIN");
+
                     auth.requestMatchers(
                             "/",
                             "/favicon.ico",

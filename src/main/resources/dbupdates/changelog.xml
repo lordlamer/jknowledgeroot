@@ -34,4 +34,11 @@
                  splitStatements="true"
                  stripComments="true"/>
     </changeSet>
+    <changeSet id="1.0.2-user-page-star" author="claude" context="production,development">
+        <sqlFile path="changes/1.0.2-user-page-star.${db.name}.sql"
+                 encoding="UTF-8"
+                 relativeToChangelogFile="true"
+                 splitStatements="true"
+                 stripComments="true"/>
+    </changeSet>
 </databaseChangeLog>
