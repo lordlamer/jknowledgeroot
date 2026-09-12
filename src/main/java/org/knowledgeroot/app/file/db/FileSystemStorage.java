@@ -28,13 +28,25 @@ class FileSystemStorage implements FileStorage {
 
     @Override
     public void store(String hash, InputStream inputStream) {
+        Path temporary = null;
         try {
             Path targetLocation = storageLocation.resolve(hash);
-            if (!exists(hash)) {
-                Files.copy(inputStream, targetLocation, StandardCopyOption.REPLACE_EXISTING);
-            }
+            if (exists(hash)) return;
+            temporary = Files.createTempFile(storageLocation, ".upload-", ".tmp");
+            Files.copy(inputStream, temporary, StandardCopyOption.REPLACE_EXISTING);
+            // Readers only see a complete object, including after a failed upload/retry.
+            Files.move(temporary, targetLocation, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException ex) {
             throw new RuntimeException("Failed to store file.", ex);
+        } finally {
+            if (temporary != null) {
+                try {
+                    Files.deleteIfExists(temporary);
+                } catch (IOException ex) {
+                    org.slf4j.LoggerFactory.getLogger(FileSystemStorage.class)
+                            .warn("Could not remove temporary upload {}", temporary, ex);
+                }
+            }
         }
     }
 

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.page.domain.Page;
 import org.knowledgeroot.app.page.domain.PageCreationService;
+import org.knowledgeroot.app.page.domain.PageEditingService;
 import org.knowledgeroot.app.page.domain.PageDao;
 import org.knowledgeroot.app.page.domain.PageFilter;
 import org.knowledgeroot.app.page.domain.PageId;
@@ -33,6 +34,7 @@ public class PageRestController {
     private final PagePermissionDao pagePermissionDao;
     private final UserContext userContext;
     private final PageCreationService pageCreationService;
+    private final PageEditingService pageEditingService;
 
     private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
 
@@ -207,19 +209,8 @@ public class PageRestController {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
-        Page currentPage = pageImpl.findById(new PageId(id));
-
-        if (currentPage==null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        currentPage = pageDtoConverter.convertBtoA(pageDto);
-
-        pageImpl.updatePage(currentPage);
-
-        return new ResponseEntity<>(pageDto, HttpStatus.OK);
+        return ResponseEntity.ok(pageEditingService.update(new PageId(id), pageDto));
     }
-
     /**
      * delete page
      * @param id page id

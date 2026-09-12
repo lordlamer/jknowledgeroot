@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.file.domain.File;
 import org.knowledgeroot.app.file.domain.FileDao;
+import org.knowledgeroot.app.file.domain.FileUploadService;
 import org.knowledgeroot.app.file.domain.FileFilter;
 import org.knowledgeroot.app.page.domain.PageId;
 import org.knowledgeroot.app.page.domain.PagePermission;
@@ -39,6 +40,7 @@ class FileRestController {
     private final FileDao fileImpl;
     private final PagePermissionDao pagePermissionDao;
     private final UserContext userContext;
+    private final FileUploadService fileUploadService;
 
     private final FileDtoConverter fileDtoConverter = new FileDtoConverter();
 
@@ -171,12 +173,7 @@ class FileRestController {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
-        for (MultipartFile file : files) {
-            if (file == null || file.isEmpty()) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-            fileImpl.createFile(file, parentContent);
-        }
+        fileUploadService.upload(parentContent, files);
 
         HttpHeaders headers = new HttpHeaders();
         return new ResponseEntity<>(headers, HttpStatus.CREATED);

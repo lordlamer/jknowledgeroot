@@ -10,7 +10,7 @@ public interface FileDao {
 
     File findById(long id);
 
-    void createFile(MultipartFile file, Integer parentContent);
+    void createFile(MultipartFile file, Integer parentContent, Integer actor);
 
     void deleteFileById(long id);
 

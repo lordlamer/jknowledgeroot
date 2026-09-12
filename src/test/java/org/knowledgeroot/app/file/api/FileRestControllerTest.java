@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(FileRestController.class)
-@Import(WebSecurityConfig.class)
+@Import({WebSecurityConfig.class, org.knowledgeroot.app.file.domain.FileUploadService.class})
 class FileRestControllerTest {
     @Autowired private MockMvc mvc;
     @MockitoBean private FileDao files;
@@ -46,6 +46,35 @@ class FileRestControllerTest {
     void setUp() {
         when(userContext.getUserContext()).thenReturn(UserDetails.builder()
                 .userId("2").login("reader").role(UserDetails.Role.USER).build());
+    }
+
+    @Test
+    void batchUploadRejectsEmptyLaterFileBeforeSavingAnything() throws Exception {
+        when(userContext.getUserContext()).thenReturn(UserDetails.builder()
+                .userId("2").login("admin").role(UserDetails.Role.ADMIN).build());
+        when(permissions.hasUserPermission(new PageId(10), 2,
+                org.knowledgeroot.app.page.domain.PagePermission.PermissionLevel.EDIT)).thenReturn(true);
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart("/file")
+                        .file(new org.springframework.mock.web.MockMultipartFile("file", "valid.txt", "text/plain", new byte[]{1}))
+                        .file(new org.springframework.mock.web.MockMultipartFile("file", "empty.txt", "text/plain", new byte[]{}))
+                        .param("parentContent", "10").with(user("admin").roles("ADMIN"))
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isBadRequest());
+        verify(files, never()).createFile(any(), any(), any());
+    }
+
+    @Test
+    void uploadPassesSessionIdentityToMetadataWriter() throws Exception {
+        when(userContext.getUserContext()).thenReturn(UserDetails.builder()
+                .userId("2").login("admin").role(UserDetails.Role.ADMIN).build());
+        when(permissions.hasUserPermission(new PageId(10), 2,
+                org.knowledgeroot.app.page.domain.PagePermission.PermissionLevel.EDIT)).thenReturn(true);
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart("/file")
+                        .file(new org.springframework.mock.web.MockMultipartFile("file", "valid.txt", "text/plain", new byte[]{1}))
+                        .param("parentContent", "10").param("createdBy", "999").with(user("admin").roles("ADMIN"))
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isCreated());
+        verify(files).createFile(any(), eq(10), eq(2));
     }
 
     @Test

@@ -57,6 +57,26 @@ geladen. Der erstmalige Demo-Import in eine Datenbank mit vorhandenen Benutzern
 wird abgebrochen. Bereits ausgeführte Demo-Migrationen werden nicht wiederholt.
 Die historischen Demo-SQL-Dateien bleiben unverändert.
 
+### Start aus IntelliJ IDEA
+
+Für eine lokale Demo-/Entwicklungsdatenbank in der Run-Konfiguration von
+`KnowledgerootApplication` unter **Program arguments** ergänzen:
+
+```text
+--spring.profiles.active=development
+```
+
+Das Profil lädt `application-development.properties` und aktiviert dort den
+Demo-Modus. Ein lokales Override von `knowledgeroot.demo-data.enabled=false`
+verhindert diese Aktivierung weiterhin. Nicht gleichzeitig `production` aktivieren.
+
+Die Meldung `Active demo credentials found` kommt aus der Startprüfung: Mindestens
+ein aktives, nicht gelöschtes Konto verwendet noch den bekannten Demo-Passworthash,
+während der Demo-Modus ausgeschaltet ist. Ein Start aus der IDE aktiviert diesen
+Modus nicht automatisch. Für eine reguläre Installation die Konten wie im
+folgenden Upgrade-Abschnitt bereinigen; zusätzliche Bootstrap-Zugangsdaten setzen
+vorhandene Konten nicht zurück.
+
 ## Upgrade einer bestehenden Installation
 
 1. Vor dem Upgrade Datenbank und Dateien sichern. Die neue Version zunächst an

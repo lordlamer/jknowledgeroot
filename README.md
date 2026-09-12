@@ -6,6 +6,11 @@ Knowledgeroot Knowledgebase written in Java
 The [production readiness roadmap](docs/roadmap.md) tracks priorities, acceptance
 criteria, open decisions, and progress toward a production release.
 
+Page edits save content, labels, and submitted permissions in one database
+transaction. Multi-file uploads publish their metadata together and use the
+actual user's audit identity. See [transactions and storage failures](docs/transactions.md)
+for rollback behavior and the handling of unreferenced storage objects.
+
 ## Build and tests
 
 Install JDK 25 and set `JAVA_HOME` to its installation directory. Start a Docker

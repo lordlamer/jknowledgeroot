@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.file.domain.File;
 import org.knowledgeroot.app.file.domain.FileDao;
+import org.knowledgeroot.app.file.domain.FileUploadService;
 import org.knowledgeroot.app.page.domain.PageId;
 import org.knowledgeroot.app.page.domain.PagePermission;
 import org.knowledgeroot.app.page.domain.PagePermissionDao;
@@ -35,6 +36,7 @@ class FileController {
     private final FileDao fileDao;
     private final PagePermissionDao pagePermissionDao;
     private final UserContext userContext;
+    private final FileUploadService fileUploadService;
 
     private Integer getCurrentUserId() {
         UserDetails currentUser = userContext.getUserContext();
@@ -71,13 +73,13 @@ class FileController {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to upload files for this page");
             }
 
-            fileDao.createFile(file, pageId);
+            fileUploadService.upload(pageId, file);
             return new ModelAndView("redirect:/ui/page/" + pageId);
         } catch (ResponseStatusException e) {
             throw e;
         } catch (Exception e) {
             log.error("Failed to upload file: {}", e.getMessage(), e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not upload file: " + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not upload file");
         }
     }
 

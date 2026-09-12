@@ -4,7 +4,7 @@ import io.github.wimdeblauwe.htmx.spring.boot.mvc.HtmxRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.knowledgeroot.app.page.api.PageDto;
-import org.knowledgeroot.app.page.api.PageDtoConverter;
+
 import org.knowledgeroot.app.page.domain.*;
 import org.knowledgeroot.app.security.context.domain.UserContext;
 import org.knowledgeroot.app.security.context.domain.UserDetails;
@@ -41,7 +41,8 @@ public class PageController {
     private final GroupDao groupImpl;
     private final UserContext userContext;
     private final PageCreationService pageCreationService;
-    private final PageDtoConverter pageDtoConverter = new PageDtoConverter();
+    private final PageEditingService pageEditingService;
+
 
     /**
      * Get the current user ID for permission checks.
@@ -241,92 +242,10 @@ public class PageController {
             return new ModelAndView("redirect:/ui/page/" + pageId);
         }
 
-        pageDto.setId(pageId);
-        pageDto.setChangeDate(LocalDateTime.now());
-        pageDto.setChangedBy(currentUserId);
-        pageDto.setActive(true);
-        pageDto.setContent(pageDto.getContent());
-        pageDto.setTimeStart(LocalDateTime.now());
-        pageDto.setTimeEnd(LocalDateTime.now());
-        pageDto.setDeleted(false);
-        pageDto.setParent(null);
-
-        Page page = pageDtoConverter.convertBtoA(pageDto);
-        pageImpl.updatePage(page);
-
-        // Save labels (replace full set)
-        pageLabelDao.setForPage(pid, parseLabels(labelsJoined));
-
-        // Process permission changes
-        LocalDateTime now = LocalDateTime.now();
-
-        // Handle permission updates
-        if (permissionUpdates != null && !permissionUpdates.isEmpty()) {
-            for (Map.Entry<String, String> entry : permissionUpdates.entrySet()) {
-                Integer permissionId = Integer.valueOf(entry.getKey());
-                String newLevel = entry.getValue();
-
-                PagePermission permission = PagePermission.builder()
-                        .id(permissionId)
-                        .permissionLevel(PagePermission.PermissionLevel.fromString(newLevel))
-                        .changedBy(currentUserId)
-                        .changeDate(now)
-                        .build();
-
-                pagePermissionImpl.updatePermissionForPage(pid, permission);
-            }
-        }
-
-        // Handle permission deletions
-        if (permissionDeletions != null && !permissionDeletions.isEmpty()) {
-            for (String permissionIdStr : permissionDeletions) {
-                // Validate permission ID string
-                if (permissionIdStr == null || permissionIdStr.trim().isEmpty() || 
-                    "null".equals(permissionIdStr) || "undefined".equals(permissionIdStr)) {
-                    System.err.println("Invalid permission ID for deletion: " + permissionIdStr);
-                    continue; // Skip invalid permission IDs
-                }
-
-                try {
-                    Integer permissionId = Integer.valueOf(permissionIdStr.trim());
-                    pagePermissionImpl.deletePermissionForPage(pid, permissionId);
-                } catch (NumberFormatException e) {
-                    System.err.println("Failed to parse permission ID for deletion: " + permissionIdStr + " - " + e.getMessage());
-                    // Continue with other deletions instead of failing the entire operation
-                }
-            }
-        }
-
-        // Handle permission additions
-        if (permissionAdditions != null && !permissionAdditions.isEmpty()) {
-            for (Map<String, String> additionData : permissionAdditions) {
-                String roleType = additionData.get("roleType");
-                String roleIdStr = additionData.get("roleId");
-                String permissionLevel = additionData.get("permissionLevel");
-
-                Integer roleId = null;
-                if (roleIdStr != null && !roleIdStr.isEmpty() && !"null".equals(roleIdStr)) {
-                    roleId = Integer.valueOf(roleIdStr);
-                }
-
-                PagePermission permission = PagePermission.builder()
-                        .pageId(pid)
-                        .roleType(PagePermission.RoleType.fromString(roleType))
-                        .roleId(roleId)
-                        .permissionLevel(PagePermission.PermissionLevel.fromString(permissionLevel))
-                        .createdBy(currentUserId)
-                        .createDate(now)
-                        .changedBy(currentUserId)
-                        .changeDate(now)
-                        .build();
-
-                pagePermissionImpl.createPermission(permission);
-            }
-        }
-
-        return new ModelAndView("redirect:/ui/page/" + page.getPageId().value() + "?trigger=reload-sidebar");
+        pageEditingService.edit(pid, pageDto, parseLabels(labelsJoined),
+                permissionUpdates, permissionDeletions, permissionAdditions);
+        return new ModelAndView("redirect:/ui/page/" + pageId + "?trigger=reload-sidebar");
     }
-
     @PostMapping("/ui/page/new")
     public ModelAndView createNewPage(
             @ModelAttribute PageDto pageDto,
@@ -600,13 +519,8 @@ public class PageController {
             }
         }
 
-        // Convert to list in order
-        for (int i = 0; i < additionsByIndex.size(); i++) {
-            if (additionsByIndex.containsKey(i)) {
-                additions.add(additionsByIndex.get(i));
-            }
-        }
-
+        additionsByIndex.entrySet().stream().sorted(Map.Entry.comparingByKey())
+                .forEach(entry -> additions.add(entry.getValue()));
         return additions;
     }
 }

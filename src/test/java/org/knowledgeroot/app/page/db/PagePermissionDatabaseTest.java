@@ -6,6 +6,7 @@ import org.knowledgeroot.app.config.LiquibaseConfig;
 import org.knowledgeroot.app.page.domain.PageId;
 import org.knowledgeroot.app.page.domain.PagePermission;
 import org.knowledgeroot.app.page.domain.PageCreationService;
+import org.knowledgeroot.app.page.domain.PageEditingService;
 import org.knowledgeroot.app.page.domain.PageLabelDao;
 import org.knowledgeroot.app.page.api.PageDto;
 import org.knowledgeroot.app.file.domain.FileDao;
@@ -28,6 +29,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.List;
+import java.util.Map;
 import javax.sql.DataSource;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -267,6 +269,105 @@ class PagePermissionDatabaseTest {
     @Configuration(proxyBeanMethods = false)
     @EnableTransactionManagement
     static class Transactions {}
+
+    @Test
+    void labelFailureRollsBackContentAuditAndLabelReplacement() {
+        PageLabelImpl labels = spy(new PageLabelImpl(JdbcClient.create(dataSource)));
+        labels.setForPage(page, List.of("original"));
+        var before = jdbc.queryForMap("SELECT * FROM page WHERE id = 100");
+        doAnswer(call -> {
+            call.callRealMethod();
+            throw new DataIntegrityViolationException("failure after replacing labels");
+        }).when(labels).setForPage(page, List.of("replacement"));
+        editingContext(UserDetails.Role.ADMIN, labels).run(context -> {
+            assertThrows(DataIntegrityViolationException.class, () -> context.getBean(PageEditingService.class)
+                    .edit(page, editDto(), List.of("replacement"), Map.of(), List.of(), List.of()));
+            assertEquals(before, jdbc.queryForMap("SELECT * FROM page WHERE id = 100"));
+            assertEquals(List.of("original"), labels.listForPage(page));
+            assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM tag WHERE name = 'replacement'", Integer.class));
+        });
+    }
+
+    @Test
+    void latePermissionFailureRollsBackContentLabelsAndEveryGrantChange() {
+        var labels = new PageLabelImpl(JdbcClient.create(dataSource));
+        labels.setForPage(page, List.of("original"));
+        grant(PagePermission.RoleType.USER, 10, VIEW);
+        grant(PagePermission.RoleType.GROUP, 20, VIEW);
+        var grants = permissions.listPermissionsByPageId(page);
+        int updated = grants.get(0).getId();
+        int deleted = grants.get(1).getId();
+        var before = jdbc.queryForList("SELECT * FROM page_permission ORDER BY id");
+        editingContext(UserDetails.Role.ADMIN, labels).run(context -> {
+            assertThrows(ResponseStatusException.class, () -> context.getBean(PageEditingService.class).edit(
+                    page, editDto(), List.of("replacement"), Map.of("" + updated, "edit"), List.of("" + deleted),
+                    List.of(Map.of("roleType", "guest", "permissionLevel", "view"),
+                            Map.of("roleType", "guest", "permissionLevel", "invalid"))));
+            assertEquals("protected", jdbc.queryForObject("SELECT name FROM page WHERE id = 100", String.class));
+            assertEquals(List.of("original"), labels.listForPage(page));
+            assertEquals(before, jdbc.queryForList("SELECT * FROM page_permission ORDER BY id"));
+        });
+    }
+
+    @Test
+    void foreignPermissionIdRollsBackEditorSubmission() {
+        var labels = new PageLabelImpl(JdbcClient.create(dataSource));
+        editingContext(UserDetails.Role.ADMIN, labels).run(context -> {
+            assertThrows(IllegalStateException.class, () -> context.getBean(PageEditingService.class)
+                    .edit(page, editDto(), List.of("replacement"), Map.of("99999", "edit"), List.of(), List.of()));
+            assertEquals("protected", jdbc.queryForObject("SELECT name FROM page WHERE id = 100", String.class));
+            assertTrue(labels.listForPage(page).isEmpty());
+        });
+    }
+
+    @Test
+    void successfulEditCommitsTogetherAndPreservesCreationAndScheduling() {
+        var labels = new PageLabelImpl(JdbcClient.create(dataSource));
+        jdbc.update("UPDATE page SET time_start = '2026-01-02 03:04:05', active = FALSE WHERE id = 100");
+        var original = jdbc.queryForMap("SELECT created_by, create_date, time_start, active FROM page WHERE id = 100");
+        editingContext(UserDetails.Role.ADMIN, labels).run(context -> {
+            context.getBean(PageEditingService.class).edit(page, editDto(), List.of("replacement"), Map.of(), List.of(),
+                    List.of(Map.of("roleType", "guest", "permissionLevel", "view")));
+            assertEquals("updated", jdbc.queryForObject("SELECT name FROM page WHERE id = 100", String.class));
+            assertEquals(12, jdbc.queryForObject("SELECT changed_by FROM page WHERE id = 100", Integer.class));
+            assertEquals(original, jdbc.queryForMap("SELECT created_by, create_date, time_start, active FROM page WHERE id = 100"));
+            assertEquals(List.of("replacement"), labels.listForPage(page));
+            var grant = permissions.listPermissionsByPageId(page).getFirst();
+            assertEquals(12, grant.getCreatedBy());
+            assertEquals(12, grant.getChangedBy());
+        });
+    }
+
+    @Test
+    void guestEditAndRestUpdateUseActualAuditIdentity() {
+        var labels = new PageLabelImpl(JdbcClient.create(dataSource));
+        grant(PagePermission.RoleType.GUEST, null, EDIT);
+        editingContext(UserDetails.Role.GUEST, labels).run(context -> {
+            context.getBean(PageEditingService.class).edit(page, editDto(), List.of(), Map.of(), List.of(), List.of());
+            assertNull(jdbc.queryForObject("SELECT changed_by FROM page WHERE id = 100", Integer.class));
+        });
+        editingContext(UserDetails.Role.USER, labels).run(context -> {
+            var result = context.getBean(PageEditingService.class).update(page, editDto());
+            assertEquals(10, result.getChangedBy());
+            assertEquals(12, result.getCreatedBy());
+            assertEquals(10, jdbc.queryForObject("SELECT changed_by FROM page WHERE id = 100", Integer.class));
+        });
+    }
+
+    private PageDto editDto() {
+        return PageDto.builder().id(999).name("updated").content("<p>new text</p>")
+                .createdBy(999).changedBy(999).active(true).deleted(false).build();
+    }
+
+    private ApplicationContextRunner editingContext(UserDetails.Role role, PageLabelDao labels) {
+        UserContext users = mock(UserContext.class);
+        when(users.getUserContext()).thenReturn(UserDetails.builder()
+                .userId(role == UserDetails.Role.ADMIN ? "12" : "10").role(role).build());
+        return new ApplicationContextRunner().withUserConfiguration(Transactions.class)
+                .withBean("transactionManager", DataSourceTransactionManager.class, () -> new DataSourceTransactionManager(dataSource))
+                .withBean(PageEditingService.class, () -> new PageEditingService(
+                        new PageImpl(mock(FileDao.class), JdbcClient.create(dataSource)), permissions, labels, users));
+    }
 
     private ApplicationContextRunner creationContext(UserDetails.Role role, boolean allowGuestRoot, PageLabelDao labels) {
         UserContext users = mock(UserContext.class);

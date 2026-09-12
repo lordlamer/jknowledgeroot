@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest({PageController.class, PageRestController.class})
-@Import({WebSecurityConfig.class, PageCreationService.class})
+@Import({WebSecurityConfig.class, PageCreationService.class, PageEditingService.class})
 class PageAccessWebTest {
     @Autowired MockMvc mvc;
     @Autowired PageCreationService creation;
@@ -155,6 +155,33 @@ class PageAccessWebTest {
         mvc.perform(post("/ui/page/100/edit").with(caller).with(csrf()).param("name", "updated"))
                 .andExpect(status().is3xxRedirection());
         verify(pages).updatePage(any());
+    }
+
+    @Test
+    void editorProcessesPermissionAdditionsWithGapsInFormIndices() throws Exception {
+        as(UserDetails.Role.ADMIN);
+        mvc.perform(post("/ui/page/100/edit").with(caller).with(csrf()).param("name", "updated")
+                        .param("permissionAdditions[3][roleType]", "guest")
+                        .param("permissionAdditions[3][permissionLevel]", "view"))
+                .andExpect(status().is3xxRedirection());
+        verify(permissions).createPermission(argThat(grant -> grant.getRoleType() == PagePermission.RoleType.GUEST
+                && grant.getRoleId() == null && grant.getCreatedBy() == 1));
+    }
+
+    @Test
+    void restUpdateDiscardsForgedAuditAndReturnsStoredCreationIdentity() throws Exception {
+        as(UserDetails.Role.ADMIN);
+        when(pages.findById(pageId)).thenReturn(Page.builder().pageId(pageId).name("old")
+                .createdBy(42).createDate(java.time.LocalDateTime.of(2020, 1, 1, 0, 0)).build());
+        mvc.perform(put("/page/100").with(caller).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"id":100,"name":"updated","content":"text","active":true,"deleted":false,
+                                 "createdBy":999,"changedBy":999,"changeDate":"2000-01-01T00:00:00"}
+                                """))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.createdBy").value(42))
+                .andExpect(jsonPath("$.changedBy").value(1));
+        verify(pages).updatePage(argThat(page -> page.getChangedBy() == 1 && page.getCreatedBy() == 42
+                && page.getChangeDate().getYear() > 2000));
     }
 
     @Test

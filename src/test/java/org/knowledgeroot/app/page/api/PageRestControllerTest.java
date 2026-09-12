@@ -42,6 +42,7 @@ class PageRestControllerTest {
     private PageDao pages;
     @MockitoBean
     private PageCreationService pageCreationService;
+    @MockitoBean private org.knowledgeroot.app.page.domain.PageEditingService pageEditingService;
     @MockitoBean
     private PagePermissionDao permissions;
     @MockitoBean

@@ -37,7 +37,7 @@ class FileControllerTest {
         when(pagePermissionDao.hasUserPermission(any(PageId.class), any(), eq(PagePermission.PermissionLevel.EDIT)))
                 .thenReturn(false);
 
-        FileController controller = new FileController(fileDao, pagePermissionDao, userContext);
+        FileController controller = new FileController(fileDao, pagePermissionDao, userContext, mock(org.knowledgeroot.app.file.domain.FileUploadService.class));
 
         MockMultipartFile multipartFile = new MockMultipartFile(
                 "file",
@@ -52,7 +52,7 @@ class FileControllerTest {
         );
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        verify(fileDao, never()).createFile(any(), any());
+        verify(fileDao, never()).createFile(any(), any(), any());
     }
 
     @Test
@@ -72,7 +72,7 @@ class FileControllerTest {
         when(pagePermissionDao.hasUserPermission(any(PageId.class), any(), eq(PagePermission.PermissionLevel.VIEW)))
                 .thenReturn(false);
 
-        FileController controller = new FileController(fileDao, pagePermissionDao, userContext);
+        FileController controller = new FileController(fileDao, pagePermissionDao, userContext, mock(org.knowledgeroot.app.file.domain.FileUploadService.class));
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         controller.downloadFile(response, 1, "secret.txt");
@@ -98,7 +98,7 @@ class FileControllerTest {
         when(pagePermissionDao.hasUserPermission(any(PageId.class), any(), eq(PagePermission.PermissionLevel.EDIT)))
                 .thenReturn(false);
 
-        FileController controller = new FileController(fileDao, pagePermissionDao, userContext);
+        FileController controller = new FileController(fileDao, pagePermissionDao, userContext, mock(org.knowledgeroot.app.file.domain.FileUploadService.class));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> controller.deleteFile(7));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());

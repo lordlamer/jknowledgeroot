@@ -15,9 +15,9 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: R09 – Schreibvorgänge atomar machen.**
+**Nächster Schritt: R10 – Validierung, Fehlerfälle und Suchabfragen verbessern.**
 
-R01 bis R08 sind abgeschlossen. R09 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
+R01 bis R09 sind abgeschlossen. R10 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
 
 ## 1. Build und Sicherheit
 
@@ -121,10 +121,15 @@ R01 bis R08 sind abgeschlossen. R09 bis R15 sind offen; die Produktionsfreigabe 
 
 ### R09 – Schreibvorgänge atomar machen
 
-- [ ] Offen
+- [x] Erledigt am 12. September 2026
 - **Befund:** Beim Bearbeiten werden Seiteninhalt, Labels und Berechtigungen noch in getrennten Transaktionen gespeichert. Ein später Fehler kann teilweise gespeicherte Änderungen hinterlassen. Die Neuerstellung über UI und REST ist seit R05 bereits gemeinsam transaktional abgesichert.
 - **Umsetzung:** Zusammengehörige Änderungen in transaktionale Anwendungsservices verschieben; Auditfelder mit dem tatsächlichen Benutzer befüllen. Dateiablage und Metadaten benötigen eine definierte Fehlerbehandlung, da ein Object Store nicht an der Datenbanktransaktion teilnimmt.
 - **Abnahme:** Ein Fehler beim Speichern von Labels oder Rechten rollt den gesamten fachlichen Datenbankvorgang zurück. Uploadfehler erzeugen keine als erfolgreich angezeigten, unvollständigen Dateien. Auditfelder sind korrekt.
+- **Umgesetzt:** `PageEditingService` prüft Bearbeitungsrechte und speichert Seiteninhalt, Änderungs-Audit, Labels sowie alle über das Formular gesendeten Rechteänderungen in einer Transaktion. Ungültige Rechtelöschungen werden abgelehnt; neue Rechte werden auch bei Lücken in den Formularindizes verarbeitet. Lokale Rechte bleiben Administratoren vorbehalten. Erstellungsdaten, Elternseite und die im Formular nicht bearbeitete Zeitplanung/Aktivierung bleiben erhalten. REST-Updates laufen ebenfalls über den Service und übernehmen Benutzer-ID und Änderungszeit vom Server; die Antwort enthält die tatsächlichen Auditwerte.
+- **Dateien:** `FileUploadService` verbindet UI- und REST-Upload. Vor dem ersten Schreiben werden alle Dateien eines Requests geprüft; sämtliche Metadaten eines Batches werden gemeinsam committet oder zurückgerollt. Die Auditfelder verwenden die aktuelle Benutzer-ID beziehungsweise `NULL` für Gäste. Dateistreams werden geschlossen. Der lokale Treiber schreibt zunächst temporär und veröffentlicht nur vollständige Dateien durch atomare Verschiebung. Fehlerdetails werden nicht mehr an die UI-Uploadfehlermeldung angehängt. Datei- und Rechte-Mapper erhalten anonyme Auditwerte als `NULL`.
+- **Fehlerregel für Storage:** Bereits vollständig gespeicherte Objekte können nach einem Datenbankfehler ohne Referenz zurückbleiben. Sie werden nicht als Anhänge veröffentlicht und beim Rollback nicht automatisch gelöscht, weil dieselben Hash-Objekte parallel oder von bestehenden Anhängen verwendet werden können. Sichere Bereinigung und weitere Storage-Härtung bleiben R11. Die Regel und ihre Betriebsgrenzen sind in [transactions.md](transactions.md) dokumentiert.
+- **Geprüft:** `.\mvnw.cmd -B --no-transfer-progress verify`: **BUILD SUCCESS**, insgesamt **179 Tests erfasst, 169 erfolgreich und 10 bereits zuvor deaktiviert**, keine Fehler. 15 neue Fälle prüfen unter anderem Rollback nach tatsächlicher Labelersetzung und mehreren Rechteänderungen, nicht zugehörige Rechte-IDs, vollständige erfolgreiche Bearbeitung, echte Auditidentität, Batch-Rollback bei Speicher- und Datenbankfehlern, Validierung vor dem ersten Upload, Gast-Audit und unterbrochenes lokales Schreiben mit erfolgreichem Wiederholen. HTTP-Tests decken zusätzlich gefälschte Auditwerte, lückenhafte Formularindizes und Batch-Validierung ab. Der bestehende JAR-/Chromium-Test mit MariaDB und MinIO besteht weiterhin. `git diff --check` ohne Fehler.
+- **Testgrenzen:** Datenbank-Rollback wird gegen echte MariaDB mit transaktionalen Spring-Proxys geprüft; Storage-Fehler werden mit dem lokalen Treiber gezielt ausgelöst. MinIO-Fehler, Prozessabbruch während eines Commits, gehostete CI, sichere Objektbereinigung und umfassende Parallelitätstests sind nicht abgedeckt. Atomare lokale Veröffentlichung benötigt Unterstützung durch das Speicherdateisystem. Veraltete Bearbeitungsstände werden weiterhin erst in R15 erkannt. Keine Schemaänderung; keine Produktionsfreigabe.
 
 ### R10 – Validierung, Fehlerfälle und Suchabfragen verbessern
 
@@ -136,8 +141,8 @@ R01 bis R08 sind abgeschlossen. R09 bis R15 sind offen; die Produktionsfreigabe 
 ### R11 – Speichertreiber und Uploads absichern
 
 - [ ] Offen
-- **Befund:** Auch bei `storage.driver=file` wird MinIO initialisiert und kontaktiert. Uploads verwenden MD5 zur Inhaltsadressierung, lesen die Datei zum Hashen vollständig in den Speicher und setzen Audit-Benutzer fest auf `1`.
-- **Umsetzung:** Storage-Beans bedingt aktivieren; lokale Speicherung ohne MinIO ermöglichen; Streaming und geeignetes Hashverfahren mit Bestandskompatibilität vorsehen; Dateinamen, Downloadheader und Uploadgrenzen sauber behandeln. Gleichzeitige Uploads und fehlgeschlagene Schreibvorgänge berücksichtigen.
+- **Befund:** Auch bei `storage.driver=file` wird MinIO initialisiert und kontaktiert. Uploads verwenden MD5 zur Inhaltsadressierung und lesen die Datei zum Hashen vollständig in den Speicher. Audit-Benutzer, Batch-Metadatentransaktion und atomare lokale Veröffentlichung sind seit R09 korrigiert; nach Fehlern können unreferenzierte Objekte beziehungsweise nach Prozessabbruch temporäre Dateien zurückbleiben.
+- **Umsetzung:** Storage-Beans bedingt aktivieren; lokale Speicherung ohne MinIO ermöglichen; Streaming und geeignetes Hashverfahren mit Bestandskompatibilität vorsehen; Dateinamen, Downloadheader und Uploadgrenzen sauber behandeln. Gleichzeitige Uploads und fehlgeschlagene Schreibvorgänge berücksichtigen; eine sichere Bereinigung unreferenzierter Objekte und temporärer Uploadreste festlegen.
 - **Abnahme:** Dateispeicher startet ohne MinIO-Konfiguration und Netzwerkzugriff auf MinIO. Beide Treiber bestehen Upload-/Downloadtests einschließlich Grenz- und Fehlerfällen. Bereits gespeicherte Dateien bleiben lesbar.
 
 ## 4. Betrieb und Release-Freigabe

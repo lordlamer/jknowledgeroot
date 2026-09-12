@@ -36,9 +36,9 @@ public class FileImpl implements FileDao {
         file.setSize(rs.getInt("size"));
         file.setType(rs.getString("type"));
         file.setDownloads(rs.getInt("downloads"));
-        file.setCreatedBy(rs.getInt("created_by"));
+        file.setCreatedBy(rs.getObject("created_by", Integer.class));
         file.setCreateDate(rs.getTimestamp("create_date").toLocalDateTime());
-        file.setChangedBy(rs.getInt("changed_by"));
+        file.setChangedBy(rs.getObject("changed_by", Integer.class));
         file.setChangeDate(rs.getTimestamp("change_date").toLocalDateTime());
         file.setDeleted(rs.getBoolean("deleted"));
         return file;
@@ -72,7 +72,7 @@ public class FileImpl implements FileDao {
     }
 
     @Override
-    public void createFile(MultipartFile file, Integer pageId) {
+    public void createFile(MultipartFile file, Integer pageId, Integer actor) {
         try {
             // Generate MD5 hash
             MessageDigest md = MessageDigest.getInstance("MD5");
@@ -82,7 +82,9 @@ public class FileImpl implements FileDao {
 
             // Store file content if it doesn't exist
             if (!fileStorage.exists(hash)) {
-                fileStorage.store(hash, file.getInputStream());
+                try (InputStream input = file.getInputStream()) {
+                    fileStorage.store(hash, input);
+                }
             }
 
             // Store metadata in database
@@ -91,16 +93,17 @@ public class FileImpl implements FileDao {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
+            LocalDateTime now = LocalDateTime.now();
             jdbcTemplate.update(sql,
                     pageId,
                     hash,
                     file.getOriginalFilename(),
                     file.getSize(),
                     file.getContentType(),
-                    1, // TODO: Get actual user ID
-                    LocalDateTime.now(),
-                    1, // TODO: Get actual user ID
-                    LocalDateTime.now()
+                    actor,
+                    now,
+                    actor,
+                    now
             );
         } catch (IOException | NoSuchAlgorithmException ex) {
             throw new RuntimeException("Failed to create file", ex);

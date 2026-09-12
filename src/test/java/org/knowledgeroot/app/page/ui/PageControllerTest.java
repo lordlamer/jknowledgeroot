@@ -67,7 +67,7 @@ class PageControllerTest {
     @BeforeEach
     void setUp() {
         pageController = new PageController(pageImpl, pagePermissionImpl, pageStarDao,
-                pageCommentDao, pageLabelDao, userImpl, groupImpl, userContext, pageCreationService);
+                pageCommentDao, pageLabelDao, userImpl, groupImpl, userContext, pageCreationService, mock(org.knowledgeroot.app.page.domain.PageEditingService.class));
     }
 
     @Test
