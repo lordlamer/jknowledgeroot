@@ -2,6 +2,8 @@ package org.knowledgeroot.app.security.config;
 
 import lombok.RequiredArgsConstructor;
 import org.knowledgeroot.app.security.auth.DatabaseAuthentificationProvider;
+import org.knowledgeroot.app.security.auth.SessionUserValidationFilter;
+import org.knowledgeroot.app.security.context.domain.UserContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,16 +13,27 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
+import org.springframework.security.web.context.DelegatingSecurityContextRepository;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class WebSecurityConfig {
     private final DatabaseAuthentificationProvider authProvider;
+    private final UserContext userContext;
 
     @Bean
     protected SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        SecurityContextRepository contextRepository = new DelegatingSecurityContextRepository(
+                new RequestAttributeSecurityContextRepository(), new HttpSessionSecurityContextRepository());
         return http
+                .securityContext(context -> context.securityContextRepository(contextRepository))
+                .addFilterBefore(new SessionUserValidationFilter(userContext, contextRepository),
+                        AnonymousAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> {
                     // Star endpoints — require an authenticated (non-guest) user. Must come
                     // before the /ui/page/** permitAll rule since the first match wins.

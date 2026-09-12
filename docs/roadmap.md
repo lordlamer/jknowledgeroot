@@ -15,9 +15,9 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: R03 – Echten Login und Sitzungen korrigieren.**
+**Nächster Schritt: R04 – Sichere Ersteinrichtung und Migrationen.**
 
-R01 und R02 sind abgeschlossen. R03 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
+R01 bis R03 sind abgeschlossen. R04 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
 
 ## 1. Build und Sicherheit
 
@@ -44,10 +44,15 @@ R01 und R02 sind abgeschlossen. R03 bis R15 sind offen; die Produktionsfreigabe 
 
 ### R03 – Echten Login und Sitzungen korrigieren
 
-- [ ] Offen
+- [x] Erledigt am 12. September 2026
 - **Befund:** Das vom AuthenticationProvider erzeugte `KnowledgerootUserToken` meldet `isAuthenticated=false`; ein isolierter Laufzeittest bestätigt dies. Tests mit `@WithMockUser` prüfen diesen Login-Pfad nicht.
 - **Umsetzung:** Authentifizierungsstatus korrekt setzen; Login, geschützte Folgerequests und Logout mit echten Anwendungstokens testen; Verhalten bestehender Sitzungen bei Kontosperrung und Rollenentzug festlegen und durchsetzen.
 - **Abnahme:** Erfolgreicher Login erlaubt berechtigte Folgerequests, fehlgeschlagener Login keine. Logout beendet die Sitzung. Kontosperrung und Rechteentzug wirken gemäß dokumentierter Regel.
+- **Umgesetzt:** Der Provider erzeugt nach erfolgreicher Passwort- und Kontoprüfung ein authentifiziertes Anwendungstoken; dessen Rollen stammen aus dem geladenen Benutzerkonto. Ungültige Zugangsdaten und fehlerhafte Legacy-Hashformate führen zur kontrollierten Login-Ablehnung. Login und Kontosuche normalisieren den Namen mit `Locale.ROOT`. Ein nicht authentifiziertes Token liefert keinen angemeldeten Benutzerkontext mehr.
+- **Sitzungsregel:** Vor der Autorisierung eines Folgerequests wird das aktive, nicht gelöschte Konto anhand seiner unveränderlichen Benutzer-ID neu geladen. Sperrung, Löschung und jede Änderung zwischen USER und ADMIN beenden die jeweilige Sitzung bei ihrem nächsten Request; anschließend ist eine neue Anmeldung nötig. Eine Umbenennung aktualisiert den Sitzungskontext unter Beibehaltung der Benutzer-ID. Datenbankfehler brechen den Request vor dem Anwendungsendpunkt ab. Bereits laufende Requests werden nicht nachträglich abgebrochen. Logout beendet die aktuelle Sitzung.
+- **Persistenz:** Login und Sitzungsprüfung verwenden ausdrücklich dasselbe SecurityContextRepository. Aktualisierte Kontexte werden gespeichert, ohne das Kontextobjekt paralleler Requests zu verändern. Die bisher berechnete Serialisierungskennung des Anwendungstokens ist explizit festgeschrieben; alte, nicht authentifizierte Tokens werden bei erneuter Verwendung abgemeldet. Die Betriebsregeln sind auch im README dokumentiert.
+- **Geprüft:** `.\mvnw.cmd -B --no-transfer-progress verify`: **BUILD SUCCESS**, 75 Tests erfasst, davon **65 erfolgreich und 10 bereits zuvor deaktiviert**, keine Fehler. 20 neue Fälle prüfen echten Formularlogin, geschützte Folgerequests, Fehlversuche, defekte Hashformate, CSRF bei Login und Logout, Wechsel der Session-ID beim Login, Logout, mehrere Sitzungen eines gesperrten Kontos, beide Richtungen einer Rollenänderung, Umbenennung mit Wiedervergabe des alten Logins, Serialisierung und Wiederherstellung des SecurityContext, alte Tokens, Datenbankausfall und serverunabhängige Namensnormalisierung. `git diff --check` ohne Fehler.
+- **Testgrenzen:** Die neuen Tests verwenden den echten Provider, Benutzerkontext und die Security-Filterkette mit `MockHttpSession`; Datenbankzugriffe sind gemockt. SQL gegen MariaDB, JDBC-Sitzungspersistenz und ein Deployment mit mehreren Instanzen bleiben in R13. Pro authentifiziertem Request fällt eine Kontodatenbankabfrage an. Modernisierung der Passwortspeicherung und Login-Drosselung bleiben in R06; die alten Spring-Session-Abhängigkeiten werden in R07 bereinigt.
 
 ### R04 – Sichere Ersteinrichtung und Migrationen
 
@@ -161,3 +166,8 @@ Referenzen für R01:
 
 - [Apache Maven: Distributionen](https://maven.apache.org/download.cgi)
 - [Apache Maven Wrapper: Aktualisierung und Prüfsummen](https://maven.apache.org/tools/wrapper/)
+
+Referenzen für R03:
+
+- [Spring Security: SecurityContext und Sitzungspersistenz](https://docs.spring.io/spring-security/reference/servlet/authentication/persistence.html)
+- [Spring Security: Logout und Sitzungsinvalidierung](https://docs.spring.io/spring-security/reference/servlet/authentication/logout.html)

@@ -8,6 +8,8 @@ import org.knowledgeroot.app.security.context.domain.UserNotFoundException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
 
+import java.util.Locale;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -16,8 +18,18 @@ class UserContextImpl implements UserContextDao {
 
     @Override
     public UserDetails getUserDetails(String name) {
-        return jdbcClient.sql("SELECT * FROM user WHERE login = :login AND active = 1 AND deleted = 0")
-                .param("login", name)
+        return findUser(jdbcClient.sql("SELECT * FROM user WHERE BINARY LOWER(login) = :login AND active = 1 AND deleted = 0")
+                .param("login", name.toLowerCase(Locale.ROOT)));
+    }
+
+    @Override
+    public UserDetails getUserDetailsById(String userId) {
+        return findUser(jdbcClient.sql("SELECT * FROM user WHERE id = :id AND active = 1 AND deleted = 0")
+                .param("id", userId));
+    }
+
+    private UserDetails findUser(JdbcClient.StatementSpec query) {
+        return query
                 .query((rs, rowNum) -> UserDetails.builder()
                         .userId(rs.getString("id"))
                         .login(rs.getString("login"))

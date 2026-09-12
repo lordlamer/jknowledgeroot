@@ -23,7 +23,7 @@ public class UserContext {
         }
 
         // if the user is authenticated with token, return user context
-        if(authentication instanceof KnowledgerootUserToken) {
+        if(authentication instanceof KnowledgerootUserToken && authentication.isAuthenticated()) {
             return (UserDetails) authentication.getDetails();
         }
 
@@ -39,6 +39,10 @@ public class UserContext {
      */
     public UserDetails getUserContextForLogin(String name) {
         return userContextDao.getUserDetails(name);
+    }
+
+    public UserDetails getUserContextForId(String userId) {
+        return userContextDao.getUserDetailsById(userId);
     }
 
     /**

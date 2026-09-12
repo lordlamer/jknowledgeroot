@@ -29,6 +29,22 @@ executable JAR in `target/`. The two existing disabled integration test classes
 are tracked in roadmap item R13; a successful build does not yet verify a real
 database or storage deployment.
 
+## Login and sessions
+
+Each authenticated request reloads the account by its stable user ID. Disabling
+or deleting an account, or changing its USER/ADMIN role, invalidates each existing
+session on its next request. A role change requires a new login. Renaming an
+account keeps its identity and refreshes the login name in the session.
+
+Logout invalidates the current session. Login and logout require a CSRF token;
+a successful login rotates an existing session ID. If account validation cannot
+reach the database, the request fails before reaching the application endpoint.
+Previously stored unauthenticated application tokens require a new login.
+
+These rules are covered by tests using the real authentication provider and
+security filter chain with a mocked account database. Database-backed session
+integration tests remain part of roadmap item R13.
+
 ## Local configuration
 
 The project uses environment variables for credentials and runtime settings.

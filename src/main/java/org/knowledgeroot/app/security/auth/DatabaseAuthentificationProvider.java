@@ -4,18 +4,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.security.context.domain.UserContext;
 import org.knowledgeroot.app.security.context.domain.UserDetails;
+import org.knowledgeroot.app.security.context.domain.UserNotFoundException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Locale;
 
 /**
  * Database authentication provider
@@ -31,50 +30,41 @@ public class DatabaseAuthentificationProvider implements AuthenticationProvider 
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        Authentication userAuth = null;
-
-        String login = authentication.getName();
+        String login = authentication.getName().toLowerCase(Locale.ROOT);
+        if (authentication.getCredentials() == null) {
+            throw new BadCredentialsException("Invalid username or password");
+        }
         String password = authentication.getCredentials().toString();
-
-        String dbPassword = "";
         try {
-            dbPassword = jdbcTemplate.queryForObject(AUTH_SQL, new Object[]{login.toLowerCase()}, String.class);
-        } catch(EmptyResultDataAccessException e) {
-            log.debug("Could not find user in database: {}", login);
-        }
-
-        // check login
-        // check plain text password with database password
-        if (PasswordHasher.verify(password, dbPassword)) {
+            String dbPassword = jdbcTemplate.queryForObject(AUTH_SQL, String.class, login);
+            if (!matchesPassword(password, dbPassword)) {
+                throw new BadCredentialsException("Invalid username or password");
+            }
+            UserDetails user = userContext.getUserContextForLogin(login);
+            if (user.isGuest()) {
+                throw new BadCredentialsException("Invalid username or password");
+            }
             log.info("Login success for user: {}", login);
-
-            // get user details
-            UserDetails userDetails = userContext.getUserContextForLogin(login);
-
-            // build spring auth object for session
-            List<GrantedAuthority> grantedAuths = new ArrayList<>();
-
-            // add admin role if user is admin
-            if(userDetails.isAdmin()) {
-                grantedAuths.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-            }
-
-            // add user role if user is user or admin
-            if(userDetails.isUser() || userDetails.isAdmin()) {
-                grantedAuths.add(new SimpleGrantedAuthority("ROLE_USER"));
-            }
-
-            // create auth object
-            userAuth = new KnowledgerootUserToken(userDetails, grantedAuths);
-        } else {
-            log.info("Login failed for user: {}", login);
+            return new KnowledgerootUserToken(user);
+        } catch (EmptyResultDataAccessException | UserNotFoundException e) {
+            throw new BadCredentialsException("Invalid username or password");
         }
+    }
 
-        return userAuth;
+    private boolean matchesPassword(String password, String hash) {
+        if (hash == null) {
+            return false;
+        }
+        try {
+            return PasswordHasher.verify(password, hash);
+        } catch (IllegalArgumentException | IndexOutOfBoundsException e) {
+            // A malformed legacy hash must fail authentication, not fail the request.
+            return false;
+        }
     }
 
     @Override
     public boolean supports(Class<?> authentication) {
-        return authentication.equals(UsernamePasswordAuthenticationToken.class);
+        return UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication);
     }
 }
