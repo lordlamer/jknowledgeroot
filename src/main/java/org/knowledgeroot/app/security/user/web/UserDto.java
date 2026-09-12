@@ -14,6 +14,7 @@ class UserDto {
     private String lastName;
     private String login;
     private String email;
+    @ToString.Exclude
     private String password;
     private Boolean admin;
 }

@@ -53,6 +53,15 @@ See the [access-control guide](docs/access-control.md) for the complete rules.
 
 ## Login and sessions
 
+New passwords use PBKDF2-HMAC-SHA-256 with 600,000 iterations. Legacy hashes migrate
+after a successful login; known demo credentials still require an explicit password
+change. Password updates invalidate existing sessions on their next request.
+New passwords have 16–128 characters, with whitespace preserved in both UI and API.
+
+Login quotas are shared through MariaDB: by default, five attempts per account and
+30 per source address in 60 seconds. See the [authentication guide](docs/authentication.md)
+for configuration, proxy behavior, migration rules, and upgrade implications.
+
 Each authenticated request reloads the account by its stable user ID. Disabling
 or deleting an account, or changing its USER/ADMIN role, invalidates each existing
 session on its next request. A role change requires a new login. Renaming an
@@ -63,9 +72,9 @@ a successful login rotates an existing session ID. If account validation cannot
 reach the database, the request fails before reaching the application endpoint.
 Previously stored unauthenticated application tokens require a new login.
 
-These rules are covered by tests using the real authentication provider and
-security filter chain with a mocked account database. Database-backed session
-integration tests remain part of roadmap item R13.
+HTTP/session rules are tested with the real provider and security filter chain
+with mocked database access. Hash migration and shared login quotas also have real
+MariaDB tests. Full HTTP/JDBC-session integration remains part of roadmap item R13.
 
 ## Local configuration
 

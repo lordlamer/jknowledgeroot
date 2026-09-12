@@ -14,8 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextImpl;
@@ -28,6 +26,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Locale;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -38,20 +37,22 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(SessionTestController.class)
-@Import({WebSecurityConfig.class, DatabaseAuthentificationProvider.class, UserContext.class})
+@Import({WebSecurityConfig.class, DatabaseAuthentificationProvider.class, UserContext.class, PasswordService.class})
 class LoginSessionTest {
     private static final String PASSWORD = "correct-password";
     private static final String HASH = PasswordHasher.hash(PASSWORD, PasswordHasher.HASH_METHOD.SHA256, 1000);
 
     @Autowired private MockMvc mvc;
-    @MockitoBean private JdbcTemplate jdbc;
+    @MockitoBean private CredentialRepository credentials;
+    @MockitoBean private LoginAttemptLimiter limiter;
     @MockitoBean private UserContextDao accounts;
 
     @BeforeEach
     void setUp() {
-        when(jdbc.queryForObject(anyString(), eq(String.class), eq("alice"))).thenReturn(HASH);
+        when(credentials.findByLogin("alice")).thenReturn(Optional.of(new CredentialRepository.Credential("1", HASH)));
+        when(credentials.replaceHash(eq("1"), eq(HASH), anyString())).thenReturn(true);
+        when(credentials.isCurrent(eq("1"), anyString())).thenReturn(true);
         UserDetails account = account("1", "alice", UserDetails.Role.USER);
-        when(accounts.getUserDetails("alice")).thenReturn(account);
         when(accounts.getUserDetailsById("1")).thenReturn(account);
     }
 
@@ -78,21 +79,20 @@ class LoginSessionTest {
         MockHttpSession session = (MockHttpSession) result.getRequest().getSession(false);
         assertTrue(session == null || session.getAttribute(SPRING_SECURITY_CONTEXT_KEY) == null);
         mvc.perform(get("/profile/session-check")).andExpect(status().is3xxRedirection());
-        verify(accounts, never()).getUserDetails(anyString());
+        verify(accounts, never()).getUserDetailsById(anyString());
     }
 
     @Test
     void unknownOrInactiveAccountIsRejected() throws Exception {
-        when(jdbc.queryForObject(anyString(), eq(String.class), eq("alice")))
-                .thenThrow(new EmptyResultDataAccessException(1));
+        when(credentials.findByLogin("alice")).thenReturn(Optional.empty());
         mvc.perform(post("/logmein").with(csrf()).param("username", "alice").param("password", PASSWORD))
                 .andExpect(redirectedUrl("/login?error"));
-        verify(accounts, never()).getUserDetails(anyString());
+        verify(accounts, never()).getUserDetailsById(anyString());
     }
 
     @Test
     void accountDisabledBetweenPasswordCheckAndContextLookupIsRejected() throws Exception {
-        when(accounts.getUserDetails("alice")).thenThrow(new UserNotFoundException("inactive"));
+        when(accounts.getUserDetailsById("1")).thenThrow(new UserNotFoundException("inactive"));
         mvc.perform(post("/logmein").with(csrf()).param("username", "alice").param("password", PASSWORD))
                 .andExpect(redirectedUrl("/login?error"));
     }
@@ -100,7 +100,7 @@ class LoginSessionTest {
     @ParameterizedTest
     @ValueSource(strings = {"", "not-a-hash", "$2$invalid$salt$hash", "$99$1000$salt$hash"})
     void malformedPasswordHashesFailLoginWithoutServerError(String hash) throws Exception {
-        when(jdbc.queryForObject(anyString(), eq(String.class), eq("alice"))).thenReturn(hash);
+        when(credentials.findByLogin("alice")).thenReturn(Optional.of(new CredentialRepository.Credential("1", hash)));
         mvc.perform(post("/logmein").with(csrf()).param("username", "alice").param("password", PASSWORD))
                 .andExpect(redirectedUrl("/login?error"));
     }
@@ -109,7 +109,7 @@ class LoginSessionTest {
     void loginRequiresCsrfToken() throws Exception {
         mvc.perform(post("/logmein").param("username", "alice").param("password", PASSWORD))
                 .andExpect(status().isForbidden());
-        verifyNoInteractions(jdbc, accounts);
+        verifyNoInteractions(credentials, accounts, limiter);
     }
 
     @Test
@@ -156,7 +156,6 @@ class LoginSessionTest {
     @EnumSource(value = UserDetails.Role.class, names = {"ADMIN", "USER"})
     void roleChangeRequiresNewLoginBeforeAuthorizingTheRequest(UserDetails.Role previousRole) throws Exception {
         UserDetails original = account("1", "alice", previousRole);
-        when(accounts.getUserDetails("alice")).thenReturn(original);
         when(accounts.getUserDetailsById("1")).thenReturn(original);
         MockHttpSession session = login();
         mvc.perform(get("/admin/session-check").session(session))
@@ -224,10 +223,57 @@ class LoginSessionTest {
             Locale.setDefault(Locale.forLanguageTag("tr-TR"));
             mvc.perform(post("/logmein").with(csrf()).param("username", "ALICE").param("password", PASSWORD))
                     .andExpect(redirectedUrl("/login/success"));
-            verify(accounts).getUserDetails("alice");
+            verify(credentials).findByLogin("alice");
         } finally {
             Locale.setDefault(previous);
         }
+    }
+
+    @Test
+    void passwordChangeInvalidatesExistingSessions() throws Exception {
+        MockHttpSession session = login();
+        when(accounts.getUserDetailsById("1")).thenReturn(UserDetails.builder().userId("1").login("alice")
+                .role(UserDetails.Role.USER).credentialTag("changed-password").build());
+        mvc.perform(get("/profile/session-check").session(session)).andExpect(status().is3xxRedirection());
+        assertTrue(session.isInvalid());
+    }
+
+    @Test
+    void throttledLoginDoesNotCheckCredentialsOrCreateSession() throws Exception {
+        doThrow(new org.springframework.security.authentication.BadCredentialsException("Invalid username or password"))
+                .when(limiter).requireAttempt(eq("alice"), anyString());
+        mvc.perform(post("/logmein").with(csrf()).param("username", "alice").param("password", PASSWORD))
+                .andExpect(redirectedUrl("/login?error"));
+        verifyNoInteractions(credentials, accounts);
+    }
+
+    @Test
+    void forwardedHeaderDoesNotOverrideTheLimiterSourceAddress() throws Exception {
+        mvc.perform(post("/logmein").with(csrf())
+                        .with(request -> { request.setRemoteAddr("192.0.2.10"); return request; })
+                        .header("X-Forwarded-For", "192.0.2.99").param("username", "ALICE").param("password", PASSWORD))
+                .andExpect(redirectedUrl("/login/success"));
+        verify(limiter).requireAttempt("alice", "192.0.2.10");
+    }
+
+    @Test
+    void preUpgradeSessionWithoutCredentialTagRequiresNewLogin() throws Exception {
+        var previousUser = UserDetails.builder().userId("1").login("alice").role(UserDetails.Role.USER).build();
+        var session = new MockHttpSession();
+        session.setAttribute(SPRING_SECURITY_CONTEXT_KEY, new SecurityContextImpl(new KnowledgerootUserToken(previousUser)));
+        mvc.perform(get("/profile/session-check").session(session)).andExpect(status().is3xxRedirection());
+        assertTrue(session.isInvalid());
+    }
+
+    @Test
+    void unavailableLoginDatabaseFailsWithoutAuthenticatedSession() throws Exception {
+        when(credentials.findByLogin("alice")).thenThrow(new DataAccessResourceFailureException("internal database detail"));
+        MvcResult result = mvc.perform(post("/logmein").with(csrf())
+                        .param("username", "alice").param("password", PASSWORD))
+                .andExpect(redirectedUrl("/login?error")).andReturn();
+        var session = result.getRequest().getSession(false);
+        assertTrue(session == null || session.getAttribute(SPRING_SECURITY_CONTEXT_KEY) == null);
+        verifyNoInteractions(accounts);
     }
 
     private MockHttpSession login() throws Exception {
@@ -238,6 +284,6 @@ class LoginSessionTest {
     }
 
     private UserDetails account(String id, String login, UserDetails.Role role) {
-        return UserDetails.builder().userId(id).login(login).role(role).build();
+        return UserDetails.builder().userId(id).login(login).role(role).credentialTag("initial-password").build();
     }
 }

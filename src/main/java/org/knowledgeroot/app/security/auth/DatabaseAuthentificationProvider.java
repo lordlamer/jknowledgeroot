@@ -5,14 +5,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.security.context.domain.UserContext;
 import org.knowledgeroot.app.security.context.domain.UserDetails;
 import org.knowledgeroot.app.security.context.domain.UserNotFoundException;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.dao.DataAccessException;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
+import org.springframework.security.web.authentication.WebAuthenticationDetails;
 
 import java.util.Locale;
 
@@ -23,43 +24,45 @@ import java.util.Locale;
 @Slf4j
 @RequiredArgsConstructor
 public class DatabaseAuthentificationProvider implements AuthenticationProvider {
-    private final JdbcTemplate jdbcTemplate;
+    private final CredentialRepository credentials;
     private final UserContext userContext;
-
-    private static final String AUTH_SQL = "select `password` from `user` WHERE BINARY lower(`login`)=? AND active=1 AND deleted=0";
+    private final PasswordService passwords;
+    private final LoginAttemptLimiter limiter;
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         String login = authentication.getName().toLowerCase(Locale.ROOT);
-        if (authentication.getCredentials() == null) {
+        if (login.length() > 255 || authentication.getCredentials() == null
+                || authentication.getCredentials().toString().length() > 1024) {
             throw new BadCredentialsException("Invalid username or password");
         }
         String password = authentication.getCredentials().toString();
         try {
-            String dbPassword = jdbcTemplate.queryForObject(AUTH_SQL, String.class, login);
-            if (!matchesPassword(password, dbPassword)) {
+            String source = authentication.getDetails() instanceof WebAuthenticationDetails details
+                    ? details.getRemoteAddress() : "unknown";
+            limiter.requireAttempt(login, source);
+            var credential = credentials.findByLogin(login).orElse(null);
+            if (!passwords.matches(password, credential == null ? null : credential.hash())) {
                 throw new BadCredentialsException("Invalid username or password");
             }
-            UserDetails user = userContext.getUserContextForLogin(login);
-            if (user.isGuest()) {
+            String currentHash = credential.hash();
+            if (passwords.upgradeEncoding(currentHash)) {
+                String replacement = passwords.encode(password);
+                if (!credentials.replaceHash(credential.userId(), currentHash, replacement)) {
+                    throw new BadCredentialsException("Invalid username or password");
+                }
+                currentHash = replacement;
+            }
+            UserDetails user = userContext.getUserContextForId(credential.userId());
+            if (user.isGuest() || !credentials.isCurrent(credential.userId(), currentHash)) {
                 throw new BadCredentialsException("Invalid username or password");
             }
             log.info("Login success for user: {}", login);
             return new KnowledgerootUserToken(user);
-        } catch (EmptyResultDataAccessException | UserNotFoundException e) {
+        } catch (UserNotFoundException e) {
             throw new BadCredentialsException("Invalid username or password");
-        }
-    }
-
-    private boolean matchesPassword(String password, String hash) {
-        if (hash == null) {
-            return false;
-        }
-        try {
-            return PasswordHasher.verify(password, hash);
-        } catch (IllegalArgumentException | IndexOutOfBoundsException e) {
-            // A malformed legacy hash must fail authentication, not fail the request.
-            return false;
+        } catch (DataAccessException e) {
+            throw new AuthenticationServiceException("Login temporarily unavailable");
         }
     }
 

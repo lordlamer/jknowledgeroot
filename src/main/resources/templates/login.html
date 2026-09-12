@@ -23,19 +23,19 @@
 
             <div th:if="${error}" class="kr-login-alert" role="alert">
                 <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
-                Login failed. Please check your credentials.
+                Login failed. Check your credentials or wait before trying again.
             </div>
             <div th:if="${msg}" class="kr-login-info" role="status" th:text="${msg}"></div>
 
             <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
             <div class="kr-field">
-                <label for="loginUsername">Username or email</label>
-                <input type="text" id="loginUsername" name="username" placeholder="admin" autocomplete="username" required autofocus>
+                <label for="loginUsername">Username</label>
+                <input type="text" id="loginUsername" name="username" maxlength="255" autocomplete="username" required autofocus>
             </div>
             <div class="kr-field">
                 <label for="loginPassword">Password</label>
-                <input type="password" id="loginPassword" name="password" autocomplete="current-password" required>
+                <input type="password" id="loginPassword" name="password" maxlength="1024" autocomplete="current-password" required>
             </div>
             <div class="kr-check">
                 <input type="checkbox" id="remember" name="remember-me" value="true">

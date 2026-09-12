@@ -5,10 +5,14 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.io.Serializable;
+import java.io.Serial;
 
 @Getter
 @Builder
 public class UserDetails implements Serializable {
+    @Serial
+    private static final long serialVersionUID = -3000690489509950389L;
+    private String credentialTag;
     /**
      * Role of the user.
      */

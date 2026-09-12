@@ -1,6 +1,6 @@
 package org.knowledgeroot.app.setup;
 
-import org.knowledgeroot.app.security.auth.PasswordHasher;
+import org.knowledgeroot.app.security.auth.PasswordService;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -12,7 +12,6 @@ import java.util.Locale;
 
 /** One-time, transactional setup; never resets or replaces an existing account. */
 public final class InitialAdministrator {
-    private static final String DEMO_HASH = "$2$1000$E556111996CF452E$B3EB80BC13DED8B02A2F09E505AED75737D4AF45D9A599623D39CD518771C306";
     private final JdbcTemplate jdbc;
     private final TransactionTemplate transaction;
     private final boolean demoDataEnabled;
@@ -34,7 +33,7 @@ public final class InitialAdministrator {
                         "SELECT initialized FROM knowledgeroot_setup WHERE id = 1 FOR UPDATE", Boolean.class);
                 if (!demoDataEnabled && jdbc.queryForObject(
                         "SELECT COUNT(*) FROM user WHERE active = 1 AND deleted = 0 AND password = ?",
-                        Integer.class, DEMO_HASH) > 0) {
+                        Integer.class, PasswordService.DEMO_HASH) > 0) {
                     throw new IllegalStateException("Active demo credentials found. Follow docs/installation.md before starting outside development.");
                 }
                 int userCount = jdbc.queryForObject("SELECT COUNT(*) FROM user", Integer.class);
@@ -57,8 +56,7 @@ public final class InitialAdministrator {
                 || password == null || password.length() < 16 || password.length() > 128 || password.isBlank()) {
             throw new IllegalStateException("Fresh database requires KR_BOOTSTRAP_LOGIN (3-100 ASCII letters/digits, . _ @ -) and KR_BOOTSTRAP_PASSWORD (16-128 characters). See docs/installation.md.");
         }
-        // Keep compatibility with the existing login provider; encoder migration is roadmap R06.
-        String hash = PasswordHasher.hash(password, PasswordHasher.HASH_METHOD.SHA256, 1000);
+        String hash = new PasswordService().encodeNewPassword(password);
         GeneratedKeyHolder key = new GeneratedKeyHolder();
         jdbc.update(connection -> {
             var statement = connection.prepareStatement("""

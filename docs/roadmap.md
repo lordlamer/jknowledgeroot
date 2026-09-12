@@ -15,9 +15,9 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: R06 – Passwortspeicherung und Login-Schutz modernisieren.**
+**Nächster Schritt: R07 – POM bereinigen und Spring aktualisieren.**
 
-R01 bis R05 sind abgeschlossen. R06 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
+R01 bis R06 sind abgeschlossen. R07 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
 
 ## 1. Build und Sicherheit
 
@@ -79,10 +79,15 @@ R01 bis R05 sind abgeschlossen. R06 bis R15 sind offen; die Produktionsfreigabe 
 
 ### R06 – Passwortspeicherung und Login-Schutz modernisieren
 
-- [ ] Offen
+- [x] Erledigt am 12. September 2026
 - **Befund:** Eigene SHA-256-Passworthashes mit 1.000 Wiederholungen werden auch für neue Passwörter verwendet.
 - **Umsetzung:** Etablierten PasswordEncoder mit geeignetem Verfahren und Kostenparametern einsetzen; vorhandene Hashes beim erfolgreichen Login migrieren; Passwortbehandlung in UI und API vereinheitlichen; Login-Drosselung und sichere Fehlerbehandlung ergänzen.
 - **Abnahme:** Neue Passwörter verwenden das neue Verfahren. Bestandsnutzer können sich anmelden und ihre Hashes werden migriert. Ungültige Hashes verursachen keine unkontrollierten Serverfehler. Passwortwechsel und Drosselung sind getestet.
+- **Umgesetzt:** Ein gemeinsamer `PasswordService` verwendet Springs PBKDF2-HMAC-SHA-256 mit 600.000 Iterationen, zufälligem 16-Byte-Salt und versioniertem Speicherformat. Admin-UI, REST-API und Erst-Admin setzen damit neue Passwörter. Neue Werte haben 16–128 Zeichen; Leerzeichen bleiben unverändert. Leere/fehlende Werte und der bisherige Maskierungswert `***` erhalten bei Updates das Passwort. Ungültige neue Werte ergeben 400; REST-Antworten enthalten weder Klartextpasswort noch Verifier.
+- **Migration:** Erfolgreiche Legacy-Logins werden ohne rückwirkende Mindestlänge migriert. Das Schreiben vergleicht Benutzer-ID und bisherigen Hash und überschreibt dadurch keine gleichzeitige Passwortänderung. Benutzerkontext und abschließende Kontoprüfung verwenden die ursprüngliche Benutzer-ID. Defekte Hashformate und übergroße Legacy-Parameter werden begrenzt und kontrolliert abgelehnt. Die bekannten Demo-Verifier werden ausdrücklich nicht automatisch migriert, damit die Produktionssperre aus R04 bis zum tatsächlichen Passwortwechsel erhalten bleibt.
+- **Drosselung und Sitzungen:** Changeset `1.0.8` speichert Zähler für normalisierte Loginnamen und Quelladressen in MariaDB. Standard sind fünf Versuche pro Konto und 30 pro Quelle in 60 Sekunden; alle Versuche werden vor dem Hashvergleich atomar reserviert. Mehrere Instanzen und Neustarts teilen dieselben Quoten. Die Anwendung übernimmt die Servlet-Gegenstellenadresse, ohne selbst Forwarded-Header auszuwerten. Passwortänderungen beenden bestehende Sitzungen beim nächsten Request über einen Verifier-Änderungsmarker. Vor R06 gespeicherte Sitzungen benötigen einmalig eine neue Anmeldung. Regeln, Konfiguration, Demo-Ausnahme und Rollbackgrenzen stehen in [authentication.md](authentication.md).
+- **Geprüft:** `.\mvnw.cmd -B --no-transfer-progress verify`: **BUILD SUCCESS**, 154 Tests erfasst, davon **144 erfolgreich und 10 bereits zuvor deaktiviert**, keine Fehler. 33 zusätzliche Fälle prüfen moderne/Legacy-Hashes, Salt, Unicode/Leerzeichen und Eingabegrenzen, defekte Verifier, UI-/API-Konsistenz und fehlende Passwortausgabe, echte MariaDB-Migration samt konkurrierendem Passwortwechsel, Quoten über parallele Instanzen, Fensterablauf und Adressbegrenzung, Datenbankausfall, ignorierte fremde Forwarded-Header und Sitzungsinvalidierung. Der Installationstest bestätigt moderne Erst-Admin-Passwörter. `git diff --check` ohne Fehler.
+- **Testgrenzen:** Hashkosten und Quoten müssen vor dem Release unter der tatsächlichen Produktionslast vermessen werden. Konten mit verbrauchten Quoten sind auch mit korrektem Passwort bis zum nächsten Fenster blockiert; Quellen hinter einem Proxy teilen ohne gezielte Konfiguration dessen Quote. Proxy-Vertrauen und Deployment bleiben in R12/R13. Vollständige HTTP-/JDBC-Sitzungsintegration und Betriebsüberwachung sind weiterhin offen. Eine Version vor R06 kann migrierte Passwörter nicht prüfen; der Rollbackweg muss dies berücksichtigen.
 
 ## 2. Abhängigkeiten und unterstützte Plattform
 

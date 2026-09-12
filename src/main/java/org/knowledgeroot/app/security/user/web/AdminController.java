@@ -3,7 +3,7 @@ package org.knowledgeroot.app.security.user.web;
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HtmxRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.knowledgeroot.app.security.auth.PasswordHasher;
+import org.knowledgeroot.app.security.auth.PasswordService;
 import org.knowledgeroot.app.security.user.api.filter.GroupFilter;
 import org.knowledgeroot.app.security.user.api.filter.UserFilter;
 import org.knowledgeroot.app.security.user.domain.*;
@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 public class AdminController {
     private final UserDao userImpl;
     private final GroupDao groupImpl;
+    private final PasswordService passwords;
 
     /**
      * get all users
@@ -67,13 +68,7 @@ public class AdminController {
                 .lastName(user.getLastName())
                 .login(user.getLogin())
                 .email(user.getEmail())
-                .password(
-                        PasswordHasher.hash(
-                                user.getPassword(),
-                                PasswordHasher.HASH_METHOD.SHA256,
-                                1000
-                        )
-                )
+                .password(passwords.encodeNewPassword(user.getPassword()))
                 .admin(Boolean.TRUE.equals(user.getAdmin()))
                 .language("en_US")
                 .timezone("UTC")
@@ -119,6 +114,8 @@ public class AdminController {
         // load user
         User user = userImpl.findById(new UserId(id));
 
+        String replacement = passwords.encodeReplacement(userDto.getPassword());
+
         // update user
         user.setFirstName(userDto.getFirstName());
         user.setLastName(userDto.getLastName());
@@ -127,14 +124,8 @@ public class AdminController {
         user.setAdmin(Boolean.TRUE.equals(userDto.getAdmin()));
 
         // update password if new password is set
-        if(userDto.getPassword() != null && !userDto.getPassword().isEmpty()) {
-            user.setPassword(
-                    PasswordHasher.hash(
-                            userDto.getPassword(),
-                            PasswordHasher.HASH_METHOD.SHA256,
-                            1000
-                    )
-            );
+        if (replacement != null) {
+            user.setPassword(replacement);
         }
 
         userImpl.updateUser(user);

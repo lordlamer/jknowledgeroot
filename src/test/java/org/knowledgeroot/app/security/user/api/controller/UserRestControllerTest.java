@@ -2,6 +2,9 @@ package org.knowledgeroot.app.security.user.api.controller;
 
 import org.junit.jupiter.api.Test;
 import org.knowledgeroot.app.security.auth.PasswordHasher;
+import org.knowledgeroot.app.security.auth.PasswordService;
+import org.springframework.web.server.ResponseStatusException;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.knowledgeroot.app.security.user.api.dto.UserDto;
 import org.knowledgeroot.app.security.user.domain.User;
 import org.knowledgeroot.app.security.user.domain.UserDao;
@@ -23,14 +26,14 @@ class UserRestControllerTest {
     @Test
     void createUserShouldRejectMissingPassword() {
         UserDao userDao = mock(UserDao.class);
-        UserRestController controller = new UserRestController(userDao);
+        UserRestController controller = new UserRestController(userDao, new PasswordService());
 
         UserDto dto = new UserDto();
         dto.setLogin("new-user");
         dto.setPassword("   ");
 
-        var response = controller.createUser(dto, UriComponentsBuilder.newInstance());
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        var error = assertThrows(ResponseStatusException.class, () -> controller.createUser(dto, UriComponentsBuilder.newInstance()));
+        assertEquals(HttpStatus.BAD_REQUEST, error.getStatusCode());
         verify(userDao, never()).createUser(any());
     }
 
@@ -38,7 +41,7 @@ class UserRestControllerTest {
     void createUserShouldHashPasswordBeforePersisting() {
         UserDao userDao = mock(UserDao.class);
         when(userDao.isUserExist(any(User.class))).thenReturn(false);
-        UserRestController controller = new UserRestController(userDao);
+        UserRestController controller = new UserRestController(userDao, new PasswordService());
 
         UserDto dto = new UserDto();
         dto.setLogin("new-user");
@@ -49,13 +52,13 @@ class UserRestControllerTest {
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userDao).createUser(captor.capture());
-        assertTrue(PasswordHasher.verify("my-plain-password", captor.getValue().getPassword()));
+        assertTrue(new PasswordService().matches("my-plain-password", captor.getValue().getPassword()));
     }
 
     @Test
     void updateUserShouldKeepExistingPasswordWhenMaskedValueIsSent() {
         UserDao userDao = mock(UserDao.class);
-        UserRestController controller = new UserRestController(userDao);
+        UserRestController controller = new UserRestController(userDao, new PasswordService());
 
         String existingHash = PasswordHasher.hash("existing-password", PasswordHasher.HASH_METHOD.SHA256, 1000);
         User existingUser = User.builder()
@@ -79,7 +82,7 @@ class UserRestControllerTest {
     @Test
     void updateUserShouldHashPasswordWhenNewPasswordIsProvided() {
         UserDao userDao = mock(UserDao.class);
-        UserRestController controller = new UserRestController(userDao);
+        UserRestController controller = new UserRestController(userDao, new PasswordService());
 
         String existingHash = PasswordHasher.hash("existing-password", PasswordHasher.HASH_METHOD.SHA256, 1000);
         User existingUser = User.builder()
@@ -90,13 +93,13 @@ class UserRestControllerTest {
 
         UserDto dto = new UserDto();
         dto.setId(9);
-        dto.setPassword("new-password");
+        dto.setPassword("new-password-long-enough");
 
         var response = controller.updateUser(9, dto);
         assertEquals(HttpStatus.OK, response.getStatusCode());
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userDao).updateUser(captor.capture());
-        assertTrue(PasswordHasher.verify("new-password", captor.getValue().getPassword()));
+        assertTrue(new PasswordService().matches("new-password-long-enough", captor.getValue().getPassword()));
     }
 }

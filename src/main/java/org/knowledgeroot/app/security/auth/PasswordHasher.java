@@ -6,6 +6,7 @@ import javax.xml.bind.DatatypeConverter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.nio.charset.StandardCharsets;
 
 /*
  * This class implements the password hashing
@@ -123,8 +124,12 @@ public class PasswordHasher {
 		String[] parts = passwordHash.split("\\$");
 		return parts.length == 5
 				&& new PasswordHasher(password, HASH_METHOD.fromIndex(Integer.parseUnsignedInt(parts[1])),
-						Integer.parseUnsignedInt(parts[2]), parts[3]).toString().equals(passwordHash);
+						Integer.parseUnsignedInt(parts[2]), parts[3]).matchesEncoded(passwordHash);
 	}
+
+    private boolean matchesEncoded(String encoded) {
+        return MessageDigest.isEqual(toString().getBytes(StandardCharsets.UTF_8), encoded.getBytes(StandardCharsets.UTF_8));
+    }
 
 	/**
 	 * create hash value from password

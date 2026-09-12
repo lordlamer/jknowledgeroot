@@ -50,7 +50,8 @@
         </div>
         <div class="kr-field">
             <label for="password">Password</label>
-            <input type="password" id="password" name="password" value="">
+            <input type="password" id="password" name="password" value="" minlength="16" maxlength="128" autocomplete="new-password" required>
+            <small>16–128 characters. Spaces are preserved.</small>
         </div>
         <div class="kr-field" style="display:flex; align-items:center; gap:8px">
             <input class="form-check-input" type="checkbox" value="true" id="admin" name="admin">

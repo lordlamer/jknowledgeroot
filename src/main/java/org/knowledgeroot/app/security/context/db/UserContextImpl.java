@@ -7,6 +7,7 @@ import org.knowledgeroot.app.security.context.domain.UserDetails;
 import org.knowledgeroot.app.security.context.domain.UserNotFoundException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
+import org.knowledgeroot.app.security.auth.PasswordService;
 
 import java.util.Locale;
 
@@ -32,6 +33,7 @@ class UserContextImpl implements UserContextDao {
         return query
                 .query((rs, rowNum) -> UserDetails.builder()
                         .userId(rs.getString("id"))
+                        .credentialTag(PasswordService.credentialTag(rs.getString("password")))
                         .login(rs.getString("login"))
                         .email(rs.getString("email"))
                         .firstName(rs.getString("first_name"))

@@ -65,7 +65,8 @@ class InstallationTest {
         assertTrue(initialized());
         var account = jdbc.queryForMap("SELECT * FROM user");
         assertEquals("first.admin", account.get("login"));
-        assertTrue(PasswordHasher.verify(PASSWORD, (String) account.get("password")));
+        assertTrue(((String) account.get("password")).startsWith(org.knowledgeroot.app.security.auth.PasswordService.PREFIX));
+        assertTrue(new org.knowledgeroot.app.security.auth.PasswordService().matches(PASSWORD, (String) account.get("password")));
         assertEquals(account.get("id"), account.get("created_by"));
         assertEquals(account.get("id"), account.get("changed_by"));
         assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM user WHERE admin = 1 AND active = 1", Integer.class));

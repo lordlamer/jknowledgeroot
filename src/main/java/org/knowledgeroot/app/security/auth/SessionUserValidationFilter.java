@@ -15,6 +15,7 @@ import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Objects;
 
 /** Revalidate session accounts before applying request authorization. */
 public class SessionUserValidationFilter extends OncePerRequestFilter {
@@ -44,7 +45,8 @@ public class SessionUserValidationFilter extends OncePerRequestFilter {
             }
 
             if (current == null || !previous.getUserId().equals(current.getUserId())
-                    || current.isGuest() || previous.getRole() != current.getRole()) {
+                    || current.isGuest() || previous.getRole() != current.getRole()
+                    || !Objects.equals(previous.getCredentialTag(), current.getCredentialTag())) {
                 logoutHandler.logout(request, response, authentication);
             } else {
                 // Do not mutate a context shared with concurrent requests in the same session.

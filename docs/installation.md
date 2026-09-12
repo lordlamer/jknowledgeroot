@@ -1,7 +1,7 @@
 # Ersteinrichtung und Datenbank-Upgrades
 
 Diese Anleitung beschreibt den Stand von R04. Die vollständige Produktionsfreigabe
-steht noch aus; insbesondere Passwortmodernisierung, Produktionsprofil, Storage
+steht noch aus; insbesondere Produktionsprofil, Storage
 und Releasebetrieb sind in der [Roadmap](roadmap.md) offen.
 
 ## Neue Installation ohne Demodaten
@@ -34,8 +34,8 @@ serialisiert gleichzeitig startende Instanzen. Auch nach dem späteren Entfernen
 aller Konten wird der Bootstrap nicht wieder geöffnet. Die erste Benutzer-ID wird
 von MariaDB vergeben; Auditfelder des neuen Administrators verweisen auf diese ID.
 
-Bis R06 verwendet der neue Administrator dasselbe Legacy-Passworthashformat wie
-der bestehende Login. R04 ersetzt weder das Hashverfahren noch den Login-Schutz.
+Seit R06 verwendet auch der neue Administrator PBKDF2-HMAC-SHA-256. Details zu
+Passwortregeln, Hashmigration und Login-Drosselung stehen in [authentication.md](authentication.md).
 
 ## Demodaten für lokale Entwicklung
 

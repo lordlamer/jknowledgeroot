@@ -2,7 +2,7 @@ package org.knowledgeroot.app.security.user.api.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.knowledgeroot.app.security.auth.PasswordHasher;
+import org.knowledgeroot.app.security.auth.PasswordService;
 import org.knowledgeroot.app.security.user.api.converter.UserDtoConverter;
 import org.knowledgeroot.app.security.user.api.dto.UserDto;
 import org.knowledgeroot.app.security.user.api.filter.UserFilter;
@@ -27,21 +27,11 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class UserRestController {
     private final UserDao userImpl;
+    private final PasswordService passwords;
 
     private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss";
 
     private final UserDtoConverter userDtoConverter = new UserDtoConverter();
-
-    private String toPasswordHash(String plainPassword) {
-        if (plainPassword == null) {
-            return null;
-        }
-        String normalized = plainPassword.trim();
-        if (normalized.isEmpty() || "***".equals(normalized)) {
-            return null;
-        }
-        return PasswordHasher.hash(normalized, PasswordHasher.HASH_METHOD.SHA256, 1000);
-    }
 
     /**
      * get all users
@@ -158,10 +148,7 @@ public class UserRestController {
     public ResponseEntity<Void> createUser(@RequestBody UserDto userDto, UriComponentsBuilder ucBuilder) {
 
         User user = userDtoConverter.convertBtoA(userDto);
-        String passwordHash = toPasswordHash(userDto.getPassword());
-        if (passwordHash == null) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+        String passwordHash = passwords.encodeNewPassword(userDto.getPassword());
         user.setPassword(passwordHash);
 
         if (userImpl.isUserExist(user)) {
@@ -194,7 +181,7 @@ public class UserRestController {
         }
 
         User updatedUser = userDtoConverter.convertBtoA(userDto);
-        String passwordHash = toPasswordHash(userDto.getPassword());
+        String passwordHash = passwords.encodeReplacement(userDto.getPassword());
         if (passwordHash != null) {
             updatedUser.setPassword(passwordHash);
         } else {
@@ -203,7 +190,7 @@ public class UserRestController {
 
         userImpl.updateUser(updatedUser);
 
-        return new ResponseEntity<>(userDto, HttpStatus.OK);
+        return new ResponseEntity<>(userDtoConverter.convertAtoB(updatedUser), HttpStatus.OK);
     }
 
     //------------------- Delete a User --------------------------------------------------------
