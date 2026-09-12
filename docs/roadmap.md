@@ -15,9 +15,9 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: R10 – Validierung, Fehlerfälle und Suchabfragen verbessern.**
+**Nächster Schritt: R11 – Speichertreiber und Uploads absichern.**
 
-R01 bis R09 sind abgeschlossen. R10 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
+R01 bis R10 sind abgeschlossen. R11 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
 
 ## 1. Build und Sicherheit
 
@@ -133,10 +133,15 @@ R01 bis R09 sind abgeschlossen. R10 bis R15 sind offen; die Produktionsfreigabe 
 
 ### R10 – Validierung, Fehlerfälle und Suchabfragen verbessern
 
-- [ ] Offen
+- [x] Erledigt am 12. September 2026
 - **Befund:** Der Inhaltsfilter verwendet `:description`, bindet aber `content`. Validierung und Fehlerantworten sind uneinheitlich; Suche lädt unbeschränkt Ergebnisse und prüft Rechte anschließend einzeln.
 - **Umsetzung:** SQL-Parameterfehler beheben; Eingaben und Seitengrößen begrenzen; konsistente 400/403/404-Antworten vorsehen; keine internen Exception-Texte ausgeben; Suche paginieren und unnötige Einzelabfragen reduzieren. Berechtigungen müssen vor der fachlichen Pagination berücksichtigt werden.
 - **Abnahme:** Inhaltsfilter funktioniert. Ungültige Eingaben und fehlende Datensätze ergeben kontrollierte Antworten. Suchergebnisse bleiben berechtigungskonform und sind bei repräsentativer Datenmenge begrenzt und ausreichend schnell.
+- **Umgesetzt:** Der Inhaltsfilter bindet jetzt den korrekten SQL-Parameter. Seitenlisten und Suche verwenden eine gemeinsame SQL-Auswahl sichtbarer Seiten einschließlich dynamischer Vererbung, Gruppen-/Gastrechten und Administratorausnahme. Rechte werden vor Pagination und Ausgabe geprüft; nicht lesbare Eltern-IDs werden in derselben Abfrage ausgeblendet. Zusätzliche Rechte-/Dateiabfragen pro Treffer entfallen. Der neue Changeset `1.0.9-read-query-indexes` ergänzt Indizes für Eltern-/Vererbungs- und Gruppenmitgliedschaftsabfragen; historische Changesets bleiben unverändert.
+- **Suche und Grenzen:** Die Suche umfasst Titel und Inhalt, liefert 20 sichtbare Treffer je Fenster und nutzt einen weiteren Treffer für die Vor-/Zurück-Navigation mit HTMX und normalen Links. Auszüge werden als kurzer Text ausgegeben. Leere Begriffe lesen keine Seiten; SQL-Wildcards in Suchtexten werden als normale Zeichen behandelt. REST-Listen für Seiten, Benutzer und Gruppen verwenden standardmäßig 50 und höchstens 100 Einträge, Offset höchstens 100.000 und eine feste ID-Sortierung. Namen, Inhalte, Labels und Suchfilter erhalten dokumentierte Grenzen; ungültige Kalendertage und umgekehrte Datumsintervalle werden abgelehnt.
+- **Fehlerantworten:** Gemeinsame MVC-Behandlung mit 400/403/404/409/500 und neutralen Problem-Detail-Antworten. Interne Exception-Texte werden auch aus den Benutzer-/Gruppenauswahllisten entfernt. Fehlende Admin-Datensätze und nicht zugehörige Rechte-IDs werden kontrolliert behandelt; fehlende Seitenrechte führen zu 403. Fehlgeschlagene HTMX-Requests zeigen eine Fehlermeldung, ohne Formular und nicht gespeicherte Eingaben zu ersetzen. Details und Kompatibilitätsänderungen stehen in [search-and-validation.md](search-and-validation.md).
+- **Geprüft:** `.\mvnw.cmd -B --no-transfer-progress verify`: **BUILD SUCCESS**, insgesamt **210 Tests erfasst, 200 erfolgreich und 10 bereits zuvor deaktiviert**, keine Fehler. Der Testsatz wächst um 31 Fälle. Die SQL-Policy stimmt bei Gästen, Benutzern, Gruppen, Administratoren, inaktiven/unbekannten Konten sowie mehrstufiger, lokaler und beschädigter Vererbung mit der Einzelprüfung überein. Pagination, verborgene Eltern, Inhaltsfilter und eine einzelne Listenabfrage sind gegen MariaDB geprüft. Eine Fixture mit 5.000 Seiten liefert auch Treffer hinter vielen privaten Seiten; der gezielte lokale Lauf benötigte 26 ms für das Ergebnisfenster. HTTP-Tests prüfen Eingabe-/Datumsgrenzen, fehlende Datensätze und Fehlerantworten ohne technische Details. Der JAR-/Chromium-Test prüft zusätzlich ungültiges Speichern mit erhaltenem Editorinhalt sowie Suchnavigation zwischen 20 und 2 Treffern. Neuinstallation, Upgrade und bestehende Sicherheits-/Storage-Tests bestehen weiterhin. `git diff --check` ohne Fehler.
+- **Verbleibende Einschränkungen:** Die Zeitmessung ist kein Lasttest und keine Produktionszusage. Teilzeichenfolgensuche kann weiterhin große Datenbankbereiche lesen; sehr große Bestände benötigen gegebenenfalls einen Suchindex. MariaDBs konfigurierte Rekursionsgrenze gilt für tiefe Hierarchien. Offset-Pagination bietet bei parallelen Änderungen keinen festen Snapshot über mehrere Requests. Seitenleisten und Datei-/Kommentarlisten sind von dieser Suchpagination nicht erfasst. Ein abgelehnter Seitenabruf bestätigt die Existenz einer geschützten ID weiterhin nicht; auch unbekannte IDs können deshalb 403 erhalten. Gehostete CI, Betrieb und Produktionsfreigabe bleiben offen.
 
 ### R11 – Speichertreiber und Uploads absichern
 

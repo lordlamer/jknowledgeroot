@@ -39,6 +39,8 @@ public class PageCreationService {
     @Transactional
     public int create(PageDto dto, List<String> pageLabels) {
         requireCanCreate(dto.getParent());
+        PageInput.validate(dto);
+        PageInput.labels(pageLabels);
         var user = users.getUserContext();
         Integer actor = user.isGuest() ? null : Integer.valueOf(user.getUserId());
         LocalDateTime now = LocalDateTime.now();

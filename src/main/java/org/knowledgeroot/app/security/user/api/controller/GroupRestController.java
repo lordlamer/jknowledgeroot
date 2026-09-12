@@ -1,6 +1,7 @@
 package org.knowledgeroot.app.security.user.api.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.knowledgeroot.app.util.RequestValidation;
 import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.security.user.api.converter.GroupDtoConverter;
 import org.knowledgeroot.app.security.user.api.dto.GroupDto;
@@ -27,7 +28,7 @@ import java.util.Objects;
 public class GroupRestController {
     private final GroupDao groupImpl;
 
-    private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss";
+    private final static String dateFormat = "uuuu-MM-dd'T'HH:mm:ss";
 
     private final GroupDtoConverter groupDtoConverter = new GroupDtoConverter();
 
@@ -55,20 +56,25 @@ public class GroupRestController {
             @RequestParam(name = "start", required = false) Integer start,
             @RequestParam(name = "limit", required = false) Integer limit
     ) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dateFormat);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dateFormat).withResolverStyle(java.time.format.ResolverStyle.STRICT);
 
         GroupFilter groupFilter = new GroupFilter();
 
         // set filter values
+        RequestValidation.id(id);
+        RequestValidation.id(createdBy);
+        RequestValidation.id(changedBy);
         groupFilter.setId(id);
+        RequestValidation.text(name, 255);
         groupFilter.setName(name);
+        RequestValidation.text(description, 255);
         groupFilter.setDescription(description);
         groupFilter.setActive(active);
         groupFilter.setCreatedBy(createdBy);
         groupFilter.setChangedBy(changedBy);
         groupFilter.setDeleted(deleted);
-        groupFilter.setLimit(limit);
-        groupFilter.setStart(start);
+        groupFilter.setLimit(RequestValidation.limit(limit));
+        groupFilter.setStart(RequestValidation.start(start));
 
         try {
             if (timeStartBegin != null)
@@ -95,8 +101,13 @@ public class GroupRestController {
             if (changeDateEnd != null)
                 groupFilter.setChangeDateEnd(LocalDateTime.parse(changeDateEnd, formatter));
         } catch(DateTimeParseException e) {
-            log.error("Could not convert date: " + e.getMessage());
+            throw new org.springframework.web.server.ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid date");
         }
+
+        RequestValidation.range(groupFilter.getTimeStartBegin(), groupFilter.getTimeStartEnd());
+        RequestValidation.range(groupFilter.getTimeEndBegin(), groupFilter.getTimeEndEnd());
+        RequestValidation.range(groupFilter.getCreateDateBegin(), groupFilter.getCreateDateEnd());
+        RequestValidation.range(groupFilter.getChangeDateBegin(), groupFilter.getChangeDateEnd());
 
         // get filtered group list
         List<Group> groups = groupImpl.listGroups(groupFilter);
@@ -118,8 +129,10 @@ public class GroupRestController {
      */
     @RequestMapping(value = "/group/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<GroupDto> getGroup(@PathVariable("id") Integer id) {
+        RequestValidation.id(id);
         Group group = groupImpl.findById(new GroupId(id));
 
+        if (group == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         GroupDto groupDto = groupDtoConverter.convertAtoB(group);
 
         if (groupDto == null) {
@@ -183,6 +196,7 @@ public class GroupRestController {
      */
     @RequestMapping(value = "/group/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<GroupDto> deleteGroup(@PathVariable("id") Integer id) {
+        RequestValidation.id(id);
         Group group = groupImpl.findById(new GroupId(id));
 
         if (group == null) {

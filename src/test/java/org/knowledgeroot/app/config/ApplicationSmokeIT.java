@@ -138,6 +138,15 @@ class ApplicationSmokeIT {
                 page.waitForSelector(".tiptap");
                 assertEquals(1, page.locator(".tiptap").count());
                 assertTrue(page.locator(".tiptap").innerText().contains("Existing cell"));
+                if (round == 0) {
+                    page.locator("input[name=name]").fill("   ");
+                    page.locator("#content form button[type=submit]").first().click();
+                    page.waitForSelector(".kr-request-error");
+                    assertTrue(page.locator(".kr-request-error").innerText().contains("check your input"));
+                    assertEquals(1, page.locator(".tiptap").count());
+                    assertEquals("Browser migration test", jdbc.queryForObject("SELECT name FROM page WHERE id = ?", String.class, pageId));
+                    page.locator("input[name=name]").fill("Browser migration test");
+                }
                 if (round == 0) page.screenshot(new Page.ScreenshotOptions().setFullPage(true)
                         .setPath(Path.of(System.getProperty("application.jar")).getParent().resolve("editor-smoke.png")));
                 page.locator(".tiptap").evaluate("element => { const data = new DataTransfer(); "
@@ -170,6 +179,20 @@ class ApplicationSmokeIT {
             var download = context.request().get(uri(server, "/ui/file/" + fileId + "/download/roundtrip.txt").toString());
             assertEquals(200, download.status());
             assertArrayEquals(content, download.body());
+            for (int index = 0; index < 22; index++) {
+                jdbc.update("INSERT INTO page (name, content, active, create_date, change_date) VALUES (?, ?, TRUE, NOW(), NOW())",
+                        "Pagination fixture " + index, "<p>pagination needle</p><img src='/favicon.ico'>");
+            }
+            page.navigate(uri(server, "/search?q=pagination").toString());
+            page.waitForSelector(".kr-result");
+            assertEquals(20, page.locator(".kr-result").count());
+            assertEquals(0, page.locator(".kr-r-snip img").count());
+            page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Next").setExact(true)).click();
+            page.waitForURL("**/search?*start=20*");
+            assertEquals(2, page.locator(".kr-result").count());
+            page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Previous").setExact(true)).click();
+            page.waitForURL("**/search?*start=0*");
+            assertEquals(20, page.locator(".kr-result").count());
             assertTrue(errors.isEmpty(), errors.toString());
         }
     }

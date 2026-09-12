@@ -157,6 +157,25 @@ class PageAccessWebTest {
         verify(pages).updatePage(any());
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"", "   "})
+    void blankNamesAreRejectedWithoutWriting(String name) throws Exception {
+        mvc.perform(post("/ui/page/100/edit").with(caller).with(csrf()).param("name", name))
+                .andExpect(status().isBadRequest());
+        verify(pages, never()).updatePage(any());
+    }
+
+    @Test
+    void oversizedPageInputIsRejectedBeforeCreation() throws Exception {
+        mvc.perform(post("/ui/page/new").with(caller).with(csrf()).param("name", "x".repeat(256)))
+                .andExpect(status().isBadRequest());
+        mvc.perform(post("/ui/page/new").with(caller).with(csrf()).param("name", "valid").param("content", "x".repeat(65536)))
+                .andExpect(status().isBadRequest());
+        mvc.perform(post("/ui/page/new").with(caller).with(csrf()).param("name", "valid").param("labels", "x".repeat(65)))
+                .andExpect(status().isBadRequest());
+        verify(pages, never()).createPage(any());
+    }
+
     @Test
     void editorProcessesPermissionAdditionsWithGapsInFormIndices() throws Exception {
         as(UserDetails.Role.ADMIN);

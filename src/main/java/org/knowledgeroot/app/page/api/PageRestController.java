@@ -1,6 +1,7 @@
 package org.knowledgeroot.app.page.api;
 
 import lombok.RequiredArgsConstructor;
+import org.knowledgeroot.app.util.RequestValidation;
 import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.page.domain.Page;
 import org.knowledgeroot.app.page.domain.PageCreationService;
@@ -36,7 +37,7 @@ public class PageRestController {
     private final PageCreationService pageCreationService;
     private final PageEditingService pageEditingService;
 
-    private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
+    private static final String DATE_FORMAT = "uuuu-MM-dd'T'HH:mm:ss";
 
     private final PageDtoConverter pageDtoConverter = new PageDtoConverter();
 
@@ -91,12 +92,16 @@ public class PageRestController {
             @RequestParam(name = "start", required = false) Integer start,
             @RequestParam(name = "limit", required = false) Integer limit
     ) {
+        RequestValidation.id(id);
+        RequestValidation.require(parent == null || parent >= 0);
+        RequestValidation.text(name, 255);
+        RequestValidation.text(content, 200);
         Integer userId = getCurrentUserId();
         if (id != null && !canView(new PageId(id), userId)) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMAT).withResolverStyle(java.time.format.ResolverStyle.STRICT);
 
         PageFilter pageFilter = new PageFilter();
 
@@ -110,8 +115,8 @@ public class PageRestController {
         pageFilter.setCreatedBy(createdBy);
         pageFilter.setChangedBy(changedBy);
         pageFilter.setDeleted(deleted);
-        pageFilter.setLimit(limit);
-        pageFilter.setStart(start);
+        pageFilter.setLimit(RequestValidation.limit(limit));
+        pageFilter.setStart(RequestValidation.start(start));
 
         try {
             if (timeStartBegin != null)
@@ -138,15 +143,19 @@ public class PageRestController {
             if (changeDateEnd != null)
                 pageFilter.setChangeDateEnd(LocalDateTime.parse(changeDateEnd, formatter));
         } catch(DateTimeParseException e) {
-            log.error("Could not convert date: {}", e.getMessage());
+            throw new org.springframework.web.server.ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid date");
         }
 
+        RequestValidation.range(pageFilter.getCreateDateBegin(), pageFilter.getCreateDateEnd());
+        RequestValidation.range(pageFilter.getChangeDateBegin(), pageFilter.getChangeDateEnd());
+        RequestValidation.range(pageFilter.getTimeStartBegin(), pageFilter.getTimeStartEnd());
+        RequestValidation.range(pageFilter.getTimeEndBegin(), pageFilter.getTimeEndEnd());
+
         // Apply object permissions before exposing any page data.
-        List<Page> pages = pageImpl.listPages(pageFilter);
+        List<Page> pages = pageImpl.listVisiblePages(pageFilter, userId);
 
         List<PageDto> pageDtos = pages.stream()
-                .filter(page -> canView(page.getPageId(), userId))
-                .map(page -> toVisibleDto(page, userId))
+                .map(pageDtoConverter::convertAtoB)
                 .toList();
 
         // check for entries

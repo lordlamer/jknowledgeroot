@@ -34,6 +34,28 @@
     <script type="text/javascript">
         var SIDEBAR_STATE_KEY = 'kr.sidebar.expanded';
 
+        function showRequestError(event) {
+            const scope = event.detail.elt?.closest('form') || document.getElementById('content');
+            if (!scope) return;
+            scope.querySelector('.kr-request-error')?.remove();
+            const alert = document.createElement('div');
+            alert.className = 'kr-request-error alert alert-danger';
+            alert.setAttribute('role', 'alert');
+            const messages = {
+                400: 'Please check your input and try again.',
+                403: 'You do not have permission for this action.',
+                404: 'The requested item was not found.',
+                409: 'The change conflicts with the current data. Please review it and try again.'
+            };
+            alert.textContent = messages[event.detail.xhr?.status] || 'The request failed. Please try again.';
+            scope.prepend(alert);
+        }
+        document.addEventListener('htmx:responseError', showRequestError);
+        document.addEventListener('htmx:sendError', showRequestError);
+        document.addEventListener('htmx:beforeRequest', function (event) {
+            const scope = event.detail.elt?.closest('form') || document.getElementById('content');
+            scope?.querySelector('.kr-request-error')?.remove();
+        });
         document.addEventListener('htmx:configRequest', function (event) {
             var tokenMeta = document.querySelector('meta[name="_csrf"]');
             var headerMeta = document.querySelector('meta[name="_csrf_header"]');

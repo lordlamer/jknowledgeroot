@@ -1,6 +1,7 @@
 package org.knowledgeroot.app.security.user.api.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.knowledgeroot.app.util.RequestValidation;
 import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.security.auth.PasswordService;
 import org.knowledgeroot.app.security.user.api.converter.UserDtoConverter;
@@ -29,7 +30,7 @@ public class UserRestController {
     private final UserDao userImpl;
     private final PasswordService passwords;
 
-    private final static String dateFormat = "yyyy-MM-dd'T'HH:mm:ss";
+    private final static String dateFormat = "uuuu-MM-dd'T'HH:mm:ss";
 
     private final UserDtoConverter userDtoConverter = new UserDtoConverter();
 
@@ -61,24 +62,33 @@ public class UserRestController {
             @RequestParam(name = "start", required = false) Integer start,
             @RequestParam(name = "limit", required = false) Integer limit
     ) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dateFormat);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dateFormat).withResolverStyle(java.time.format.ResolverStyle.STRICT);
 
         UserFilter userFilter = new UserFilter();
 
         // set filter values
+        RequestValidation.id(id);
+        RequestValidation.id(createdBy);
+        RequestValidation.id(changedBy);
         userFilter.setId(id);
+        RequestValidation.text(firstName, 255);
         userFilter.setFirstName(firstName);
+        RequestValidation.text(lastName, 255);
         userFilter.setLastName(lastName);
+        RequestValidation.text(login, 255);
         userFilter.setLogin(login);
+        RequestValidation.text(email, 255);
         userFilter.setEmail(email);
+        RequestValidation.text(language, 255);
         userFilter.setLanguage(language);
+        RequestValidation.text(timezone, 255);
         userFilter.setTimezone(timezone);
         userFilter.setActive(active);
         userFilter.setCreatedBy(createdBy);
         userFilter.setChangedBy(changedBy);
         userFilter.setDeleted(deleted);
-        userFilter.setLimit(limit);
-        userFilter.setStart(start);
+        userFilter.setLimit(RequestValidation.limit(limit));
+        userFilter.setStart(RequestValidation.start(start));
 
         try {
             if (timeStartBegin != null)
@@ -105,8 +115,13 @@ public class UserRestController {
             if (changeDateEnd != null)
                 userFilter.setChangeDateEnd(LocalDateTime.parse(changeDateEnd, formatter));
         } catch(DateTimeParseException e) {
-            log.error("Could not convert date: " + e.getMessage());
+            throw new org.springframework.web.server.ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid date");
         }
+
+        RequestValidation.range(userFilter.getTimeStartBegin(), userFilter.getTimeStartEnd());
+        RequestValidation.range(userFilter.getTimeEndBegin(), userFilter.getTimeEndEnd());
+        RequestValidation.range(userFilter.getCreateDateBegin(), userFilter.getCreateDateEnd());
+        RequestValidation.range(userFilter.getChangeDateBegin(), userFilter.getChangeDateEnd());
 
         // get filtered user list
         List<User> users = userImpl.listUsers(userFilter);
@@ -128,8 +143,10 @@ public class UserRestController {
      */
     @RequestMapping(value = "/user/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UserDto> getUser(@PathVariable("id") Integer id) {
+        RequestValidation.id(id);
         User user = userImpl.findById(new UserId(id));
 
+        if (user == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         UserDto userDto = userDtoConverter.convertAtoB(user);
 
         if (userDto == null) {
@@ -201,6 +218,7 @@ public class UserRestController {
      */
     @RequestMapping(value = "/user/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<UserDto> deleteUser(@PathVariable("id") Integer id) {
+        RequestValidation.id(id);
         User user = userImpl.findById(new UserId(id));
 
         if (user == null) {

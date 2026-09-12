@@ -11,6 +11,10 @@ transaction. Multi-file uploads publish their metadata together and use the
 actual user's audit identity. See [transactions and storage failures](docs/transactions.md)
 for rollback behavior and the handling of unreferenced storage objects.
 
+Search and the page API apply permissions before pagination. See
+[search, input limits, and error responses](docs/search-and-validation.md)
+for request limits, compatibility changes, and database indexes.
+
 ## Build and tests
 
 Install JDK 25 and set `JAVA_HOME` to its installation directory. Start a Docker

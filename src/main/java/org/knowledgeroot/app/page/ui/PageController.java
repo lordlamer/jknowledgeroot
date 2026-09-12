@@ -3,6 +3,7 @@ package org.knowledgeroot.app.page.ui;
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HtmxRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.page.api.PageDto;
 
 import org.knowledgeroot.app.page.domain.*;
@@ -30,6 +31,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Controller
+@Slf4j
 @RequiredArgsConstructor
 public class PageController {
     private final PageDao pageImpl;
@@ -68,6 +70,7 @@ public class PageController {
      * by always calling setForPage with the result.
      */
     private List<String> parseLabels(String labelsJoined) {
+        org.knowledgeroot.app.util.RequestValidation.text(labelsJoined, 4096);
         if (labelsJoined == null || labelsJoined.isBlank()) {
             return List.of();
         }
@@ -105,7 +108,7 @@ public class PageController {
         // Berechtigungsprüfung für das Anzeigen der Seite
         if (!pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.VIEW)) {
             // Keine Berechtigung - umleiten zur Startseite
-            return "redirect:/";
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
         Page page = pageImpl.findById(pid);
@@ -167,7 +170,7 @@ public class PageController {
         Integer currentUserId = getCurrentUserId();
         if (!pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.EDIT)) {
             // Keine Berechtigung - umleiten oder Fehlermeldung anzeigen
-            return "redirect:/ui/page/" + pageId;
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
         Page page = pageImpl.findById(pid);
@@ -201,7 +204,7 @@ public class PageController {
         Integer currentUserId = getCurrentUserId();
         if (!pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.EDIT)) {
             // Keine Berechtigung - umleiten oder Fehlermeldung anzeigen
-            return "redirect:/ui/page/" + pageId;
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
         model.addAttribute("page", pageImpl.findById(pid));
@@ -239,7 +242,7 @@ public class PageController {
         Integer currentUserId = getCurrentUserId();
         if (!pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.EDIT)) {
             // Keine Berechtigung - umleiten oder Fehlermeldung anzeigen
-            return new ModelAndView("redirect:/ui/page/" + pageId);
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
         pageEditingService.edit(pid, pageDto, parseLabels(labelsJoined),
@@ -264,7 +267,7 @@ public class PageController {
         Integer currentUserId = getCurrentUserId();
         if (!pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.EDIT)) {
             // Keine Berechtigung - umleiten
-            return new ModelAndView("redirect:/ui/page/" + pageId);
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
         pageImpl.deletePageById(pid);
@@ -286,7 +289,7 @@ public class PageController {
         Integer currentUserId = getCurrentUserId();
         if (!pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.EDIT)) {
             // Keine Berechtigung - umleiten
-            return "redirect:/ui/page/" + pageId;
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
         Page page = pageImpl.findById(pid);
@@ -315,7 +318,7 @@ public class PageController {
         Integer currentUserId = getCurrentUserId();
         if (!pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.EDIT)) {
             // Keine Berechtigung - umleiten
-            return "redirect:/ui/page/" + pageId;
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -377,7 +380,7 @@ public class PageController {
         PageId pid = new PageId(pageId);
         Integer currentUserId = getCurrentUserId();
         if (!pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.EDIT)) {
-            return "redirect:/ui/page/" + pageId;
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
         pagePermissionImpl.deletePermissionForPage(pid, permissionId);
@@ -446,8 +449,9 @@ public class PageController {
                 .toList();
             return ResponseEntity.ok(userList);
         } catch (Exception e) {
+            log.error("Could not load permission choices", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error retrieving users: " + e.getMessage());
+                .body("Could not retrieve users");
         }
     }
 
@@ -470,8 +474,9 @@ public class PageController {
                 .toList();
             return ResponseEntity.ok(groupList);
         } catch (Exception e) {
+            log.error("Could not load permission choices", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error retrieving groups: " + e.getMessage());
+                .body("Could not retrieve groups");
         }
     }
 

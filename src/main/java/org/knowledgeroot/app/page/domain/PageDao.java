@@ -9,6 +9,9 @@ public interface PageDao {
      */
     List<Page> listPages(PageFilter pageFilter);
 
+    /** Visible results, including parent redaction, with permissions applied before LIMIT. */
+    List<Page> listVisiblePages(PageFilter pageFilter, Integer viewer);
+
     /**
      * find page by given id
      * @param pageId
@@ -39,12 +42,6 @@ public interface PageDao {
      */
     void deletePageById(PageId pageId);
 
-    /**
-     * search for content on pages
-     * @param searchQuery
-     * @return
-     */
-    List<Page> searchContent(String searchQuery);
 
     /**
      * Get page hierarchy from root to current page for breadcrumb navigation

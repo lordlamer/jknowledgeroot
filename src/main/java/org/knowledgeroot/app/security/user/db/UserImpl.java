@@ -134,7 +134,7 @@ public class UserImpl implements UserDao {
             predicates.add(changeDateEnd);
         }
 
-        cq.select(from).where(cb.and(predicates.toArray(Predicate[]::new)));
+        cq.select(from).where(cb.and(predicates.toArray(Predicate[]::new))).orderBy(cb.asc(from.get("id")));
         TypedQuery<UserEntity> q = entityManager.createQuery(cq);
 
         // set limit

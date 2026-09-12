@@ -57,7 +57,7 @@ class PageRestControllerTest {
 
     @Test
     void listExcludesPrivatePagesIncludingTheirMetadata() throws Exception {
-        when(pages.listPages(any(PageFilter.class))).thenReturn(List.of(page(10, 0), page(99, 0)));
+        when(pages.listVisiblePages(any(PageFilter.class), any())).thenReturn(List.of(page(10, 0)));
         when(permissions.hasUserPermission(new PageId(10), 2, VIEW)).thenReturn(true);
 
         mvc.perform(get("/page").with(user("reader")))
@@ -67,12 +67,12 @@ class PageRestControllerTest {
                 .andExpect(jsonPath("$[0].name").value("page-10"))
                 .andExpect(jsonPath("$[0].content").value("content-10"));
 
-        verify(permissions).hasUserPermission(new PageId(99), 2, VIEW);
+        verify(pages).listVisiblePages(any(PageFilter.class), eq(2));
     }
 
     @Test
     void listWithoutReadablePagesReturnsNoContent() throws Exception {
-        when(pages.listPages(any(PageFilter.class))).thenReturn(List.of(page(99, 0)));
+        when(pages.listVisiblePages(any(PageFilter.class), any())).thenReturn(List.of());
 
         mvc.perform(get("/page").with(user("reader")))
                 .andExpect(status().isNoContent())
@@ -97,7 +97,7 @@ class PageRestControllerTest {
         setCaller(userId, role);
         when(permissions.hasUserPermission(new PageId(99), userId, VIEW)).thenReturn(true);
         when(pages.findById(new PageId(99))).thenReturn(page(99, 0));
-        when(pages.listPages(any(PageFilter.class))).thenReturn(List.of(page(99, 0)));
+        when(pages.listVisiblePages(any(PageFilter.class), any())).thenReturn(List.of(page(99, 0)));
 
         mvc.perform(get("/page/99").with(user(login).roles(role)))
                 .andExpect(status().isOk())
@@ -120,7 +120,7 @@ class PageRestControllerTest {
         when(permissions.hasUserPermission(new PageId(10), 2, VIEW)).thenReturn(true);
         Page child = page(10, 99);
         when(pages.findById(new PageId(10))).thenReturn(child);
-        when(pages.listPages(any(PageFilter.class))).thenReturn(List.of(child));
+        when(pages.listVisiblePages(any(PageFilter.class), any())).thenReturn(List.of(Page.builder().pageId(new PageId(10)).name("child").build()));
 
         mvc.perform(get("/page/10").with(user("reader")))
                 .andExpect(status().isOk())
@@ -156,6 +156,29 @@ class PageRestControllerTest {
         when(userContext.getUserContext()).thenReturn(UserDetails.builder()
                 .userId(Integer.toString(userId)).login("reader")
                 .role(UserDetails.Role.valueOf(role)).build());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"limit,0", "limit,101", "start,-1", "start,100001", "id,-1", "parent,-1",
+            "time_start.begin,2026-02-30T00:00:00", "change_date.end,not-a-date"})
+    void invalidFiltersAreRejectedBeforeDatabaseAccess(String name, String value) throws Exception {
+        mvc.perform(get("/page").with(user("reader")).param(name, value)).andExpect(status().isBadRequest());
+        verifyNoInteractions(pages);
+    }
+
+    @Test
+    void reversedDateRangeIsRejected() throws Exception {
+        mvc.perform(get("/page").with(user("reader"))
+                .param("time_start.begin", "2026-02-02T00:00:00").param("time_start.end", "2026-01-01T00:00:00"))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(pages);
+    }
+
+    @Test
+    void listHasBoundedDefaultsAndUsesDatabasePermissionFiltering() throws Exception {
+        mvc.perform(get("/page").with(user("reader"))).andExpect(status().isNoContent());
+        verify(pages).listVisiblePages(argThat(filter -> filter.getStart() == 0 && filter.getLimit() == 50), eq(2));
+        verifyNoInteractions(permissions);
     }
 
     private Page page(int id, int parent) {

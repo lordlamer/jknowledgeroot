@@ -120,7 +120,7 @@ class PagePermissionDatabaseTest {
         PagePermission existing = permissions.listPermissionsByPageId(page).getFirst();
         PagePermission update = PagePermission.builder().id(existing.getId()).permissionLevel(EDIT)
                 .changedBy(12).changeDate(LocalDateTime.now()).build();
-        assertThrows(IllegalStateException.class, () -> permissions.updatePermissionForPage(otherPage, update));
+        assertThrows(org.springframework.dao.EmptyResultDataAccessException.class, () -> permissions.updatePermissionForPage(otherPage, update));
         assertEquals(VIEW, permissions.listPermissionsByPageId(page).getFirst().getPermissionLevel());
         permissions.updatePermissionForPage(page, update);
         assertTrue(permissions.hasUserPermission(page, 10, EDIT));
@@ -130,7 +130,7 @@ class PagePermissionDatabaseTest {
     void deleteCannotRemovePermissionBelongingToAnotherPage() {
         grant(PagePermission.RoleType.USER, 10, VIEW);
         int id = permissions.listPermissionsByPageId(page).getFirst().getId();
-        assertThrows(IllegalStateException.class, () -> permissions.deletePermissionForPage(otherPage, id));
+        assertThrows(org.springframework.dao.EmptyResultDataAccessException.class, () -> permissions.deletePermissionForPage(otherPage, id));
         assertTrue(permissions.hasUserPermission(page, 10, VIEW));
         permissions.deletePermissionForPage(page, id);
         assertFalse(permissions.hasUserPermission(page, 10, VIEW));
@@ -271,6 +271,73 @@ class PagePermissionDatabaseTest {
     static class Transactions {}
 
     @Test
+    void visibleQueryMatchesIndividualPermissionsIncludingBrokenInheritanceAndInactiveUsers() {
+        grant(PagePermission.RoleType.USER, 10, NONE);
+        grant(PagePermission.RoleType.GROUP, 20, EDIT);
+        jdbc.update("INSERT INTO group_member (group_id, member_id, member_type) VALUES (20, 10, 'user')");
+        jdbc.update("INSERT INTO page_permission (page_id, role_type, permission_level, create_date, change_date) VALUES (101, 'guest', 'view', NOW(), NOW())");
+        insertPage(102, 100, true, false);
+        insertPage(103, 102, true, false);
+        insertPage(104, 101, false, false);
+        insertPage(105, 100, false, false);
+        insertPage(110, 111, true, false);
+        insertPage(111, 110, true, false);
+        insertPage(120, 0, false, true);
+        insertPage(121, 120, true, false);
+        insertPage(130, 999, true, false);
+        jdbc.update("UPDATE user SET active = FALSE WHERE id = 11");
+        var dao = new PageImpl(mock(FileDao.class), JdbcClient.create(dataSource));
+        var ids = jdbc.queryForList("SELECT id FROM page ORDER BY id", Integer.class);
+        for (Integer viewer : java.util.Arrays.asList(null, 10, 11, 12, 999)) {
+            var expected = ids.stream().filter(id -> permissions.hasUserPermission(new PageId(id), viewer, VIEW)).toList();
+            var actual = dao.listVisiblePages(org.knowledgeroot.app.page.domain.PageFilter.builder().limit(100).build(), viewer);
+            assertEquals(expected, actual.stream().map(p -> p.getPageId().value()).toList(), "viewer=" + viewer);
+        }
+        jdbc.update("DELETE FROM group_member WHERE member_id = 10");
+        assertEquals(List.of(101), dao.listVisiblePages(new org.knowledgeroot.app.page.domain.PageFilter(), 10)
+                .stream().map(p -> p.getPageId().value()).toList());
+    }
+
+    @Test
+    void contentFilterAndPaginationApplyAfterPermissionsAndHidePrivateParent() {
+        insertPage(102, 100, false, false);
+        insertPage(103, 100, false, false);
+        jdbc.update("UPDATE page SET content = 'a 100%_match b' WHERE id IN (100, 102, 103)");
+        jdbc.update("INSERT INTO page_permission (page_id, role_type, permission_level, create_date, change_date) VALUES (102, 'guest', 'view', NOW(), NOW()), (103, 'guest', 'view', NOW(), NOW())");
+        var files = mock(FileDao.class);
+        var client = spy(JdbcClient.create(dataSource));
+        var dao = new PageImpl(files, client);
+        var filter = org.knowledgeroot.app.page.domain.PageFilter.builder().content("100%_match").start(1).limit(1).build();
+        var result = dao.listVisiblePages(filter, null);
+        assertEquals(1, result.size());
+        assertEquals(103, result.getFirst().getPageId().value());
+        assertNull(result.getFirst().getParent());
+        verify(client, times(1)).sql(anyString());
+        verifyNoInteractions(files);
+        assertEquals(3, dao.listPages(org.knowledgeroot.app.page.domain.PageFilter.builder().content("100%_match").build()).size());
+        assertTrue(dao.listVisiblePages(org.knowledgeroot.app.page.domain.PageFilter.builder().content("100X_match").build(), null).isEmpty());
+    }
+
+    @Test
+    void boundedSearchOnFiveThousandPagesFindsLateReadableResults() {
+        var rows = java.util.stream.IntStream.range(1000, 6000).mapToObj(id -> new Object[]{id, "needle " + id}).toList();
+        jdbc.batchUpdate("INSERT INTO page (id, name, content, active, create_date, change_date) VALUES (?, ?, 'body', TRUE, NOW(), NOW())", rows);
+        jdbc.update("INSERT INTO page_permission (page_id, role_type, permission_level, create_date, change_date) SELECT id, 'guest', 'view', NOW(), NOW() FROM page WHERE id >= 5980");
+        var client = spy(JdbcClient.create(dataSource));
+        var dao = new PageImpl(mock(FileDao.class), client);
+        long begin = System.nanoTime();
+        var result = dao.listVisiblePages(org.knowledgeroot.app.page.domain.PageFilter.builder().query("needle").start(5).limit(10).build(), null);
+        System.out.println("R10 search: 5000 pages, one query, " + ((System.nanoTime() - begin) / 1_000_000) + " ms");
+        assertEquals(java.util.stream.IntStream.range(5985, 5995).boxed().toList(), result.stream().map(p -> p.getPageId().value()).toList());
+        verify(client, times(1)).sql(anyString());
+    }
+
+    private void insertPage(int id, int parent, boolean inherit, boolean deleted) {
+        jdbc.update("INSERT INTO page (id, parent, name, inherit_permissions, deleted, create_date, change_date) VALUES (?, ?, 'fixture', ?, ?, NOW(), NOW())",
+                id, parent, inherit, deleted);
+    }
+
+    @Test
     void labelFailureRollsBackContentAuditAndLabelReplacement() {
         PageLabelImpl labels = spy(new PageLabelImpl(JdbcClient.create(dataSource)));
         labels.setForPage(page, List.of("original"));
@@ -313,7 +380,7 @@ class PagePermissionDatabaseTest {
     void foreignPermissionIdRollsBackEditorSubmission() {
         var labels = new PageLabelImpl(JdbcClient.create(dataSource));
         editingContext(UserDetails.Role.ADMIN, labels).run(context -> {
-            assertThrows(IllegalStateException.class, () -> context.getBean(PageEditingService.class)
+            assertThrows(org.springframework.dao.EmptyResultDataAccessException.class, () -> context.getBean(PageEditingService.class)
                     .edit(page, editDto(), List.of("replacement"), Map.of("99999", "edit"), List.of(), List.of()));
             assertEquals("protected", jdbc.queryForObject("SELECT name FROM page WHERE id = 100", String.class));
             assertTrue(labels.listForPage(page).isEmpty());

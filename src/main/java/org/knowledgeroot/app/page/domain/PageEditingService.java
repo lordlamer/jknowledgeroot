@@ -27,6 +27,8 @@ public class PageEditingService {
                      Map<String, String> updates, List<String> deletions, List<Map<String, String>> additions) {
         Integer actor = actor();
         Page page = editablePage(id, actor);
+        PageInput.validate(dto);
+        PageInput.labels(pageLabels);
         if (!updates.isEmpty() || !deletions.isEmpty() || !additions.isEmpty()) {
             if (!users.getUserContext().isAdmin()) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
             if (permissions.isInheriting(id)) throw new ResponseStatusException(HttpStatus.CONFLICT);
@@ -59,11 +61,12 @@ public class PageEditingService {
     public PageDto update(PageId id, PageDto dto) {
         Integer actor = actor();
         Page page = editablePage(id, actor);
+        PageInput.validate(dto);
         setContent(page, dto, actor, LocalDateTime.now());
         page.setTimeStart(dto.getTimeStart());
         page.setTimeEnd(dto.getTimeEnd());
-        page.setActive(dto.getActive());
-        page.setDeleted(dto.getDeleted());
+        if (dto.getActive() != null) page.setActive(dto.getActive());
+        if (dto.getDeleted() != null) page.setDeleted(dto.getDeleted());
         pages.updatePage(page);
         // Return persisted audit identity and creation fields, never the client-supplied values.
         return new PageDtoConverter().convertAtoB(page);

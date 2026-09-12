@@ -238,10 +238,7 @@ public class PagePermissionImpl implements PagePermissionDao {
                 )
                 .update();
 
-        Assert.state(
-                update == 1,
-                "Failed to update permission with ID " + pagePermission.getId() + " for page " + pageId.value()
-        );
+        if (update != 1) throw new org.springframework.dao.EmptyResultDataAccessException(1);
     }
 
     @Override
@@ -263,10 +260,7 @@ public class PagePermissionImpl implements PagePermissionDao {
                 .param("pageId", pageId.value())
                 .update();
 
-        Assert.state(
-                deleted == 1,
-                "Failed to delete permission with ID " + permissionId + " for page " + pageId.value()
-        );
+        if (deleted != 1) throw new org.springframework.dao.EmptyResultDataAccessException(1);
     }
 
     @Override

@@ -14,6 +14,7 @@ public class PageFilter {
     private Integer parent;
     private String name;
     private String content;
+    private String query;
 
     private LocalDateTime timeStartBegin;
     private LocalDateTime timeStartEnd;
