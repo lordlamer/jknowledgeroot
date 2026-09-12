@@ -15,9 +15,9 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: R07 – POM bereinigen und Spring aktualisieren.**
+**Nächster Schritt: R08 – Sanitizer, Editor und weitere Bibliotheken aktualisieren.**
 
-R01 bis R06 sind abgeschlossen. R07 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
+R01 bis R07 sind abgeschlossen. R08 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
 
 ## 1. Build und Sicherheit
 
@@ -93,16 +93,22 @@ R01 bis R06 sind abgeschlossen. R07 bis R15 sind offen; die Produktionsfreigabe 
 
 ### R07 – POM bereinigen und Spring aktualisieren
 
-- [ ] Offen
+- [x] Erledigt am 12. September 2026
 - **Befund:** Spring Boot 3.5.14; zusätzlich Spring Session 1.3.5.RELEASE neben Core/JDBC 3.5.6. Ungenutztes JavaFaker zieht SnakeYAML mit Android-Classifier 1.23 neben SnakeYAML 2.4 in den Klassenpfad.
 - **Umsetzung:** Alte Session-Abhängigkeit und ungenutztes JavaFaker entfernen; redundante Logging- und WebJars-Locator-Abhängigkeiten bereinigen; Spring-Boot-4.x-Migration auf eine unterstützte Linie durchführen. Explizite Liquibase-Version gegen das Boot-Management prüfen. Transitive Abhängigkeiten wie die derzeit verwendete `javax.xml.bind`-API beim Bereinigen berücksichtigen.
 - **Abnahme:** Keine konkurrierenden alten Session-/SnakeYAML-Generationen im Klassenpfad. Unterstützte Boot-Version, erfolgreiche Tests und echter Anwendungsstart. Dependency-Baum und Schwachstellenscan sind geprüft; relevante Funde sind behoben oder mit konkreter Begründung bewertet.
+- **Umgesetzt:** Spring Boot 4.1.1 mit den modularen Web-MVC-, Liquibase-, JDBC-Session- und Test-Startern; Spring Security 7.1.1, Session 4.1.1, Jackson 3.1.5 und Liquibase 5.0.3 über Boot verwaltet. HTMXs Spring-/Thymeleaf-Integration auf 5.1.0, Testcontainers-Artefakte auf die verwaltete 2.x-Generation umgestellt. Alte Session-Bibliothek, JavaFaker, redundante Logging-/Locator-Abhängigkeiten, ungenutzter Mail-Starter und PostgreSQL-Treiber entfernt. WebJars verwenden `locator-lite`. Lombok folgt dem BOM; Milestone-Repositories und das entfernte Plugin-Flag `executable` entfallen. JAR-Start weiterhin mit `java -jar`.
+- **Kompatibilität:** Tests auf die neuen Paketnamen, `@MockitoBean` und Jackson 3 umgestellt. `javax.xml.bind.DatatypeConverter` in Legacy-Passwort-/Dateihashes durch JDK `HexFormat` ersetzt, ohne die gespeicherte Darstellung zu ändern. JDBC-Schema bleibt unter Liquibase; die veraltete Property `spring.session.store-type` entfällt. MinIO benötigt weiterhin Jackson 2 in einem separaten Namensraum; MVC verwendet Jackson 3.
+- **Geprüft:** `.\mvnw.cmd -B --no-transfer-progress clean verify`: **BUILD SUCCESS**, insgesamt **155 Tests erfasst, 145 erfolgreich und 10 bereits zuvor deaktiviert**, keine Fehler. Der neue Failsafe-Test startet das fertig gebaute JAR zweimal mit echtem HTTP-Server und isolierten MariaDB-/MinIO-Containern. Login mit CSRF, Admin-API über JPA, gerenderte Admin-Seite, Passwortausblendung, versionslose WebJars, JDBC-Sitzung nach Neustart ohne Bootstrap-Zugangsdaten und Logout bestehen. Dependency-Baum und JAR-Inhalt bestätigen nur aktuelle Session-Module und SnakeYAML 2.6. `git diff --check` ohne Fehler.
+- **Sicherheitsprüfung:** Wiederholbares OSV-Skript für aufgelöste Maven- und npm-WebJar-Versionen ergänzt. Tomcat ausdrücklich auf 11.0.25 angehoben, da der Boot-BOM-Stand 11.0.24 neue Sicherheitsfunde hatte. Nach dem Update: 303 Paketversionen geprüft, zehn Zuordnungen zu neun Advisories bleiben für Sanitizer, MinIO/Bouncy Castle und CKEditor/lodash-es. Jeder Fund ist in [dependencies.md](dependencies.md) mit Voraussetzungen, Grenzen und konkretem R08-Folgeschritt bewertet; der Scanner meldet weiterhin Exitcode 1 und unterdrückt keine Funde. Dies ist keine Produktionsfreigabe.
+- **Testgrenzen:** Der MinIO-Container ist eine festgelegte Kompatibilitätsfixture. Vollständige Browser-/Upload-/Downloadtests, Image-/CI-Plugin-Scans und gemischter Betrieb alter/neuer Versionen sind nicht nachgewiesen. Weitere Betriebshärtung und Releaseprüfung bleiben R08 sowie R11–R14. Der neue Starttest ersetzt die beiden deaktivierten Integrationstestklassen noch nicht.
 
 ### R08 – Sanitizer, Editor und weitere Bibliotheken aktualisieren
 
 - [ ] Offen
 - **Umsetzung:** HTML Sanitizer von 20240325.1 mindestens auf 20260102.1 oder eine geeignete neuere Version aktualisieren; CKEditor vom nicht mehr unterstützten Classic-Predefined-Build auf eine unterstützte Installation migrieren; MinIO-SDK, Commons IO und verwendete Frontend-Bibliotheken gezielt prüfen und aktualisieren.
 - **Einordnung:** Für die alte Sanitizer-Version existiert CVE-2025-66021. Die speziellen Voraussetzungen der veröffentlichten Schwachstelle wurden in der aktuellen Policy nicht festgestellt; ein ausnutzbares XSS wurde im Review nicht nachgewiesen.
+- **Konkrete Funde aus R07:** MinIO-XML-Substitution mindestens mit SDK 8.6.0 beheben; Bouncy Castle mindestens 1.84 prüfen. CKEditor-Advisories zur Zwischenablage und General HTML Support sowie lodash-es-Funde bearbeiten. Die Templates enthalten freizügige HTML-Konfiguration; die tatsächlich aktiven Plugins und das gebündelte JavaScript müssen im Browser geprüft werden. Ein Maven-Override ersetzt keinen bereits gebündelten Editor-Code. Einzelbewertungen und korrigierte Versionen stehen in [dependencies.md](dependencies.md).
 - **Abnahme:** Sanitizer-Regressionstests bestehen. Editor, Speichern, HTMX-Navigation und statische Ressourcen funktionieren im Browser. Bestehende Inhalte bleiben nutzbar. Upload und Download funktionieren mit dem aktualisierten SDK.
 
 ## 3. Datenintegrität und Anwendungscode

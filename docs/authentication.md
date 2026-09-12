@@ -116,5 +116,7 @@ gesperrte Logins, Quelladressen und Sitzungsinvalidierung nach Passwortänderung
 
 Hashkosten und Quoten sind noch unter der tatsächlichen Produktionslast zu messen.
 Reverse-Proxy-Betrieb, ein vollständiger Deploymenttest, Monitoring und gegebenenfalls
-zusätzliche Begrenzung am vorgeschalteten Proxy folgen in R12/R13. Die beiden zuvor
+zusätzliche Begrenzung am vorgeschalteten Proxy folgen in R12/R13. R07 ergänzt einen
+HTTP-Test des gebauten JARs samt JDBC-Sitzung über einen Neustart; siehe
+[Abhängigkeiten und Prüfungen](dependencies.md). Die beiden zuvor
 deaktivierten allgemeinen Integrationstestklassen bleiben bis R13 offen.

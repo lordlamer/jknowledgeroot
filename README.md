@@ -9,7 +9,7 @@ criteria, open decisions, and progress toward a production release.
 ## Build and tests
 
 Install JDK 25 and set `JAVA_HOME` to its installation directory. Start a Docker
-engine for the isolated MariaDB installation and upgrade tests. The Maven
+engine for the isolated MariaDB and MinIO tests. The Maven
 Wrapper downloads the pinned Maven version on its first invocation; a separate
 Maven installation is not required.
 
@@ -28,7 +28,14 @@ On Windows (PowerShell):
 The build compiles the application, runs the enabled tests, and creates the
 executable JAR in `target/`. The two existing disabled integration test classes
 are tracked in roadmap item R13. Installation tests exercise a real MariaDB in
-Testcontainers; full application and storage deployment tests are still pending.
+Testcontainers. During `verify`, Failsafe starts the packaged JAR twice against
+disposable MariaDB/MinIO containers and checks real HTTP login, JPA-backed admin
+access, WebJars, JDBC-session persistence across restart, and logout.
+Full browser, storage, and deployment coverage remains in the roadmap.
+
+Spring Boot 4.1.1 manages the framework dependencies. See the
+[dependency and security audit guide](docs/dependencies.md) for migration details,
+the Tomcat security override, repeatable scanning, and outstanding R08 findings.
 
 ## Initial administrator and upgrades
 
@@ -74,7 +81,8 @@ Previously stored unauthenticated application tokens require a new login.
 
 HTTP/session rules are tested with the real provider and security filter chain
 with mocked database access. Hash migration and shared login quotas also have real
-MariaDB tests. Full HTTP/JDBC-session integration remains part of roadmap item R13.
+MariaDB tests. The packaged-application smoke test also verifies real HTTP login
+and JDBC-session reuse after restart. Broader integration coverage remains in R13.
 
 ## Local configuration
 

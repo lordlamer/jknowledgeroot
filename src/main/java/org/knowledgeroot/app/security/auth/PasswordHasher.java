@@ -2,7 +2,7 @@ package org.knowledgeroot.app.security.auth;
 
 import jakarta.validation.constraints.NotNull;
 
-import javax.xml.bind.DatatypeConverter;
+import java.util.HexFormat;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -141,8 +141,7 @@ public class PasswordHasher {
 	 */
 	public static final String hash(String password, HASH_METHOD hashMethod, int repetition) {
 		return new PasswordHasher(password, hashMethod, repetition,
-					DatatypeConverter
-						.printHexBinary(
+					HexFormat.of().withUpperCase().formatHex(
 								createRandomString(SALT_LENGTH)))
 				.toString();
 	}
@@ -174,14 +173,14 @@ public class PasswordHasher {
 
 		// remark: hashing the salt is a costly nonsense. It does not
 		// add to the cryptographic value
-		String hashedSalt = DatatypeConverter.printHexBinary(createHash(salt, HASH_METHOD.MD5));
+		String hashedSalt = HexFormat.of().withUpperCase().formatHex(createHash(salt, HASH_METHOD.MD5));
 		hash = password;
 
 		// remark: double, triple hashing: consider using a repetition count of
 		// 1. If you need more, the chosen hashing method is likely
 		// cryptographically insecure and should be replaced anyway.
 		for (int i = -1; ++i < repetition;)
-			hash = DatatypeConverter.printHexBinary(createHash(hash + hashedSalt + i, method));
+			hash = HexFormat.of().withUpperCase().formatHex(createHash(hash + hashedSalt + i, method));
 	}
 
 	/**

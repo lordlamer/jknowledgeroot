@@ -10,7 +10,6 @@ spring.datasource.password=${KR_DB_PASSWORD:}
 spring.jpa.open-in-view=false
 
 # jdbc session handling
-spring.session.store-type=jdbc
 spring.session.jdbc.initialize-schema=never
 spring.session.timeout=3600
 

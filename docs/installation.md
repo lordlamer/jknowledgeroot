@@ -111,8 +111,9 @@ Spring-Boot-BOM verwaltet.
 
 Unter Linux/macOS lautet der Wrapper-Aufruf `sh ./mvnw`. Ein Build ohne verfügbare
 Docker-Engine schlägt fehl; die neuen Integrationstests werden nicht stillschweigend
-übersprungen. Vollständige HTTP-/JDBC-Sitzungstests und Storage-/Deploymenttests
-bleiben in R13.
+übersprungen. R07 ergänzt einen Starttest des fertigen JARs gegen isolierte MariaDB-
+und MinIO-Container samt HTTP-Login und JDBC-Sitzung über einen Neustart. Weitere
+Storage-/Deploymenttests bleiben in R13; siehe [Abhängigkeiten und Prüfungen](dependencies.md).
 
 Referenzen:
 

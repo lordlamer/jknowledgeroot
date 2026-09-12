@@ -8,7 +8,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.xml.bind.DatatypeConverter;
+import java.util.HexFormat;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
@@ -76,7 +76,7 @@ public class FileImpl implements FileDao {
         try {
             // Generate MD5 hash
             MessageDigest md = MessageDigest.getInstance("MD5");
-            String hash = DatatypeConverter.printHexBinary(
+            String hash = HexFormat.of().withUpperCase().formatHex(
                     md.digest(file.getBytes())
             ).toLowerCase();
 
