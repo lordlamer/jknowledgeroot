@@ -66,4 +66,8 @@
         <sqlFile path="changes/1.0.6-initial-setup.mariadb.sql"
                  relativeToChangelogFile="true" encoding="UTF-8" splitStatements="true" stripComments="true"/>
     </changeSet>
+    <changeSet id="1.0.7-page-permission-inheritance" author="knowledgeroot" dbms="mariadb">
+        <sqlFile path="changes/1.0.7-page-permission-inheritance.mariadb.sql"
+                 relativeToChangelogFile="true" encoding="UTF-8" splitStatements="true" stripComments="true"/>
+    </changeSet>
 </databaseChangeLog>

@@ -57,4 +57,12 @@ public interface PagePermissionDao {
      * @param creatorId The user ID of the creator
      */
     void createDefaultPermissions(PageId pageId, Integer creatorId);
+
+    boolean isInheriting(PageId pageId);
+
+    /** Resolve the nearest page with local permissions; null means an invalid hierarchy. */
+    PageId permissionSource(PageId pageId);
+
+    /** Explicitly switch mode; leaving inheritance copies currently effective grants. */
+    void setInheriting(PageId pageId, boolean inherit, Integer actorId);
 }

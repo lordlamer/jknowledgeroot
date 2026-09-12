@@ -11,6 +11,7 @@ import org.springframework.util.Assert;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.HashSet;
 
 @Service
 @Transactional
@@ -67,20 +68,25 @@ public class PagePermissionImpl implements PagePermissionDao {
 
     @Override
     public boolean hasUserPermission(PageId pageId, Integer userId, PagePermission.PermissionLevel minPermissionLevel) {
-        // Special handling for guest users (userId = null means guest)
+        if (node(pageId) == null) {
+            return false;
+        }
+        if (userId != null) {
+            Boolean isAdmin = jdbcClient.sql("SELECT admin FROM user WHERE id = :id AND active = 1 AND deleted = 0")
+                    .param("id", userId).query(Boolean.class).optional().orElse(null);
+            if (isAdmin == null) {
+                return false;
+            }
+            if (isAdmin) {
+                return true;
+            }
+        }
+        pageId = permissionSource(pageId);
+        if (pageId == null) {
+            return false;
+        }
         if (userId == null) {
             return hasGuestPermission(pageId, minPermissionLevel);
-        }
-
-        // Admins can always view and edit any page
-        Boolean isAdmin = jdbcClient.sql("""
-                SELECT admin FROM `user` WHERE id = :userId
-                """)
-                .param("userId", userId)
-                .query(Boolean.class)
-                .single();
-        if (Boolean.TRUE.equals(isAdmin)) {
-            return true;
         }
 
         // 1. Check direct user permissions
@@ -160,6 +166,7 @@ public class PagePermissionImpl implements PagePermissionDao {
 
     @Override
     public void createPermission(PagePermission pagePermission) {
+        requireLocal(pagePermission.getPageId());
         int update = jdbcClient.sql("""
                 INSERT INTO page_permission (
                     page_id,
@@ -212,6 +219,7 @@ public class PagePermissionImpl implements PagePermissionDao {
 
     @Override
     public void updatePermissionForPage(PageId pageId, PagePermission pagePermission) {
+        requireLocal(pageId);
         int update = jdbcClient.sql("""
                 UPDATE page_permission SET
                     permission_level = ?,
@@ -245,6 +253,7 @@ public class PagePermissionImpl implements PagePermissionDao {
 
     @Override
     public void deletePermissionForPage(PageId pageId, Integer permissionId) {
+        requireLocal(pageId);
         int deleted = jdbcClient.sql("""
                 DELETE FROM page_permission
                 WHERE id = :id
@@ -262,6 +271,14 @@ public class PagePermissionImpl implements PagePermissionDao {
 
     @Override
     public void createDefaultPermissions(PageId pageId, Integer creatorId) {
+        PermissionNode page = node(pageId);
+        Assert.state(page != null, "Page does not exist");
+        if (page.parent() > 0) {
+            Assert.state(permissionSource(new PageId(page.parent())) != null, "Invalid parent hierarchy");
+            jdbcClient.sql("UPDATE page SET inherit_permissions = TRUE WHERE id = :id")
+                    .param("id", pageId.value()).update();
+            return;
+        }
         LocalDateTime now = LocalDateTime.now();
 
         // 1. Creator gets EDIT permissions (only if creatorId is not null)
@@ -293,7 +310,10 @@ public class PagePermissionImpl implements PagePermissionDao {
                     .update();
         }
 
-        // 2. Guest gets VIEW permissions (audit columns may be NULL)
+        // A guest-created root is public to read; authenticated roots stay private.
+        if (creatorId != null) {
+            return;
+        }
         jdbcClient.sql("""
                 INSERT INTO page_permission (
                     page_id,
@@ -319,5 +339,67 @@ public class PagePermissionImpl implements PagePermissionDao {
                         now
                 )
                 .update();
+    }
+
+    private record PermissionNode(int parent, boolean inherits) {}
+
+    private PermissionNode node(PageId pageId) {
+        return jdbcClient.sql("SELECT parent, inherit_permissions FROM page WHERE id = :id AND deleted = 0")
+                .param("id", pageId.value())
+                .query((rs, row) -> new PermissionNode(rs.getInt("parent"), rs.getBoolean("inherit_permissions")))
+                .optional().orElse(null);
+    }
+
+    @Override
+    public PageId permissionSource(PageId pageId) {
+        var visited = new HashSet<Integer>();
+        while (pageId != null && visited.add(pageId.value())) {
+            PermissionNode page = node(pageId);
+            if (page == null) return null;
+            if (!page.inherits()) return pageId;
+            pageId = page.parent() > 0 ? new PageId(page.parent()) : null;
+        }
+        return null;
+    }
+
+    @Override
+    public boolean isInheriting(PageId pageId) {
+        PermissionNode page = node(pageId);
+        Assert.state(page != null, "Page does not exist");
+        return page.inherits();
+    }
+
+    private void requireLocal(PageId pageId) {
+        jdbcClient.sql("SELECT id FROM page WHERE id = :id FOR UPDATE")
+                .param("id", pageId.value()).query(Integer.class).single();
+        Assert.state(!isInheriting(pageId), "Switch to local permissions before editing grants");
+    }
+
+    @Override
+    public void setInheriting(PageId pageId, boolean inherit, Integer actorId) {
+        // Serialize mode changes on the target page. This method runs transactionally.
+        jdbcClient.sql("SELECT id FROM page WHERE id = :id FOR UPDATE")
+                .param("id", pageId.value()).query(Integer.class).single();
+        PermissionNode page = node(pageId);
+        Assert.state(page != null, "Page does not exist");
+        if (page.inherits() == inherit) return;
+        PageId source = inherit && page.parent() > 0
+                ? permissionSource(new PageId(page.parent())) : permissionSource(pageId);
+        Assert.state(source != null && (!inherit || (page.parent() > 0 && !source.equals(pageId))),
+                "Cannot inherit from an invalid parent hierarchy");
+        jdbcClient.sql("DELETE FROM page_permission WHERE page_id = :id").param("id", pageId.value()).update();
+        if (!inherit) {
+            jdbcClient.sql("""
+                    INSERT INTO page_permission (page_id, role_type, role_id, permission_level,
+                                                 created_by, create_date, changed_by, change_date)
+                    SELECT :id, role_type, role_id, permission_level, :actor, :now, :actor, :now
+                    FROM page_permission WHERE page_id = :source
+                    """)
+                    .param("id", pageId.value()).param("actor", actorId)
+                    .param("now", LocalDateTime.now()).param("source", source.value()).update();
+        }
+        jdbcClient.sql("UPDATE page SET inherit_permissions = :inherit, changed_by = :actor, change_date = :now WHERE id = :id")
+                .param("inherit", inherit).param("actor", actorId).param("now", LocalDateTime.now())
+                .param("id", pageId.value()).update();
     }
 }

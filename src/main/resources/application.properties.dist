@@ -18,6 +18,9 @@ spring.session.timeout=3600
 knowledgeroot.bootstrap.login=${KR_BOOTSTRAP_LOGIN:}
 knowledgeroot.bootstrap.password=${KR_BOOTSTRAP_PASSWORD:}
 
+# Guest-created root pages are public to read. Child creation uses parent EDIT rights.
+knowledgeroot.pages.allow-guest-root-creation=${KR_ALLOW_GUEST_ROOT_CREATION:false}
+
 # template
 spring.thymeleaf.enabled=true
 spring.thymeleaf.cache=false

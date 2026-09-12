@@ -84,12 +84,13 @@
                 <!-- Tab für Berechtigungen -->
                 <div class="tab-pane fade" id="permissions-content" role="tabpanel" aria-labelledby="permissions-tab">
                     <div class="alert alert-info">
-                        <p>Standardberechtigungen werden automatisch gesetzt:</p>
-                        <ul>
-                            <li>Sie als Ersteller erhalten <strong>Bearbeiten</strong>-Rechte</li>
-                            <li>Gäste erhalten <strong>Anzeigen</strong>-Rechte</li>
-                        </ul>
-                        <p>Sie können zusätzliche Berechtigungen nach dem Erstellen der Seite hinzufügen.</p>
+                        <p th:if="${page}">Diese Unterseite erbt die Rechte der Elternseite.
+                            Spätere Änderungen der Elternrechte gelten automatisch auch hier.</p>
+                        <p th:if="${page == null and isguest}">Diese Hauptseite wird öffentlich lesbar.
+                            Gäste erhalten dadurch kein Bearbeitungsrecht.</p>
+                        <p th:if="${page == null and !isguest}">Diese Hauptseite ist zunächst nur für
+                            Sie und Administratoren zugänglich.</p>
+                        <p>Administratoren können nach dem Erstellen abweichende Freigaben festlegen.</p>
                     </div>
                 </div>
             </div>

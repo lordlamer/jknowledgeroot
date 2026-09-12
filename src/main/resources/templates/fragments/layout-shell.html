@@ -23,7 +23,7 @@
                      hx-swap="innerHTML"></div>
                 <div class="kr-tree-section-title kr-section-workspace">
                     Workspace
-                    <button type="button" class="add" title="Add root page" aria-label="Add root page"
+                    <button th:if="${canCreateRootPage}" type="button" class="add" title="Add root page" aria-label="Add root page"
                             hx-get="/ui/page/new" hx-target="#content" hx-push-url="true">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
                     </button>

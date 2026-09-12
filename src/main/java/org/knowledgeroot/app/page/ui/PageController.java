@@ -19,6 +19,7 @@ import org.springframework.ui.Model;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ public class PageController {
     private final UserDao userImpl;
     private final GroupDao groupImpl;
     private final UserContext userContext;
+    private final PageCreationService pageCreationService;
     private final PageDtoConverter pageDtoConverter = new PageDtoConverter();
 
     /**
@@ -80,6 +82,7 @@ public class PageController {
 
     @GetMapping("/ui/page/new")
     public String showNewPage(HtmxRequest htmxRequest) {
+        pageCreationService.requireCanCreate(null);
         if(htmxRequest.isHtmxRequest()) {
             return "page/new :: body";
         }
@@ -168,11 +171,8 @@ public class PageController {
 
         Page page = pageImpl.findById(pid);
 
-        // Berechtigungen laden
-        List<PagePermission> permissions = pagePermissionImpl.listPermissionsByPageId(pid);
-
         model.addAttribute("page", page);
-        model.addAttribute("permissions", permissions);
+        addPermissionModel(pid, model);
         model.addAttribute("labelsJoined", String.join(", ", pageLabelDao.listForPage(pid)));
 
         // trigger reload sidebar
@@ -194,6 +194,7 @@ public class PageController {
             HttpServletResponse response,
             HtmxRequest htmxRequest
     ) {
+        pageCreationService.requireCanCreate(pageId);
         // Berechtigungsprüfung
         PageId pid = new PageId(pageId);
         Integer currentUserId = getCurrentUserId();
@@ -222,6 +223,12 @@ public class PageController {
             @RequestParam(name = "labels", required = false) String labelsJoined,
             @RequestParam MultiValueMap<String, String> allParams
     ) {
+        boolean hasPermissionChanges = allParams.keySet().stream().anyMatch(key ->
+                key.startsWith("permissionUpdates") || key.startsWith("permissionDeletions")
+                        || key.startsWith("permissionAdditions"));
+        if (hasPermissionChanges) {
+            requireLocalPermissionManagement(new PageId(pageId));
+        }
         // Parse permission parameters manually from form data
         Map<String, String> permissionUpdates = parsePermissionUpdates(allParams);
         List<String> permissionDeletions = parsePermissionDeletions(allParams);
@@ -325,38 +332,7 @@ public class PageController {
             @ModelAttribute PageDto pageDto,
             @RequestParam(name = "labels", required = false) String labelsJoined
     ) {
-        Integer currentUserId = getCurrentUserId();
-
-        // Guests or unknown users: allow creation with NULL audit fields (DB now allows NULL)
-        if (pageDto.getParent() != null && pageDto.getParent() > 0) {
-            PageId parentId = new PageId(pageDto.getParent());
-            if (!pagePermissionImpl.hasUserPermission(parentId, currentUserId, PagePermission.PermissionLevel.EDIT)) {
-                // Keine Berechtigung - umleiten
-                return new ModelAndView("redirect:/");
-            }
-        }
-
-        pageDto.setCreateDate(LocalDateTime.now());
-        pageDto.setCreatedBy(currentUserId);
-        pageDto.setChangeDate(LocalDateTime.now());
-        pageDto.setChangedBy(currentUserId);
-        pageDto.setActive(true);
-        pageDto.setContent(pageDto.getContent());
-        pageDto.setTimeStart(LocalDateTime.now());
-        pageDto.setTimeEnd(LocalDateTime.now());
-        pageDto.setDeleted(false);
-
-        if(pageDto.getParent() == null)
-            pageDto.setParent(0);
-
-        Page page = pageDtoConverter.convertBtoA(pageDto);
-        int newPageId = pageImpl.createPage(page);
-
-        // Standardberechtigungen erstellen
-        pagePermissionImpl.createDefaultPermissions(new PageId(newPageId), page.getCreatedBy());
-
-        // Save labels
-        pageLabelDao.setForPage(new PageId(newPageId), parseLabels(labelsJoined));
+        int newPageId = pageCreationService.create(pageDto, parseLabels(labelsJoined));
 
         // Redirect to the new page
         return new ModelAndView("redirect:/ui/page/" + newPageId + "?trigger=reload-sidebar");
@@ -385,6 +361,7 @@ public class PageController {
             Model model,
             HtmxRequest htmxRequest
     ) {
+        requirePermissionAdministrator();
         // Berechtigungsprüfung
         PageId pid = new PageId(pageId);
         Integer currentUserId = getCurrentUserId();
@@ -394,16 +371,15 @@ public class PageController {
         }
 
         Page page = pageImpl.findById(pid);
-        List<PagePermission> permissions = pagePermissionImpl.listPermissionsByPageId(pid);
-
         model.addAttribute("page", page);
-        model.addAttribute("permissions", permissions);
+        addPermissionModel(pid, model);
+        model.addAttribute("labelsJoined", String.join(", ", pageLabelDao.listForPage(pid)));
 
         if(htmxRequest.isHtmxRequest()) {
-            return "page/permissions :: body";
+            return "page/edit :: body";
         }
 
-        return "page/permissions";
+        return "page/edit";
     }
 
     @PostMapping("/ui/page/{pageId}/permission")
@@ -414,6 +390,7 @@ public class PageController {
             @RequestParam("permissionLevel") String permissionLevel,
             Model model
     ) {
+        requireLocalPermissionManagement(new PageId(pageId));
         // Berechtigungsprüfung
         PageId pid = new PageId(pageId);
         Integer currentUserId = getCurrentUserId();
@@ -438,8 +415,7 @@ public class PageController {
         pagePermissionImpl.createPermission(permission);
 
         // Berechtigungen neu laden
-        List<PagePermission> permissions = pagePermissionImpl.listPermissionsByPageId(pid);
-        model.addAttribute("permissions", permissions);
+        addPermissionModel(pid, model);
         model.addAttribute("page", pageImpl.findById(pid));
 
         return "page/edit :: #permissions-content";
@@ -451,6 +427,7 @@ public class PageController {
             @PathVariable("permissionId") Integer permissionId,
             @RequestParam("permissionLevel") String permissionLevel
     ) {
+        requireLocalPermissionManagement(new PageId(pageId));
         // Berechtigungsprüfung
         PageId pid = new PageId(pageId);
         Integer currentUserId = getCurrentUserId();
@@ -476,6 +453,7 @@ public class PageController {
             @PathVariable("permissionId") Integer permissionId,
             Model model
     ) {
+        requireLocalPermissionManagement(new PageId(pageId));
         // Berechtigungsprüfung
         PageId pid = new PageId(pageId);
         Integer currentUserId = getCurrentUserId();
@@ -486,11 +464,45 @@ public class PageController {
         pagePermissionImpl.deletePermissionForPage(pid, permissionId);
 
         // Berechtigungen neu laden
-        List<PagePermission> permissions = pagePermissionImpl.listPermissionsByPageId(pid);
-        model.addAttribute("permissions", permissions);
+        addPermissionModel(pid, model);
         model.addAttribute("page", pageImpl.findById(pid));
 
         return "page/edit :: #permissions-content";
+    }
+
+    private void requirePermissionAdministrator() {
+        if (!userContext.getUserContext().isAdmin()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+    }
+
+    private void requireLocalPermissionManagement(PageId pageId) {
+        requirePermissionAdministrator();
+        if (pagePermissionImpl.isInheriting(pageId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Switch to local permissions first");
+        }
+    }
+
+    private void addPermissionModel(PageId pageId, Model model) {
+        boolean canManage = userContext.getUserContext().isAdmin();
+        model.addAttribute("canManagePermissions", canManage);
+        if (canManage) {
+            boolean inherits = pagePermissionImpl.isInheriting(pageId);
+            model.addAttribute("inheritsPermissions", inherits);
+            model.addAttribute("permissionSource", pagePermissionImpl.permissionSource(pageId));
+            model.addAttribute("permissions", inherits ? List.of() : pagePermissionImpl.listPermissionsByPageId(pageId));
+        }
+    }
+
+    @PostMapping("/ui/page/{pageId}/permission-mode")
+    public ModelAndView changePermissionMode(@PathVariable Integer pageId, @RequestParam boolean inherit) {
+        requirePermissionAdministrator();
+        try {
+            pagePermissionImpl.setInheriting(new PageId(pageId), inherit, getCurrentUserId());
+        } catch (IllegalStateException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Invalid permission inheritance");
+        }
+        return new ModelAndView("redirect:/ui/page/" + pageId + "/edit");
     }
 
     // REST-API-Endpunkte für Benutzer- und Gruppeninformationen
@@ -498,6 +510,7 @@ public class PageController {
     @GetMapping("/api/users")
     @ResponseBody
     public ResponseEntity<?> getUsers() {
+        requirePermissionAdministrator();
         try {
             // Create filter for active and non-deleted users
             UserFilter filter = new UserFilter();
@@ -522,6 +535,7 @@ public class PageController {
     @GetMapping("/api/groups")
     @ResponseBody
     public ResponseEntity<?> getGroups() {
+        requirePermissionAdministrator();
         try {
             // Create filter for active and non-deleted groups
             GroupFilter filter = new GroupFilter();

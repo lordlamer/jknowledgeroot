@@ -205,6 +205,9 @@ class InstallationTest {
         migration("classpath:dbupdates/legacy-changelog.xml", "production,development").afterPropertiesSet();
         var checksums = jdbc.queryForList("SELECT ID, MD5SUM FROM DATABASECHANGELOG ORDER BY ORDEREXECUTED");
         var pages = jdbc.queryForList("SELECT * FROM page ORDER BY id");
+        var grants = jdbc.queryForList("SELECT * FROM page_permission ORDER BY id");
+        // The new column preserves the original explicit mode for every existing page.
+        pages.forEach(page -> page.put("inherit_permissions", false));
         var users = jdbc.queryForList("SELECT * FROM user ORDER BY id");
         new ResourceDatabasePopulator(new ClassPathResource("org/springframework/session/jdbc/schema-mysql.sql"))
                 .execute(dataSource);
@@ -214,7 +217,8 @@ class InstallationTest {
         migrate(true);
         migrate(false);
         assertEquals(checksums, jdbc.queryForList(
-                "SELECT ID, MD5SUM FROM DATABASECHANGELOG WHERE ID NOT IN ('1.0.5-jdbc-session', '1.0.6-initial-setup') ORDER BY ORDEREXECUTED"));
+                "SELECT ID, MD5SUM FROM DATABASECHANGELOG WHERE ORDEREXECUTED <= ? ORDER BY ORDEREXECUTED", checksums.size()));
+        assertEquals(grants, jdbc.queryForList("SELECT * FROM page_permission ORDER BY id"));
         assertEquals(pages, jdbc.queryForList("SELECT * FROM page ORDER BY id"));
         assertEquals(users, jdbc.queryForList("SELECT * FROM user ORDER BY id"));
         Session restored = sessionRepository().findById(session.getId());

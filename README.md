@@ -39,6 +39,18 @@ must rotate or disable remaining demo credentials before upgrading outside
 development. See the [installation and upgrade guide](docs/installation.md)
 for bootstrap rules, migration checks, and session schema ownership.
 
+## Page permissions
+
+New child pages dynamically inherit their parent's permissions. New root pages
+created by signed-in users are private to their creator and administrators.
+Set `KR_ALLOW_GUEST_ROOT_CREATION=true` to allow guests to create publicly readable
+root pages; the default is `false`. Guests may create children wherever they have
+parent-page edit permission. Public read access alone never grants editing.
+
+Only administrators manage sharing and explicitly switch between inherited and
+local permissions. Existing pages retain their local grants during upgrade.
+See the [access-control guide](docs/access-control.md) for the complete rules.
+
 ## Login and sessions
 
 Each authenticated request reloads the account by its stable user ID. Disabling

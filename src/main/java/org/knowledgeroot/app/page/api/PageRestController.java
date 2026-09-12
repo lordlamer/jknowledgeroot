@@ -3,6 +3,7 @@ package org.knowledgeroot.app.page.api;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.knowledgeroot.app.page.domain.Page;
+import org.knowledgeroot.app.page.domain.PageCreationService;
 import org.knowledgeroot.app.page.domain.PageDao;
 import org.knowledgeroot.app.page.domain.PageFilter;
 import org.knowledgeroot.app.page.domain.PageId;
@@ -31,6 +32,7 @@ public class PageRestController {
     private final PageDao pageImpl;
     private final PagePermissionDao pagePermissionDao;
     private final UserContext userContext;
+    private final PageCreationService pageCreationService;
 
     private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
 
@@ -186,12 +188,10 @@ public class PageRestController {
     @RequestMapping(value = "/page", method = RequestMethod.POST)
     public ResponseEntity<Void> createPage(@RequestBody PageDto pageDto, UriComponentsBuilder ucBuilder) {
 
-        Page page = pageDtoConverter.convertBtoA(pageDto);
-
-        pageImpl.createPage(page);
+        int id = pageCreationService.create(pageDto, List.of());
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(ucBuilder.path("/page/{id}").buildAndExpand(page.getPageId().value()).toUri());
+        headers.setLocation(ucBuilder.path("/page/{id}").buildAndExpand(id).toUri());
 
         return new ResponseEntity<>(headers, HttpStatus.CREATED);
     }

@@ -15,9 +15,9 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: R05 – Öffentliche Rechte bewusst festlegen (Produktentscheidung).**
+**Nächster Schritt: R06 – Passwortspeicherung und Login-Schutz modernisieren.**
 
-R01 bis R04 sind abgeschlossen. R05 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
+R01 bis R05 sind abgeschlossen. R06 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
 
 ## 1. Build und Sicherheit
 
@@ -68,11 +68,14 @@ R01 bis R04 sind abgeschlossen. R05 bis R15 sind offen; die Produktionsfreigabe 
 
 ### R05 – Öffentliche Rechte bewusst festlegen
 
-- [ ] Offen – Produktentscheidung erforderlich
+- [x] Erledigt am 12. September 2026
 - **Befund:** Gäste können Seiten auf oberster Ebene erstellen. Neue Seiten erhalten automatisch Gast-Leserechte, auch unter einer geschützten Elternseite. Bearbeitungsrechte erlauben derzeit ebenfalls die Verwaltung der Seitenberechtigungen.
-- **Entscheidung:** Öffentliches Wiki oder interne Wissensdatenbank; Erstellen durch Gäste; Standardrechte und Vererbung; Trennung von Bearbeiten und Freigeben.
-- **Vorschlag:** Für eine interne Wissensdatenbank Gast-Erstellung deaktivieren, neue Seiten privat oder mit explizit übernommenen Elternrechten anlegen und das Verwalten von Freigaben gesondert regeln. Dieser Vorschlag ist noch keine beschlossene Produktregel.
+- **Beschlossene Regel:** Neue Unterseiten erben dynamisch von ihrer Elternseite. Erstellung erfordert deren Bearbeitungsrecht, auch für Gäste. Hauptseiten angemeldeter Benutzer sind zunächst nur für Ersteller und Admins zugänglich. Wenn Gast-Erstellung für Hauptseiten erlaubt ist, entstehen öffentlich lesbare Seiten ohne automatische Gast-Bearbeitungsrechte. Abweichende Freigaben erfordern eine ausdrückliche Entscheidung; die Verwaltung ist vom Bearbeiten getrennt und Administratoren vorbehalten.
 - **Abnahme:** Die beschlossene Berechtigungsmatrix ist dokumentiert und für Oberfläche und API getestet. Geschützte Inhalte werden nicht unbeabsichtigt veröffentlicht; bestehende Daten werden bei Regeländerungen berücksichtigt.
+- **Umgesetzt:** Changeset `1.0.7` ergänzt den Vererbungsmodus; vorhandene Seiten behalten ihre bisherigen eigenen Rechte. Die gemeinsame Berechtigungsprüfung löst die Elternkette dynamisch auf und verweigert normalen Benutzern/Gästen Zugriff bei ungültiger oder zyklischer Vererbung. Admins können im Editor ausdrücklich zu eigenen Rechten wechseln (Kopie der aktuell wirksamen Freigaben) oder lokale Rechte zugunsten der Vererbung entfernen. Lokale Freigabeänderungen sind während der Vererbung gesperrt. Berechtigungsliste, Benutzer-/Gruppenauswahl, direkte Endpunkte und Berechtigungsfelder im Speicherformular verlangen Adminrechte; unerlaubte Felder werden vor Inhaltsänderungen abgelehnt.
+- **Erstellung:** UI und REST verwenden denselben transaktionalen Erstellungsservice für Inhalt, Standardrechte und Labels. Auditdaten kommen aus der Sitzung; REST liefert die erzeugte Seiten-ID zurück. Neue Unterseiten erhalten keine zusätzlichen Ersteller-/Gastfreigaben, die spätere Elternänderungen umgehen könnten. `KR_ALLOW_GUEST_ROOT_CREATION` steuert Gast-Hauptseiten und ist standardmäßig `false`. Gast-Unterseiten richten sich unabhängig davon nach den Elternrechten. Regeln, Migration und Bedienung sind in [access-control.md](access-control.md) und README dokumentiert.
+- **Geprüft:** `.\mvnw.cmd -B --no-transfer-progress verify`: **BUILD SUCCESS**, 121 Tests erfasst, davon **111 erfolgreich und 10 bereits zuvor deaktiviert**, keine Fehler. 31 neue Fälle prüfen bestehende Benutzer-/Gruppen-/Gast-/Admin-Rechte, fremde Berechtigungs-IDs, mehrstufige Vererbung und Entzug, explizite Ausnahmen und Rückkehr zur Vererbung, ungültige Hierarchien, Gast-Erstellung, private Hauptseiten, Auditdaten und Rollback sowie HTTP-/Formularzugriff und gerenderte Thymeleaf-Ansichten. Der MariaDB-Upgrade-Test bestätigt den Erhalt bestehender Seiten und Freigaben. `git diff --check` ohne Fehler.
+- **Testgrenzen:** MariaDB-Tests verwenden echte SQL-Abfragen; HTTP-/Template-Tests verwenden die echte Filterkette, Controller und den Erstellungsservice mit gemockten DAOs. Ein interaktiver Browsertest der HTMX-Moduswechsel und vollständige HTTP-/Datenbank-/Storage-Integration bleiben in R13. Die Vererbung benötigt zusätzliche Abfragen entlang der Elternkette; Optimierung folgt in R10. Vorhandene lokale Ausnahmen bleiben bewusst unabhängig von Elternänderungen. Bestehende Gast-Bearbeitungsrechte bleiben erhalten und erlauben Gast-Unterseiten, aber keine Freigabeverwaltung.
 
 ### R06 – Passwortspeicherung und Login-Schutz modernisieren
 
@@ -102,7 +105,7 @@ R01 bis R04 sind abgeschlossen. R05 bis R15 sind offen; die Produktionsfreigabe 
 ### R09 – Schreibvorgänge atomar machen
 
 - [ ] Offen
-- **Befund:** Seiteninhalt, Labels und Berechtigungen werden in getrennten Transaktionen gespeichert. Ein später Fehler kann teilweise gespeicherte Änderungen hinterlassen.
+- **Befund:** Beim Bearbeiten werden Seiteninhalt, Labels und Berechtigungen noch in getrennten Transaktionen gespeichert. Ein später Fehler kann teilweise gespeicherte Änderungen hinterlassen. Die Neuerstellung über UI und REST ist seit R05 bereits gemeinsam transaktional abgesichert.
 - **Umsetzung:** Zusammengehörige Änderungen in transaktionale Anwendungsservices verschieben; Auditfelder mit dem tatsächlichen Benutzer befüllen. Dateiablage und Metadaten benötigen eine definierte Fehlerbehandlung, da ein Object Store nicht an der Datenbanktransaktion teilnimmt.
 - **Abnahme:** Ein Fehler beim Speichern von Labels oder Rechten rollt den gesamten fachlichen Datenbankvorgang zurück. Uploadfehler erzeugen keine als erfolgreich angezeigten, unvollständigen Dateien. Auditfelder sind korrekt.
 

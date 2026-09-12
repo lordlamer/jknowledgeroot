@@ -10,6 +10,7 @@ import org.knowledgeroot.app.page.domain.Page;
 import org.knowledgeroot.app.page.domain.PageId;
 import org.knowledgeroot.app.page.domain.PagePermission;
 import org.knowledgeroot.app.page.domain.PageDao;
+import org.knowledgeroot.app.page.domain.PageCreationService;
 import org.knowledgeroot.app.page.domain.PageCommentDao;
 import org.knowledgeroot.app.page.domain.PageLabelDao;
 import org.knowledgeroot.app.page.domain.PagePermissionDao;
@@ -58,17 +59,20 @@ class PageControllerTest {
 
     @Mock
     private UserContext userContext;
+    @Mock
+    private PageCreationService pageCreationService;
 
     private PageController pageController;
 
     @BeforeEach
     void setUp() {
         pageController = new PageController(pageImpl, pagePermissionImpl, pageStarDao,
-                pageCommentDao, pageLabelDao, userImpl, groupImpl, userContext);
+                pageCommentDao, pageLabelDao, userImpl, groupImpl, userContext, pageCreationService);
     }
 
     @Test
     void getUsers_ShouldReturnUserList() {
+        when(userContext.getUserContext()).thenReturn(UserDetails.builder().role(UserDetails.Role.ADMIN).build());
         // Arrange
         User user1 = User.builder()
                 .id(new UserId(1))
@@ -99,6 +103,7 @@ class PageControllerTest {
 
     @Test
     void getGroups_ShouldReturnGroupList() {
+        when(userContext.getUserContext()).thenReturn(UserDetails.builder().role(UserDetails.Role.ADMIN).build());
         // Arrange
         Group group1 = Group.builder()
                 .id(new GroupId(1))

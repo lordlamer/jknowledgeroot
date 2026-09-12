@@ -10,7 +10,7 @@
     <h1>Your team's knowledge, at home.</h1>
     <p>A calm, structured place to write docs, store runbooks, and keep what matters to your team searchable and versioned.</p>
     <div class="kr-cta">
-        <button class="kr-btn primary" type="button" hx-get="/ui/page/new" hx-target="#content" hx-push-url="true">
+        <button th:if="${canCreateRootPage}" class="kr-btn primary" type="button" hx-get="/ui/page/new" hx-target="#content" hx-push-url="true">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
             Create your first page
         </button>

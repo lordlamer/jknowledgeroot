@@ -44,7 +44,7 @@
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="kr-editor-tab nav-link" id="permissions-tab" data-bs-toggle="tab" data-bs-target="#permissions-content"
+            <button th:if="${canManagePermissions}" class="kr-editor-tab nav-link" id="permissions-tab" data-bs-toggle="tab" data-bs-target="#permissions-content"
                     type="button" role="tab" aria-controls="permissions-content" aria-selected="false">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 Permissions
@@ -76,7 +76,28 @@
                 </div>
 
                 <!-- Tab für Berechtigungen -->
-                <div class="tab-pane fade" id="permissions-content" role="tabpanel" aria-labelledby="permissions-tab">
+                <div th:if="${canManagePermissions}" class="tab-pane fade" id="permissions-content" role="tabpanel" aria-labelledby="permissions-tab">
+                    <div class="alert alert-info" th:if="${inheritsPermissions}">
+                        <p>Die Rechte werden dynamisch von der übergeordneten Seite geerbt.
+                            Änderungen dort gelten auch für diese Seite.</p>
+                        <a th:if="${permissionSource != null}" th:href="@{'/ui/page/' + ${permissionSource} + '/edit'}">Berechtigungsquelle bearbeiten</a>
+                        <button type="button" class="btn btn-secondary"
+                                th:hx-post="'/ui/page/' + ${page.pageId} + '/permission-mode'"
+                                hx-vals='{"inherit":"false"}' hx-params="inherit" hx-target="#content"
+                                hx-confirm="Aktuelle Rechte kopieren und die Vererbung aufheben? Spätere Änderungen der Elternrechte gelten dann nicht mehr.">
+                            Eigene Rechte verwenden
+                        </button>
+                    </div>
+                    <div th:unless="${inheritsPermissions}">
+                    <div class="alert alert-info" th:if="${page.parent != null and page.parent > 0}">
+                        <p>Diese Seite verwendet eigene Rechte.</p>
+                        <button type="button" class="btn btn-secondary"
+                                th:hx-post="'/ui/page/' + ${page.pageId} + '/permission-mode'"
+                                hx-vals='{"inherit":"true"}' hx-params="inherit" hx-target="#content"
+                                hx-confirm="Eigene Rechte entfernen und künftig dynamisch von der Elternseite erben?">
+                            Rechte der Elternseite erben
+                        </button>
+                    </div>
                     <!-- Vorhandene Berechtigungen anzeigen -->
                     <div class="table-responsive" th:if="${permissions}">
                         <table class="table table-striped">
@@ -155,6 +176,7 @@
                                         onclick="addPermissionLocally()">Hinzufügen</button>
                             </div>
                         </div>
+                    </div>
                     </div>
                 </div>
             </div>

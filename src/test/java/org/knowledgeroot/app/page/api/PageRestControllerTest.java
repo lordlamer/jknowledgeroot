@@ -6,6 +6,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.knowledgeroot.app.page.domain.Page;
 import org.knowledgeroot.app.page.domain.PageDao;
+import org.knowledgeroot.app.page.domain.PageCreationService;
 import org.knowledgeroot.app.page.domain.PageFilter;
 import org.knowledgeroot.app.page.domain.PageId;
 import org.knowledgeroot.app.page.domain.PagePermissionDao;
@@ -39,6 +40,8 @@ class PageRestControllerTest {
 
     @MockitoBean
     private PageDao pages;
+    @MockitoBean
+    private PageCreationService pageCreationService;
     @MockitoBean
     private PagePermissionDao permissions;
     @MockitoBean
