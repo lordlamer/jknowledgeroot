@@ -8,7 +8,8 @@ criteria, open decisions, and progress toward a production release.
 
 ## Build and tests
 
-Install JDK 25 and set `JAVA_HOME` to its installation directory. The Maven
+Install JDK 25 and set `JAVA_HOME` to its installation directory. Start a Docker
+engine for the isolated MariaDB installation and upgrade tests. The Maven
 Wrapper downloads the pinned Maven version on its first invocation; a separate
 Maven installation is not required.
 
@@ -26,8 +27,17 @@ On Windows (PowerShell):
 
 The build compiles the application, runs the enabled tests, and creates the
 executable JAR in `target/`. The two existing disabled integration test classes
-are tracked in roadmap item R13; a successful build does not yet verify a real
-database or storage deployment.
+are tracked in roadmap item R13. Installation tests exercise a real MariaDB in
+Testcontainers; full application and storage deployment tests are still pending.
+
+## Initial administrator and upgrades
+
+Fresh databases require individually configured `KR_BOOTSTRAP_LOGIN` and
+`KR_BOOTSTRAP_PASSWORD` on the first start. There is no default administrator.
+Demo data requires the explicit `development` profile. Existing installations
+must rotate or disable remaining demo credentials before upgrading outside
+development. See the [installation and upgrade guide](docs/installation.md)
+for bootstrap rules, migration checks, and session schema ownership.
 
 ## Login and sessions
 

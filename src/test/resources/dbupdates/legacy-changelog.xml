@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog logicalFilePath="dbupdates/changelog.xml" xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <property name="db.name" value="mariadb" dbms="mariadb"/>
+    <property name="db.name" value="mssql" dbms="mssql"/>
+    <property name="db.name" value="postgres" dbms="postgresql"/>
+    <property name="demo" value="demo" context="example-context"/>
+
+    <changeSet id="1.0.0-baseline" author="lordlamer" context="production">
+        <sqlFile path="dbupdates/baseline/liquibase.${db.name}.create.sql"
+                 encoding="UTF-8"
+                 relativeToChangelogFile="false"
+                 splitStatements="true"
+                 stripComments="true"/>
+    </changeSet>
+
+    <changeSet id="1.0.0-baseline-demo" author="lordlamer" context="development">
+        <sqlFile path="dbupdates/baseline/liquibase.${db.name}.create.demo.data.sql"
+                 encoding="UTF-8"
+                 relativeToChangelogFile="false"
+                 splitStatements="true"
+                 stripComments="true"/>
+    </changeSet>
+
+    <changeSet id="1.0.0-tag" author="lordlamer">
+        <tagDatabase tag="1.0.0"/>
+    </changeSet>
+    <changeSet id="1.0.1-guest-nullable-audit" author="junie" context="production,development">
+        <sqlFile path="dbupdates/changes/1.0.1-guest-nullable-audit.${db.name}.sql"
+                 encoding="UTF-8"
+                 relativeToChangelogFile="false"
+                 splitStatements="true"
+                 stripComments="true"/>
+    </changeSet>
+    <changeSet id="1.0.2-user-page-star" author="claude" context="production,development">
+        <sqlFile path="dbupdates/changes/1.0.2-user-page-star.${db.name}.sql"
+                 encoding="UTF-8"
+                 relativeToChangelogFile="false"
+                 splitStatements="true"
+                 stripComments="true"/>
+    </changeSet>
+    <changeSet id="1.0.3-page-comment" author="claude" context="production,development">
+        <sqlFile path="dbupdates/changes/1.0.3-page-comment.${db.name}.sql"
+                 encoding="UTF-8"
+                 relativeToChangelogFile="false"
+                 splitStatements="true"
+                 stripComments="true"/>
+    </changeSet>
+    <changeSet id="1.0.4-tag-unique-name" author="claude" context="production,development">
+        <sqlFile path="dbupdates/changes/1.0.4-tag-unique-name.${db.name}.sql"
+                 encoding="UTF-8"
+                 relativeToChangelogFile="false"
+                 splitStatements="true"
+                 stripComments="true"/>
+    </changeSet>
+</databaseChangeLog>

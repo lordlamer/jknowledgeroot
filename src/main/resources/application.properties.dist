@@ -11,8 +11,12 @@ spring.jpa.open-in-view=false
 
 # jdbc session handling
 spring.session.store-type=jdbc
-spring.session.jdbc.initialize-schema=always
+spring.session.jdbc.initialize-schema=never
 spring.session.timeout=3600
+
+# One-time administrator setup for a fresh database (remove credentials afterwards).
+knowledgeroot.bootstrap.login=${KR_BOOTSTRAP_LOGIN:}
+knowledgeroot.bootstrap.password=${KR_BOOTSTRAP_PASSWORD:}
 
 # template
 spring.thymeleaf.enabled=true

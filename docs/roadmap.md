@@ -15,9 +15,9 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: R04 – Sichere Ersteinrichtung und Migrationen.**
+**Nächster Schritt: R05 – Öffentliche Rechte bewusst festlegen (Produktentscheidung).**
 
-R01 bis R03 sind abgeschlossen. R04 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
+R01 bis R04 sind abgeschlossen. R05 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
 
 ## 1. Build und Sicherheit
 
@@ -56,10 +56,15 @@ R01 bis R03 sind abgeschlossen. R04 bis R15 sind offen; die Produktionsfreigabe 
 
 ### R04 – Sichere Ersteinrichtung und Migrationen
 
-- [ ] Offen
+- [x] Erledigt am 12. September 2026
 - **Befund:** Liquibase aktiviert fest `development, production`; frische Installationen erhalten dadurch Demodaten einschließlich eines Admin-Kontos mit festem Passwort-Hash.
 - **Umsetzung:** Demodaten ausdrücklich auf Entwicklung begrenzen; sichere Einrichtung des ersten Administrators vorsehen; Umgang mit vorhandenen Demo-Konten dokumentieren. Session-Schema über einen definierten Migrationsprozess verwalten.
 - **Abnahme:** Eine frische Produktionsdatenbank enthält keine Demo-Konten oder Demo-Inhalte. Erstzugang benötigt individuell gesetzte Zugangsdaten. Wiederholter Start und Upgrade einer bestehenden Datenbank funktionieren ohne Datenverlust.
+- **Umgesetzt:** Liquibase verwendet standardmäßig ausschließlich den Schema-Kontext `production`. Demodaten erfordern ausdrücklich das Entwicklungsprofil und die Demo-Einstellung; eine gleichzeitige Aktivierung des Produktionsprofils wird abgelehnt. Der historische Demo-Changeset verlangt jetzt `@development` und verweigert den erstmaligen Import in eine Datenbank mit vorhandenen Benutzern. Die historischen SQL-Dateien bleiben unverändert.
+- **Erstzugang:** Nach den Migrationen legt der Bootstrap in einer noch unbenutzten Datenbank genau einen aktiven Administrator aus `KR_BOOTSTRAP_LOGIN` und `KR_BOOTSTRAP_PASSWORD` an. Fehlende oder ungültige Werte verhindern den Start. Kontoerstellung, Auditfelder und Setup-Markierung sind transaktional; eine gesperrte Setup-Zeile serialisiert parallele Instanzen. Vorhandene Konten werden nie überschrieben. Nach abgeschlossener Einrichtung werden keine Bootstrap-Zugangsdaten mehr benötigt; auch das spätere Entfernen aller Konten öffnet die Einrichtung nicht erneut.
+- **Upgrade und Sitzungen:** Aktive Konten mit dem bekannten Demo-Passworthash verhindern einen Start außerhalb des Demo-Modus; die Bereinigung und Wiederherstellung sind in [installation.md](installation.md) dokumentiert. Eine bestehende Installation ohne aktiven Administrator wird ebenfalls abgelehnt. Neue Changesets `1.0.5` und `1.0.6` verwalten Session-Schema und Setup-Markierung. Kompatible, zuvor von Spring Boot angelegte Session-Tabellen werden samt Daten übernommen; Springs eigene Schemainitialisierung ist deaktiviert.
+- **Geprüft:** `.\mvnw.cmd -B --no-transfer-progress verify`: **BUILD SUCCESS**, 90 Tests erfasst, davon **80 erfolgreich und 10 bereits zuvor deaktiviert**, keine Fehler. 15 neue Tests verwenden eine isolierte MariaDB 12.2.2 über Testcontainers. Geprüft sind Neuinstallation, fehlende/ungültige Zugangsdaten, Spring-Initialisierungsreihenfolge, wiederholter Start, konkurrierender Bootstrap, Rollback nach einem INSERT, deaktivierte/entfernte Administratoren, Demo-Profilregeln und Upgrade anhand der historischen Changesets. Konten, Inhalte und Changeset-Checksummen bleiben beim Upgrade erhalten; JDBC-Sitzungen lassen sich speichern, wiederlesen, übernehmen und kaskadierend löschen. `git diff --check` ohne Fehler.
+- **Testgrenzen und Betrieb:** Der Wrapper-Build benötigt jetzt Docker; Testcontainers-Abhängigkeiten verwenden die vom bestehenden Boot-BOM verwaltete Version. Die privaten lokalen Konfigurationen und bestehende Dienste wurden nicht verändert. Die Tests starten die Migrations-/Bootstrap-Konfiguration und das JDBC-Session-Repository, aber noch keine vollständige Anwendung mit HTTP und Storage. Diese breitere Integration bleibt in R13. Das Legacy-Hashverfahren bleibt bis R06 bestehen; Produktionskonfiguration, getrennte Datenbankrollen und Release-/Restore-Erprobung folgen in R12/R14. Inkompatibel manuell veränderte Session-Schemata werden nicht automatisch repariert.
 
 ### R05 – Öffentliche Rechte bewusst festlegen
 

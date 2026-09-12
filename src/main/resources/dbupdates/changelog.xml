@@ -16,7 +16,10 @@
                  stripComments="true"/>
     </changeSet>
 
-    <changeSet id="1.0.0-baseline-demo" author="lordlamer" context="development">
+    <changeSet id="1.0.0-baseline-demo" author="lordlamer" context="@development">
+        <preConditions onFail="HALT">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM user</sqlCheck>
+        </preConditions>
         <sqlFile path="baseline/liquibase.${db.name}.create.demo.data.sql"
                  encoding="UTF-8"
                  relativeToChangelogFile="true"
@@ -54,5 +57,13 @@
                  relativeToChangelogFile="true"
                  splitStatements="true"
                  stripComments="true"/>
+    </changeSet>
+    <changeSet id="1.0.5-jdbc-session" author="knowledgeroot" dbms="mariadb">
+        <sqlFile path="changes/1.0.5-jdbc-session.mariadb.sql"
+                 relativeToChangelogFile="true" encoding="UTF-8" splitStatements="true" stripComments="true"/>
+    </changeSet>
+    <changeSet id="1.0.6-initial-setup" author="knowledgeroot" dbms="mariadb">
+        <sqlFile path="changes/1.0.6-initial-setup.mariadb.sql"
+                 relativeToChangelogFile="true" encoding="UTF-8" splitStatements="true" stripComments="true"/>
     </changeSet>
 </databaseChangeLog>
