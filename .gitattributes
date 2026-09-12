@@ -1,2 +1,4 @@
 mvnw text eol=lf
 mvnw.cmd text eol=crlf
+# Entrypoints mounted from Windows checkouts must remain executable by a Linux shell.
+deploy/*.sh text eol=lf

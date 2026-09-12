@@ -13,7 +13,15 @@ public class LiquibaseConfig {
     @Bean
     public SpringLiquibase liquibase(DataSource dataSource, Environment environment) {
         SpringLiquibase liquibase = new SpringLiquibase();
-        liquibase.setDataSource(dataSource);
+        String migrationUser = environment.getProperty("knowledgeroot.migration.username", "");
+        String migrationPassword = environment.getProperty("knowledgeroot.migration.password", "");
+        if (!migrationUser.isBlank()) {
+            if (migrationPassword.isBlank()) throw new IllegalStateException("Missing migration database password");
+            liquibase.setDataSource(new org.springframework.jdbc.datasource.DriverManagerDataSource(
+                    environment.getRequiredProperty("spring.datasource.url"), migrationUser, migrationPassword));
+        } else {
+            liquibase.setDataSource(dataSource);
+        }
         liquibase.setChangeLog("classpath:dbupdates/changelog.xml");
         liquibase.setContexts(demoDataEnabled(environment) ? "production,development" : "production");
         liquibase.setShouldRun(true);

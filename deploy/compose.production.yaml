@@ -1,0 +1,54 @@
+# Run with an explicit --env-file and project name. This defines a NEW deployment.
+services:
+  database:
+    image: mariadb:12.2.2
+    environment:
+      MARIADB_DATABASE: knowledgeroot
+      MARIADB_ROOT_PASSWORD: ${KR_DB_ROOT_PASSWORD:?Set a unique database root password}
+      KR_DB_PASSWORD: ${KR_DB_PASSWORD:?Set the runtime database password}
+      KR_MIGRATION_PASSWORD: ${KR_MIGRATION_PASSWORD:?Set the migration database password}
+    volumes:
+      - database:/var/lib/mysql
+      - ./init-database.sh:/docker-entrypoint-initdb.d/10-knowledgeroot.sh:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+    networks: [backend]
+  app:
+    image: ${KR_APP_IMAGE:?Set an explicitly versioned application image}
+    environment:
+      SPRING_PROFILES_ACTIVE: production
+      SPRING_CONFIG_IMPORT: ""
+      KR_DB_URL: jdbc:mariadb://database:3306/knowledgeroot
+      KR_DB_USER: knowledgeroot
+      KR_DB_PASSWORD: ${KR_DB_PASSWORD:?Set the runtime database password}
+      KR_MIGRATION_USER: knowledgeroot_migrate
+      KR_MIGRATION_PASSWORD: ${KR_MIGRATION_PASSWORD:?Set the migration database password}
+      KR_STORAGE_DRIVER: file
+      KR_FILE_STORAGE_DIR: /var/lib/knowledgeroot/files
+      KR_BOOTSTRAP_LOGIN: ${KR_BOOTSTRAP_LOGIN:-}
+      KR_BOOTSTRAP_PASSWORD: ${KR_BOOTSTRAP_PASSWORD:-}
+      KR_FORWARD_HEADERS_STRATEGY: ${KR_FORWARD_HEADERS_STRATEGY:-none}
+      KR_TRUSTED_PROXY_PATTERN: ${KR_TRUSTED_PROXY_PATTERN:-(?!)}
+    depends_on:
+      database: {condition: service_healthy}
+    ports:
+      - "127.0.0.1:${KR_APP_PORT:-8081}:8081"
+    volumes:
+      - files:/var/lib/knowledgeroot/files
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=512m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    stop_grace_period: 40s
+    restart: unless-stopped
+    networks: [backend]
+networks:
+  backend: {}
+volumes:
+  database: {}
+  files: {}

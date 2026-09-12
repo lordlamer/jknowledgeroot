@@ -68,8 +68,8 @@ Quarantäne vor endgültiger Löschung. Eine automatische Bereinigung ist nicht
 implementiert. Seit R11 werden neue Inhalte mit begrenztem Puffer gehasht und
 unter SHA-256-Schlüsseln gespeichert; alte MD5-Objekte bleiben lesbar. Uploadgrenzen,
 sichere Downloadheader und die unabhängige Treiberinitialisierung sind ebenfalls
-dort beschrieben. Der Storage-Dienst für den produktiven Betrieb bleibt eine
-offene Entscheidung in R12.
+dort beschrieben. R12 dokumentiert in [production.md](production.md) den lokalen
+Speicher als Standardbetrieb für eine einzelne Instanz.
 
 ## Nachweise
 

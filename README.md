@@ -64,6 +64,11 @@ See the [editor guide](docs/editor.md) for supported content and upgrade checks.
 
 ## Initial administrator and upgrades
 
+For the production profile, restricted database accounts, a persistent local file
+volume, HTTPS/proxy settings and the release workflow, see the
+[production deployment guide](docs/production.md). The Docker image runs as UID
+10001. Production Compose is separate from the existing development services.
+
 Fresh databases require individually configured `KR_BOOTSTRAP_LOGIN` and
 `KR_BOOTSTRAP_PASSWORD` on the first start. There is no default administrator.
 Demo data requires the explicit `development` profile. Existing installations

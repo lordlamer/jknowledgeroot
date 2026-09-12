@@ -1,14 +1,16 @@
 # Ersteinrichtung und Datenbank-Upgrades
 
-Diese Anleitung beschreibt den Stand von R04. Die vollständige Produktionsfreigabe
-steht noch aus; insbesondere Produktionsprofil, Storage
-und Releasebetrieb sind in der [Roadmap](roadmap.md) offen.
+Diese Anleitung beschreibt Erstzugang und Upgrades, ergänzt bis R12.
+Produktionsprofil, Datenbankkonten, Container und Lieferprozess stehen in
+[production.md](production.md). Die vollständige Produktionsfreigabe und der
+praktisch erprobte Restore stehen weiterhin aus.
 
 ## Neue Installation ohne Demodaten
 
 1. Eine eigene, leere MariaDB-Datenbank und die Datenbank-/Storage-Konfiguration
    bereitstellen. Für die Migration benötigt der Datenbankbenutzer auch DDL-Rechte.
-   Die Trennung zwischen Migrations- und Laufzeitbenutzer folgt in R12.
+   Im Produktionsprofil sind seit R12 getrennte Migrations- und Laufzeitbenutzer
+   verpflichtend; das Laufzeitkonto benötigt ausschließlich DML-Rechte.
 2. Kein `development`-Profil aktivieren. Auch ohne explizites Spring-Profil werden
    ausschließlich Schema-Migrationen ausgeführt. Es werden keine Demo-Seiten,
    Demo-Gruppen oder Demo-Benutzer angelegt.

@@ -44,16 +44,20 @@ class ApplicationSmokeIT {
             .withCommand("server /data").withExposedPorts(9000)
             .waitingFor(Wait.forHttp("/minio/health/ready").forPort(9000));
     @TempDir Path files;
+    private javax.net.ssl.SSLContext tls;
 
     @Test
     void applicationStartsAndKeepsAuthenticatedJdbcSessionAfterRestart() throws Exception {
+        prepareProductionDatabaseAndTls();
         var cookies = new CookieManager(null, CookiePolicy.ACCEPT_ALL);
         try (var client = HttpClient.newBuilder().cookieHandler(cookies)
+                .sslContext(tls)
                 .connectTimeout(Duration.ofSeconds(10)).build()) {
             try (var context = start(true)) {
                 var login = get(client, context, "/login");
                 assertEquals(200, login.statusCode());
                 assertTrue(login.body().contains("Sign in"));
+                assertTrue(login.headers().firstValue("strict-transport-security").isPresent());
                 assertEquals(200, get(client, context, "/webjars/htmx.org/dist/htmx.min.js").statusCode());
                 assertEquals(200, get(client, context, "/webjars/bootstrap/css/bootstrap.min.css").statusCode());
                 String form = "username=smoke.admin&password=smoke-test-password-2026&_csrf="
@@ -62,12 +66,16 @@ class ApplicationSmokeIT {
                         .header("Content-Type", "application/x-www-form-urlencoded")
                         .POST(HttpRequest.BodyPublishers.ofString(form)).build(), HttpResponse.BodyHandlers.ofString());
                 assertEquals(302, authenticated.statusCode());
+                assertTrue(authenticated.headers().allValues("set-cookie").stream().anyMatch(value ->
+                        value.startsWith("SESSION=") && value.contains("Secure") && value.contains("HttpOnly") && value.contains("SameSite=Lax")));
                 assertTrue(authenticated.headers().firstValue("location").orElseThrow().endsWith("/login/success"));
                 assertAdministrator(client, context);
                 browserEditingAndUploads(context);
                 var jdbc = new JdbcTemplate(new DriverManagerDataSource(database.getJdbcUrl(),
                         database.getUsername(), database.getPassword()));
                 assertTrue(jdbc.queryForObject("SELECT COUNT(*) FROM SPRING_SESSION_ATTRIBUTES", Integer.class) > 0);
+                assertThrows(org.springframework.dao.DataAccessException.class,
+                        () -> jdbc.execute("CREATE TABLE forbidden_runtime_ddl (id INT)"));
             }
             try (var restarted = start(false)) {
                 assertAdministrator(client, restarted);
@@ -78,16 +86,57 @@ class ApplicationSmokeIT {
                         .build(), HttpResponse.BodyHandlers.ofString());
                 assertEquals(302, logout.statusCode());
                 assertEquals(302, get(client, restarted, "/user").statusCode());
+                assertForwardedAddress(client, restarted, false);
             }
             try (var local = start(false, "file")) {
+                assertForwardedAddress(client, local, true);
                 localStorageAndUploadLimits(local);
             }
         }
     }
 
+    private void assertForwardedAddress(HttpClient client, TestServer server, boolean trusted) throws Exception {
+        String source = trusted ? "198.51.100.11" : "198.51.100.10";
+        String token = csrf(get(client, server, "/login").body());
+        var response = client.send(HttpRequest.newBuilder(uri(server, "/logmein"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .header("X-Forwarded-For", "203.0.113.7, " + source).header("X-Forwarded-Proto", "https")
+                .POST(HttpRequest.BodyPublishers.ofString("username=proxy.probe&password=incorrect&_csrf="
+                        + URLEncoder.encode(token, StandardCharsets.UTF_8))).build(), HttpResponse.BodyHandlers.ofString());
+        assertEquals(302, response.statusCode());
+        var jdbc = new JdbcTemplate(new DriverManagerDataSource(database.getJdbcUrl(), database.getUsername(), database.getPassword()));
+        assertEquals(trusted ? 1 : 0, jdbc.queryForObject("SELECT COUNT(*) FROM login_attempt WHERE bucket_key = ?", Integer.class,
+                org.knowledgeroot.app.security.auth.PasswordService.credentialTag("source:" + source)));
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM login_attempt WHERE bucket_key = ?", Integer.class,
+                org.knowledgeroot.app.security.auth.PasswordService.credentialTag("source:203.0.113.7")));
+    }
+
+    private void prepareProductionDatabaseAndTls() throws Exception {
+        var root = new JdbcTemplate(new DriverManagerDataSource(database.getJdbcUrl(), "root", database.getPassword()));
+        root.execute("CREATE USER 'smoke_migrator'@'%' IDENTIFIED BY 'smoke-migration-password'");
+        root.execute("GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, INDEX, REFERENCES ON test.* TO 'smoke_migrator'@'%'");
+        root.execute("REVOKE ALL PRIVILEGES ON test.* FROM 'test'@'%'");
+        root.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON test.* TO 'test'@'%'");
+        Path keyStore = files.resolve("test-tls.p12");
+        String keytool = Path.of(System.getProperty("java.home"), "bin",
+                System.getProperty("os.name").startsWith("Windows") ? "keytool.exe" : "keytool").toString();
+        var generator = new ProcessBuilder(keytool, "-genkeypair", "-alias", "localhost", "-keyalg", "RSA",
+                "-storetype", "PKCS12", "-keystore", keyStore.toString(), "-storepass", "test-certificate-password",
+                "-dname", "CN=localhost", "-ext", "SAN=dns:localhost", "-validity", "2", "-noprompt")
+                .redirectErrorStream(true).redirectOutput(files.resolve("keytool.log").toFile()).start();
+        try { assertTrue(generator.waitFor(30, TimeUnit.SECONDS)); assertEquals(0, generator.exitValue()); }
+        finally { if (generator.isAlive()) stop(generator); }
+        var keys = java.security.KeyStore.getInstance("PKCS12");
+        try (var input = Files.newInputStream(keyStore)) { keys.load(input, "test-certificate-password".toCharArray()); }
+        var trust = javax.net.ssl.TrustManagerFactory.getInstance(javax.net.ssl.TrustManagerFactory.getDefaultAlgorithm());
+        trust.init(keys);
+        tls = javax.net.ssl.SSLContext.getInstance("TLS");
+        tls.init(null, trust.getTrustManagers(), null);
+    }
+
     private void localStorageAndUploadLimits(TestServer server) {
         try (var playwright = Playwright.create(); var browser = playwright.chromium().launch();
-             var context = browser.newContext()) {
+             var context = browser.newContext(new Browser.NewContextOptions().setIgnoreHTTPSErrors(true))) {
             var page = context.newPage();
             page.navigate(uri(server, "/login").toString());
             page.locator("#loginUsername").fill("smoke.admin");
@@ -138,7 +187,7 @@ class ApplicationSmokeIT {
             });
         } finally { stop(installer); }
         try (var playwright = Playwright.create(); var browser = playwright.chromium().launch();
-             var context = browser.newContext()) {
+             var context = browser.newContext(new Browser.NewContextOptions().setIgnoreHTTPSErrors(true))) {
             var page = context.newPage();
             var errors = new ArrayList<String>();
             page.onPageError(errors::add);
@@ -247,6 +296,9 @@ class ApplicationSmokeIT {
                 "--spring.datasource.url=" + database.getJdbcUrl(),
                 "--spring.datasource.username=" + database.getUsername(),
                 "--spring.datasource.password=" + database.getPassword(),
+                "--knowledgeroot.migration.username=smoke_migrator", "--knowledgeroot.migration.password=smoke-migration-password",
+                "--server.ssl.enabled=true", "--server.ssl.key-store=" + files.resolve("test-tls.p12").toUri(),
+                "--server.ssl.key-store-password=test-certificate-password", "--server.ssl.key-store-type=PKCS12",
                 "--knowledgeroot.bootstrap.login=" + (bootstrap ? "smoke.admin" : ""),
                 "--knowledgeroot.bootstrap.password=" + (bootstrap ? "smoke-test-password-2026" : ""),
                 "--knowledgeroot.storage.driver=" + driver, "--file.storage-dir=" + files.resolve("objects"),
@@ -254,7 +306,8 @@ class ApplicationSmokeIT {
                 "--minio.access-key=smoke-test-user", "--minio.secret-key=smoke-test-password",
                 "--minio.bucket=smoke-test", "--spring.main.banner-mode=off"));
         if (driver.equals("file")) command.addAll(List.of("--spring.servlet.multipart.max-file-size=1KB",
-                "--spring.servlet.multipart.max-request-size=4KB"));
+                "--spring.servlet.multipart.max-request-size=4KB", "--server.forward-headers-strategy=native",
+                "--server.tomcat.remoteip.internal-proxies=127[.]0[.]0[.]1|0:0:0:0:0:0:0:1|::1"));
         Path log = files.resolve(driver + (bootstrap ? "-first-start.log" : "-restart.log"));
         Process process = new ProcessBuilder(command).directory(files.toFile()).redirectErrorStream(true)
                 .redirectOutput(log.toFile()).start();
@@ -263,7 +316,10 @@ class ApplicationSmokeIT {
         try {
             while (process.isAlive() && System.nanoTime() < deadline) {
                 var matcher = portPattern.matcher(Files.readString(log));
-                if (matcher.find()) return new TestServer(process, Integer.parseInt(matcher.group(1)));
+                if (matcher.find()) {
+                    assertFalse(Files.readString(log).contains("password="), "Startup log must not expose a JDBC password");
+                    return new TestServer(process, Integer.parseInt(matcher.group(1)));
+                }
                 Thread.sleep(100);
             }
             fail("Packaged application did not start:\n" + Files.readString(log));
@@ -283,7 +339,7 @@ class ApplicationSmokeIT {
     }
 
     private URI uri(TestServer context, String path) {
-        return URI.create("http://localhost:" + context.port() + path);
+        return URI.create("https://localhost:" + context.port() + path);
     }
 
     private HttpResponse<String> get(HttpClient client, TestServer context, String path) throws Exception {

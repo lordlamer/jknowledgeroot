@@ -15,9 +15,9 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: R12 – Produktionskonfiguration und Lieferprozess herstellen.**
+**Nächster Schritt: R13 – Integrationstests und Betriebsüberwachung ergänzen.**
 
-R01 bis R11 sind abgeschlossen. R12 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
+R01 bis R12 sind abgeschlossen. R13 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
 
 ## 1. Build und Sicherheit
 
@@ -159,10 +159,15 @@ R01 bis R11 sind abgeschlossen. R12 bis R15 sind offen; die Produktionsfreigabe 
 
 ### R12 – Produktionskonfiguration und Lieferprozess herstellen
 
-- [ ] Offen
+- [x] Erledigt am 12. September 2026
 - **Umsetzung:** Produktionsprofil mit verpflichtenden Zugangsdaten, eingeschränktem Datenbankbenutzer und aktivem Template-Cache erstellen; HTTPS-/Proxy- und Cookie-Konfiguration dokumentieren und testen. Container als unprivilegierten Benutzer betreiben, Images versionieren und Datenbank-/Storage-Ports nur gezielt freigeben. CI-Prüfung von Veröffentlichung trennen: PRs veröffentlichen keine Images; Releases stammen aus freigegebenen Branches beziehungsweise Tags.
-- **Storage-Entscheidung:** Für den archivierten, nicht mehr gepflegten MinIO-Community-Server einen tragfähigen Betriebsweg bestimmen: lokaler Dateispeicher oder ein gepflegter beziehungsweise unterstützter S3-Dienst. Die Auswahl ist offen.
+- **Storage-Entscheidung:** Dokumentierter Standard ist eine einzelne Instanz mit lokalem Dateispeicher auf einem persistenten Volume. Für mehrere Instanzen bleibt ein gemeinsam verfügbarer, gepflegter S3-Dienst gesondert auszuwählen und zu prüfen. Der MinIO-Container bleibt ausschließlich Entwicklungs-/Testfixture.
 - **Abnahme:** Dokumentierter Start in einer frischen Umgebung; fehlende Pflichtkonfiguration führt zu verständlichen Fehlern. CI prüft PRs ohne Registry-Zugangsdaten und veröffentlicht nur freigegebene Builds. Storage-Entscheidung und Betriebsvoraussetzungen sind dokumentiert.
+- **Umgesetzt:** Produktionsprofil mit frühen Prüfungen für Datenbankzugänge und unsichere Overrides, aktivem Template-Cache, Secure-/HttpOnly-/SameSite-Sitzungscookies und begrenztem Proxy-Vertrauen. Liquibase erhält eine eigene Datenbankverbindung; Laufzeit und Bootstrap funktionieren mit ausschließlich DML-Rechten. Hibernate protokolliert im Produktionsprofil keine Verbindungsübersicht mit möglichen Passwortparametern mehr.
+- **Container und Betrieb:** Temurin-JRE mit vollständiger Version und Digest, UID/GID 10001 statt root und begrenzter Build-Kontext. Separates Produktions-Compose mit verpflichtenden Zugangsdaten, eigenem Datei-Volume, nur lesbarem Root-Dateisystem, begrenztem temporärem Speicher und ohne veröffentlichten Datenbankport. Entwicklungs-Compose verwendet feste Imageversionen, Loopback-Ports und keine Vorgabepasswörter. [production.md](production.md) und `deploy/` beschreiben Ersteinrichtung, Rechte, HTTPS/Proxy, Start und Neustart.
+- **Lieferprozess:** PRs und `master` werden ohne Registry-Geheimnisse geprüft. Nur gültige Versionstags auf Commits aus `master` erreichen nach erfolgreichem Verify den separaten Publish-Job. Dieser verwendet das bereits geprüfte Image als Artefakt und veröffentlicht Versions-/Commit-Tags. Actions sind auf vollständige SHAs festgelegt. Die Umgebung `release`, Reviewer, Tag-/Branch-Schutz und ihre Registry-Secrets müssen im Repository eingerichtet werden; diese externen Einstellungen wurden nicht verändert.
+- **Geprüft:** `.\mvnw.cmd -B --no-transfer-progress verify`: **BUILD SUCCESS**, 250 Tests erfasst, davon **240 erfolgreich und 10 bereits zuvor deaktiviert**, keine Fehler. Die neuen Prüfungen umfassen Produktionskonfiguration, HTTPS/Cookies/HSTS, Proxy-IP-Ketten, verweigerte DDL im Laufzeitkonto und fehlende Passwortparameter im Startlog. Dockerimage erfolgreich gebaut; das isolierte Compose-Skript bestand Neuinstallation, UID-, Dateisystem-/Volume- und Datenbankrechteprüfung sowie Neustart und Logprüfung. Workflow mit actionlint 1.7.12 und Shellskripte syntaktisch geprüft. `git diff --check` ohne Fehler. Entbehrliche Testcontainer und ihre Volumes wurden entfernt.
+- **Grenzen:** Keine gehostete CI-Ausführung, Veröffentlichung oder Konfiguration einer echten Domain. Migrationszugangsdaten bleiben für Liquibase beim Start im Prozess; es gibt noch keinen separaten Migrationsjob. Die vollständige Produktionsfreigabe, zehn deaktivierte Tests, Monitoring, produktive Last sowie Backup-/Restore-Abnahme bleiben R13–R15.
 
 ### R13 – Integrationstests und Betriebsüberwachung ergänzen
 

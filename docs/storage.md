@@ -22,9 +22,11 @@ nicht initialisiert. Unbekannte Treibernamen verhindern den Start.
 
 Ein Wechsel des Treibers verschiebt keine Dateien. Vor einem Wechsel müssen
 sämtliche referenzierten Objekte unter unveränderten Schlüsseln vollständig in
-den neuen Speicher kopiert und ihre Inhalte geprüft werden. Die Wahl des
-Produktionsdienstes und dessen Berechtigungen bleiben Teil von R12; das gepinnte
-MinIO-Testimage ist eine Kompatibilitätsfixture.
+den neuen Speicher kopiert und ihre Inhalte geprüft werden. Seit R12 ist lokaler
+Speicher für eine einzelne Instanz der dokumentierte Standard in
+[production.md](production.md). Ein externer S3-Dienst für mehrere Instanzen
+benötigt eine eigene Auswahl und Abnahme; das gepinnte MinIO-Testimage bleibt
+eine Kompatibilitätsfixture.
 
 ## Grenzen und Ressourcen
 
