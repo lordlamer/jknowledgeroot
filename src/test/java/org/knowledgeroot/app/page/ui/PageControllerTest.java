@@ -3,18 +3,27 @@ package org.knowledgeroot.app.page.ui;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import io.github.wimdeblauwe.htmx.spring.boot.mvc.HtmxRequest;
+import org.knowledgeroot.app.page.domain.Page;
+import org.knowledgeroot.app.page.domain.PageId;
+import org.knowledgeroot.app.page.domain.PagePermission;
 import org.knowledgeroot.app.page.domain.PageDao;
 import org.knowledgeroot.app.page.domain.PageCommentDao;
 import org.knowledgeroot.app.page.domain.PageLabelDao;
 import org.knowledgeroot.app.page.domain.PagePermissionDao;
 import org.knowledgeroot.app.page.domain.PageStarDao;
 import org.knowledgeroot.app.security.context.domain.UserContext;
+import org.knowledgeroot.app.security.context.domain.UserDetails;
 import org.knowledgeroot.app.security.user.domain.*;
 import org.knowledgeroot.app.security.user.api.filter.UserFilter;
 import org.knowledgeroot.app.security.user.api.filter.GroupFilter;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.ui.ExtendedModelMap;
 
 import java.util.Arrays;
 import java.util.List;
@@ -113,5 +122,32 @@ class PageControllerTest {
         assertEquals(2, groupList.size());
         assertEquals(1, groupList.get(0).get("id"));
         assertEquals("Administrators", groupList.get(0).get("name"));
+    }
+
+    @ParameterizedTest
+    @EnumSource(UserDetails.Role.class)
+    void breadcrumbContainsOnlyReadableAncestors(UserDetails.Role role) {
+        Integer userId = role == UserDetails.Role.GUEST ? null : 2;
+        when(userContext.getUserContext()).thenReturn(UserDetails.builder()
+                .userId(userId == null ? "guest" : userId.toString()).login("reader").role(role).build());
+        Page root = Page.builder().pageId(new PageId(1)).name("visible-root").build();
+        Page hiddenParent = Page.builder().pageId(new PageId(99)).name("secret-parent").build();
+        Page child = Page.builder().pageId(new PageId(10)).name("visible-child").build();
+        when(pagePermissionImpl.hasUserPermission(new PageId(10), userId, PagePermission.PermissionLevel.VIEW))
+                .thenReturn(true);
+        when(pagePermissionImpl.hasUserPermission(new PageId(1), userId, PagePermission.PermissionLevel.VIEW))
+                .thenReturn(true);
+        when(pagePermissionImpl.hasUserPermission(new PageId(99), userId, PagePermission.PermissionLevel.VIEW))
+                .thenReturn(role == UserDetails.Role.ADMIN);
+        when(pageImpl.findById(new PageId(10))).thenReturn(child);
+        when(pageImpl.getPageHierarchy(new PageId(10))).thenReturn(List.of(root, hiddenParent, child));
+        ExtendedModelMap model = new ExtendedModelMap();
+
+        String view = pageController.showPage(10, null, model,
+                new MockHttpServletResponse(), mock(HtmxRequest.class));
+
+        assertEquals("page/show", view);
+        assertEquals(role == UserDetails.Role.ADMIN ? List.of(root, hiddenParent, child) : List.of(root, child),
+                model.get("breadcrumb"));
     }
 }

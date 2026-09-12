@@ -15,9 +15,9 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: R02 – Seitenrechte in der REST-API durchsetzen.**
+**Nächster Schritt: R03 – Echten Login und Sitzungen korrigieren.**
 
-R01 ist abgeschlossen. R02 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
+R01 und R02 sind abgeschlossen. R03 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
 
 ## 1. Build und Sicherheit
 
@@ -33,10 +33,14 @@ R01 ist abgeschlossen. R02 bis R15 sind offen; die Produktionsfreigabe steht wei
 
 ### R02 – Seitenrechte in der REST-API durchsetzen
 
-- [ ] Offen
+- [x] Erledigt am 12. September 2026
 - **Befund:** `GET /page` und `GET /page/{id}` prüfen keine individuellen Seitenrechte. Die Rollenprüfung erlaubt normalen Benutzern den Zugriff auf diese Endpunkte.
 - **Umsetzung:** Berechtigungen für Listen und Einzelabrufe konsistent mit der Oberfläche prüfen; weitere Zugriffswege einschließlich Dateien, Suche und Hierarchie auf dieselbe Regel prüfen.
 - **Abnahme:** Benutzer ohne Leserecht erhalten weder Inhalt noch vertrauliche Metadaten geschützter Seiten. Tests decken Gast, normalen Benutzer, Gruppenmitglied und Administrator sowie fremde Seiten-IDs ab.
+- **Umgesetzt:** REST-Listen filtern Seiten über den gemeinsamen `PagePermissionDao`. Einzelabrufe und die ID-Abfrage der Liste verweigern unberechtigten Zugriff mit 403 vor dem Laden der Inhalte; fehlende Datensätze werden bei erlaubtem Zugriff mit 404 beantwortet. Lesbare Unterseiten geben die ID geschützter Eltern in der API als `null` zurück; die Brotkrümelnavigation enthält nur lesbare Vorfahren. Auch das Löschen eines Kommentars verlangt jetzt Leserecht auf die Seite, bevor Kommentare geladen oder geändert werden. Damit kann eine beliebige, nicht vorhandene Kommentar-ID keine fremde Kommentarliste mehr offenlegen.
+- **Weitere Zugriffswege geprüft:** Dateien prüfen bereits das Leserecht auf ihre tatsächliche Seite, einschließlich Metadaten und beider REST-Downloadadressen. Suche und Seitenleiste filtern nach Leserechten; gemerkte Seiten werden in `PageStarImpl.listStarredPages` nach aktuellen Rechten gefiltert. Vorhandene Filter beibehalten und Datei-/Seitenleisten-Regressionsfälle ergänzt.
+- **Geprüft:** `.\mvnw.cmd -B --no-transfer-progress verify`: **BUILD SUCCESS**, 55 Tests erfasst, davon **45 erfolgreich und 10 bereits zuvor deaktiviert**, keine Fehler. 28 neue Testfälle decken REST-Filter und direkte Seiten-IDs, Weitergabe der Benutzer-ID an die Berechtigungsprüfung, Gastzugriff, erlaubte Benutzer-/Gruppen-/Admin-Szenarien, Elternmetadaten, Kommentarzugriff, Seitenleiste und Dateien ab. `git diff --check` ohne Fehler.
+- **Testgrenzen:** Die REST-Tests verwenden echte Controller und die Spring-Security-Filterkette mit simuliertem Benutzerkontext und gemockten DAOs. Sie prüfen die Durchsetzung der Berechtigungsentscheidung; Gruppenmitgliedschafts-SQL, echter Login und Sitzungspersistenz werden damit nicht integriert getestet und bleiben in R03/R13. Die REST-Liste filtert vor der Ausgabe, aber noch nach der Datenbank-Pagination; dadurch können Ergebnisseiten kürzer ausfallen. Die Optimierung einschließlich Pagination bleibt in R10.
 
 ### R03 – Echten Login und Sitzungen korrigieren
 

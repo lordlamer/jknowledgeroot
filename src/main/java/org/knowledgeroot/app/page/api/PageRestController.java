@@ -6,6 +6,11 @@ import org.knowledgeroot.app.page.domain.Page;
 import org.knowledgeroot.app.page.domain.PageDao;
 import org.knowledgeroot.app.page.domain.PageFilter;
 import org.knowledgeroot.app.page.domain.PageId;
+import org.knowledgeroot.app.page.domain.PagePermission;
+import org.knowledgeroot.app.page.domain.PagePermissionDao;
+import org.knowledgeroot.app.security.context.domain.UserContext;
+import org.knowledgeroot.app.security.context.domain.UserDetails;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -24,10 +29,38 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class PageRestController {
     private final PageDao pageImpl;
+    private final PagePermissionDao pagePermissionDao;
+    private final UserContext userContext;
 
     private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
 
     private final PageDtoConverter pageDtoConverter = new PageDtoConverter();
+
+    private Integer getCurrentUserId() {
+        UserDetails user = userContext.getUserContext();
+        if (user == null || user.isGuest()) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(user.getUserId());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private boolean canView(PageId pageId, Integer userId) {
+        return pagePermissionDao.hasUserPermission(pageId, userId, PagePermission.PermissionLevel.VIEW);
+    }
+
+    private PageDto toVisibleDto(Page page, Integer userId) {
+        PageDto dto = pageDtoConverter.convertAtoB(page);
+        // Reading a child does not grant access to its parent or expose its ID.
+        if (dto.getParent() != null && dto.getParent() > 0
+                && !canView(new PageId(dto.getParent()), userId)) {
+            dto.setParent(null);
+        }
+        return dto;
+    }
 
     /**
      * get all pages
@@ -54,6 +87,11 @@ public class PageRestController {
             @RequestParam(name = "start", required = false) Integer start,
             @RequestParam(name = "limit", required = false) Integer limit
     ) {
+        Integer userId = getCurrentUserId();
+        if (id != null && !canView(new PageId(id), userId)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
 
         PageFilter pageFilter = new PageFilter();
@@ -99,11 +137,13 @@ public class PageRestController {
             log.error("Could not convert date: {}", e.getMessage());
         }
 
-        // get filtered user list
+        // Apply object permissions before exposing any page data.
         List<Page> pages = pageImpl.listPages(pageFilter);
 
-        // map to dto
-        List<PageDto> pageDtos = pageDtoConverter.convertAtoB(pages);
+        List<PageDto> pageDtos = pages.stream()
+                .filter(page -> canView(page.getPageId(), userId))
+                .map(page -> toVisibleDto(page, userId))
+                .toList();
 
         // check for entries
         if(pageDtos.isEmpty()){
@@ -119,15 +159,23 @@ public class PageRestController {
      */
     @RequestMapping(value = "/page/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PageDto> getPage(@PathVariable("id") Integer id) {
-        Page page = pageImpl.findById(new PageId(id));
+        PageId pageId = new PageId(id);
+        Integer userId = getCurrentUserId();
+        if (!canView(pageId, userId)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
 
-        PageDto pageDto = pageDtoConverter.convertAtoB(page);
-
-        if (pageDto == null) {
+        Page page;
+        try {
+            page = pageImpl.findById(pageId);
+        } catch (EmptyResultDataAccessException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        if (page == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        return new ResponseEntity<>(pageDto, HttpStatus.OK);
+        return new ResponseEntity<>(toVisibleDto(page, userId), HttpStatus.OK);
     }
 
     /**

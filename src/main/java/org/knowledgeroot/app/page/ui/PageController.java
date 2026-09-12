@@ -105,7 +105,10 @@ public class PageController {
         }
 
         Page page = pageImpl.findById(pid);
-        List<Page> hierarchy = pageImpl.getPageHierarchy(pid);
+        List<Page> hierarchy = pageImpl.getPageHierarchy(pid).stream()
+                .filter(ancestor -> pagePermissionImpl.hasUserPermission(
+                        ancestor.getPageId(), currentUserId, PagePermission.PermissionLevel.VIEW))
+                .toList();
 
         model.addAttribute("page", page);
         model.addAttribute("breadcrumb", hierarchy);

@@ -79,6 +79,10 @@ public class PageCommentController {
         UserDetails user = userContext.getUserContext();
         Integer currentUserId = requireUserId(user);
 
+        if (!pagePermissionDao.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.VIEW)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
         Optional<PageComment> comment = pageCommentDao.findById(commentId);
         if (comment.isPresent()) {
             PageComment c = comment.get();
