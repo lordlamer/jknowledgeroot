@@ -4,7 +4,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.knowledgeroot.app.page.domain.PageDao;
+import org.knowledgeroot.app.page.domain.PageCommentDao;
+import org.knowledgeroot.app.page.domain.PageLabelDao;
 import org.knowledgeroot.app.page.domain.PagePermissionDao;
+import org.knowledgeroot.app.page.domain.PageStarDao;
 import org.knowledgeroot.app.security.context.domain.UserContext;
 import org.knowledgeroot.app.security.user.domain.*;
 import org.knowledgeroot.app.security.user.api.filter.UserFilter;
@@ -30,6 +33,15 @@ class PageControllerTest {
     private PagePermissionDao pagePermissionImpl;
 
     @Mock
+    private PageStarDao pageStarDao;
+
+    @Mock
+    private PageCommentDao pageCommentDao;
+
+    @Mock
+    private PageLabelDao pageLabelDao;
+
+    @Mock
     private UserDao userImpl;
 
     @Mock
@@ -42,7 +54,8 @@ class PageControllerTest {
 
     @BeforeEach
     void setUp() {
-        pageController = new PageController(pageImpl, pagePermissionImpl, userImpl, groupImpl, userContext);
+        pageController = new PageController(pageImpl, pagePermissionImpl, pageStarDao,
+                pageCommentDao, pageLabelDao, userImpl, groupImpl, userContext);
     }
 
     @Test
