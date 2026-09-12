@@ -22,6 +22,15 @@ public class WebErrors extends ResponseEntityExceptionHandler {
     @ExceptionHandler({EmptyResultDataAccessException.class, org.knowledgeroot.app.security.context.domain.UserNotFoundException.class})
     ResponseEntity<Object> missing(Exception ex) { return response(HttpStatus.NOT_FOUND); }
 
+    @ExceptionHandler(org.knowledgeroot.app.file.domain.StoredFileNotFoundException.class)
+    ResponseEntity<Object> missingObject(Exception ex) { return response(HttpStatus.NOT_FOUND); }
+
+    @ExceptionHandler(org.knowledgeroot.app.file.domain.StorageException.class)
+    ResponseEntity<Object> storage(Exception ex) {
+        log.error("Storage request failed", ex);
+        return response(HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     ResponseEntity<Object> invalid(IllegalArgumentException ex) { return response(HttpStatus.BAD_REQUEST); }
 

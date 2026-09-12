@@ -45,7 +45,9 @@
                 400: 'Please check your input and try again.',
                 403: 'You do not have permission for this action.',
                 404: 'The requested item was not found.',
-                409: 'The change conflicts with the current data. Please review it and try again.'
+                409: 'The change conflicts with the current data. Please review it and try again.',
+                413: 'The upload exceeds the allowed size or file count.',
+                503: 'File storage is currently unavailable. Please try again later.'
             };
             alert.textContent = messages[event.detail.xhr?.status] || 'The request failed. Please try again.';
             scope.prepend(alert);

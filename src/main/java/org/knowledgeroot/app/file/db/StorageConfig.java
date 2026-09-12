@@ -1,33 +1,19 @@
 package org.knowledgeroot.app.file.db;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
+import org.springframework.core.env.Environment;
 
-/**
- * Configuration for the storage implementation.
- */
-@Configuration
-@RequiredArgsConstructor
+@Configuration(proxyBeanMethods = false)
 class StorageConfig {
-    @Value("${knowledgeroot.storage.driver}")
-    private String storageDriver;
-
-    private final FileSystemStorage fileSystemStorage;
-    private final MinioStorage minioStorage;
-
     @Bean
-    @Primary
-    public FileStorage storageImplementation() {
-        switch(storageDriver) {
-            case "file":
-                return fileSystemStorage;
-            case "minio":
-                return minioStorage;
-            default:
-                throw new IllegalStateException("Unknown storage driver: " + storageDriver);
-        }
+    FileStorage storageImplementation(Environment environment) {
+        return switch (environment.getProperty("knowledgeroot.storage.driver", "minio")) {
+            case "file" -> new FileSystemStorage(environment.getProperty("file.storage-dir", "./storage"));
+            case "minio" -> new MinioStorage(environment.getRequiredProperty("minio.url"),
+                    environment.getRequiredProperty("minio.access-key"), environment.getRequiredProperty("minio.secret-key"),
+                    environment.getRequiredProperty("minio.bucket"));
+            default -> throw new IllegalStateException("Unknown storage driver; use file or minio");
+        };
     }
 }

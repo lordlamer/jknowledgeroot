@@ -39,6 +39,7 @@ class FileUploadDatabaseTest {
     private DriverManagerDataSource source;
     private JdbcTemplate jdbc;
     private FileSystemStorage storage;
+    private final org.knowledgeroot.app.file.domain.UploadPolicy policy = new org.knowledgeroot.app.file.domain.UploadPolicy("25MB", "100MB", 10);
     private UserContext users;
     private PagePermissionDao permissions;
 
@@ -76,7 +77,7 @@ class FileUploadDatabaseTest {
             when(users.getUserContext()).thenReturn(UserDetails.builder().role(UserDetails.Role.GUEST).build());
             uploads.upload(100, file("guest", "guest"));
             int id = jdbc.queryForObject("SELECT id FROM file WHERE name = 'guest'", Integer.class);
-            var meta = new FileImpl(jdbc, storage).findById(id);
+            var meta = new FileImpl(jdbc, storage, policy).findById(id);
             assertNull(meta.getCreatedBy());
             assertNull(meta.getChangedBy());
             try (var input = storage.retrieve(meta.getHash())) {
@@ -105,10 +106,11 @@ class FileUploadDatabaseTest {
 
     @Test
     void databaseFailureAfterStorageRollsBackAllMetadata() {
+        jdbc.execute("ALTER TABLE file ADD CONSTRAINT reject_test_upload CHECK (name <> 'reject')");
         context().run(context -> {
             var uploads = context.getBean(FileUploadService.class);
             assertThrows(DataIntegrityViolationException.class, () -> uploads.upload(100,
-                    file("valid", "first"), file("x".repeat(256), "second")));
+                    file("valid", "first"), file("reject", "second")));
             assertEquals(0, count());
             try (var objects = Files.list(directory)) {
                 assertEquals(2, objects.count()); // Complete, unreferenced objects are retained deliberately.
@@ -146,14 +148,60 @@ class FileUploadDatabaseTest {
                 return 'x';
             }
         };
-        assertThrows(RuntimeException.class, () -> storage.store("test-object", broken));
-        assertFalse(storage.exists("test-object"));
+        assertThrows(RuntimeException.class, () -> storage.store("0123456789abcdef0123456789abcdef", broken));
+        assertFalse(storage.exists("0123456789abcdef0123456789abcdef"));
         try (var files = Files.list(directory)) { assertEquals(0, files.count()); }
-        storage.store("test-object", new ByteArrayInputStream(new byte[]{1, 2, 3}));
-        try (var input = storage.retrieve("test-object")) { assertArrayEquals(new byte[]{1, 2, 3}, input.readAllBytes()); }
+        storage.store("0123456789abcdef0123456789abcdef", new ByteArrayInputStream(new byte[]{1, 2, 3}));
+        try (var input = storage.retrieve("0123456789abcdef0123456789abcdef")) { assertArrayEquals(new byte[]{1, 2, 3}, input.readAllBytes()); }
     }
 
     private int count() { return jdbc.queryForObject("SELECT COUNT(*) FROM file", Integer.class); }
+
+    @Test
+    void unicodeFilenameAndMissingContentTypeAreStoredSafely() {
+        context().run(context -> {
+            context.getBean(FileUploadService.class).upload(100,
+                    new MockMultipartFile("file", "C:\\fakepath\\Büro 📎.txt", null, new byte[]{4, 5}));
+            var file = new FileImpl(jdbc, storage, policy).listFiles(null).getFirst();
+            assertEquals("Büro 📎.txt", file.getName());
+            assertEquals("application/octet-stream", file.getType());
+        });
+    }
+
+    @Test
+    void legacyMd5ObjectRemainsReadableWhileIdenticalNewUploadUsesSha256() {
+        String legacy = "0123456789abcdef0123456789abcdef";
+        storage.store(legacy, new ByteArrayInputStream(new byte[]{1, 2, 3}));
+        jdbc.update("INSERT INTO file (page_id, hash, name, size, create_date, change_date) VALUES (100, ?, 'legacy', 3, NOW(), NOW())", legacy);
+        context().run(context -> {
+            context.getBean(FileUploadService.class).upload(100, new MockMultipartFile("file", "new", "text/plain", new byte[]{1, 2, 3}) {
+                @Override public byte[] getBytes() { throw new AssertionError("upload must stream"); }
+            });
+            var dao = new FileImpl(jdbc, storage, policy);
+            for (int id : jdbc.queryForList("SELECT id FROM file", Integer.class)) {
+                try (var input = dao.loadFile(id)) { assertArrayEquals(new byte[]{1, 2, 3}, input.readAllBytes()); }
+            }
+            assertEquals(legacy, jdbc.queryForObject("SELECT hash FROM file WHERE name = 'legacy'", String.class));
+            assertEquals("sha256-039058c6f2c0cb492c533b0a4d14ef77cc0f78abccced5287d84a1a2011cfb81", jdbc.queryForObject("SELECT hash FROM file WHERE name = 'new'", String.class));
+        });
+    }
+
+    @Test
+    void concurrentUploadsKeepAllMetadataAndShareOneCompleteObject() {
+        context().run(context -> {
+            var service = context.getBean(FileUploadService.class);
+            try (var executor = java.util.concurrent.Executors.newFixedThreadPool(4)) {
+                var tasks = java.util.stream.IntStream.range(0, 8).<java.util.concurrent.Callable<Void>>mapToObj(i -> () -> {
+                    service.upload(100, file("same-" + i, "shared content"));
+                    return null;
+                }).toList();
+                for (var future : executor.invokeAll(tasks)) future.get();
+            }
+            assertEquals(8, count());
+            assertEquals(1, jdbc.queryForObject("SELECT COUNT(DISTINCT hash) FROM file", Integer.class));
+            try (var objects = Files.list(directory)) { assertEquals(1, objects.count()); }
+        });
+    }
 
     private MockMultipartFile file(String name, String content) {
         return new MockMultipartFile("file", name, "text/plain", content.getBytes(java.nio.charset.StandardCharsets.UTF_8));
@@ -166,6 +214,6 @@ class FileUploadDatabaseTest {
     private ApplicationContextRunner context() {
         return new ApplicationContextRunner().withUserConfiguration(Transactions.class)
                 .withBean("transactionManager", DataSourceTransactionManager.class, () -> new DataSourceTransactionManager(source))
-                .withBean(FileUploadService.class, () -> new FileUploadService(new FileImpl(jdbc, storage), permissions, users));
+                .withBean(FileUploadService.class, () -> new FileUploadService(new FileImpl(jdbc, storage, policy), permissions, users, policy));
     }
 }

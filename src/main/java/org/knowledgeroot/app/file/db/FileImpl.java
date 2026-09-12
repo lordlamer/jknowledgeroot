@@ -8,11 +8,11 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HexFormat;
+import org.knowledgeroot.app.file.domain.UploadPolicy;
+import org.knowledgeroot.app.file.domain.StorageException;
+import java.nio.file.Files;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -23,6 +23,7 @@ import java.util.List;
 public class FileImpl implements FileDao {
     private final JdbcTemplate jdbcTemplate;
     private final FileStorage fileStorage;
+    private final UploadPolicy policy;
 
     /**
      * Row mapper for file entity.
@@ -50,9 +51,10 @@ public class FileImpl implements FileDao {
      * @param jdbcTemplate JDBC template
      * @param fileStorage  file storage
      */
-    public FileImpl(JdbcTemplate jdbcTemplate, FileStorage fileStorage) {
+    public FileImpl(JdbcTemplate jdbcTemplate, FileStorage fileStorage, UploadPolicy policy) {
         this.jdbcTemplate = jdbcTemplate;
         this.fileStorage = fileStorage;
+        this.policy = policy;
     }
 
     @Override
@@ -73,17 +75,11 @@ public class FileImpl implements FileDao {
 
     @Override
     public void createFile(MultipartFile file, Integer pageId, Integer actor) {
-        try {
-            // Generate MD5 hash
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            String hash = HexFormat.of().withUpperCase().formatHex(
-                    md.digest(file.getBytes())
-            ).toLowerCase();
-
-            // Store file content if it doesn't exist
-            if (!fileStorage.exists(hash)) {
-                try (InputStream input = file.getInputStream()) {
-                    fileStorage.store(hash, input);
+        policy.validate(new MultipartFile[]{file});
+        try (StagedUpload staged = StagedUpload.read(file, policy.maxFileBytes())) {
+            if (!fileStorage.exists(staged.key)) {
+                try (InputStream input = Files.newInputStream(staged.path)) {
+                    fileStorage.store(staged.key, input);
                 }
             }
 
@@ -96,17 +92,18 @@ public class FileImpl implements FileDao {
             LocalDateTime now = LocalDateTime.now();
             jdbcTemplate.update(sql,
                     pageId,
-                    hash,
-                    file.getOriginalFilename(),
-                    file.getSize(),
-                    file.getContentType(),
+                    staged.key,
+                    UploadPolicy.name(file.getOriginalFilename()),
+                    staged.size,
+                    file.getContentType() == null || file.getContentType().isBlank()
+                            ? "application/octet-stream" : file.getContentType(),
                     actor,
                     now,
                     actor,
                     now
             );
-        } catch (IOException | NoSuchAlgorithmException ex) {
-            throw new RuntimeException("Failed to create file", ex);
+        } catch (IOException ex) {
+            throw new StorageException("Failed to stage upload", ex);
         }
     }
 
@@ -124,19 +121,7 @@ public class FileImpl implements FileDao {
 
     @Override
     public InputStream loadFile(Integer fileId) {
-        try {
-            // 1. Abfrage der Datei anhand der ID, um den Hash zu erhalten
-            String sql = "SELECT hash FROM file WHERE id = ? AND deleted = false";
-            String hash = jdbcTemplate.queryForObject(sql, String.class, fileId);
-
-            if (hash == null) {
-                return null;
-            }
-
-            // 2. Datei-Inhalt als InputStream über den FileStorage abrufen
-            return fileStorage.retrieve(hash);
-        } catch (Exception ex) {
-            throw new RuntimeException("Failed to load file with ID: " + fileId, ex);
-        }
+        String hash = jdbcTemplate.queryForObject("SELECT hash FROM file WHERE id = ? AND deleted = false", String.class, fileId);
+        return fileStorage.retrieve(hash);
     }
 }

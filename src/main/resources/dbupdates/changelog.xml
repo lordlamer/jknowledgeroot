@@ -78,4 +78,8 @@
         <sqlFile path="changes/1.0.9-read-query-indexes.mariadb.sql"
                  relativeToChangelogFile="true" encoding="UTF-8" splitStatements="true" stripComments="true"/>
     </changeSet>
+    <changeSet id="1.0.10-file-storage-keys" author="knowledgeroot" dbms="mariadb">
+        <sqlFile path="changes/1.0.10-file-storage-keys.mariadb.sql"
+                 relativeToChangelogFile="true" encoding="UTF-8" splitStatements="true" stripComments="true"/>
+    </changeSet>
 </databaseChangeLog>

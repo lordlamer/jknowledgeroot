@@ -1,7 +1,8 @@
 package org.knowledgeroot.app.file.db;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.knowledgeroot.app.file.domain.StorageException;
+import org.knowledgeroot.app.file.domain.StoredFileNotFoundException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,11 +10,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.attribute.BasicFileAttributes;
 
 /**
  * File system storage implementation of the file storage.
  */
-@Component
 class FileSystemStorage implements FileStorage {
     private final Path storageLocation;
 
@@ -22,7 +27,7 @@ class FileSystemStorage implements FileStorage {
         try {
             Files.createDirectories(this.storageLocation);
         } catch (IOException ex) {
-            throw new RuntimeException("Could not create storage directory!", ex);
+            throw new StorageException("Could not create storage directory!", ex);
         }
     }
 
@@ -30,14 +35,20 @@ class FileSystemStorage implements FileStorage {
     public void store(String hash, InputStream inputStream) {
         Path temporary = null;
         try {
-            Path targetLocation = storageLocation.resolve(hash);
+            Path targetLocation = objectPath(hash);
             if (exists(hash)) return;
             temporary = Files.createTempFile(storageLocation, ".upload-", ".tmp");
             Files.copy(inputStream, temporary, StandardCopyOption.REPLACE_EXISTING);
             // Readers only see a complete object, including after a failed upload/retry.
-            Files.move(temporary, targetLocation, StandardCopyOption.ATOMIC_MOVE);
+            try {
+                Files.move(temporary, targetLocation, StandardCopyOption.ATOMIC_MOVE);
+            } catch (FileAlreadyExistsException | AccessDeniedException ex) {
+                // Another instance published the same content-addressed object first.
+                // Windows reports an existing ATOMIC_MOVE destination as AccessDeniedException.
+                if (!exists(hash)) throw ex;
+            }
         } catch (IOException ex) {
-            throw new RuntimeException("Failed to store file.", ex);
+            throw new StorageException("Failed to store file.", ex);
         } finally {
             if (temporary != null) {
                 try {
@@ -53,25 +64,41 @@ class FileSystemStorage implements FileStorage {
     @Override
     public InputStream retrieve(String hash) {
         try {
-            Path file = storageLocation.resolve(hash);
-            return Files.newInputStream(file);
+            Path file = objectPath(hash);
+            return Files.newInputStream(file, LinkOption.NOFOLLOW_LINKS);
+        } catch (NoSuchFileException ex) {
+            throw new StoredFileNotFoundException(ex);
         } catch (IOException ex) {
-            throw new RuntimeException("Failed to read file.", ex);
+            throw new StorageException("Failed to read file.", ex);
         }
     }
 
     @Override
     public void delete(String hash) {
         try {
-            Path file = storageLocation.resolve(hash);
+            Path file = objectPath(hash);
             Files.deleteIfExists(file);
         } catch (IOException ex) {
-            throw new RuntimeException("Failed to delete file.", ex);
+            throw new StorageException("Failed to delete file.", ex);
         }
     }
 
     @Override
     public boolean exists(String hash) {
-        return Files.exists(storageLocation.resolve(hash));
+        try {
+            var attributes = Files.readAttributes(objectPath(hash), BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+            if (!attributes.isRegularFile()) throw new IOException("Storage object is not a regular file");
+            return true;
+        } catch (NoSuchFileException ex) {
+            return false;
+        } catch (IOException ex) {
+            throw new StorageException("Could not inspect stored file", ex);
+        }
+    }
+
+    private Path objectPath(String hash) {
+        Path path = storageLocation.resolve(StorageKey.validate(hash));
+        if (Files.isSymbolicLink(path)) throw new StorageException("Symbolic storage objects are not supported", null);
+        return path;
     }
 }

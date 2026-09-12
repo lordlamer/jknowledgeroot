@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(FileRestController.class)
-@Import({WebSecurityConfig.class, org.knowledgeroot.app.file.domain.FileUploadService.class})
+@Import({WebSecurityConfig.class, org.knowledgeroot.app.file.domain.FileUploadService.class, org.knowledgeroot.app.file.domain.UploadPolicy.class})
 class FileRestControllerTest {
     @Autowired private MockMvc mvc;
     @MockitoBean private FileDao files;
@@ -113,7 +113,7 @@ class FileRestControllerTest {
         mvc.perform(get(path).with(user("reader")))
                 .andExpect(status().isOk())
                 .andExpect(content().string("contents"))
-                .andExpect(header().string("Content-Disposition", "attachment; filename=\"file-7.txt\""));
+                .andExpect(header().string("Content-Disposition", "attachment; filename=\"file-7.txt\"; filename*=UTF-8''file-7.txt"));
     }
 
     private File file(int id, int pageId) {

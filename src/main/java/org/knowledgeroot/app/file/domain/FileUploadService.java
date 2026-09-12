@@ -17,18 +17,17 @@ public class FileUploadService {
     private final FileDao files;
     private final PagePermissionDao permissions;
     private final UserContext users;
+    private final UploadPolicy policy;
 
     @Transactional
     public void upload(Integer pageId, MultipartFile... uploads) {
+        org.knowledgeroot.app.util.RequestValidation.id(pageId);
         var user = users.getUserContext();
         Integer actor = user.isGuest() ? null : Integer.valueOf(user.getUserId());
         if (!permissions.hasUserPermission(new PageId(pageId), actor, PagePermission.PermissionLevel.EDIT)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
-        if (uploads == null || uploads.length == 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        for (var upload : uploads) {
-            if (upload == null || upload.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is empty");
-        }
+        policy.validate(uploads);
         // Store content first; publish all metadata in one database commit.
         // Do not delete shared hash objects on rollback: another upload may already reference them.
         for (var upload : uploads) files.createFile(upload, pageId, actor);

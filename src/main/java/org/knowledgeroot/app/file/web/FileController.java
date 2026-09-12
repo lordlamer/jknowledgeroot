@@ -65,6 +65,7 @@ class FileController {
             @RequestParam("file") MultipartFile file,
             @RequestParam("pageId") Integer pageId) {
         try {
+            org.knowledgeroot.app.util.RequestValidation.id(pageId);
             if (file.isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is empty");
             }
@@ -75,6 +76,9 @@ class FileController {
 
             fileUploadService.upload(pageId, file);
             return new ModelAndView("redirect:/ui/page/" + pageId);
+        } catch (org.knowledgeroot.app.file.domain.StorageException e) {
+            log.error("File storage unavailable", e);
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "File storage unavailable");
         } catch (ResponseStatusException e) {
             throw e;
         } catch (Exception e) {
@@ -111,13 +115,14 @@ class FileController {
                 return;
             }
 
-            response.setContentType(meta.getType() == null ? "application/octet-stream" : meta.getType());
-            response.setHeader(
-                    "Content-Disposition",
-                    String.format("attachment; filename=\"%s\"", meta.getName() == null ? "download" : meta.getName())
-            );
+            org.knowledgeroot.app.file.web.DownloadHeaders.apply(response, meta);
 
             FileCopyUtils.copy(inputStream, response.getOutputStream());
+        } catch (org.knowledgeroot.app.file.domain.StoredFileNotFoundException e) {
+            writeError(response, HttpStatus.NOT_FOUND, "File not found");
+        } catch (org.knowledgeroot.app.file.domain.StorageException e) {
+            log.error("File storage unavailable", e);
+            writeError(response, HttpStatus.SERVICE_UNAVAILABLE, "File storage unavailable");
         } catch (Exception e) {
             log.error("Failed to download file: {}", e.getMessage(), e);
             writeError(response, HttpStatus.INTERNAL_SERVER_ERROR, "Could not download file!");
@@ -144,6 +149,8 @@ class FileController {
     }
 
     private void writeError(HttpServletResponse response, HttpStatus status, String message) {
+        if (response.isCommitted()) return;
+        response.reset();
         try {
             response.setContentType("text/plain");
             response.setStatus(status.value());

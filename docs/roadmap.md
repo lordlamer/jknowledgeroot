@@ -15,9 +15,9 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: R11 – Speichertreiber und Uploads absichern.**
+**Nächster Schritt: R12 – Produktionskonfiguration und Lieferprozess herstellen.**
 
-R01 bis R10 sind abgeschlossen. R11 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
+R01 bis R11 sind abgeschlossen. R12 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
 
 ## 1. Build und Sicherheit
 
@@ -145,10 +145,15 @@ R01 bis R10 sind abgeschlossen. R11 bis R15 sind offen; die Produktionsfreigabe 
 
 ### R11 – Speichertreiber und Uploads absichern
 
-- [ ] Offen
+- [x] Erledigt am 12. September 2026
 - **Befund:** Auch bei `storage.driver=file` wird MinIO initialisiert und kontaktiert. Uploads verwenden MD5 zur Inhaltsadressierung und lesen die Datei zum Hashen vollständig in den Speicher. Audit-Benutzer, Batch-Metadatentransaktion und atomare lokale Veröffentlichung sind seit R09 korrigiert; nach Fehlern können unreferenzierte Objekte beziehungsweise nach Prozessabbruch temporäre Dateien zurückbleiben.
 - **Umsetzung:** Storage-Beans bedingt aktivieren; lokale Speicherung ohne MinIO ermöglichen; Streaming und geeignetes Hashverfahren mit Bestandskompatibilität vorsehen; Dateinamen, Downloadheader und Uploadgrenzen sauber behandeln. Gleichzeitige Uploads und fehlgeschlagene Schreibvorgänge berücksichtigen; eine sichere Bereinigung unreferenzierter Objekte und temporärer Uploadreste festlegen.
 - **Abnahme:** Dateispeicher startet ohne MinIO-Konfiguration und Netzwerkzugriff auf MinIO. Beide Treiber bestehen Upload-/Downloadtests einschließlich Grenz- und Fehlerfällen. Bereits gespeicherte Dateien bleiben lesbar.
+- **Umgesetzt:** Ausschließlich der konfigurierte Treiber wird erzeugt. Neue Uploads verwenden SHA-256 mit begrenztem Lesepuffer und temporärer Datei; die tatsächliche Streamlänge wird geprüft. Changeset `1.0.10` erweitert die Schlüsselspalte und erlaubt vollständige Unicode-Dateinamen. MD5-Bestandsobjekte bleiben unverändert lesbar. Standardgrenzen sind 25 MiB pro Datei, 100 MiB pro Request und zehn Dateien, konfigurierbar über Umgebungsvariablen.
+- **Downloads und Fehler:** Basisnamen statt Client-Pfaden, validierte Metadaten, UTF-8-Attachmentheader, `nosniff` und private/no-store. Beide Treiber begrenzen Objektschlüssel; lokale symbolische Objektdateien werden abgelehnt. Fehlende Objekte ergeben 404, Speicherzugriffsfehler 503. MinIO verschluckt Zugriffs-/Bucketfehler nicht mehr und verwendet begrenzte Netzwerk-Timeouts. Abgebrochene Downloads erhalten keinen angehängten Fehlertext. Gleichzeitige lokale Veröffentlichungen desselben Inhalts funktionieren auch unter Windows.
+- **Bereinigung und Betrieb:** [storage.md](storage.md) beschreibt Treiber, Grenzen, temporären Platzbedarf, Upgrade und eine manuelle Wartungsprozedur mit gestoppten Writern, sämtlichen Datenbankreferenzen einschließlich gelöschter Anhänge sowie Backup und Quarantäne. Kein Löschen gemeinsamer Hash-Objekte beim Rollback. Ein automatischer Garbage Collector ist nicht implementiert; die praktische Restore-Abnahme bleibt R14.
+- **Geprüft:** `.\mvnw.cmd -B --no-transfer-progress verify`: **BUILD SUCCESS**, 238 Tests erfasst, davon **228 erfolgreich und 10 bereits zuvor deaktiviert**, keine Fehler. Neue Tests prüfen beide Treiber mit 11-MiB-Dateien und parallelem Schreiben, fehlende Objekte/Buckets, Uploadgrenzen und tatsächliche Byteanzahl, Unicode-/Headerbehandlung und unterbrochene Downloads. MariaDB prüft Legacy-Kompatibilität, parallele Metadatentransaktionen und unveränderte Bestandsreferenzen nach der Migration. Der JAR-Test startet zusätzlich mit lokalem Speicher trotz ungültiger MinIO-URL und prüft Upload/Download sowie HTTP 413. `git diff --check` ohne Fehler.
+- **Testgrenzen:** Kein Nachweis für harte Prozessabbrüche, globale Ressourcenquoten oder sämtliche S3-Ausfälle. Produktive Last, Storage-Dienst, Deployment, gehostete CI und praktisch erprobte Wiederherstellung bleiben R12–R14. Die zehn bereits deaktivierten Tests bleiben R13; dieser Stand ist noch keine Produktionsfreigabe.
 
 ## 4. Betrieb und Release-Freigabe
 

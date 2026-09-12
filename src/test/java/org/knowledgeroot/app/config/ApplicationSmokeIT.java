@@ -79,6 +79,43 @@ class ApplicationSmokeIT {
                 assertEquals(302, logout.statusCode());
                 assertEquals(302, get(client, restarted, "/user").statusCode());
             }
+            try (var local = start(false, "file")) {
+                localStorageAndUploadLimits(local);
+            }
+        }
+    }
+
+    private void localStorageAndUploadLimits(TestServer server) {
+        try (var playwright = Playwright.create(); var browser = playwright.chromium().launch();
+             var context = browser.newContext()) {
+            var page = context.newPage();
+            page.navigate(uri(server, "/login").toString());
+            page.locator("#loginUsername").fill("smoke.admin");
+            page.locator("#loginPassword").fill("smoke-test-password-2026");
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
+            page.waitForURL(uri(server, "/").toString());
+            String token = page.locator("meta[name=_csrf]").getAttribute("content");
+            String header = page.locator("meta[name=_csrf_header]").getAttribute("content");
+            var jdbc = new JdbcTemplate(new DriverManagerDataSource(database.getJdbcUrl(), database.getUsername(), database.getPassword()));
+            int pageId = jdbc.queryForObject("SELECT id FROM page WHERE name = 'Browser migration test'", Integer.class);
+            int before = jdbc.queryForObject("SELECT COUNT(*) FROM file", Integer.class);
+            byte[] content = new byte[1024];
+            new java.util.Random(41).nextBytes(content);
+            var upload = context.request().post(uri(server, "/file").toString(), RequestOptions.create()
+                    .setHeader(header, token).setMultipart(FormData.create().set("parentContent", pageId)
+                            .set("file", new FilePayload("local.txt", "text/plain", content))));
+            assertEquals(201, upload.status(), upload.text());
+            int fileId = jdbc.queryForObject("SELECT id FROM file WHERE name = 'local.txt'", Integer.class);
+            var download = context.request().get(uri(server, "/file/" + fileId + "/download/local.txt").toString());
+            assertEquals(200, download.status(), download.text());
+            assertArrayEquals(content, download.body());
+            assertEquals("nosniff", download.headers().get("x-content-type-options"));
+            assertTrue(download.headers().get("content-disposition").contains("filename*="));
+            var oversized = context.request().post(uri(server, "/file").toString(), RequestOptions.create()
+                    .setHeader(header, token).setMultipart(FormData.create().set("parentContent", pageId)
+                            .set("file", new FilePayload("oversized.txt", "text/plain", new byte[1025]))));
+            assertEquals(413, oversized.status(), oversized.text());
+            assertEquals(before + 1, jdbc.queryForObject("SELECT COUNT(*) FROM file", Integer.class));
         }
     }
 
@@ -198,6 +235,10 @@ class ApplicationSmokeIT {
     }
 
     private TestServer start(boolean bootstrap) throws Exception {
+        return start(bootstrap, "minio");
+    }
+
+    private TestServer start(boolean bootstrap, String driver) throws Exception {
         String executable = System.getProperty("os.name").startsWith("Windows") ? "java.exe" : "java";
         var command = new ArrayList<>(List.of(Path.of(System.getProperty("java.home"), "bin", executable).toString(),
                 "-jar", Path.of(System.getProperty("application.jar")).toAbsolutePath().toString(),
@@ -208,11 +249,13 @@ class ApplicationSmokeIT {
                 "--spring.datasource.password=" + database.getPassword(),
                 "--knowledgeroot.bootstrap.login=" + (bootstrap ? "smoke.admin" : ""),
                 "--knowledgeroot.bootstrap.password=" + (bootstrap ? "smoke-test-password-2026" : ""),
-                "--knowledgeroot.storage.driver=minio", "--file.storage-dir=" + files,
-                "--minio.url=http://" + storage.getHost() + ":" + storage.getMappedPort(9000),
+                "--knowledgeroot.storage.driver=" + driver, "--file.storage-dir=" + files.resolve("objects"),
+                "--minio.url=" + (driver.equals("file") ? "invalid" : "http://" + storage.getHost() + ":" + storage.getMappedPort(9000)),
                 "--minio.access-key=smoke-test-user", "--minio.secret-key=smoke-test-password",
                 "--minio.bucket=smoke-test", "--spring.main.banner-mode=off"));
-        Path log = files.resolve(bootstrap ? "first-start.log" : "restart.log");
+        if (driver.equals("file")) command.addAll(List.of("--spring.servlet.multipart.max-file-size=1KB",
+                "--spring.servlet.multipart.max-request-size=4KB"));
+        Path log = files.resolve(driver + (bootstrap ? "-first-start.log" : "-restart.log"));
         Process process = new ProcessBuilder(command).directory(files.toFile()).redirectErrorStream(true)
                 .redirectOutput(log.toFile()).start();
         var portPattern = Pattern.compile("Tomcat started on port ([0-9]+)");

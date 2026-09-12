@@ -1,6 +1,6 @@
 # Speichern und Fehlerbehandlung
 
-Stand: R09, 12. September 2026.
+Stand: R11, 12. September 2026.
 
 ## Seiten
 
@@ -62,11 +62,13 @@ mehreren Anhängen und gleichzeitig laufenden Uploads gemeinsam verwendet werden
 eine Löschung beim Rollback könnte deren Inhalte entfernen. Dasselbe gilt für
 einen Speicherfehler mit unklarem Ausgang nach vollständiger Übertragung.
 
-Eine sichere Bereinigung benötigt einen gesonderten Abgleich mit der Datenbank,
-einen Umgang mit laufenden Uploads und ausreichenden zeitlichen Abstand. Eine
-solche Bereinigung ist noch nicht implementiert. Streaming, Hashmodernisierung,
-Speichergrenzen, umfassende Parallelitäts-/Ausfalltests und die bedingte Aktivierung
-der Treiber bleiben R11. Der MinIO-Server für den produktiven Betrieb bleibt eine
+Das manuelle Wartungsverfahren in [storage.md](storage.md) verlangt einen
+Abgleich mit sämtlichen Datenbankreferenzen bei gestoppten Writern, Backup und
+Quarantäne vor endgültiger Löschung. Eine automatische Bereinigung ist nicht
+implementiert. Seit R11 werden neue Inhalte mit begrenztem Puffer gehasht und
+unter SHA-256-Schlüsseln gespeichert; alte MD5-Objekte bleiben lesbar. Uploadgrenzen,
+sichere Downloadheader und die unabhängige Treiberinitialisierung sind ebenfalls
+dort beschrieben. Der Storage-Dienst für den produktiven Betrieb bleibt eine
 offene Entscheidung in R12.
 
 ## Nachweise

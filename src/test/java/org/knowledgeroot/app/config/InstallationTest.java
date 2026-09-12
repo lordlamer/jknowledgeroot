@@ -204,6 +204,8 @@ class InstallationTest {
     void legacyUpgradePreservesChecksumsContentAccountsAndJdbcSessions() throws Exception {
         // Pre-R04 changesets and SQL, with classpath paths adjusted for the fixture.
         migration("classpath:dbupdates/legacy-changelog.xml", "production,development").afterPropertiesSet();
+        jdbc.update("INSERT INTO file (page_id, hash, name, size, create_date, change_date) SELECT MIN(id), '0123456789abcdef0123456789abcdef', 'legacy.txt', 3, NOW(), NOW() FROM page");
+        var filesBefore = jdbc.queryForList("SELECT * FROM file ORDER BY id");
         var checksums = jdbc.queryForList("SELECT ID, MD5SUM FROM DATABASECHANGELOG ORDER BY ORDEREXECUTED");
         var pages = jdbc.queryForList("SELECT * FROM page ORDER BY id");
         var grants = jdbc.queryForList("SELECT * FROM page_permission ORDER BY id");
@@ -220,6 +222,7 @@ class InstallationTest {
         assertEquals(checksums, jdbc.queryForList(
                 "SELECT ID, MD5SUM FROM DATABASECHANGELOG WHERE ORDEREXECUTED <= ? ORDER BY ORDEREXECUTED", checksums.size()));
         assertEquals(grants, jdbc.queryForList("SELECT * FROM page_permission ORDER BY id"));
+        assertEquals(filesBefore, jdbc.queryForList("SELECT * FROM file ORDER BY id"));
         assertEquals(pages, jdbc.queryForList("SELECT * FROM page ORDER BY id"));
         assertEquals(users, jdbc.queryForList("SELECT * FROM user ORDER BY id"));
         Session restored = sessionRepository().findById(session.getId());

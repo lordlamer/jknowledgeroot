@@ -15,6 +15,11 @@ Search and the page API apply permissions before pagination. See
 [search, input limits, and error responses](docs/search-and-validation.md)
 for request limits, compatibility changes, and database indexes.
 
+Local storage starts independently of MinIO. New uploads use streaming SHA-256
+hashing; existing MD5 objects remain readable. Defaults are 25 MiB per file,
+100 MiB per request and ten files per upload. See the [storage guide](docs/storage.md)
+for configuration, temporary disk space, safe downloads and manual orphan cleanup.
+
 ## Build and tests
 
 Install JDK 25 and set `JAVA_HOME` to its installation directory. Start a Docker
@@ -40,11 +45,13 @@ On Windows (PowerShell):
 The build compiles the application, runs the enabled tests, and creates the
 executable JAR in `target/`. The two existing disabled integration test classes
 are tracked in roadmap item R13. Installation tests exercise a real MariaDB in
-Testcontainers. During `verify`, Failsafe starts the packaged JAR twice against
+Testcontainers. During `verify`, Failsafe starts the packaged JAR against
 disposable MariaDB/MinIO containers and checks real HTTP login, JPA-backed admin
 access, WebJars, JDBC-session persistence across restart, and logout. Chromium
 also checks editor creation/saving, repeated HTMX navigation, rich-text preservation,
 malicious paste handling, and a real file upload/download.
+An additional JAR start uses local storage with an invalid MinIO URL and checks
+an upload at the size limit, its download and HTTP 413 above the limit.
 Full browser, storage, and deployment coverage remains in the roadmap.
 
 Spring Boot 4.1.1 manages the framework dependencies. See the
