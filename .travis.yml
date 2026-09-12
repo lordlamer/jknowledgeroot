@@ -1,5 +1,9 @@
 language: java
 jdk:
  - openjdk25
+services:
+ - docker
+before_script:
+ - sh ./mvnw -B --no-transfer-progress org.codehaus.mojo:exec-maven-plugin:3.5.0:exec -Dexec.executable=java -Dexec.classpathScope=test '-Dexec.args=-classpath %classpath com.microsoft.playwright.CLI install-deps chromium'
 script:
  - sh ./mvnw -B --no-transfer-progress verify

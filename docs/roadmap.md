@@ -15,9 +15,9 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: R08 – Sanitizer, Editor und weitere Bibliotheken aktualisieren.**
+**Nächster Schritt: R09 – Schreibvorgänge atomar machen.**
 
-R01 bis R07 sind abgeschlossen. R08 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
+R01 bis R08 sind abgeschlossen. R09 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
 
 ## 1. Build und Sicherheit
 
@@ -105,11 +105,17 @@ R01 bis R07 sind abgeschlossen. R08 bis R15 sind offen; die Produktionsfreigabe 
 
 ### R08 – Sanitizer, Editor und weitere Bibliotheken aktualisieren
 
-- [ ] Offen
+- [x] Erledigt am 12. September 2026
 - **Umsetzung:** HTML Sanitizer von 20240325.1 mindestens auf 20260102.1 oder eine geeignete neuere Version aktualisieren; CKEditor vom nicht mehr unterstützten Classic-Predefined-Build auf eine unterstützte Installation migrieren; MinIO-SDK, Commons IO und verwendete Frontend-Bibliotheken gezielt prüfen und aktualisieren.
 - **Einordnung:** Für die alte Sanitizer-Version existiert CVE-2025-66021. Die speziellen Voraussetzungen der veröffentlichten Schwachstelle wurden in der aktuellen Policy nicht festgestellt; ein ausnutzbares XSS wurde im Review nicht nachgewiesen.
 - **Konkrete Funde aus R07:** MinIO-XML-Substitution mindestens mit SDK 8.6.0 beheben; Bouncy Castle mindestens 1.84 prüfen. CKEditor-Advisories zur Zwischenablage und General HTML Support sowie lodash-es-Funde bearbeiten. Die Templates enthalten freizügige HTML-Konfiguration; die tatsächlich aktiven Plugins und das gebündelte JavaScript müssen im Browser geprüft werden. Ein Maven-Override ersetzt keinen bereits gebündelten Editor-Code. Einzelbewertungen und korrigierte Versionen stehen in [dependencies.md](dependencies.md).
 - **Abnahme:** Sanitizer-Regressionstests bestehen. Editor, Speichern, HTMX-Navigation und statische Ressourcen funktionieren im Browser. Bestehende Inhalte bleiben nutzbar. Upload und Download funktionieren mit dem aktualisierten SDK.
+- **Umgesetzt:** HTML Sanitizer 20260313.1, MinIO SDK 9.0.3 mit Bouncy Castle 1.84 und explizitem OkHttp-JVM-Artefakt 5.3.2, Commons IO 2.22.0 und HTMX 2.0.10. Bootstrap 5.3.8 und Icons 1.13.1 geprüft und beibehalten. Ungenutztes jQuery, jsTree, Font Awesome, Mustache und Hyperscript sowie die fehlerhafte Anforderung einer alten HTMX-Erweiterung entfernt.
+- **Editor:** Den alten CKEditor-Classic-Build durch Tiptap 3.31.3 mit MIT-lizenzierten Erweiterungen und DOMPurify 3.4.15 ersetzt; die BSD-Projektlizenz bleibt bestehen. Gemeinsame Integration für Anlegen und Bearbeiten mit HTML-Speicherung, Übernahme bestehender Tabellen, Links, Bilder und unterstützter Formatierungen. Formularfeld und bereits erfasste HTMX-Parameter werden vor dem Senden synchronisiert; Fragmentwechsel räumen Editorinstanzen auf. Details und Funktionsumfang stehen in [editor.md](editor.md).
+- **Reproduzierbarer Build:** Maven installiert Node 24.21.0 und npm 11.6.2 lokal und baut das Editor-Bundle mit `npm ci` aus dem versionierten Lockfile. JavaScript, CSS und die Lizenztexte der enthaltenen Pakete werden ins JAR übernommen. Haupt- und Testkompilierung verwenden getrennte `javac`-Prozesse. Die CI-Konfiguration installiert die Linux-Systemabhängigkeiten für Chromium.
+- **Geprüft:** Vollständiger Wrapper-Build mit `clean verify` und abschließendem `verify`: **BUILD SUCCESS**, insgesamt **164 Tests erfasst, 154 erfolgreich und 10 bereits zuvor deaktiviert**, keine Fehler. Zehn Sanitizer-Fälle prüfen schädliches HTML und den Erhalt unterstützter Formatierungen. Der erweiterte JAR-Test prüft mit echtem Chromium Seitenerstellung, drei HTMX-Bearbeitungs-/Speicherzyklen, bestehende Tabellen, Absatzfarben, Ausrichtung, Links und Bilder, schädlichen Zwischenablageinhalt sowie Multipart-Upload und bytegleichen Download gegen isolierte MariaDB-/MinIO-Container. JavaScript-Fehler und fehlerhaft geladene Skripte/Stylesheets werden geprüft; der Editor-Screenshot wurde zusätzlich visuell kontrolliert.
+- **Sicherheitsprüfung:** Der OSV-Scan umfasst nun auch das Frontend-Lockfile einschließlich Buildwerkzeugen und optionalen Plattformpaketen. **267 Paketversionen geprüft, keine bekannten Advisories, Exitcode 0**. Die zehn Zuordnungen zu neun Advisories aus R07 sind durch Updates beziehungsweise Entfernung der betroffenen Pakete behoben; keine Funde werden unterdrückt. Scanverfahren und Grenzen stehen in [dependencies.md](dependencies.md).
+- **Verbleibende Einschränkungen:** Gehostete CI, weitere Browser, Mobilgeräte und vollständige Barrierefreiheit wurden nicht geprüft. Nicht unterstütztes Spezial-HTML kann beim Bearbeiten normalisiert werden; repräsentative eigene Bestandsinhalte sind vor dem Release zu prüfen. Der MinIO-Server bleibt eine festgelegte Kompatibilitätsfixture. Storage-Fehlerfälle, Image-/CI-Plugin-Prüfungen, die zehn deaktivierten Tests sowie Betrieb und Wiederherstellung bleiben R11–R14. Dieser Stand ist noch keine Produktionsfreigabe.
 
 ## 3. Datenintegrität und Anwendungscode
 

@@ -11,9 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
 
     <script type="text/javascript" th:src="@{/webjars/htmx.org/dist/htmx.min.js}"></script>
-    <script type="text/javascript" th:src="@{/webjars/htmx.org/dist/ext/client-side-templates.js}"></script>
-    <script type="text/javascript" th:src="@{/webjars/mustache/mustache.js}"></script>
-    <script type="text/javascript" th:src="@{/webjars/jquery/jquery.min.js}"></script>
 
     <link th:rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}"/>
     <script type="text/javascript" th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
@@ -21,7 +18,8 @@
 
     <link th:href="@{/resources/css/layout.css}" rel="stylesheet">
 
-    <script type="text/javascript" th:src="@{/webjars/ckeditor__ckeditor5-build-classic/build/ckeditor.js}"></script>
+    <link th:href="@{/resources/editor/editor.css}" rel="stylesheet">
+    <script th:src="@{/resources/editor/editor.js}" defer></script>
 
     <script>
         (function () {

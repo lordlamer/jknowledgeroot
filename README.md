@@ -11,7 +11,10 @@ criteria, open decisions, and progress toward a production release.
 Install JDK 25 and set `JAVA_HOME` to its installation directory. Start a Docker
 engine for the isolated MariaDB and MinIO tests. The Maven
 Wrapper downloads the pinned Maven version on its first invocation; a separate
-Maven installation is not required.
+Maven installation is not required. Maven also installs the pinned Node/npm
+toolchain and builds the editor from `frontend/package-lock.json`.
+The browser test downloads Chromium on its first run; Linux needs the system
+libraries described in the [editor and build guide](docs/editor.md).
 
 On Linux or macOS:
 
@@ -30,12 +33,18 @@ executable JAR in `target/`. The two existing disabled integration test classes
 are tracked in roadmap item R13. Installation tests exercise a real MariaDB in
 Testcontainers. During `verify`, Failsafe starts the packaged JAR twice against
 disposable MariaDB/MinIO containers and checks real HTTP login, JPA-backed admin
-access, WebJars, JDBC-session persistence across restart, and logout.
+access, WebJars, JDBC-session persistence across restart, and logout. Chromium
+also checks editor creation/saving, repeated HTMX navigation, rich-text preservation,
+malicious paste handling, and a real file upload/download.
 Full browser, storage, and deployment coverage remains in the roadmap.
 
 Spring Boot 4.1.1 manages the framework dependencies. See the
 [dependency and security audit guide](docs/dependencies.md) for migration details,
-the Tomcat security override, repeatable scanning, and outstanding R08 findings.
+the Tomcat security override, repeatable Maven/npm scanning, and the resolved R08 findings.
+
+The rich-text editor uses self-hosted Tiptap with MIT-licensed extensions;
+the project license remains BSD-2-Clause. No editor license key is required.
+See the [editor guide](docs/editor.md) for supported content and upgrade checks.
 
 ## Initial administrator and upgrades
 

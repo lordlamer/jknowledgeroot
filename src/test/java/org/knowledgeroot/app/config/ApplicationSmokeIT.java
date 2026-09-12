@@ -1,6 +1,11 @@
 package org.knowledgeroot.app.config;
 
 import org.junit.jupiter.api.Test;
+import com.microsoft.playwright.*;
+import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.RequestOptions;
+import com.microsoft.playwright.options.FormData;
+import com.microsoft.playwright.options.FilePayload;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -59,6 +64,7 @@ class ApplicationSmokeIT {
                 assertEquals(302, authenticated.statusCode());
                 assertTrue(authenticated.headers().firstValue("location").orElseThrow().endsWith("/login/success"));
                 assertAdministrator(client, context);
+                browserEditingAndUploads(context);
                 var jdbc = new JdbcTemplate(new DriverManagerDataSource(database.getJdbcUrl(),
                         database.getUsername(), database.getPassword()));
                 assertTrue(jdbc.queryForObject("SELECT COUNT(*) FROM SPRING_SESSION_ATTRIBUTES", Integer.class) > 0);
@@ -73,6 +79,98 @@ class ApplicationSmokeIT {
                 assertEquals(302, logout.statusCode());
                 assertEquals(302, get(client, restarted, "/user").statusCode());
             }
+        }
+    }
+
+    private void browserEditingAndUploads(TestServer server) throws Exception {
+        // The CLI calls System.exit, so invoke it in its own process, never inside the test JVM.
+        Path arguments = files.resolve("playwright.args");
+        String classpath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+        Files.writeString(arguments, "-cp\n\"" + classpath.replace('\\', '/')
+                + "\"\ncom.microsoft.playwright.CLI\ninstall\nchromium\n");
+        String java = Path.of(System.getProperty("java.home"), "bin",
+                System.getProperty("os.name").startsWith("Windows") ? "java.exe" : "java").toString();
+        Path installLog = files.resolve("playwright-install.log");
+        var installer = new ProcessBuilder(java, "@" + arguments).redirectErrorStream(true)
+                .redirectOutput(installLog.toFile()).start();
+        try {
+            assertTrue(installer.waitFor(180, TimeUnit.SECONDS), "Chromium installation timed out");
+            assertEquals(0, installer.exitValue(), () -> {
+                try { return Files.readString(installLog); }
+                catch (Exception e) { return "Chromium installation failed: " + e.getMessage(); }
+            });
+        } finally { stop(installer); }
+        try (var playwright = Playwright.create(); var browser = playwright.chromium().launch();
+             var context = browser.newContext()) {
+            var page = context.newPage();
+            var errors = new ArrayList<String>();
+            page.onPageError(errors::add);
+            page.onResponse(response -> {
+                if (response.status() >= 400 && List.of("script", "stylesheet").contains(response.request().resourceType()))
+                    errors.add(response.url() + ": " + response.status());
+            });
+            context.route("https://fonts.googleapis.com/**", route -> route.fulfill(new Route.FulfillOptions()
+                    .setContentType("text/css").setBody("")));
+            page.navigate(uri(server, "/login").toString());
+            page.locator("#loginUsername").fill("smoke.admin");
+            page.locator("#loginPassword").fill("smoke-test-password-2026");
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
+            page.waitForURL(uri(server, "/").toString());
+            page.navigate(uri(server, "/ui/page/new").toString());
+            page.waitForSelector(".tiptap");
+            page.locator("#page-name").fill("Browser migration test");
+            page.locator(".tiptap").fill("New editor content");
+            page.locator("#content form button[type=submit]").first().click();
+            page.waitForSelector("#content a[hx-get$='/edit']");
+            var jdbc = new JdbcTemplate(new DriverManagerDataSource(database.getJdbcUrl(), database.getUsername(), database.getPassword()));
+            int pageId = jdbc.queryForObject("SELECT id FROM page WHERE name = 'Browser migration test'", Integer.class);
+            assertTrue(jdbc.queryForObject("SELECT content FROM page WHERE id = ?", String.class, pageId).contains("New editor content"));
+
+            // Load persisted, older rich text into the replacement editor without losing its structure.
+            jdbc.update("UPDATE page SET content = ? WHERE id = ?",
+                    "<h2>Existing heading</h2><p><strong>Bold</strong> <em>italic</em></p>"
+                            + "<table><tbody><tr><td>Existing cell</td></tr></tbody></table>"
+                            + "<p style='text-align:center;color:red'>Styled paragraph</p>"
+                            + "<p><a href='https://example.org'>Existing link</a></p>"
+                            + "<figure><img src='/favicon.ico' alt='Existing picture'></figure>", pageId);
+            for (int round = 0; round < 3; round++) {
+                page.locator("#content a[hx-get$='/edit']").first().click();
+                page.waitForSelector(".tiptap");
+                assertEquals(1, page.locator(".tiptap").count());
+                assertTrue(page.locator(".tiptap").innerText().contains("Existing cell"));
+                if (round == 0) page.screenshot(new Page.ScreenshotOptions().setFullPage(true)
+                        .setPath(Path.of(System.getProperty("application.jar")).getParent().resolve("editor-smoke.png")));
+                page.locator(".tiptap").evaluate("element => { const data = new DataTransfer(); "
+                        + "data.setData('text/html', '<p>Safe paste<img src=x onerror=window.editorXss=1></p><script>window.editorXss=1</script>');"
+                        + "element.dispatchEvent(new ClipboardEvent('paste', {clipboardData:data, bubbles:true, cancelable:true})); }");
+                assertNull(page.evaluate("window.editorXss"));
+                page.locator("#content form button[type=submit]").first().click();
+                page.waitForSelector("#content a[hx-get$='/edit']");
+                assertEquals(0, page.locator(".tiptap").count());
+            }
+            String persisted = jdbc.queryForObject("SELECT content FROM page WHERE id = ?", String.class, pageId);
+            assertTrue(persisted.contains("Existing cell"), persisted);
+            assertTrue(persisted.contains("<strong>Bold</strong>"), persisted);
+            assertTrue(persisted.contains("text-align:center"), persisted);
+            assertTrue(persisted.contains("color:red"), persisted);
+            assertTrue(persisted.contains("https://example.org"), persisted);
+            assertTrue(persisted.contains("/favicon.ico"), persisted);
+            assertFalse(persisted.contains("onerror"), persisted);
+            assertFalse(persisted.contains("<script"), persisted);
+
+            // Real multipart upload through the application and byte-for-byte download through the new SDK.
+            String csrfToken = page.locator("meta[name=_csrf]").getAttribute("content");
+            String csrfHeader = page.locator("meta[name=_csrf_header]").getAttribute("content");
+            byte[] content = "Storage upgrade roundtrip: äöü\n".getBytes(StandardCharsets.UTF_8);
+            var upload = context.request().post(uri(server, "/file").toString(), RequestOptions.create()
+                    .setHeader(csrfHeader, csrfToken).setMultipart(FormData.create().set("parentContent", pageId)
+                            .set("file", new FilePayload("roundtrip.txt", "text/plain", content))));
+            assertEquals(201, upload.status(), upload.text());
+            int fileId = jdbc.queryForObject("SELECT id FROM file WHERE page_id = ?", Integer.class, pageId);
+            var download = context.request().get(uri(server, "/ui/file/" + fileId + "/download/roundtrip.txt").toString());
+            assertEquals(200, download.status());
+            assertArrayEquals(content, download.body());
+            assertTrue(errors.isEmpty(), errors.toString());
         }
     }
 

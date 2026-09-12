@@ -1,0 +1,17 @@
+{
+  "name": "knowledgeroot-editor",
+  "version": "1.0.0",
+  "private": true,
+  "license": "BSD-2-Clause",
+  "scripts": { "build": "node build.mjs" },
+  "dependencies": {
+    "@tiptap/core": "3.31.3",
+    "@tiptap/starter-kit": "3.31.3",
+    "@tiptap/extension-table": "3.31.3",
+    "@tiptap/extension-image": "3.31.3",
+    "@tiptap/extension-text-style": "3.31.3",
+    "@tiptap/extension-text-align": "3.31.3",
+    "dompurify": "3.4.15"
+  },
+  "devDependencies": { "esbuild": "0.28.2" }
+}

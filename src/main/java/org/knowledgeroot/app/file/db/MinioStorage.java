@@ -42,7 +42,7 @@ class MinioStorage implements FileStorage {
                     PutObjectArgs.builder()
                             .bucket(bucket)
                             .object(hash)
-                            .stream(inputStream, -1, 10485760)
+                            .stream(inputStream, -1L, 10485760L)
                             .build());
         } catch (Exception ex) {
             throw new RuntimeException("Failed to store file in Minio.", ex);

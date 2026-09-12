@@ -78,7 +78,13 @@
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
-            <version>8.5.17</version>
+            <version>9.0.3</version>
+        </dependency>
+        <!-- MinIO 9 uses OkHttp 5; Maven needs the JVM variant of this multiplatform library. -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp-jvm</artifactId>
+            <version>5.3.2</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -108,31 +114,14 @@
 
         <dependency>
             <groupId>org.webjars</groupId>
-            <artifactId>jquery</artifactId>
-            <version>3.7.1</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.webjars</groupId>
             <artifactId>bootstrap</artifactId>
             <version>5.3.8</version>
         </dependency>
 
         <dependency>
-            <groupId>org.webjars</groupId>
-            <artifactId>font-awesome</artifactId>
-            <version>5.15.4</version>
-        </dependency>
-        <dependency>
-            <groupId>org.webjars</groupId>
-            <artifactId>jstree</artifactId>
-            <version>3.3.16</version>
-        </dependency>
-
-        <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.20.0</version>
+            <version>2.22.0</version>
         </dependency>
 
         <dependency>
@@ -153,7 +142,7 @@
         <dependency>
             <groupId>org.webjars.npm</groupId>
             <artifactId>htmx.org</artifactId>
-            <version>2.0.8</version>
+            <version>2.0.10</version>
         </dependency>
         <dependency>
             <groupId>io.github.wimdeblauwe</groupId>
@@ -165,21 +154,6 @@
             <artifactId>htmx-spring-boot-thymeleaf</artifactId>
             <version>${htmx-spring-boot.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.webjars.npm</groupId>
-            <artifactId>mustache</artifactId>
-            <version>4.2.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.webjars.npm</groupId>
-            <artifactId>hyperscript.org</artifactId>
-            <version>0.9.14</version>
-        </dependency>
-        <dependency>
-            <groupId>org.webjars.npm</groupId>
-            <artifactId>ckeditor__ckeditor5-build-classic</artifactId>
-            <version>40.1.0</version>
-        </dependency>
 
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -190,12 +164,48 @@
         <dependency>
             <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
             <artifactId>owasp-java-html-sanitizer</artifactId>
-            <version>20240325.1</version>
+            <version>20260313.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.microsoft.playwright</groupId>
+            <artifactId>playwright</artifactId>
+            <version>1.62.0</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
     <build>
+        <resources>
+            <resource><directory>src/main/resources</directory></resource>
+            <resource><directory>${project.build.directory}/generated-resources</directory></resource>
+        </resources>
         <plugins>
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>2.0.2</version>
+                <configuration>
+                    <workingDirectory>frontend</workingDirectory>
+                    <installDirectory>${project.build.directory}/frontend</installDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>install-frontend-toolchain</id>
+                        <goals><goal>install-node-and-npm</goal></goals>
+                        <configuration><nodeVersion>v24.21.0</nodeVersion><npmVersion>11.6.2</npmVersion></configuration>
+                    </execution>
+                    <execution>
+                        <id>install-frontend-dependencies</id>
+                        <goals><goal>npm</goal></goals>
+                        <configuration><arguments>ci --ignore-scripts --no-audit --no-fund</arguments></configuration>
+                    </execution>
+                    <execution>
+                        <id>build-editor</id>
+                        <goals><goal>npm</goal></goals>
+                        <configuration><arguments>run build</arguments></configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -215,6 +225,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <release>${java.version}</release>
+                    <!-- Isolate javac runs for main/test compilation and their annotation processors. -->
+                    <fork>true</fork>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>

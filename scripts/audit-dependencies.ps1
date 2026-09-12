@@ -1,6 +1,7 @@
 param(
     [string]$DependencyTree = 'target/dependency-tree.json',
-    [string]$Report = 'target/dependency-audit.json'
+    [string]$Report = 'target/dependency-audit.json',
+    [string]$FrontendLock = 'frontend/package-lock.json'
 )
 
 # Input: mvnw dependency:tree -DoutputType=json -DoutputFile=target/dependency-tree.json
@@ -26,6 +27,14 @@ function Visit-Dependency($node) {
 }
 $tree = Get-Content -LiteralPath $DependencyTree -Raw | ConvertFrom-Json
 foreach ($child in $tree.children) { Visit-Dependency $child }
+$lockJson = Get-Content -LiteralPath $FrontendLock -Raw
+# Windows PowerShell 5 cannot deserialize npm's empty root-package property name.
+$lock = ($lockJson -replace '("packages"\s*:\s*\{\s*)""\s*:', '$1"__root__":') | ConvertFrom-Json
+foreach ($entry in $lock.packages.PSObject.Properties) {
+    if (!$entry.Name.StartsWith('node_modules/') -or !$entry.Value.version) { continue }
+    $name = $entry.Name -replace '^.*node_modules/', ''
+    Add-Package 'npm' $name $entry.Value.version
+}
 $queries = @($packages.GetEnumerator() | Sort-Object Name | ForEach-Object { $_.Value })
 $findings = @()
 for ($offset = 0; $offset -lt $queries.Count; $offset += 100) {
@@ -58,6 +67,7 @@ for ($offset = 0; $offset -lt $queries.Count; $offset += 100) {
     checkedAt = [DateTime]::UtcNow.ToString('o')
     source = 'https://api.osv.dev'
     dependencyTreeSha256 = (Get-FileHash -LiteralPath $DependencyTree -Algorithm SHA256).Hash
+    frontendLockSha256 = (Get-FileHash -LiteralPath $FrontendLock -Algorithm SHA256).Hash
     queries = $queries
     findings = $findings
 } | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath $Report -Encoding UTF8
