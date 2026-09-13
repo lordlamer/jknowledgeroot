@@ -1,6 +1,6 @@
 # Produktionskonfiguration und Lieferprozess
 
-Stand: R20, 13. September 2026. Dieser Stand bereitet den Betrieb vor;
+Stand: R22, 13. September 2026. Dieser Stand bereitet den Betrieb vor;
 [Backup und Wiederherstellung](recovery.md) sowie der [Release-Kandidat](release.md)
 sind dokumentiert; die betriebliche Freigabe bleibt offen. Versionskonflikte,
 Historie und Löschverhalten beschreibt [page-history.md](page-history.md). Healthchecks, Metriken und
@@ -164,6 +164,11 @@ SESSION-Cookies tragen Secure/HttpOnly/SameSite, HTTPS-Antworten enthalten HSTS,
 Redirects bleiben auf der öffentlichen HTTPS-Adresse und fremde
 `X-Forwarded-For`-Werte verändern keine Login-Quote. Ein Proxy-/Zertifikatssetup
 für die konkrete Domain ist nicht durch die Konfigurationsdatei allein erledigt.
+
+Der [lokale HTTPS-Proxytest](proxy-testing.md) prüft das nginx-Beispiel mit eigenen
+Testzertifikaten, Login/Logout, Cookies, Redirects und gefälschten Forwarded-Headern
+gegen das Produktions-Compose. Er ergänzt die CI; die Abnahme am Zielhost bleibt
+weiterhin erforderlich.
 
 ## CI und Veröffentlichung
 

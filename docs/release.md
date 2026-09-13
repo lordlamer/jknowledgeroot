@@ -66,7 +66,7 @@ Registry-Digests festhalten und explizit als `KR_APP_IMAGE` und `KR_DB_IMAGE` se
    und die Standardlabels beider Dockerfiles gemeinsam pflegen. Bei einem Versionswechsel alte
    JARs durch `clean` entfernen, damit das Docker-COPY eindeutig bleibt.
 2. Gesamten Maven-Testlauf, Containerstart und Backup-/Upgrade-/Rollbackprüfung
-   bestehen lassen. Vor der Freigabe die Java-/Datenbank-OS-Korrekturen aus
+   sowie den [HTTPS-Proxytest](proxy-testing.md) bestehen lassen. Vor der Freigabe die Java-/Datenbank-OS-Korrekturen aus
    [R19](roadmap.md#r19--java-wartungsrelease-und-verfügbare-datenbank-os-fixes-übernehmen)
    abschließen. Dependency-Baum und OSV-Bericht archivieren. Der Workflow führt
    den vorhandenen Scanner nun aus und stoppt bei Funden oder unvollständiger

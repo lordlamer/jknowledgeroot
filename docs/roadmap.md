@@ -15,9 +15,22 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: R21 committen und die verbleibende Betriebsabnahme durchführen.**
+**Nächster Schritt: Zielumgebung festlegen und die verbleibende Betriebsabnahme durchführen.**
 
-R01 bis R21 sind umgesetzt und lokal geprüft; R20 ist als `2f24ffa` committet. Der aktuelle Kandidat ist `1.0.0-rc.2`. Verbleibende OS-Paketbefunde, gehostete CI, Repository-/Release-Schutz, TLS/Proxy, produktive Last, Alarmierung sowie eigene Backup-/Wiederanlaufzeiten sind vor der Produktionsfreigabe gemäß [release.md](release.md) abzunehmen. Diese externen Schritte wurden nicht stellvertretend durchgeführt. Das [Abnahmeprotokoll](operational-acceptance.md) hält die offenen Angaben und Nachweise fest; [container-findings.md](container-findings.md) und [database-findings.md](database-findings.md) enthalten die getrennte technische Einordnung der Restbefunde.
+R01 bis R22 sind umgesetzt, lokal geprüft und committet. Der aktuelle Kandidat ist `1.0.0-rc.2`. Verbleibende OS-Paketbefunde, gehostete CI, Repository-/Release-Schutz, TLS/Proxy, produktive Last, Alarmierung sowie eigene Backup-/Wiederanlaufzeiten sind vor der Produktionsfreigabe gemäß [release.md](release.md) abzunehmen. Diese externen Schritte wurden nicht stellvertretend durchgeführt. Das [Abnahmeprotokoll](operational-acceptance.md) hält die offenen Angaben und Nachweise fest; [container-findings.md](container-findings.md) und [database-findings.md](database-findings.md) enthalten die getrennte technische Einordnung der Restbefunde.
+
+Die Einträge R01–R22 dokumentieren jeweils den damaligen Prüfstand. Hinweise auf
+damals noch fehlende spätere Schritte oder ausstehende Commits sind historische
+Nachweise; maßgeblich für die aktuellen offenen Arbeiten ist diese Übersicht.
+
+### Noch offen bis zur Produktionsfreigabe
+
+- [ ] Zielsystem, Domain, Betreiber/Vertretung, erwartete Nutzer-/Datenmengen und Betriebsgrenzen festlegen.
+- [ ] Den sauberen Release-Commit vollständig in der gehosteten CI prüfen; Branch-/Tag-Schutz, Release-Reviewer und Registry-Secrets einrichten.
+- [ ] Staging mit tatsächlichem Proxy, gültigem TLS-Zertifikat und passender Netzfreigabe abnehmen; eigene Altinhalte, Rollen, Gastzugriff, Redaktion und Anhänge prüfen.
+- [ ] Repräsentative Last messen, Antwortzeit-/Fehlergrenzen festlegen und externe Alarmierung praktisch testen.
+- [ ] Gemeinsame DB-/Dateisicherung außerhalb des App-Hosts einrichten; Restore/Upgrade/Rollback mit eigenen Daten prüfen und zulässigen Datenverlust sowie Wiederanlaufzeit nachweisen.
+- [ ] Aktuelle Sicherheitsberichte einschließlich Betreiberproxy bewerten, verbleibende Befunde mit Verantwortlichen und Prüftermin entscheiden; anschließend Freigabe dokumentieren, Images veröffentlichen und Nachweise dauerhaft archivieren.
 
 ## 1. Build und Sicherheit
 
@@ -265,6 +278,15 @@ R01 bis R21 sind umgesetzt und lokal geprüft; R20 ist als `2f24ffa` committet. 
 - **Abnahme:** Passende aktuelle Artefakte bestehen; alte JARs, vertauschte oder veränderte Berichte, fehlende Nachweise und widersprüchliche Erfolgsmeldungen scheitern. Ein fehlgeschlagener Aufruf hinterlässt kein altes Erfolgsmanifest.
 - **Geprüft:** Zwölf Node-Tests bestehen, einschließlich veralteter/fehlender JAR-Identität, falscher Image-ID, abweichender Schichten und Labels, geänderter Berichtsbytes, blockierender Rohbefunde trotz behauptetem Erfolg und unvollständiger Nachweise. Fehlende/ungültige POM oder Argumente lassen ebenfalls kein altes Manifest stehen. Praktisch wurden das R20-JAR wegen seiner alten Revision und die R20-Scans für die neuen Images abgelehnt. Neu-Paketierung mit Temurin 25.0.4.1+1 und Revision `2f24ffa` sowie beide Containerbuilds bestehen; Java-Tests wurden bei dieser Paketierung ausdrücklich übersprungen, der unveränderte Anwendungscode bleibt durch die 265 erfolgreichen Tests aus R19 abgedeckt. Produktionsstart und Neustart bestehen. Beide frischen OS-Scans bestehen: Anwendung **105 Pakete, acht MEDIUM/vier LOW**, Datenbank **149 Pakete, 13 MEDIUM/sieben LOW**, keine blockierenden Funde. Die Abschlussprüfung akzeptiert die aktuellen Nachweise; jede der vier einzeln entfernten Scandateien führt zum Abbruch und zur Entfernung des vorherigen Manifests. Wiederhergestellte Berichte ergeben erneut `auditsVerified: true`. Workflowprüfung mit actionlint 1.7.12 und `git diff --check` bestehen; entbehrliche Testcontainer und Volumes wurden entfernt. R21 bleibt bis zum nächsten Commit als veränderte Arbeitskopie markiert.
 - **Grenzen:** Die Zuordnung ist keine signierte Attestierung, aktualisiert keinen älteren Scan desselben Images und ersetzt keine betriebliche Freigabe. Java-Anwendung, Dependencies und Containerpakete werden in R21 nicht geändert. Gehostete CI, Registry und Zielbetrieb bleiben offen.
+
+### R22 – HTTPS und Proxy-Vertrauen durch die vollständige nginx-Strecke prüfen
+
+- [x] Umgesetzt und lokal geprüft am 13. September 2026; R21 ist als `ff07fe4` committet
+- **Befund:** Die vorhandenen Java-/HTTP-Tests prüfen direktes TLS sowie Tomcats Verarbeitung von Forwarded-Headern. Das dokumentierte nginx-Beispiel selbst und sein Zusammenspiel mit Produktions-Compose, Cookies, Redirects und IP-Quote waren bisher nicht automatisch geprüft.
+- **Umsetzung:** `deploy/proxy-smoke-test.mjs` erstellt eine entbehrliche Installation und einen offiziellen nginx-Testcontainer mit festem Digest. Ein eigenes kurzlebiges Zertifikat wird vom Client samt Hostname geprüft. Nur die tatsächliche IP dieses Proxys wird vertraut. Aus dem nginx-Beispiel werden ausschließlich Zertifikatspfade und interne Upstream-Adresse angepasst. Der Test prüft HTTP-Weiterleitung, HSTS, Administratorlogin, Cookieattribute, CSRF/Logout, kanonische HTTPS-Redirects trotz gefälschter Header, unvertrauten Direktzugriff sowie die gemeinsame IP-Quote bei wechselnden behaupteten Client-Adressen. Er verwendet eine eigene reduzierte Testquote und hinterlässt einen Bericht mit Image-IDs und Konfigurationsprüfsumme. CI führt den Test aus und archiviert den Bericht; [proxy-testing.md](proxy-testing.md) beschreibt Aufruf und Grenzen.
+- **Abnahme:** Die reale Proxy-Strecke erfüllt die dokumentierten Erwartungen; ein Login mit richtigem Passwort bleibt nach ausgeschöpfter Quellquote trotz geänderter Forwarded-Header gesperrt. Testprojekt, Volumes und Testschlüssel werden entfernt. Bestehende Dienste werden nicht verändert.
+- **Geprüft:** Neu-Paketierung mit Temurin 25.0.4.1+1 und Revision `ff07fe4` sowie beide Imagebuilds einschließlich JAR-/Laufzeitzuordnung bestehen. Der vollständige nginx-Test besteht mit allen fünf Prüfgruppen. Beim ersten Lauf erkannte der Testhelfer das CSRF-Metafeld der Administratorseite noch nicht; nach Unterstützung von Formular- und Metafeldern besteht auch Logout. Erfolgsbericht unter `target/proxy-smoke.json`, Laufprotokoll unter `target/r22-proxy.log`; der Bericht enthält die tatsächlich gestarteten Image-IDs und die Beispielprüfsumme. JavaScript-Syntax, actionlint 1.7.12 und `git diff --check` bestehen. Beide entbehrlichen Testprojekte einschließlich Volumes und Testschlüsseln wurden entfernt. Die Paketierung übersprang Java-Tests ausdrücklich; für den unveränderten Anwendungscode bleiben die 265 erfolgreichen Tests aus R19 maßgeblich. OS-Scans und Wiederherstellung wurden in R22 nicht erneut ausgeführt; die aktuellen lokalen Images haben deshalb weiterhin ein vorläufiges Manifest mit `auditsVerified: false`. Vor Freigabe läuft die vollständige CI-Prüfkette. R22 ist noch nicht committet.
+- **Grenzen:** Keine echte Domain, Zertifikatserneuerung, öffentliche Netz-/Firewallprüfung oder gehostete CI. Das gepinnte nginx-Image ist eine Testabhängigkeit und keine Auswahl oder Sicherheitsfreigabe des Betreiberproxys. Anwendungscode, POM und Produktionskonfiguration bleiben fachlich unverändert; die Betriebsabnahme des Zielhosts bleibt offen.
 
 ## Nachweise der Bestandsaufnahme
 

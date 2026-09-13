@@ -42,6 +42,8 @@ Eine ausgefüllte Kopie mit tatsächlichen Systemdaten gehört in das Betriebsar
 Die jeweiligen Befehle und Grenzen stehen in [production.md](production.md),
 [monitoring.md](monitoring.md), [recovery.md](recovery.md),
 [page-history.md](page-history.md) und [image-security.md](image-security.md).
+Der [lokale Proxytest](proxy-testing.md) liefert einen zusätzlichen technischen
+Nachweis für das nginx-Beispiel; die TLS-/Proxy-Abnahme des Zielsystems bleibt offen.
 Fehler-/Lasttests nur in einer dafür vorgesehenen Umgebung und einem abgestimmten
 Zeitfenster ausführen; keine bestehenden produktiven Volumes als Testziel verwenden.
 

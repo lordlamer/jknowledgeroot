@@ -38,13 +38,15 @@ jobs:
           target/frontend/node/node scripts/build-container.mjs knowledgeroot:verified knowledgeroot:database-verified
           test "$(docker image inspect knowledgeroot:verified --format '{{.Config.User}}')" = '10001:10001'
           sh deploy/smoke-test.sh knowledgeroot:verified knowledgeroot:database-verified
+      - name: Verify HTTPS ingress and forwarded-header isolation
+        run: target/frontend/node/node deploy/proxy-smoke-test.mjs knowledgeroot:verified knowledgeroot:database-verified
       - name: Audit container operating system
         run: |
           target/frontend/node/node --test scripts/image-audit-policy.test.mjs scripts/release-evidence.test.mjs
           target/frontend/node/node scripts/audit-image.mjs knowledgeroot:verified
       - name: Audit pinned production database operating system
         run: target/frontend/node/node scripts/audit-image.mjs --database knowledgeroot:database-verified
-      - name: Archive container audit evidence including failures
+      - name: Archive container audit and proxy evidence including failures
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -54,6 +56,7 @@ jobs:
             target/image-audit-summary.json
             target/database-image-audit.json
             target/database-image-audit-summary.json
+            target/proxy-smoke.json
           if-no-files-found: warn
           retention-days: 14
       - name: Verify backup, upgrade and rollback from pinned R13 baseline
@@ -80,6 +83,7 @@ jobs:
             target/release-image.tar
             target/release-manifest.json
             target/dependency-audit.json
+            target/proxy-smoke.json
             target/image-audit.json
             target/image-audit-summary.json
             target/database-image-audit.json
