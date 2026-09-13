@@ -15,15 +15,15 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: R23–R25 committen, danach den Release-Kandidaten in der vollständigen CI und im Zielbetrieb abnehmen.**
+**Nächster Schritt: R26-Dokumentation committen; danach gehostete CI und konkrete Betriebsabnahme durchführen.**
 
-R01 bis R22 sind umgesetzt, lokal geprüft und committet. Der aktuelle Kandidat ist `1.0.0-rc.2`. Verbleibende OS-Paketbefunde, gehostete CI, Repository-/Release-Schutz, TLS/Proxy, produktive Last, Alarmierung sowie eigene Backup-/Wiederanlaufzeiten sind vor der Produktionsfreigabe gemäß [release.md](release.md) abzunehmen. Diese externen Schritte wurden nicht stellvertretend durchgeführt. Das [Abnahmeprotokoll](operational-acceptance.md) hält die offenen Angaben und Nachweise fest; [container-findings.md](container-findings.md) und [database-findings.md](database-findings.md) enthalten die getrennte technische Einordnung der Restbefunde.
+R01 bis R25 sind umgesetzt, lokal geprüft und committet. Der aktuelle Kandidat ist `1.0.0-rc.2`. Verbleibende OS-Paketbefunde, gehostete CI, Repository-/Release-Schutz, TLS/Proxy, produktive Last, Alarmierung sowie eigene Backup-/Wiederanlaufzeiten sind vor der Produktionsfreigabe gemäß [release.md](release.md) abzunehmen. Diese externen Schritte wurden nicht stellvertretend durchgeführt. Das [Abnahmeprotokoll](operational-acceptance.md) hält die offenen Angaben und Nachweise fest; [container-findings.md](container-findings.md) und [database-findings.md](database-findings.md) enthalten die getrennte technische Einordnung der Restbefunde.
 
-R23 bis R25 ergänzen den gewünschten Funktionsumfang und sind lokal geprüft;
-die Änderungen sind noch nicht committet. Die vorläufige Administratorregel für
+R23 bis R25 ergänzen den gewünschten Funktionsumfang und sind als `155e710`
+committet. Die vorläufige Administratorregel für
 Verschiebungen und der mögliche E-Mail-Passwortreset sind unten ausdrücklich festgehalten.
 
-Die Einträge R01–R22 dokumentieren jeweils den damaligen Prüfstand. Hinweise auf
+Die Einträge R01–R25 dokumentieren jeweils den damaligen Prüfstand. Hinweise auf
 damals noch fehlende spätere Schritte oder ausstehende Commits sind historische
 Nachweise; maßgeblich für die aktuellen offenen Arbeiten ist diese Übersicht.
 
@@ -354,6 +354,18 @@ bereits neue Passwörter vergeben. Selbstbedienung per E-Mail braucht eine separ
 Umsetzung mit verifizierten Adressen, Mailkonfiguration und Einmal-Tokens.
 Für das Verschieben ist vorläufig die empfohlene Administratorregel umgesetzt;
 eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
+
+## 8. Gemeinsame Release-Prüfung nach den Funktionsergänzungen
+
+### R26 – Committeten Funktionsstand vollständig lokal prüfen
+
+- [x] Lokal abgeschlossen am 13. September 2026; Dokumentation noch nicht committet
+- **Ausgangslage:** R23–R25 sind als `155e7101cdfa48b60ae236e0eb2eb9b5462ccda6` committet. Die letzten Nachweise stammten noch aus der veränderten Arbeitskopie, teilweise aus unterschiedlichen Zwischenständen; die OS-Scans waren nicht erneuert.
+- **Umfang:** Vollständiger Maven-Lauf, neue Container aus dessen JAR, Produktionsstart/Neustart, HTTPS-Proxy, Backup/Upgrade/Rollback, frisch aufgelöster Dependency-Baum samt OSV-Prüfung, beide OS-Scans und abschließende Artefaktzuordnung. Das Betriebsprotokoll ergänzt konkrete Prüfungen für Passwortwechsel, Verschieben, Vergleich und mobile Bedienung.
+- **Geprüft:** `target/r26-verify.log`: **277 Tests erfolgreich**, keine Fehler oder übersprungenen Tests (276 Surefire plus ein JAR-/Chromium-Test). Zwölf Node-Tests für Scanbewertung und Artefaktzuordnung bestehen. OSV prüft **277 Maven-/npm-Paketversionen ohne Befund**. Neue Images `knowledgeroot:r26-local` und `knowledgeroot:r26-database-local` bestehen Build, Produktionsstart einschließlich Neustart und sämtliche fünf HTTPS-/nginx-Prüfgruppen. Beide frischen OS-Scans bestehen: Anwendung **105 Pakete, acht MEDIUM/vier LOW**, Datenbank **149 Pakete, 13 MEDIUM/sieben LOW**, jeweils keine blockierenden Funde. Das abschließende Manifest bestätigt die JAR-/Image-/Scan-Zuordnung und `auditsVerified: true`.
+- **Wiederherstellung:** Backup, Upgrade vom gepinnten R13-Ausgangsstand mit MariaDB 12.2.2 auf das neue Image mit MariaDB 12.3.3 und Snapshot-Rollback auf den Ausgangsstand bestehen (`target/r26-recovery.log`). Login, öffentliche/private Seiten, Gruppenzugriff und Dateibytes sind nachgewiesen. Entbehrliche Testprojekte einschließlich Volumes wurden entfernt; die vorhandenen Entwicklungsdienste blieben unverändert. `git diff --check` besteht.
+- **Nachweise:** `target/r26-verify.log`, `target/r26-evidence-tests.log`, `target/r26-build.log`, `target/r26-smoke.log`, `target/r26-proxy.log`, `target/r26-dependency-tree.log`, `target/r26-dependency-audit.log`, `target/r26-app-audit.log`, `target/r26-db-audit.log`, `target/r26-manifest.log` sowie die zugehörigen JSON-Berichte unter `target/`. Das Manifest wurde vor den anschließenden Dokumentationsänderungen bei unveränderten versionierten Dateien erstellt (`dirty: false`); es beschreibt den genannten Funktionscommit, nicht einen späteren Dokumentationscommit.
+- **Grenzen:** Lokale Windows-/Linux-amd64-Prüfung, keine gehostete CI oder Produktionsfreigabe. Die unveränderten Restbefunde bleiben gemäß den getrennten App-/Datenbankbewertungen betrieblich zu entscheiden. Echte Domain, Last-/Alarmierungsgrenzen, Betreiber, RPO/RTO und dauerhafte Archivierung bleiben offen. Kein Tag und keine Veröffentlichung; die anschließenden Dokumentationsänderungen sind noch nicht committet.
 
 ## Nachweise der Bestandsaufnahme
 

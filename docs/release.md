@@ -80,6 +80,9 @@ Registry-Digests festhalten und explizit als `KR_APP_IMAGE` und `KR_DB_IMAGE` se
    im Editor kontrollieren. Versionskonflikte und Wiederherstellung gemäß
    [page-history.md](page-history.md) auch mit eigenen Arbeitsabläufen abnehmen.
    Dafür das [Abnahmeprotokoll](operational-acceptance.md) ausfüllen und archivieren.
+   Passwortwechsel mit mehreren Sitzungen, Verschieben einschließlich vererbter
+   Freigaben und Versionsvergleiche gemäß [product-functions.md](product-functions.md)
+   gehören ebenfalls zur Abnahme; diese Funktionen sind seit R23–R25 enthalten.
 4. Repository-Schutz und GitHub-Umgebung `release` gemäß [production.md](production.md)
    einrichten. Erst nach Freigabe den passenden Tag, beispielsweise
    `v1.0.0-rc.2`, erstellen. Ein abweichender Tag und eine veränderte Arbeitskopie

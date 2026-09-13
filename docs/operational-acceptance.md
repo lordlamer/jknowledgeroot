@@ -14,7 +14,7 @@ ist `1.0.0-rc.2`; eine Produktionsfreigabe wurde noch nicht erteilt.
 | Release-Commit, Registry-Digest und Manifest | Offen; konkrete Artefakte festhalten |
 | Datenbankversion, Speicherort und Proxyversion | Offen |
 | CPU/RAM, freier DB-/Datei-/Temp-/Backupplatz | Offen |
-| Erwartete gleichzeitige Nutzer und Datenmenge | Offen |
+| Nutzung / erwartete gleichzeitige Nutzer und Datenmenge | Intern und öffentlich; anfangs eher klein, später auch größere Bestände. Konkrete Parallelität und Datenmenge offen. |
 | Zulässige Antwortzeiten und Fehlerquote | Vor Lastprüfung festlegen |
 | RPO, RTO und Aufbewahrungsdauer | Vor Restoreprüfung festlegen |
 
@@ -30,7 +30,10 @@ Eine ausgefüllte Kopie mit tatsächlichen Systemdaten gehört in das Betriebsar
 | Installation/Upgrade | In Staging dieselbe Konfiguration und einen geschützten repräsentativen Datenbestand verwenden; Migration und Start ohne Fehler. Alte Writer bleiben gestoppt. | Offen |
 | TLS und Proxy | Gültiges Zertifikat, HTTPS-Zugriff, korrekte Weiterleitungen, Secure/HttpOnly/SameSite-Cookies; App-Port nur für den vorgesehenen Proxy zugänglich. | Offen |
 | Rechte und Gäste | Reale Rollen/Gruppen sowie Gastzugriff prüfen: öffentliche Seite erreichbar, private Seite und deren Datei unzugänglich; Unterseiten erben die vereinbarte Freigabe. | Offen |
-| Redaktion | Eigene Altinhalte bearbeiten; zwei Tabs erzeugen einen Konflikt ohne Verlust des Entwurfs. Historie ansehen und wiederherstellen. | Offen |
+| Redaktion und Historie | Eigene Altinhalte bearbeiten; zwei Tabs erzeugen einen Konflikt ohne Verlust des Entwurfs. Historie ansehen und wiederherstellen. Zwei gespeicherte Stände, auch über mehrere Ergebnisseiten hinweg, und einen Stand mit der aktuellen Seite vergleichen; Text-, Link- und Formatierungsänderungen prüfen. | Offen |
+| Seiten verschieben | Als Administrator eine Seite samt Unterseiten verschieben: IDs, Links und Anhänge bleiben erhalten; vererbte Rechte folgen dem neuen Elternteil, lokale Freigaben bleiben bestehen. Beim Verschieben auf die oberste Ebene bleiben die bisherigen wirksamen Freigaben erhalten. Zugriff mit Gast und realen Gruppen vor/nach dem Verschieben prüfen; ein vorher geöffnetes Bearbeitungsformular muss einen Konflikt melden. | Offen |
+| Passwort im Profil | Falsches aktuelles Passwort und abweichende Wiederholung ändern das Passwort nicht. Erfolgreicher Wechsel verlangt eine neue Anmeldung; auch eine zweite zuvor geöffnete Sitzung verliert beim nächsten Request ihre Anmeldung. Das alte Passwort funktioniert nicht mehr. Vorhandenes Zurücksetzen durch Administratoren prüfen; E-Mail-Reset gehört vorerst nicht zum Umfang. | Offen |
+| Mobile Bedienung | Profil bei schmalem Bildschirm bedienen; Passwortfelder und Aktionen bleiben sichtbar. Seitenleiste öffnen/schließen, Seite verschieben und Vergleichsansicht mit eigenen Inhalten prüfen. | Offen |
 | Löschen und Anhänge | Eltern mit Unterseiten lassen sich nicht löschen. Gelöschte Seiten/Downloads sind verborgen; Administrator stellt Eltern und Kinder samt Anhangzugriff wieder her. | Offen |
 | Last und Loginquoten | Repräsentative Suche, Navigation, Login und Uploads mit vereinbarter Parallelität ausführen; p95, Fehlerquote, CPU/RAM, DB-Pool und freien Platz aufzeichnen. | Offen |
 | Alarmierung | In Staging DB-/Speicherfehler kontrolliert auslösen; Readiness wird DOWN und externe Alarmierung erreicht tatsächlich Betreiber und Vertretung. Wiederanlauf prüfen. | Offen |
@@ -41,7 +44,8 @@ Eine ausgefüllte Kopie mit tatsächlichen Systemdaten gehört in das Betriebsar
 
 Die jeweiligen Befehle und Grenzen stehen in [production.md](production.md),
 [monitoring.md](monitoring.md), [recovery.md](recovery.md),
-[page-history.md](page-history.md) und [image-security.md](image-security.md).
+[page-history.md](page-history.md), [product-functions.md](product-functions.md)
+und [image-security.md](image-security.md).
 Der [lokale Proxytest](proxy-testing.md) liefert einen zusätzlichen technischen
 Nachweis für das nginx-Beispiel; die TLS-/Proxy-Abnahme des Zielsystems bleibt offen.
 Fehler-/Lasttests nur in einer dafür vorgesehenen Umgebung und einem abgestimmten
