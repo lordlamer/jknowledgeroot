@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
+<head><title>Knowledgeroot :: Move page</title></head>
+<body>
+<header class="kr-page-header">
+    <div class="kr-page-title-wrap"><h1 class="kr-page-title">Move page</h1><p th:text="${page.name}"></p></div>
+    <a class="kr-btn" th:href="@{'/ui/page/' + ${page.pageId}}">Cancel</a>
+</header>
+<section class="kr-content-area">
+    <p>The page and all its sub-pages move together. Links, attachments and saved versions stay with their pages.</p>
+    <p th:if="${inherits}" class="alert alert-warning">This page inherits access rights. Moving it changes access to the new parent's rights, including for inheriting sub-pages. Moving to the top level preserves the current effective rights as local grants.</p>
+    <p th:unless="${inherits}" class="alert alert-info">This page keeps its local access rights. Sub-pages keep their inheritance settings.</p>
+    <form method="get" th:action="@{'/ui/page/' + ${page.pageId} + '/move'}" class="kr-form-row">
+        <div class="kr-field"><label for="destination-query">Find a destination</label><input id="destination-query" name="query" th:value="${query}" maxlength="255"></div>
+        <button type="submit" class="kr-btn">Search</button>
+    </form>
+    <div class="kr-editor-pane my-3">
+        <h2 th:text="${destination == null ? 'Top level' : destination.name}"></h2>
+        <a th:if="${destination != null}" th:href="@{'/ui/page/' + ${page.pageId} + '/move'(parent=${destination.parent})}">Up one level</a>
+        <form method="post" th:action="@{'/ui/page/' + ${page.pageId} + '/move'}" class="mt-3">
+            <input type="hidden" name="revision" th:value="${page.revision}"><input type="hidden" name="parent" th:value="${parent}">
+            <p th:unless="${validDestination}" class="alert alert-warning">Choose a destination outside this page's subtree.</p>
+            <button type="submit" class="kr-btn accent" th:disabled="${!validDestination || parent == page.parent}">Move here</button>
+        </form>
+    </div>
+    <p th:if="${#lists.isEmpty(items)}">No pages found at this level.</p>
+    <ul class="list-group mb-3"><li class="list-group-item" th:each="item : ${items}" th:unless="${item.pageId.equals(page.pageId)}">
+        <a th:href="@{'/ui/page/' + ${page.pageId} + '/move'(parent=${item.pageId.value()})}" th:text="${item.name}"></a>
+    </li></ul>
+    <a th:if="${start > 0}" th:href="@{'/ui/page/' + ${page.pageId} + '/move'(parent=${parent},query=${query},start=${T(java.lang.Math).max(0,start - 50)})}">Previous</a>
+    <a th:if="${hasNext}" th:href="@{'/ui/page/' + ${page.pageId} + '/move'(parent=${parent},query=${query},start=${start + 50})}">Next</a>
+</section>
+</body></html>

@@ -349,7 +349,73 @@ class ApplicationSmokeIT {
             page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Previous").setExact(true)).click();
             page.waitForURL("**/search?*start=0*");
             assertEquals(20, page.locator(".kr-result").count());
+            // Exercise the actual move picker and version comparison as an administrator.
+            page.navigate(uri(server, "/ui/page/new").toString());
+            page.waitForSelector(".tiptap");
+            page.locator("#page-name").fill("Browser move destination");
+            page.locator(".tiptap").fill("Destination content");
+            page.locator("#content form button[type=submit]").first().click();
+            page.waitForSelector("#content a[hx-get$='/edit']");
+            int destination = jdbc.queryForObject("SELECT id FROM page WHERE name='Browser move destination'", Integer.class);
+            page.navigate(uri(server, "/ui/page/" + pageId).toString());
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("More").setExact(true)).click();
+            page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Move page").setExact(true)).click();
+            page.locator("#destination-query").fill("Browser move destination");
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Search").setExact(true)).click();
+            page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Browser move destination").setExact(true)).click();
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Move here")).click();
+            page.waitForURL("**/ui/page/" + pageId + "?trigger=reload-sidebar");
+            assertEquals(destination, jdbc.queryForObject("SELECT parent FROM page WHERE id=?", Integer.class, pageId));
+            page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("History").setExact(true)).click();
+            page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Compare with current")).last().click();
+            page.waitForSelector("details summary");
+            assertEquals(2, page.locator("article.kr-content").count());
+            assertTrue(page.locator("#content ins, #content del").count() > 0);
+            page.screenshot(new Page.ScreenshotOptions().setPath(Path.of("target/product-version-compare.png")).setFullPage(true));
+            browserProfilePassword(browser, server, jdbc);
             assertTrue(errors.isEmpty(), errors.toString());
+        }
+    }
+
+    private void browserProfilePassword(Browser browser, TestServer server, JdbcTemplate jdbc) {
+        jdbc.update("INSERT INTO user (login,password,active,created_by,create_date,changed_by,change_date) SELECT 'browser.profile',password,TRUE,id,NOW(),id,NOW() FROM user WHERE login='smoke.admin'");
+        try (var context = browser.newContext(new Browser.NewContextOptions().setIgnoreHTTPSErrors(true))) {
+            context.route("https://fonts.googleapis.com/**", route -> route.fulfill(new Route.FulfillOptions().setContentType("text/css").setBody("")));
+            var page = context.newPage();
+            page.navigate(uri(server, "/login").toString());
+            page.locator("#loginUsername").fill("browser.profile");
+            page.locator("#loginPassword").fill("smoke-test-password-2026");
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
+            page.waitForURL(uri(server, "/").toString());
+            page.navigate(uri(server, "/profile").toString());
+            page.locator("#current-password").fill("wrong-current-password");
+            page.locator("#new-password").fill("browser-profile-password-2026");
+            page.locator("#confirm-password").fill("browser-profile-password-2026");
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Change password")).click();
+            page.waitForSelector(".alert-danger");
+            assertEquals("", page.locator("#current-password").inputValue());
+            assertEquals("", page.locator("#new-password").inputValue());
+            page.setViewportSize(390, 844);
+            page.waitForFunction("document.querySelector('.app-main-content').clientWidth >= 380");
+            assertEquals("false", page.locator("#krSidebarToggle").getAttribute("aria-expanded"));
+            page.locator("#krSidebarToggle").click();
+            assertEquals("true", page.locator("#krSidebarToggle").getAttribute("aria-expanded"));
+            page.keyboard().press("Escape");
+            assertEquals("false", page.locator("#krSidebarToggle").getAttribute("aria-expanded"));
+            assertTrue((Boolean) page.evaluate("document.querySelector('.app-main-content').scrollWidth <= document.querySelector('.app-main-content').clientWidth + 1"));
+            page.locator("form[action='/profile/password']").scrollIntoViewIfNeeded();
+            page.screenshot(new Page.ScreenshotOptions().setPath(Path.of("target/product-profile-mobile.png")).setFullPage(true));
+            page.locator("#current-password").fill("smoke-test-password-2026");
+            page.locator("#new-password").fill("browser-profile-password-2026");
+            page.locator("#confirm-password").fill("browser-profile-password-2026");
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Change password")).click();
+            page.waitForURL("**/login?passwordChanged=true");
+            page.locator("#loginUsername").fill("browser.profile");
+            page.locator("#loginPassword").fill("browser-profile-password-2026");
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
+            page.waitForURL(uri(server, "/").toString());
+            page.navigate(uri(server, "/profile").toString());
+            page.waitForSelector("#current-password");
         }
     }
 

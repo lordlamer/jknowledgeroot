@@ -273,9 +273,32 @@
 
             var sbBtn = document.getElementById('krSidebarToggle');
             if (sbBtn) {
+                var sb = document.getElementById('sidebar');
+                var narrow = window.matchMedia('(max-width: 720px)');
+                function updateSidebarButton() {
+                    sbBtn.setAttribute('aria-expanded', String(!!sb && (narrow.matches ? sb.classList.contains('mobile-open') : !sb.classList.contains('collapsed'))));
+                }
+                function closeMobileSidebar() {
+                    if (sb) sb.classList.remove('mobile-open');
+                    updateSidebarButton();
+                }
+                narrow.addEventListener('change', closeMobileSidebar);
+                updateSidebarButton();
                 sbBtn.addEventListener('click', function () {
-                    var sb = document.getElementById('sidebar');
-                    if (sb) sb.classList.toggle('collapsed');
+                    if (!sb) return;
+                    if (narrow.matches) {
+                        sb.classList.remove('collapsed');
+                        sb.classList.toggle('mobile-open');
+                    } else sb.classList.toggle('collapsed');
+                    updateSidebarButton();
+                });
+                document.addEventListener('keydown', function (event) {
+                    if (event.key === 'Escape' && sb && sb.classList.contains('mobile-open')) {
+                        closeMobileSidebar(); sbBtn.focus();
+                    }
+                });
+                document.addEventListener('htmx:afterSwap', function (event) {
+                    if (event.detail.target.id === 'content') closeMobileSidebar();
                 });
             }
 

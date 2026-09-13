@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
+<head><title>Knowledgeroot :: Compare versions</title></head>
+<body>
+<header class="kr-page-header">
+    <div class="kr-page-title-wrap"><h1 class="kr-page-title">Compare versions</h1><p th:text="${page.name}"></p></div>
+    <a class="kr-btn" th:href="@{'/ui/page/' + ${page.pageId} + '/history'}">Back to history</a>
+</header>
+<section class="kr-content-area">
+    <p>Deletions are struck through; additions are underlined. Large changes are shown as complete blocks.</p>
+    <h2>Page name</h2>
+    <div><th:block th:each="part : ${nameDiff}"><del th:if="${part.kind == 'removed'}" class="bg-danger-subtle" th:text="${part.text}"></del><ins th:if="${part.kind == 'added'}" class="bg-success-subtle" th:text="${part.text}"></ins><span th:if="${part.kind == 'same'}" th:text="${part.text}"></span></th:block></div>
+    <div class="row g-4 mt-2">
+        <section th:each="version : ${ {left, right} }" class="col-12 col-lg-6" style="min-width:0">
+            <h2 th:text="(${version.id == 0} ? 'Current version ' : 'Saved version ') + ${version.revision}"></h2>
+            <p th:text="${version.changedAt}"></p>
+            <p th:if="${version.labelsCaptured}" th:text="'Labels: ' + ${#strings.listJoin(version.labels, ', ')}"></p>
+            <p th:unless="${version.labelsCaptured}">Labels were not captured for this legacy version.</p>
+            <article class="kr-content" style="overflow-wrap:anywhere;overflow:auto" th:utext="${version.content}"></article>
+        </section>
+    </div>
+    <h2 class="mt-4">Text changes</h2>
+    <div style="white-space:pre-wrap;overflow-wrap:anywhere"><th:block th:each="part : ${textDiff}"><del th:if="${part.kind == 'removed'}" class="bg-danger-subtle" th:text="${part.text}"></del><ins th:if="${part.kind == 'added'}" class="bg-success-subtle" th:text="${part.text}"></ins><span th:if="${part.kind == 'same'}" th:text="${part.text}"></span></th:block></div>
+    <details class="mt-4">
+        <summary>Content and formatting changes (HTML)</summary>
+        <pre class="mt-2" style="white-space:pre-wrap;overflow-wrap:anywhere"><th:block th:each="part : ${contentDiff}"><del th:if="${part.kind == 'removed'}" class="bg-danger-subtle" th:text="${part.text}"></del><ins th:if="${part.kind == 'added'}" class="bg-success-subtle" th:text="${part.text}"></ins><span th:if="${part.kind == 'same'}" th:text="${part.text}"></span></th:block></pre>
+    </details>
+</section>
+</body></html>

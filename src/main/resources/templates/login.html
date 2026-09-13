@@ -26,6 +26,7 @@
                 Login failed. Check your credentials or wait before trying again.
             </div>
             <div th:if="${msg}" class="kr-login-info" role="status" th:text="${msg}"></div>
+            <div th:if="${param.passwordChanged != null}" class="kr-login-info" role="status">Password changed. Sign in with your new password.</div>
 
             <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 

@@ -13,14 +13,30 @@
 <p>Saved versions contain the page name, content and captured labels. Restoring keeps current sharing, attachments and page location.</p>
 <p th:if="${page.deleted}" class="alert alert-warning">This page is deleted. Restore a saved version to make it available again. Its parent must be available first.</p>
 <p th:if="${#lists.isEmpty(items)}">No earlier versions have been saved yet.</p>
+<p th:if="${selected != null}" class="alert alert-info" th:text="'Selected version ' + ${selected.revision} + '. Choose another saved version below, or continue browsing the history.'"></p>
 <div class="table-responsive"><table th:unless="${#lists.isEmpty(items)}" class="table">
     <thead><tr><th>Version</th><th>Changed</th><th>Name</th><th></th></tr></thead>
     <tbody><tr th:each="item : ${items}">
         <td th:text="${item.revision}"></td><td th:text="${item.changedAt}"></td><td th:text="${item.name}"></td>
-        <td><a th:href="@{'/ui/page/' + ${page.pageId} + '/history/' + ${item.id}}">View version</a></td>
+        <td><a th:href="@{'/ui/page/' + ${page.pageId} + '/history/' + ${item.id}}">View version</a>
+            · <a th:href="@{'/ui/page/' + ${page.pageId} + '/history/compare'(from=${item.id})}">Compare with current</a>
+            · <a th:href="@{'/ui/page/' + ${page.pageId} + '/history'(start=${start},compareFrom=${item.id})}">Select for comparison</a>
+            <th:block th:if="${selected != null}"> · <a th:href="@{'/ui/page/' + ${page.pageId} + '/history/compare'(from=${selected.id},to=${item.id})}">Compare with selected</a></th:block></td>
     </tr></tbody>
 </table></div>
-<a th:if="${start > 0}" th:href="@{'/ui/page/' + ${page.pageId} + '/history'(start=${T(java.lang.Math).max(0, start - 50)})}">Previous</a>
-<a th:if="${hasNext}" th:href="@{'/ui/page/' + ${page.pageId} + '/history'(start=${start + 50})}">Next</a>
+<form th:unless="${#lists.isEmpty(items)}" method="get" th:action="@{'/ui/page/' + ${page.pageId} + '/history/compare'}" class="kr-editor-pane mb-3">
+    <h2>Compare versions</h2>
+    <p>The selectors show the saved versions on this history page.</p>
+    <div class="kr-form-row">
+        <div class="kr-field"><label for="compare-from">Earlier version</label>
+            <select id="compare-from" name="from"><option th:each="item : ${items}" th:value="${item.id}" th:text="'Version ' + ${item.revision} + ' · ' + ${item.changedAt}"></option></select></div>
+        <div class="kr-field"><label for="compare-to">Compare with</label>
+            <select id="compare-to" name="to"><option value="0">Current version</option>
+                <option th:each="item : ${items}" th:value="${item.id}" th:text="'Version ' + ${item.revision} + ' · ' + ${item.changedAt}"></option></select></div>
+    </div>
+    <button type="submit" class="kr-btn accent">Compare versions</button>
+</form>
+<a th:if="${start > 0}" th:href="@{'/ui/page/' + ${page.pageId} + '/history'(start=${T(java.lang.Math).max(0, start - 50)},compareFrom=${selected?.id})}">Previous</a>
+<a th:if="${hasNext}" th:href="@{'/ui/page/' + ${page.pageId} + '/history'(start=${start + 50},compareFrom=${selected?.id})}">Next</a>
 </section>
 </body></html>

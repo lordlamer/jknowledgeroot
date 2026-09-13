@@ -108,9 +108,9 @@ festen R13-Baseline-Image auf den Kandidaten mit der neuen Migration.
 
 Versionshistorie und gelöschte Dateien werden nicht automatisch ausgedünnt.
 Datenbank-/Volume-Wachstum überwachen und vor einer späteren Lösch-/Aufbewahrungsregel
-fachliche Anforderungen festlegen. Eine visuelle Änderungsgegenüberstellung,
-automatisches Zusammenführen, Verschieben von Seiten und Aufbewahrungsautomatik
-sind nicht implementiert. Die technische Umsetzung ersetzt keine Lastmessung,
+fachliche Anforderungen festlegen. Versionsvergleich und Verschieben beschreibt
+[product-functions.md](product-functions.md). Automatisches Zusammenführen und
+Aufbewahrungsautomatik sind nicht implementiert. Die technische Umsetzung ersetzt keine Lastmessung,
 externe Alarmierung oder Freigabe der tatsächlichen Produktionsumgebung.
 
 Referenz für die zusätzlich berücksichtigte Datenbank-Konfliktmeldung:

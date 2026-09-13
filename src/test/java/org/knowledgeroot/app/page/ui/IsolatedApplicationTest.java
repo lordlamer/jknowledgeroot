@@ -74,9 +74,12 @@ abstract class IsolatedApplicationTest {
         return jdbc.queryForObject("SELECT MAX(id) FROM page_permission WHERE page_id=?", Integer.class, page);
     }
     Client login(String login) throws Exception {
+        return login(login, PASSWORD);
+    }
+    Client login(String login, String password) throws Exception {
         var form = mvc.perform(get("/login")).andExpect(status().isOk()).andReturn().getResponse();
         var authenticated = mvc.perform(post("/logmein").cookie(form.getCookies())
-                .param("username",login).param("password",PASSWORD).param("_csrf",csrf(form.getContentAsString())))
+                .param("username",login).param("password",password).param("_csrf",csrf(form.getContentAsString())))
                 .andExpect(status().isFound()).andExpect(redirectedUrl("/login/success")).andReturn().getResponse();
         var cookies = new java.util.LinkedHashMap<String,Cookie>();
         for (Cookie cookie : authenticated.getCookies()) cookies.put(cookie.getName(),cookie);

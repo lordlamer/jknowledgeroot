@@ -50,5 +50,25 @@
         </div>
     </div>
 </form>
+<section class="kr-editor-pane mt-4" aria-labelledby="password-heading">
+    <h2 id="password-heading">Change password</h2>
+    <p>Use 16–128 characters. After changing your password, sign in again on all devices.</p>
+    <p th:if="${passwordError}" class="alert alert-danger" role="alert" th:text="${passwordError}"></p>
+    <form method="post" th:action="@{/profile/password}">
+        <div class="kr-field">
+            <label for="current-password">Current password</label>
+            <input id="current-password" name="currentPassword" type="password" autocomplete="current-password" maxlength="1024" required>
+        </div>
+        <div class="kr-field">
+            <label for="new-password">New password</label>
+            <input id="new-password" name="newPassword" type="password" autocomplete="new-password" minlength="16" maxlength="128" required>
+        </div>
+        <div class="kr-field">
+            <label for="confirm-password">Repeat new password</label>
+            <input id="confirm-password" name="confirmPassword" type="password" autocomplete="new-password" minlength="16" maxlength="128" required>
+        </div>
+        <button type="submit" class="kr-btn accent mt-3">Change password</button>
+    </form>
+</section>
 </body>
 </html>

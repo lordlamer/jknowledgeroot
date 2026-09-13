@@ -27,6 +27,16 @@ public class CredentialRepository {
                 replacement, id, expected) == 1;
     }
 
+    public Optional<Credential> findById(String id) {
+        return jdbc.query("SELECT id, password FROM user WHERE id = ? AND active = 1 AND deleted = 0",
+                (rs, row) -> new Credential(rs.getString("id"), rs.getString("password")), id).stream().findFirst();
+    }
+
+    public boolean changePassword(String id, String expected, String replacement) {
+        return jdbc.update("UPDATE user SET password = ?, changed_by = id, change_date = NOW() WHERE id = ? AND BINARY password = ? AND active = 1 AND deleted = 0",
+                replacement, id, expected) == 1;
+    }
+
     public boolean isCurrent(String id, String hash) {
         return jdbc.queryForObject("SELECT COUNT(*) FROM user WHERE id = ? AND BINARY password = ? AND active = 1 AND deleted = 0",
                 Integer.class, id, hash) == 1;

@@ -86,4 +86,8 @@
         <sqlFile path="changes/1.0.11-page-revisions.mariadb.sql"
                  relativeToChangelogFile="true" encoding="UTF-8" splitStatements="true" stripComments="true"/>
     </changeSet>
+    <changeSet id="1.0.12-page-moves" author="knowledgeroot" dbms="mariadb">
+        <sqlFile path="changes/1.0.12-page-moves.mariadb.sql"
+                 relativeToChangelogFile="true" encoding="UTF-8" splitStatements="true" stripComments="true"/>
+    </changeSet>
 </databaseChangeLog>

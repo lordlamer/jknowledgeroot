@@ -17,10 +17,28 @@ public class PageHistoryController {
     private final PageDao pages;
     private final PageEditingService editing;
     private final UserContext users;
+    private final PageLabelDao labels;
+
+    @GetMapping("/ui/page/{id}/history/compare")
+    @org.springframework.transaction.annotation.Transactional(readOnly=true)
+    public String compare(@PathVariable int id, @RequestParam int from,
+                          @RequestParam(defaultValue="0") int to, Model model, HtmxRequest request) {
+        RequestValidation.require(from > 0 && to >= 0);
+        var page = editing.historyPage(new PageId(id));
+        var left = pages.findRevision(page.getPageId(), from);
+        var right = to == 0 ? new PageRevision(0, page.getRevision(), page.getName(), page.getContent(),
+                page.getChangeDate(), true, labels.listForPage(page.getPageId())) : pages.findRevision(page.getPageId(), to);
+        model.addAttribute("page", page);
+        model.addAttribute("left", left); model.addAttribute("right", right);
+        model.addAttribute("nameDiff", RevisionDiff.compare(left.name(), right.name()));
+        model.addAttribute("contentDiff", RevisionDiff.compare(left.content(), right.content()));
+        model.addAttribute("textDiff", RevisionDiff.compare(RevisionDiff.text(left.content()), RevisionDiff.text(right.content())));
+        return request.isHtmxRequest() ? "page/compare :: body" : "page/compare";
+    }
 
     @GetMapping("/ui/page/{id}/history")
     public String history(@PathVariable int id, @RequestParam(defaultValue="0") int start,
-                          Model model, HtmxRequest request) {
+                          @RequestParam(required=false) Integer compareFrom, Model model, HtmxRequest request) {
         var pageId = new PageId(id);
         model.addAttribute("page", editing.historyPage(pageId));
         start = RequestValidation.start(start);
@@ -29,6 +47,7 @@ public class PageHistoryController {
         model.addAttribute("start", start);
         model.addAttribute("hasNext", items.size() > 50);
         model.addAttribute("admin", users.getUserContext().isAdmin());
+        model.addAttribute("selected", compareFrom == null ? null : pages.findRevision(pageId, compareFrom));
         return request.isHtmxRequest() ? "page/history :: body" : "page/history";
     }
 

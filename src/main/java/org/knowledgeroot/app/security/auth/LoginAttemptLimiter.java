@@ -36,12 +36,20 @@ public class LoginAttemptLimiter {
     }
 
     public void requireAttempt(String normalizedLogin, String remoteAddress) {
+        requireAttempts("account:" + normalizedLogin, "source:" + remoteAddress);
+    }
+
+    public void requirePasswordChangeAttempt(String userId, String remoteAddress) {
+        requireAttempts("password-change-account:" + userId, "password-change-source:" + remoteAddress);
+    }
+
+    private void requireAttempts(String accountKey, String sourceKey) {
         removeExpiredBuckets();
         boolean allowed = Boolean.TRUE.equals(transaction.execute(status -> {
             long now = jdbc.queryForObject("SELECT CAST(UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000 AS UNSIGNED)", Long.class);
             // Names and addresses are stored only as namespaced hashes.
-            boolean account = reserve("account:" + normalizedLogin, accountAttempts, now);
-            boolean source = reserve("source:" + remoteAddress, sourceAttempts, now);
+            boolean account = reserve(accountKey, accountAttempts, now);
+            boolean source = reserve(sourceKey, sourceAttempts, now);
             return account && source;
         }));
         // Throw after commit so rejected attempts cannot roll back the counters.

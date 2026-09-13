@@ -15,9 +15,13 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: Zielumgebung festlegen und die verbleibende Betriebsabnahme durchführen.**
+**Nächster Schritt: R23–R25 committen, danach den Release-Kandidaten in der vollständigen CI und im Zielbetrieb abnehmen.**
 
 R01 bis R22 sind umgesetzt, lokal geprüft und committet. Der aktuelle Kandidat ist `1.0.0-rc.2`. Verbleibende OS-Paketbefunde, gehostete CI, Repository-/Release-Schutz, TLS/Proxy, produktive Last, Alarmierung sowie eigene Backup-/Wiederanlaufzeiten sind vor der Produktionsfreigabe gemäß [release.md](release.md) abzunehmen. Diese externen Schritte wurden nicht stellvertretend durchgeführt. Das [Abnahmeprotokoll](operational-acceptance.md) hält die offenen Angaben und Nachweise fest; [container-findings.md](container-findings.md) und [database-findings.md](database-findings.md) enthalten die getrennte technische Einordnung der Restbefunde.
+
+R23 bis R25 ergänzen den gewünschten Funktionsumfang und sind lokal geprüft;
+die Änderungen sind noch nicht committet. Die vorläufige Administratorregel für
+Verschiebungen und der mögliche E-Mail-Passwortreset sind unten ausdrücklich festgehalten.
 
 Die Einträge R01–R22 dokumentieren jeweils den damaligen Prüfstand. Hinweise auf
 damals noch fehlende spätere Schritte oder ausstehende Commits sind historische
@@ -25,6 +29,7 @@ Nachweise; maßgeblich für die aktuellen offenen Arbeiten ist diese Übersicht.
 
 ### Noch offen bis zur Produktionsfreigabe
 
+- [x] Zusätzlichen Funktionsumfang R23–R25 lokal abnehmen: Passwortänderung im Profil, Seitenverschieben und Versionsvergleich.
 - [ ] Zielsystem, Domain, Betreiber/Vertretung, erwartete Nutzer-/Datenmengen und Betriebsgrenzen festlegen.
 - [ ] Den sauberen Release-Commit vollständig in der gehosteten CI prüfen; Branch-/Tag-Schutz, Release-Reviewer und Registry-Secrets einrichten.
 - [ ] Staging mit tatsächlichem Proxy, gültigem TLS-Zertifikat und passender Netzfreigabe abnehmen; eigene Altinhalte, Rollen, Gastzugriff, Redaktion und Anhänge prüfen.
@@ -287,6 +292,68 @@ Nachweise; maßgeblich für die aktuellen offenen Arbeiten ist diese Übersicht.
 - **Abnahme:** Die reale Proxy-Strecke erfüllt die dokumentierten Erwartungen; ein Login mit richtigem Passwort bleibt nach ausgeschöpfter Quellquote trotz geänderter Forwarded-Header gesperrt. Testprojekt, Volumes und Testschlüssel werden entfernt. Bestehende Dienste werden nicht verändert.
 - **Geprüft:** Neu-Paketierung mit Temurin 25.0.4.1+1 und Revision `ff07fe4` sowie beide Imagebuilds einschließlich JAR-/Laufzeitzuordnung bestehen. Der vollständige nginx-Test besteht mit allen fünf Prüfgruppen. Beim ersten Lauf erkannte der Testhelfer das CSRF-Metafeld der Administratorseite noch nicht; nach Unterstützung von Formular- und Metafeldern besteht auch Logout. Erfolgsbericht unter `target/proxy-smoke.json`, Laufprotokoll unter `target/r22-proxy.log`; der Bericht enthält die tatsächlich gestarteten Image-IDs und die Beispielprüfsumme. JavaScript-Syntax, actionlint 1.7.12 und `git diff --check` bestehen. Beide entbehrlichen Testprojekte einschließlich Volumes und Testschlüsseln wurden entfernt. Die Paketierung übersprang Java-Tests ausdrücklich; für den unveränderten Anwendungscode bleiben die 265 erfolgreichen Tests aus R19 maßgeblich. OS-Scans und Wiederherstellung wurden in R22 nicht erneut ausgeführt; die aktuellen lokalen Images haben deshalb weiterhin ein vorläufiges Manifest mit `auditsVerified: false`. Vor Freigabe läuft die vollständige CI-Prüfkette. R22 ist noch nicht committet.
 - **Grenzen:** Keine echte Domain, Zertifikatserneuerung, öffentliche Netz-/Firewallprüfung oder gehostete CI. Das gepinnte nginx-Image ist eine Testabhängigkeit und keine Auswahl oder Sicherheitsfreigabe des Betreiberproxys. Anwendungscode, POM und Produktionskonfiguration bleiben fachlich unverändert; die Betriebsabnahme des Zielhosts bleibt offen.
+
+## 7. Ergänzter Funktionsumfang für 1.0
+
+Festgelegt: interne und öffentliche Nutzung; anfangs eher kleine Installationen,
+später auch größere Bestände. Seitenverschieben, Historie/Versionsvergleich und
+Passwortänderung mit aktuellem Passwort gehören zum Pflichtumfang. Die bestehende
+Historie und Wiederherstellung aus R15 bleiben erhalten. Details und Grenzen stehen
+in [product-functions.md](product-functions.md).
+
+### R23 – Passwortänderung im Profil
+
+- [x] Umgesetzt und lokal geprüft am 13. September 2026; noch nicht committet
+- **Umsetzung:** Eigenes Formular mit aktuellem Passwort, neuem Passwort und Wiederholung. Serverseitige Passwortregeln, CSRF, persistente Fehlversuchsbegrenzung und atomarer Hashwechsel verhindern unberechtigte oder konkurrierende Änderungen. Die Änderung betrifft ausschließlich das angemeldete Konto; Passwörter werden nicht in Fehlerformularen ausgegeben. Anschließend sind alle alten Sitzungen ungültig und eine neue Anmeldung ist nötig.
+- **Abnahme:** Falsches aktuelles Passwort, abweichende Wiederholung, schwaches neues Passwort, ausgeschöpfte Quote und fehlendes CSRF ändern das Konto nicht. Ein erfolgreicher Wechsel beendet beide zuvor geöffneten Sitzungen; das neue Passwort funktioniert im Browser und der Benutzer kann keine fremde Konto-ID unterschieben.
+- **Zusätzlicher Bedienungsbefund:** Die bisherige Seitenleiste drückte bei 390 Pixeln Breite das Profilformular aus dem Bild. Das mobile Layout verwendet jetzt eine einblendbare Seitenleiste, eine angepasste Kopfleiste und umbrechende Formular-/Aktionszeilen. Browserprüfungen kontrollieren sichtbare Formularbreite, Toggle-/Escape-Bedienung und leere Passwortfelder nach Fehlern.
+
+### R24 – Seiten samt Unterseiten verschieben
+
+- [x] Umgesetzt und lokal geprüft am 13. September 2026; noch nicht committet
+- **Umsetzung:** Administrativer Dialog mit paginierter Zielauswahl und Suche; Rechteänderungen bleiben damit in der bisherigen Administratorzuständigkeit. Vererbung folgt dem neuen Elternteil; lokale Rechte bleiben bestehen. Beim Umzug auf die oberste Ebene werden bisher wirksame vererbte Rechte als lokale Freigaben gespeichert. Ein Snapshot hält den vorherigen Seitenstand fest, Revisionen invalidieren offene Formulare im Unterbaum. Migration `1.0.12-page-moves` ergänzt eine transaktionale Sperre ausschließlich für Strukturverschiebungen.
+- **Abnahme:** Rechte und Unterseiten folgen dem vereinbarten Verhalten; lokale Freigaben und Seiten-IDs bleiben erhalten. Selbst-/Unterbaumziele, gelöschte Ziele, fehlende/veraltete Revisionen, unberechtigte Benutzer und fehlendes CSRF werden abgelehnt. Zwei gegenläufige parallele Verschiebungen können keinen Kreis erzeugen.
+
+### R25 – Gespeicherte Versionen vergleichen
+
+- [x] Umgesetzt und lokal geprüft am 13. September 2026; noch nicht committet
+- **Umsetzung:** Vergleich mit der aktuellen Seite oder einem zweiten gespeicherten Stand; Auswahl bleibt beim Blättern erhalten. Bereinigte Fassungen stehen nebeneinander, Text-/Namensänderungen werden markiert, HTML-Unterschiede sind aufklappbar. Labels ohne historischen Snapshot bleiben als unbekannt gekennzeichnet. Große Vergleiche verwenden vollständige Blöcke statt unbeschränktem quadratischem Aufwand.
+- **Abnahme:** Vergleich ist nur mit heutigen Bearbeitungsrechten möglich und prüft beide Snapshot-Zugehörigkeiten. Fremde Versionen und unberechtigte Leser werden abgelehnt; historisches HTML kann keinen Code ausführen. Browserprüfung umfasst Vergleichsansicht und tatsächliche Bedienung.
+
+**Gemeinsamer Prüfnachweis R23–R25:** Der vollständige Maven-Lauf besteht mit
+275 Surefire-Tests und einem Test des paketierten JARs einschließlich Chromium
+(`target/r23-verify.log`), ohne Fehler oder übersprungene Tests. Nach den letzten
+Korrekturen bestehen erneut 44 ausgewählte Tests für Produktfunktionen,
+Versionsvergleich, Passwortspeicherung und Sitzungen sowie der JAR-/Browsertest
+(`target/r23-acceptance.log`). Dieser letzte Lauf prüft auch die getrennten
+Quotenbereiche für Login und Passwortänderung. Die Browserprüfung bedient die
+neuen Funktionen tatsächlich und prüft das Profil bei 390 Pixeln Breite;
+Screenshots liegen unter `target/product-profile-mobile.png` und
+`target/product-version-compare.png`.
+
+Die abschließend paketierte Anwendung und das Datenbank-Image bestehen den
+Containerbuild samt JAR-/Laufzeitzuordnung (`target/r23-accepted-build.log`).
+Der vollständige HTTPS-/nginx-Test besteht mit diesen Images in allen fünf
+Prüfgruppen (`target/r23-accepted-proxy.log`, `target/proxy-smoke.json`).
+Das entbehrliche Proxy-Testprojekt einschließlich Volumes und Schlüsseln wurde
+entfernt; vorhandene Entwicklungsdienste wurden nicht verändert.
+
+Backup, Upgrade mit der neuen Migration und Rollback bestehen mit dem
+R13-Ausgangsimage und den neuen Funktionsimages (`target/r23-recovery.log`);
+Konten, Rechte und Dateiinhalte bleiben erhalten. Dieser Wiederherstellungslauf
+erfolgte vor den abschließenden Änderungen an Vergleichs-Lesetransaktion und
+Passwortquoten; Schema und Verschiebungslogik wurden danach nicht verändert.
+OS-Paketscans wurden nicht erneut ausgeführt; POM, npm-Abhängigkeiten und
+Containerpakete bleiben unverändert. Das lokale Manifest bleibt vorläufig mit
+`auditsVerified: false`. Die vollständige CI und die betriebliche Freigabe des
+späteren sauberen Release-Commits stehen weiterhin aus.
+
+**Noch optionale Produktentscheidung:** Passwortvergessen per E-Mail ist vorerst
+zurückgestellt; die Rückfrage zum Umfang ist noch offen. Administratoren können
+bereits neue Passwörter vergeben. Selbstbedienung per E-Mail braucht eine separate
+Umsetzung mit verifizierten Adressen, Mailkonfiguration und Einmal-Tokens.
+Für das Verschieben ist vorläufig die empfohlene Administratorregel umgesetzt;
+eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 
 ## Nachweise der Bestandsaufnahme
 

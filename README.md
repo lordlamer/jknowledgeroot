@@ -75,6 +75,8 @@ checks still needed on the actual target system.
 Page edits now detect stale revisions. [Page history and deletion](docs/page-history.md)
 explains restoring earlier content, preserving drafts on conflicts, and administrator
 recovery of deleted pages. REST update/delete clients must send the current revision.
+The [1.0 product functions](docs/product-functions.md) describe moving page trees,
+comparing saved versions and changing your password with current-password verification.
 
 Status-only liveness/readiness probes and administrator-only metrics are available.
 Readiness checks the database and selected file storage; the container has a built-in

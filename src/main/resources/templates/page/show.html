@@ -50,7 +50,8 @@
                     <li><a class="dropdown-item" href="#"
                            th:attr="hx-get='/ui/page/' + ${page.pageId} + '/edit'"
                            hx-target="#content" hx-push-url="true">Edit page</a></li>
-                    <li><a class="dropdown-item" href="#">Move page</a></li>
+                    <li th:if="${currentIsAdmin}"><a class="dropdown-item" th:href="@{'/ui/page/' + ${page.pageId} + '/move'}"
+                           th:attr="hx-get='/ui/page/' + ${page.pageId} + '/move'" hx-target="#content" hx-push-url="true">Move page</a></li>
                     <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#fileUploadModal">Upload file</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item text-danger" href="#"
