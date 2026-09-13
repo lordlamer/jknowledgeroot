@@ -15,15 +15,20 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: R26-Dokumentation committen; danach gehostete CI und konkrete Betriebsabnahme durchführen.**
+**Nächster Schritt: R27 committen und die gemessene Seitenleisten-Skalierung in R28 verbessern; gehostete CI und konkrete Betriebsabnahme bleiben offen.**
 
-R01 bis R25 sind umgesetzt, lokal geprüft und committet. Der aktuelle Kandidat ist `1.0.0-rc.2`. Verbleibende OS-Paketbefunde, gehostete CI, Repository-/Release-Schutz, TLS/Proxy, produktive Last, Alarmierung sowie eigene Backup-/Wiederanlaufzeiten sind vor der Produktionsfreigabe gemäß [release.md](release.md) abzunehmen. Diese externen Schritte wurden nicht stellvertretend durchgeführt. Das [Abnahmeprotokoll](operational-acceptance.md) hält die offenen Angaben und Nachweise fest; [container-findings.md](container-findings.md) und [database-findings.md](database-findings.md) enthalten die getrennte technische Einordnung der Restbefunde.
+R01 bis R26 sind umgesetzt, lokal geprüft und committet; R26-Dokumentation als `c8db67d`. Der aktuelle Kandidat ist `1.0.0-rc.2`. Verbleibende OS-Paketbefunde, gehostete CI für den aktuellen Stand, Repository-/Release-Schutz, TLS/Proxy, produktive Last, Alarmierung sowie eigene Backup-/Wiederanlaufzeiten sind vor der Produktionsfreigabe gemäß [release.md](release.md) abzunehmen. Das [Abnahmeprotokoll](operational-acceptance.md) hält die offenen Angaben und Nachweise fest; [container-findings.md](container-findings.md) und [database-findings.md](database-findings.md) enthalten die getrennte technische Einordnung der Restbefunde.
+
+Am 13. September wurde der vorhandene [erfolgreiche GitHub-Lauf](https://github.com/lordlamer/jknowledgeroot/actions/runs/34764388748)
+für `508ac87` geprüft: Verify einschließlich Build, Scans und Wiederherstellung
+erfolgreich, Veröffentlichung übersprungen. Der Remote-Stand liegt noch sechs
+Commits hinter `c8db67d`; dieser ältere Nachweis deckt R19–R26 nicht ab.
 
 R23 bis R25 ergänzen den gewünschten Funktionsumfang und sind als `155e710`
 committet. Die vorläufige Administratorregel für
 Verschiebungen und der mögliche E-Mail-Passwortreset sind unten ausdrücklich festgehalten.
 
-Die Einträge R01–R25 dokumentieren jeweils den damaligen Prüfstand. Hinweise auf
+Die Einträge R01–R26 dokumentieren jeweils den damaligen Prüfstand. Hinweise auf
 damals noch fehlende spätere Schritte oder ausstehende Commits sind historische
 Nachweise; maßgeblich für die aktuellen offenen Arbeiten ist diese Übersicht.
 
@@ -366,6 +371,22 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 - **Wiederherstellung:** Backup, Upgrade vom gepinnten R13-Ausgangsstand mit MariaDB 12.2.2 auf das neue Image mit MariaDB 12.3.3 und Snapshot-Rollback auf den Ausgangsstand bestehen (`target/r26-recovery.log`). Login, öffentliche/private Seiten, Gruppenzugriff und Dateibytes sind nachgewiesen. Entbehrliche Testprojekte einschließlich Volumes wurden entfernt; die vorhandenen Entwicklungsdienste blieben unverändert. `git diff --check` besteht.
 - **Nachweise:** `target/r26-verify.log`, `target/r26-evidence-tests.log`, `target/r26-build.log`, `target/r26-smoke.log`, `target/r26-proxy.log`, `target/r26-dependency-tree.log`, `target/r26-dependency-audit.log`, `target/r26-app-audit.log`, `target/r26-db-audit.log`, `target/r26-manifest.log` sowie die zugehörigen JSON-Berichte unter `target/`. Das Manifest wurde vor den anschließenden Dokumentationsänderungen bei unveränderten versionierten Dateien erstellt (`dirty: false`); es beschreibt den genannten Funktionscommit, nicht einen späteren Dokumentationscommit.
 - **Grenzen:** Lokale Windows-/Linux-amd64-Prüfung, keine gehostete CI oder Produktionsfreigabe. Die unveränderten Restbefunde bleiben gemäß den getrennten App-/Datenbankbewertungen betrieblich zu entscheiden. Echte Domain, Last-/Alarmierungsgrenzen, Betreiber, RPO/RTO und dauerhafte Archivierung bleiben offen. Kein Tag und keine Veröffentlichung; die anschließenden Dokumentationsänderungen sind noch nicht committet.
+
+### R27 – Wiederholbare Lastszenarien für Suche und Navigation
+
+- [x] Implementiert und lokal geprüft am 13. September 2026; noch nicht committet
+- **Ausgangslage:** Es fehlte ein wiederholbarer HTTP-Lastvergleich. Die Einzelmessung aus R10 war keine Prüfung gleichzeitiger Requests. Die geplante Nutzung reicht von kleinen internen Installationen bis zu größeren öffentlichen Beständen.
+- **Umsetzung:** `deploy/load-smoke-test.mjs` erzeugt eine entbehrliche Compose-Installation mit synthetischen Seiten, Gast-/Gruppenrechten und vererbenden Unterseiten. Acht Leseabläufe werden mit begrenzter Parallelität nach einem Aufwärmlauf gemessen. Status und Inhalte müssen stimmen; private Gastinhalte zählen als Fehler. Bericht mit Fehlerquote, p50/p95/p99 je Szenario, Durchsatz, Ressourcenmomentaufnahmen sowie Image-/Skriptzuordnung. Seitenzahl, Zweigbreite, Requestzahl, Parallelität und optionales p95-Budget sind begrenzt konfigurierbar. CI ergänzt einen kleinen Lauf und archiviert dessen Bericht auch bei Fehlern.
+- **Abnahme:** 1000 und 10000 Seiten jeweils mit einem und acht Workern ohne falsche Antworten oder Datenfreigaben messen. Der Messhelfer prüft Parallelitätsbegrenzung und verzögerte Antwortkörper mit echtem HTTP; falsche Inhalte, Verbindungsfehler und unzulässige Parameter dürfen keinen Erfolg ergeben. Nach jedem Lauf sind ausschließlich die neu erstellten Testressourcen entfernt.
+- **Gemessen:** Beide Bestände mit je 160 Requests pro Parallelitätsstufe bestehen, insgesamt **640 gemessene Requests ohne Fehler**, zusätzlich Aufwärmrequests. Bei 1000 Seiten: p95 **70,46 ms** mit einem Worker und **117,06 ms** mit acht; bei 10000 Seiten: **649,00 ms** beziehungsweise **582,54 ms**. Das sind Gesamtwerte des festgelegten Szenariomixes; einzelne Such-/Navigationswerte stehen separat in `target/r27-load-1000.json` und `target/r27-load-10000.json`. Die getesteten R26-Images enthalten den unveränderten Funktionscommit `155e710`; das neue Testskript stammt aus der Arbeitskopie nach `c8db67d`. Beide Testprojekte und Volumes sind entfernt. Vier Node-Tests des Messhelfers sowie JavaScript-Syntax, actionlint und `git diff --check` bestehen.
+- **Grenzen:** Kurzer synthetischer Lesevergleich ohne Produktionsgrenzwerte, keine Kapazitätszusage. Eigene Daten, lange Hierarchien, Schreib-/Upload-/Loginlast, Dauerlast, TLS, Metrikverläufe und externe Alarmierung bleiben in der Betriebsabnahme. Details und Aufrufe stehen in [load-testing.md](load-testing.md). Der Anwendungscode und seine Abhängigkeiten werden in R27 nicht verändert.
+
+### R28 – Breite Seitenhierarchien in der Navigation begrenzen
+
+- [ ] Offen; nächster Codepunkt aus der Messung R27
+- **Befund:** Bei 10000 Seiten und acht Workern erreicht die Gast-Seitenleiste im kurzen lokalen Lauf p95 **797,09 ms**; die beiden erfolgreichen Gast-Suchszenarien liegen bei **78,97/82,42 ms**. `SidebarController` lädt derzeit alle unmittelbaren Unterseiten und prüft jede Freigabe separat. Die SQL-basierte Sichtbarkeitsfilterung und Pagination aus R10 erfassen diese Navigation noch nicht. Gemessen wurde auf einer Docker-Engine mit sechs CPUs und rund 16 GiB RAM, ohne daraus eine Produktionskapazität abzuleiten.
+- **Geplante Umsetzung:** Rechte bereits in der Seitenlistenabfrage berücksichtigen und breite Ebenen in begrenzten Abschnitten nachladen. Navigation, markierte Seite und Sterne müssen benutzbar bleiben; keine privaten Titel oder IDs ausgeben.
+- **Abnahme:** Breite Ebenen vollständig über weitere Abschnitte erreichbar, unverändert korrekte Gast-/Gruppenrechte und Navigation. Den bestehenden R27-Lauf vor/nach der Änderung vergleichen; die Zahl geladener Einträge pro Request ist begrenzt. Zeitwerte getrennt von geteiltem Rechner, Warmup und Datenbestand bewerten.
 
 ## Nachweise der Bestandsaufnahme
 

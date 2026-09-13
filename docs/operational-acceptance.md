@@ -50,6 +50,9 @@ Der [lokale Proxytest](proxy-testing.md) liefert einen zusätzlichen technischen
 Nachweis für das nginx-Beispiel; die TLS-/Proxy-Abnahme des Zielsystems bleibt offen.
 Fehler-/Lasttests nur in einer dafür vorgesehenen Umgebung und einem abgestimmten
 Zeitfenster ausführen; keine bestehenden produktiven Volumes als Testziel verwenden.
+Für einen ersten wiederholbaren Lesevergleich steht der
+[synthetische Lasttest](load-testing.md) bereit. Er ersetzt die Prüfung mit
+eigenen Daten, Schreib-/Uploadlast und vereinbarten Grenzwerten nicht.
 
 ## Entscheidung
 

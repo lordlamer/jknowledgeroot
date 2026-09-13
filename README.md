@@ -82,6 +82,8 @@ Status-only liveness/readiness probes and administrator-only metrics are availab
 Readiness checks the database and selected file storage; the container has a built-in
 readiness healthcheck. See [monitoring and integration tests](docs/monitoring.md)
 for endpoint access, failure detection and operational limits.
+The [repeatable read workload](docs/load-testing.md) compares search and navigation
+on disposable synthetic datasets and records latency, throughput and access failures.
 
 For the production profile, restricted database accounts, a persistent local file
 volume, HTTPS/proxy settings and the release workflow, see the

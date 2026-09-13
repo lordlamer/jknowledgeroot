@@ -40,13 +40,17 @@ jobs:
           sh deploy/smoke-test.sh knowledgeroot:verified knowledgeroot:database-verified
       - name: Verify HTTPS ingress and forwarded-header isolation
         run: target/frontend/node/node deploy/proxy-smoke-test.mjs knowledgeroot:verified knowledgeroot:database-verified
+      - name: Verify synthetic read workload and measurements
+        run: |
+          target/frontend/node/node --test scripts/load-measurement.test.mjs
+          target/frontend/node/node deploy/load-smoke-test.mjs knowledgeroot:verified knowledgeroot:database-verified --pages=1000 --requests=80 --concurrency=1,4
       - name: Audit container operating system
         run: |
           target/frontend/node/node --test scripts/image-audit-policy.test.mjs scripts/release-evidence.test.mjs
           target/frontend/node/node scripts/audit-image.mjs knowledgeroot:verified
       - name: Audit pinned production database operating system
         run: target/frontend/node/node scripts/audit-image.mjs --database knowledgeroot:database-verified
-      - name: Archive container audit and proxy evidence including failures
+      - name: Archive container audit, proxy and workload evidence including failures
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -57,6 +61,7 @@ jobs:
             target/database-image-audit.json
             target/database-image-audit-summary.json
             target/proxy-smoke.json
+            target/load-smoke.json
           if-no-files-found: warn
           retention-days: 14
       - name: Verify backup, upgrade and rollback from pinned R13 baseline
@@ -84,6 +89,7 @@ jobs:
             target/release-manifest.json
             target/dependency-audit.json
             target/proxy-smoke.json
+            target/load-smoke.json
             target/image-audit.json
             target/image-audit-summary.json
             target/database-image-audit.json
