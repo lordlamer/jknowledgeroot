@@ -160,6 +160,17 @@ Maven läuft. Künftige Wartungsreleases erfordern ein gemeinsames Update dieser
 Vorgaben und der Artefaktprüfung. Die endgültigen Testergebnisse und Imagescans
 stehen im R19-Nachweis der [Roadmap](roadmap.md).
 
+## Datenbankbewertung und entbehrliche Pakete (R20)
+
+Die [gesonderte Datenbankbewertung](database-findings.md) untersucht die
+MariaDB-Paketabhängigkeiten, native Verlinkung sowie Start-, Wartungs- und
+Wiederherstellungswege. Der Build entfernt die ungenutzte SQLite-Bibliothek
+zusammen mit ihrem einzigen installierten Verbraucher `gpg`. `gpgv`, Schlüssel
+und die übrigen MariaDB-Abhängigkeiten bleiben erhalten; der Deploymenttest
+prüft die Entfernung. Eigene GPG-/SQLite-Initialisierungsskripte gehören nicht
+zum geprüften Betrieb. Die Bewertung erteilt keine Risikoakzeptanz und verwendet
+keine Scanner-Ausnahmen. Der endgültige Scan steht im R20-Roadmapnachweis.
+
 Quellen: [Adoptium JRE-Artefakte für Linux x64](https://api.adoptium.net/v3/assets/latest/25/hotspot?architecture=x64&image_type=jre&os=linux&vendor=eclipse),
 [Trivy v0.74.0](https://github.com/aquasecurity/trivy/releases/tag/v0.74.0),
 [Imagearchive scannen](https://trivy.dev/docs/latest/target/container_image/),

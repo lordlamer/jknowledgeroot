@@ -50,6 +50,13 @@ compose exec -T app sh -c '
 '
 compose exec -T database sh -c '
   set -eu
+  for package in gpg libsqlite3-0; do
+    if dpkg-query --status "$package" >/dev/null 2>&1; then
+      echo "Unexpected database signing/SQLite package: $package" >&2
+      exit 1
+    fi
+  done
+  command -v gpgv >/dev/null
   export MYSQL_PWD="$KR_DB_PASSWORD"
   count=$(mariadb --user=knowledgeroot knowledgeroot --execute="SELECT COUNT(*) FROM user" --skip-column-names)
   test "$count" = 1

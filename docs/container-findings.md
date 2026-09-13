@@ -4,6 +4,8 @@ Stand: 13. September 2026, R17. Diese technische Bewertung ist eine Grundlage f�
 die Betriebsabnahme und keine erteilte Risikoakzeptanz. Herstellerstatus und
 Paketbestand beziehen sich auf diesen Zeitpunkt und das gepr체fte App-Image.
 Die vollst채ndigen Scannerberichte bleiben unver채ndert; es gibt keine Ignore-Liste.
+Die eigenst채ndige [Datenbankbewertung ab R20](database-findings.md) untersucht
+die zus채tzlichen Pakete und Aufrufwege des MariaDB-Containers.
 
 ## Entfernte Pakete
 

@@ -1,12 +1,15 @@
 # Produktionskonfiguration und Lieferprozess
 
-Stand: R19, 13. September 2026. Dieser Stand bereitet den Betrieb vor;
+Stand: R20, 13. September 2026. Dieser Stand bereitet den Betrieb vor;
 [Backup und Wiederherstellung](recovery.md) sowie der [Release-Kandidat](release.md)
 sind dokumentiert; die betriebliche Freigabe bleibt offen. Versionskonflikte,
 Historie und Löschverhalten beschreibt [page-history.md](page-history.md). Healthchecks, Metriken und
 die erweiterten Integrationstests beschreibt [monitoring.md](monitoring.md).
 Der [OS-Imagescan](image-security.md) ergänzt die Paketprüfung. Für die tatsächliche
 Zielumgebung steht ein [Abnahmeprotokoll](operational-acceptance.md) bereit.
+Die verbleibenden nativen [Datenbankbefunde](database-findings.md) sind gesondert
+bewertet. Das Datenbankimage enthält kein GPG-/SQLite-Werkzeugpaket; eigene
+Initialisierungs- und Wartungsskripte dürfen diese nicht voraussetzen.
 
 ## Betriebsmodell
 
