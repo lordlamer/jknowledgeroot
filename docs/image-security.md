@@ -10,17 +10,23 @@ Nach Maven-Paketierung mit der aktuellen `build.revision`:
 
 ```sh
 target/frontend/node/node scripts/build-container.mjs knowledgeroot:verified knowledgeroot:database-verified
-target/frontend/node/node --test scripts/image-audit-policy.test.mjs
+target/frontend/node/node --test scripts/image-audit-policy.test.mjs scripts/release-evidence.test.mjs
 target/frontend/node/node scripts/audit-image.mjs knowledgeroot:verified
 target/frontend/node/node scripts/audit-image.mjs --database knowledgeroot:database-verified
+target/frontend/node/node scripts/release-metadata.mjs knowledgeroot:verified knowledgeroot:database-verified --with-audits
 ```
 
 Unter Windows heißen die Node-Befehle `target/frontend/node/node.exe`.
 Der Buildhelfer aktualisiert den Dateizeitpunkt des JARs auf dem Host, ohne dessen
 Bytes zu verändern. Damit übernimmt Docker Desktop auch erneut gebaute Archive
 mit gleicher Größe und normalisiertem Maven-Zeitpunkt zuverlässig in den Kontext.
+Die eingebettete JAR-Version und -Revision werden bereits vor dem Build geprüft.
 Anschließend prüft `release-metadata.mjs` die Labels und die bytegleiche JAR-Kopie.
 Ein Fehler lässt den Befehl scheitern; das Image gilt dann nicht als geprüft.
+Nach beiden Scans bindet der abschließende Aufruf mit `--with-audits` die vollständigen
+Berichte an die geprüften Images und wertet die Schweregradregel erneut aus.
+Nur dann trägt das Manifest `auditsVerified: true`; Einzelheiten und Grenzen
+beschreibt [release.md](release.md).
 
 Der Scanner ist das offizielle Trivy-Image `0.74.0`, festgelegt auf
 `sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969`.
@@ -38,7 +44,7 @@ wird ausschließlich das eigens erzeugte temporäre Verzeichnis entfernt.
 
 - `target/image-audit.json`: vollständiger Trivy-Bericht mit Paketbestand und Funden.
 - `target/image-audit-summary.json`: Ergebnis, blockierende Funde, Scanner-Digest,
-  Image-ID/Labels, Archivprüfsumme, Scanzeit und Metadaten der Schwachstellendatenbank.
+  Image-ID/Labels, Archiv- und Rohberichtsprüfsumme, Scanzeit und Metadaten der Schwachstellendatenbank.
 - `target/database-image-audit.json` und `target/database-image-audit-summary.json`:
   dieselben Nachweise für den Datenbankstandard aus dem Produktions-Compose.
   `target/frontend/node/node scripts/audit-image.mjs --database knowledgeroot:database-verified`

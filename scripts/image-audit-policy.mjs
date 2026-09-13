@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 
+// Official immutable v0.74.0 release, pinned independently of mutable tags.
+export const scanner = 'ghcr.io/aquasecurity/trivy:0.74.0@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969';
+
 export function evaluateReport(report) {
   assert.equal(report.SchemaVersion, 2, 'Unsupported Trivy report schema');
   assert(report.Metadata?.OS?.Family && report.Metadata.OS.Name, 'No operating system detected');

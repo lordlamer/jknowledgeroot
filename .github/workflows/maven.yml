@@ -40,7 +40,7 @@ jobs:
           sh deploy/smoke-test.sh knowledgeroot:verified knowledgeroot:database-verified
       - name: Audit container operating system
         run: |
-          target/frontend/node/node --test scripts/image-audit-policy.test.mjs
+          target/frontend/node/node --test scripts/image-audit-policy.test.mjs scripts/release-evidence.test.mjs
           target/frontend/node/node scripts/audit-image.mjs knowledgeroot:verified
       - name: Audit pinned production database operating system
         run: target/frontend/node/node scripts/audit-image.mjs --database knowledgeroot:database-verified
@@ -68,7 +68,7 @@ jobs:
       - name: Record artifact identity and validate version agreement
         env:
           RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
-        run: target/frontend/node/node scripts/release-metadata.mjs knowledgeroot:verified knowledgeroot:database-verified
+        run: target/frontend/node/node scripts/release-metadata.mjs knowledgeroot:verified knowledgeroot:database-verified --with-audits
       - name: Save verified release image
         if: startsWith(github.ref, 'refs/tags/')
         run: docker save knowledgeroot:verified knowledgeroot:database-verified --output target/release-image.tar

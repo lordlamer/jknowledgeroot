@@ -4,10 +4,8 @@ import {createHash} from 'node:crypto';
 import {createReadStream, mkdirSync, mkdtempSync, readFileSync, writeFileSync, copyFileSync, rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {basename, join, resolve} from 'node:path';
-import {evaluateReport} from './image-audit-policy.mjs';
+import {evaluateReport, scanner} from './image-audit-policy.mjs';
 
-// Official immutable v0.74.0 release, pinned independently of mutable tags.
-const scanner = 'ghcr.io/aquasecurity/trivy:0.74.0@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969';
 const run = args => execFileSync('docker', args, {encoding:'utf8'}).trim();
 const database = process.argv[2] === '--database';
 assert.equal(process.argv.length, database ? 4 : 3, 'Pass a local application image or --database IMAGE');
@@ -41,11 +39,13 @@ try {
     '--exit-code', '0', '--input', '/input/image.tar'], {stdio:'inherit', timeout:720_000});
   const reportFile = join(output, 'report.json');
   copyFileSync(reportFile, join('target', reportPrefix + '.json'));
-  const report = JSON.parse(readFileSync(reportFile, 'utf8'));
+  const reportBytes = readFileSync(reportFile);
+  const reportSha256 = createHash('sha256').update(reportBytes).digest('hex');
+  const report = JSON.parse(reportBytes.toString('utf8'));
   const assessment = evaluateReport(report);
   const dbMetadata = JSON.parse(readFileSync(join(output, 'cache', 'db', 'metadata.json'), 'utf8'));
   const summary = {scannedAt:new Date().toISOString(), scanner, image, imageId:inspected.Id,
-    imageLabels:inspected.Config.Labels, archiveSha256, database:dbMetadata, ...assessment};
+    imageLabels:inspected.Config.Labels, archiveSha256, reportSha256, database:dbMetadata, ...assessment};
   writeFileSync(join('target', reportPrefix + '-summary.json'), JSON.stringify(summary, null, 2) + '\n');
   console.log(`Container OS audit: ${summary.packages} packages; ${summary.blockers.length} blocking findings; ${summary.passed ? 'PASS' : 'FAIL'}.`);
   for (const finding of summary.blockers) console.error(`${finding.severity}: ${finding.id} (${finding.package})`);

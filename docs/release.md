@@ -17,6 +17,7 @@ sh ./mvnw -B --no-transfer-progress -Dbuild.revision="$revision" clean verify
 target/frontend/node/node scripts/build-container.mjs knowledgeroot:verified knowledgeroot:database-verified
 target/frontend/node/node scripts/audit-image.mjs knowledgeroot:verified
 target/frontend/node/node scripts/audit-image.mjs --database knowledgeroot:database-verified
+target/frontend/node/node scripts/release-metadata.mjs knowledgeroot:verified knowledgeroot:database-verified --with-audits
 ```
 
 `target/release-manifest.json` nennt Maven-Version, Git-Revision, Änderungen an
@@ -24,10 +25,29 @@ versionierten Dateien, JAR-SHA-256, beide Image-IDs/Basisimages, Java-Laufzeit,
 MariaDB-Serverversion und die installierten glibc-Versionen. Die beiden Images
 müssen dieselbe Projektversion und Git-Revision tragen. Fehlende Laufzeitkorrekturen
 brechen die Prüfung ab; alte Manifeste werden vor Build/Validierung entfernt.
+Die eingebettete JAR-Version und -Revision müssen bereits vor dem Containerbuild
+mit POM und aktuellem Commit übereinstimmen. Ein altes JAR lässt sich dadurch
+nicht mit neuen Image-Labels als aktueller Build ausgeben.
+
+Der Buildhelfer erzeugt zunächst ein vorläufiges Manifest mit
+`auditsVerified: false`. Erst der abschließende Aufruf mit `--with-audits` prüft
+beide vollständigen OS-Scanberichte gegen die jeweiligen Images: Image-ID,
+Dateisystemschichten, Labels, festgelegter Scanner und Berichtsprüfsummen müssen
+übereinstimmen. Die Schweregradregel wird aus den Rohberichten erneut ausgewertet;
+abweichende Zusammenfassungen werden abgelehnt. Das abschließende Manifest enthält
+`auditsVerified: true` sowie SHA-256-Werte beider Berichte und Zusammenfassungen.
+Bei gesetztem `RELEASE_TAG` sind diese Prüfungen auch ohne Zusatzoption zwingend.
+Die CI führt sie nach den Scans und vor dem gemeinsamen Imageexport aus.
+
 Unter Windows kann
 `target/frontend/node/node.exe` verwendet werden. Lokale Arbeitskopien mit Änderungen
 sind als solche erkennbar und keine Release-Artefakte. Ohne `build.revision` tragen
-die JAR-Builddaten `unknown`; für freigegebene Artefakte die Revision immer mitgeben.
+die JAR-Builddaten `unknown`; der Containerbuild lehnt solche Artefakte ab.
+
+Diese Zuordnung verhindert verwechselte oder widersprüchliche Nachweise. Sie ist
+keine signierte Herkunftsbescheinigung und keine automatische Betriebsfreigabe.
+Ein älterer Scan desselben Images wird dadurch nicht aktualisiert; vor der Freigabe
+die oben genannten Scans erneut ausführen und ihre Datenbankstände mit archivieren.
 
 Die festgelegte Maven-Ausgabezeit reduziert zeitbedingte Archivunterschiede. Eine
 garantierte bitgleiche Reproduktion über beliebige Betriebssysteme oder JDK-Builds
