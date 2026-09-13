@@ -37,7 +37,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(SessionTestController.class)
-@Import({WebSecurityConfig.class, DatabaseAuthentificationProvider.class, UserContext.class, PasswordService.class})
+@Import({SessionTestController.class, WebSecurityConfig.class, DatabaseAuthentificationProvider.class, UserContext.class, PasswordService.class})
 class LoginSessionTest {
     private static final String PASSWORD = "correct-password";
     private static final String HASH = PasswordHasher.hash(PASSWORD, PasswordHasher.HASH_METHOD.SHA256, 1000);

@@ -31,6 +31,8 @@ for attempt in $(seq 1 90); do
   sleep 1
 done
 if [ "$ready" != true ]; then compose logs app; exit 1; fi
+test "$(curl --max-time 10 --fail --silent "http://$address/actuator/health/readiness")" = '{"status":"UP"}'
+compose exec -T app sh -c 'bash /app/healthcheck'
 compose exec -T app sh -c '
   set -eu
   test "$(id -u)" = 10001
@@ -53,6 +55,7 @@ for attempt in $(seq 1 90); do
   sleep 1
 done
 test "$ready" = true
+compose exec -T app sh -c 'bash /app/healthcheck'
 if compose logs app | grep -qi 'password='; then
   printf 'Application startup logs must not contain JDBC passwords.\n' >&2
   exit 1

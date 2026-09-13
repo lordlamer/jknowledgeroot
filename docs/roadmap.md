@@ -15,9 +15,9 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: R13 – Integrationstests und Betriebsüberwachung ergänzen.**
+**Nächster Schritt: R14 – Wiederherstellung und Release erproben.**
 
-R01 bis R12 sind abgeschlossen. R13 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
+R01 bis R13 sind abgeschlossen. R14 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
 
 ## 1. Build und Sicherheit
 
@@ -171,9 +171,13 @@ R01 bis R12 sind abgeschlossen. R13 bis R15 sind offen; die Produktionsfreigabe 
 
 ### R13 – Integrationstests und Betriebsüberwachung ergänzen
 
-- [ ] Offen
+- [x] Erledigt am 12. September 2026
 - **Umsetzung:** Die beiden deaktivierten Integrationstestklassen ersetzen oder reparieren und aktivieren; isolierte MariaDB-/Storage-Tests, beispielsweise mit Testcontainers, etablieren. Echten Login, Rollen und Objektberechtigungen, Kommentare, Sterne, Labels, Dateien sowie Neuinstallation und Upgrade testen. Health-/Readiness-Prüfungen, brauchbare Logs und erforderliche Metriken ergänzen; Management-Endpunkte absichern.
 - **Abnahme:** Tests benötigen keine private lokale Konfiguration oder produktiven Dienste. Frische Installation und Upgrade laufen automatisiert. Ausfall von Datenbank oder gewähltem Storage wird erkennbar; sensible Managementinformationen sind nicht öffentlich.
+- **Integration:** Die beiden deaktivierten Testklassen sind durch aktive Tests mit vollständigem Spring-Kontext, entbehrlicher MariaDB, lokalem Dateispeicher, tatsächlichem Login/CSRF und JDBC-Sitzungen ersetzt. Sie prüfen unter anderem Gruppenmitgliedschaft und Entzug, Rechte/Vererbung, atomare Bearbeitung samt Labels und Rechteänderungen, Kommentare/Eigentümer, persönliche Sterne und berechtigungskonforme Dateizugriffe. Testcontroller der Security-Einzeltests werden ausdrücklich isoliert importiert. Neuinstallation und Upgrade bleiben durch die bestehenden Datenbanktests abgedeckt.
+- **Überwachung:** Boot Actuator liefert nur statusbezogene öffentliche Health-, Liveness- und Readiness-Antworten. Eine eigene zustandslose Filterkette hält Probes unabhängig vom Sitzungsspeicher. Readiness umfasst Datenbank und ausgewählten Storage; Liveness bleibt unabhängig von deren Verfügbarkeit. Die Abhängigkeitsproben verwenden begrenzte Netzwerk-/Poolwartezeiten, zwei Sekunden Cache, feste Status-Gauges und Logs nur bei Zustandswechsel. Metriken verlangen aktuelle Administratorrechte; sensible und schreibende Endpunkte sowie JMX-Exposition sind abgeschaltet. Das Containerimage besitzt einen Readiness-Healthcheck.
+- **Nachweise:** `.\mvnw.cmd -B --no-transfer-progress clean verify`: **BUILD SUCCESS**, **256 Tests erfolgreich, keine Fehler und keine übersprungenen Tests**. Der JAR-/HTTPS-Test prüft echte pausierte Datenbank-/MinIO-Container und ein verschobenes lokales Speicherverzeichnis samt DOWN/503, weiterhin UP bei Liveness und erfolgreicher Erholung. Probes funktionieren auch mit bestehendem Login-Cookie, verändern es nicht und erhalten die Anmeldung nach der Erholung. Das finale Dockerimage besteht den isolierten Compose-Test einschließlich Neuinstallation, Rechteprüfung, Healthcheck und Neustart; Testcontainer und ihre Volumes wurden entfernt. Shellsyntax und `git diff --check` sind geprüft. [monitoring.md](monitoring.md) beschreibt Endpunkte, Metriken, Logs, Alarmierung und Grenzen.
+- **Grenzen:** Externe Alarmierung, Dashboard/automatisiertes Scraping und produktive Schwellenwerte sind noch einzurichten. Die S3-Probe prüft Bucket-Zugriff, nicht Schreibrecht oder Vollständigkeit aller Objekte. Ein blockiertes Netzwerkdateisystem hat keinen eigenen harten Probe-Timeout. Gehostete CI, Lastmessung, praktische vollständige Wiederherstellung und endgültige Release-Freigabe bleiben offen beziehungsweise R14–R15.
 
 ### R14 – Wiederherstellung und Release erproben
 

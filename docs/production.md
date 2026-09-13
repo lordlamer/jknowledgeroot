@@ -1,7 +1,8 @@
 # Produktionskonfiguration und Lieferprozess
 
-Stand: R12, 12. September 2026. Dieser Stand bereitet den Betrieb vor;
-Integration/Monitoring, Restore und die endgültige Freigabe bleiben R13–R15.
+Stand: R13, 12. September 2026. Dieser Stand bereitet den Betrieb vor;
+Restore und die endgültige Freigabe bleiben R14–R15. Healthchecks, Metriken und
+die erweiterten Integrationstests beschreibt [monitoring.md](monitoring.md).
 
 ## Betriebsmodell
 
@@ -62,6 +63,11 @@ Datei-Volume übernimmt die Besitzrechte aus dem Image. Vorhandene Bind-Mounts
 müssen passend für UID 10001 eingerichtet sein. `/tmp` ist ein begrenztes
 512-MiB-tmpfs; parallele große Uploads benötigen mehr Platz oder ein geeignetes
 privates temporäres Volume. Grenzen stehen in [storage.md](storage.md).
+
+Seit R13 prüft der eingebaute Container-Healthcheck Readiness einschließlich
+Datenbank und Speicher. `up --wait` wartet auf diesen Zustand. Ein unhealthy-Status
+löst unter Compose keine automatische Neustartschleife aus; Betriebsregeln und
+Anpassungen bei direktem TLS stehen in [monitoring.md](monitoring.md).
 
 ## Produktionsprofil und Datenbankrechte
 

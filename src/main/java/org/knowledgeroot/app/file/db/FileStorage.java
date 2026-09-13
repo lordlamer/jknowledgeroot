@@ -10,4 +10,5 @@ interface FileStorage {
     InputStream retrieve(String hash);
     void delete(String hash);
     boolean exists(String hash);
+    void checkAvailability();
 }

@@ -120,7 +120,7 @@ Bereinigung gilt dieses Wartungsverfahren:
    Byteanzahl und SHA-256-Prüfsumme vergleichen und ein Manifest mit ursprünglichem
    Schlüssel und Datum sichern. Erst danach das Original entfernen. Auch bei
    MD5-Objekten kann die Kopie mit SHA-256 verglichen werden; den Schlüssel erhalten.
-5. Lokale `.upload-*.tmp` im dedizierten Objektverzeichnis und
+5. Lokale `.upload-*.tmp` und `.health-*.tmp` im dedizierten Objektverzeichnis und
    `knowledgeroot-upload-*.tmp` im dedizierten JVM-Tempverzeichnis stammen von
    abgebrochenen Uploads. Nach Ausschluss sämtlicher Writer ebenfalls zunächst
    quarantänisieren. Keine fremden Dateien aus einem gemeinsam genutzten Tempordner

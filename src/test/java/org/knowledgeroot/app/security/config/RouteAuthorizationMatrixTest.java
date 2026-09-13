@@ -19,7 +19,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = SecurityMatrixTestController.class)
-@Import(WebSecurityConfig.class)
+@Import({WebSecurityConfig.class, SecurityMatrixTestController.class})
 class RouteAuthorizationMatrixTest {
 
     @Autowired

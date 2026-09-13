@@ -3,7 +3,9 @@ RUN groupadd --gid 10001 knowledgeroot && useradd --uid 10001 --gid 10001 --no-c
     && mkdir -p /app /var/lib/knowledgeroot/files && chown -R 10001:10001 /app /var/lib/knowledgeroot
 WORKDIR /app
 COPY --chown=10001:10001 target/*.jar /app/app.jar
+COPY --chown=10001:10001 deploy/container-healthcheck.sh /app/healthcheck
 ENV SPRING_PROFILES_ACTIVE=production KR_STORAGE_DRIVER=file KR_FILE_STORAGE_DIR=/var/lib/knowledgeroot/files
 USER 10001:10001
 EXPOSE 8081
+HEALTHCHECK --interval=30s --timeout=10s --start-period=45s --retries=3 CMD ["bash", "/app/healthcheck"]
 ENTRYPOINT ["java","-jar","/app/app.jar"]

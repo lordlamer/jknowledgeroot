@@ -13,6 +13,7 @@ import java.io.InputStream;
  */
 class MinioStorage implements FileStorage, AutoCloseable {
     private final MinioClient minioClient;
+    private final MinioClient probeClient;
     private final String bucket;
     private final okhttp3.OkHttpClient httpClient = new okhttp3.OkHttpClient.Builder()
             .connectTimeout(java.time.Duration.ofSeconds(10))
@@ -35,6 +36,10 @@ class MinioStorage implements FileStorage, AutoCloseable {
                 .credentials(accessKey, secretKey)
                 .httpClient(httpClient)
                 .build();
+
+        this.probeClient = MinioClient.builder().endpoint(url).credentials(accessKey, secretKey)
+                .httpClient(httpClient.newBuilder().connectTimeout(java.time.Duration.ofSeconds(2))
+                        .readTimeout(java.time.Duration.ofSeconds(2)).callTimeout(java.time.Duration.ofSeconds(3)).build()).build();
 
         try {
             boolean bucketExists = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
@@ -109,6 +114,13 @@ class MinioStorage implements FileStorage, AutoCloseable {
         } catch (Exception ex) {
             throw new StorageException("Could not inspect stored object", ex);
         }
+    }
+
+    @Override public void checkAvailability() {
+        try {
+            if (!probeClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build()))
+                throw new IllegalStateException("Storage bucket missing");
+        } catch (Exception failure) { throw new StorageException("Storage probe failed", failure); }
     }
 
     @Override public void close() {

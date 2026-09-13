@@ -10,6 +10,7 @@ import java.util.Map;
 
 /** Minimal endpoints to observe the real security chain and application user context. */
 @RestController
+@org.springframework.boot.test.context.TestComponent
 @RequiredArgsConstructor
 class SessionTestController {
     private final UserContext userContext;

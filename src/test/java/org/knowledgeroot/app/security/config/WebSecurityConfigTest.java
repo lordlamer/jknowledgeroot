@@ -17,7 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(controllers = TestPostController.class)
-@Import(WebSecurityConfig.class)
+@Import({WebSecurityConfig.class, TestPostController.class})
 class WebSecurityConfigTest {
 
     @Autowired

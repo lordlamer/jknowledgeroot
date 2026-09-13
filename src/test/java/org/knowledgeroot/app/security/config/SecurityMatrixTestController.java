@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@org.springframework.boot.test.context.TestComponent
 class SecurityMatrixTestController {
 
     @GetMapping("/user/1")

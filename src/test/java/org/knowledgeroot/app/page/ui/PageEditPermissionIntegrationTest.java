@@ -1,145 +1,75 @@
 package org.knowledgeroot.app.page.ui;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-
-@Disabled("Will be fixed later")
-@SpringBootTest
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-public class PageEditPermissionIntegrationTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Test
-    public void testEditPageWithPermissionChanges() throws Exception {
-        System.out.println("[DEBUG_LOG] Testing page edit with permission changes");
-
-        // Test editing a page with permission updates, deletions, and additions
-        mockMvc.perform(MockMvcRequestBuilders.post("/ui/page/1/edit")
-                .param("name", "Updated Page Name")
-                .param("content", "Updated page content")
-                // Permission updates
-                .param("permissionUpdates[1]", "view")
-                .param("permissionUpdates[2]", "edit")
-                // Permission deletions
-                .param("permissionDeletions[]", "3")
-                .param("permissionDeletions[]", "4")
-                // Permission additions
-                .param("permissionAdditions[0][roleType]", "user")
-                .param("permissionAdditions[0][roleId]", "2")
-                .param("permissionAdditions[0][permissionLevel]", "view")
-                .param("permissionAdditions[1][roleType]", "group")
-                .param("permissionAdditions[1][roleId]", "2")
-                .param("permissionAdditions[1][permissionLevel]", "edit")
-                .param("permissionAdditions[2][roleType]", "guest")
-                .param("permissionAdditions[2][roleId]", "")
-                .param("permissionAdditions[2][permissionLevel]", "view"))
-                .andDo(print())
-                .andExpect(MockMvcResultMatchers.status().is3xxRedirection())
-                .andExpect(MockMvcResultMatchers.redirectedUrl("/ui/page/1?trigger=reload-sidebar"));
+class PageEditPermissionIntegrationTest extends IsolatedApplicationTest {
+    @Test void editorSavesContentLabelsAndServerAuditWithoutChangingGrants() throws Exception {
+        var before = jdbc.queryForList("SELECT * FROM page_permission WHERE page_id=? ORDER BY id",pageId);
+        login(editor).perform(post("/ui/page/" + pageId + "/edit").param("name","Edited").param("content","<p>Saved</p>")
+                .param("labels","one, two").param("changedBy",Integer.toString(outsiderId)))
+                .andExpect(status().is3xxRedirection());
+        assertEquals("<p>Saved</p>",jdbc.queryForObject("SELECT content FROM page WHERE id=?",String.class,pageId));
+        assertEquals(editorId,jdbc.queryForObject("SELECT changed_by FROM page WHERE id=?",Integer.class,pageId));
+        assertEquals(2,jdbc.queryForObject("SELECT COUNT(*) FROM tag_content WHERE page_id=?",Integer.class,pageId));
+        assertEquals(before,jdbc.queryForList("SELECT * FROM page_permission WHERE page_id=? ORDER BY id",pageId));
     }
 
-    @Test
-    public void testEditPageWithOnlyPageContent() throws Exception {
-        System.out.println("[DEBUG_LOG] Testing page edit with only content changes");
-
-        // Test editing a page without permission changes
-        mockMvc.perform(MockMvcRequestBuilders.post("/ui/page/1/edit")
-                .param("name", "Simple Page Update")
-                .param("content", "Simple content update"))
-                .andDo(print())
-                .andExpect(MockMvcResultMatchers.status().is3xxRedirection())
-                .andExpect(MockMvcResultMatchers.redirectedUrl("/ui/page/1?trigger=reload-sidebar"));
+    @Test void readerCannotEditContent() throws Exception {
+        login(reader).perform(post("/ui/page/" + pageId + "/edit").param("name","Denied").param("content","Denied"))
+                .andExpect(status().isForbidden());
+        assertEquals("original",jdbc.queryForObject("SELECT content FROM page WHERE id=?",String.class,pageId));
     }
 
-    @Test
-    public void testEditPageWithOnlyPermissionUpdates() throws Exception {
-        System.out.println("[DEBUG_LOG] Testing page edit with only permission updates");
-
-        // Test editing a page with only permission updates
-        mockMvc.perform(MockMvcRequestBuilders.post("/ui/page/1/edit")
-                .param("name", "Test Page")
-                .param("content", "Test content")
-                .param("permissionUpdates[1]", "none")
-                .param("permissionUpdates[2]", "view"))
-                .andDo(print())
-                .andExpect(MockMvcResultMatchers.status().is3xxRedirection())
-                .andExpect(MockMvcResultMatchers.redirectedUrl("/ui/page/1?trigger=reload-sidebar"));
+    @Test void editorCannotEscalateSharingThroughTheEditForm() throws Exception {
+        login(editor).perform(post("/ui/page/" + pageId + "/edit").param("name","Denied").param("content","Denied")
+                .param("permissionAdditions[0][roleType]","guest").param("permissionAdditions[0][permissionLevel]","edit"))
+                .andExpect(status().isForbidden());
+        assertEquals("original",jdbc.queryForObject("SELECT content FROM page WHERE id=?",String.class,pageId));
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM page_permission WHERE page_id=? AND role_type='guest'",Integer.class,pageId));
     }
 
-    @Test
-    public void testEditPageWithOnlyPermissionDeletions() throws Exception {
-        System.out.println("[DEBUG_LOG] Testing page edit with only permission deletions");
-
-        // Test editing a page with only permission deletions
-        mockMvc.perform(MockMvcRequestBuilders.post("/ui/page/1/edit")
-                .param("name", "Test Page")
-                .param("content", "Test content")
-                .param("permissionDeletions[]", "5")
-                .param("permissionDeletions[]", "6"))
-                .andDo(print())
-                .andExpect(MockMvcResultMatchers.status().is3xxRedirection())
-                .andExpect(MockMvcResultMatchers.redirectedUrl("/ui/page/1?trigger=reload-sidebar"));
+    @Test void adminUpdatesDeletesAndAddsPermissionsAtomically() throws Exception {
+        int readerGrant = jdbc.queryForObject("SELECT id FROM page_permission WHERE page_id=? AND role_id=?",Integer.class,pageId,readerId);
+        int editorGrant = jdbc.queryForObject("SELECT id FROM page_permission WHERE page_id=? AND role_id=?",Integer.class,pageId,editorId);
+        login("integration.admin").perform(post("/ui/page/" + pageId + "/edit").param("name","Shared").param("content","Updated")
+                .param("permissionUpdates[" + readerGrant + "]","edit").param("permissionDeletions[]",Integer.toString(editorGrant))
+                .param("permissionAdditions[0][roleType]","guest").param("permissionAdditions[0][roleId]","")
+                .param("permissionAdditions[0][permissionLevel]","view")).andExpect(status().is3xxRedirection());
+        assertEquals("edit",jdbc.queryForObject("SELECT permission_level FROM page_permission WHERE id=?",String.class,readerGrant));
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM page_permission WHERE id=?",Integer.class,editorGrant));
+        mvc.perform(get("/ui/page/" + pageId)).andExpect(status().isOk());
+        mvc.perform(get("/ui/page/" + pageId + "/edit")).andExpect(status().isForbidden());
     }
 
-    @Test
-    public void testEditPageWithOnlyPermissionAdditions() throws Exception {
-        System.out.println("[DEBUG_LOG] Testing page edit with only permission additions");
-
-        // Test editing a page with only permission additions
-        mockMvc.perform(MockMvcRequestBuilders.post("/ui/page/1/edit")
-                .param("name", "Test Page")
-                .param("content", "Test content")
-                .param("permissionAdditions[0][roleType]", "user")
-                .param("permissionAdditions[0][roleId]", "2")
-                .param("permissionAdditions[0][permissionLevel]", "edit")
-                .param("permissionAdditions[1][roleType]", "guest")
-                .param("permissionAdditions[1][roleId]", "")
-                .param("permissionAdditions[1][permissionLevel]", "view"))
-                .andDo(print())
-                .andExpect(MockMvcResultMatchers.status().is3xxRedirection())
-                .andExpect(MockMvcResultMatchers.redirectedUrl("/ui/page/1?trigger=reload-sidebar"));
+    @Test void foreignPermissionIdRollsBackContentAndLabels() throws Exception {
+        int foreign = grant(otherPageId,"guest",null,"view");
+        login("integration.admin").perform(post("/ui/page/" + pageId + "/edit").param("name","Rollback").param("content","Rollback")
+                .param("labels","rollback-label").param("permissionDeletions[]",Integer.toString(foreign)))
+                .andExpect(status().isNotFound());
+        assertEquals("original",jdbc.queryForObject("SELECT content FROM page WHERE id=?",String.class,pageId));
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM tag_content WHERE page_id=?",Integer.class,pageId));
+        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM page_permission WHERE id=?",Integer.class,foreign));
     }
 
-    @Test
-    public void testEditPageWithGuestPermissions() throws Exception {
-        System.out.println("[DEBUG_LOG] Testing page edit with guest permissions");
-
-        // Test adding guest permissions (roleId should be null/empty)
-        mockMvc.perform(MockMvcRequestBuilders.post("/ui/page/1/edit")
-                .param("name", "Test Page")
-                .param("content", "Test content")
-                .param("permissionAdditions[0][roleType]", "guest")
-                .param("permissionAdditions[0][roleId]", "")
-                .param("permissionAdditions[0][permissionLevel]", "view"))
-                .andDo(print())
-                .andExpect(MockMvcResultMatchers.status().is3xxRedirection())
-                .andExpect(MockMvcResultMatchers.redirectedUrl("/ui/page/1?trigger=reload-sidebar"));
+    @Test void newChildInheritsAndParentChangesAffectExistingSessions() throws Exception {
+        String childName = "child-" + pageId;
+        login(editor).perform(post("/ui/page/new").param("parent",Integer.toString(pageId)).param("name",childName)
+                .param("content","Child").param("active","true")).andExpect(status().is3xxRedirection());
+        int child = jdbc.queryForObject("SELECT id FROM page WHERE name=?",Integer.class,childName);
+        assertTrue(jdbc.queryForObject("SELECT inherit_permissions FROM page WHERE id=?",Boolean.class,child));
+        var session = login(reader);
+        session.perform(get("/ui/page/" + child)).andExpect(status().isOk());
+        jdbc.update("DELETE FROM page_permission WHERE page_id=? AND role_type='user' AND role_id=?",pageId,readerId);
+        session.perform(get("/ui/page/" + child)).andExpect(status().isForbidden());
     }
 
-    @Test
-    public void testEditPageWithNoPermissionParameters() throws Exception {
-        System.out.println("[DEBUG_LOG] Testing page edit with no permission parameters");
-
-        // Test that missing permission parameters don't cause issues (real-world scenario)
-        mockMvc.perform(MockMvcRequestBuilders.post("/ui/page/1/edit")
-                .param("name", "Test Page")
-                .param("content", "Test content"))
-                .andDo(print())
-                .andExpect(MockMvcResultMatchers.status().is3xxRedirection())
-                .andExpect(MockMvcResultMatchers.redirectedUrl("/ui/page/1?trigger=reload-sidebar"));
+    @Test void missingCsrfCannotChangeStoredContent() throws Exception {
+        var session = login(editor);
+        mvc.perform(post("/ui/page/" + pageId + "/edit").cookie(session.cookies).param("name","No CSRF").param("content","Denied"))
+                .andExpect(status().isForbidden());
+        assertEquals("original",jdbc.queryForObject("SELECT content FROM page WHERE id=?",String.class,pageId));
     }
 }

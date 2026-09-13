@@ -101,4 +101,14 @@ class FileSystemStorage implements FileStorage {
         if (Files.isSymbolicLink(path)) throw new StorageException("Symbolic storage objects are not supported", null);
         return path;
     }
+
+    @Override public void checkAvailability() {
+        try {
+            Path probe = Files.createTempFile(storageLocation, ".health-", ".tmp");
+            try {
+                Files.write(probe, new byte[]{42});
+                if (Files.readAllBytes(probe)[0] != 42) throw new IOException("Storage probe failed");
+            } finally { Files.deleteIfExists(probe); }
+        } catch (IOException failure) { throw new StorageException("Storage probe failed", failure); }
+    }
 }

@@ -43,8 +43,8 @@ On Windows (PowerShell):
 ```
 
 The build compiles the application, runs the enabled tests, and creates the
-executable JAR in `target/`. The two existing disabled integration test classes
-are tracked in roadmap item R13. Installation tests exercise a real MariaDB in
+executable JAR in `target/`. The previously disabled integration classes now use
+isolated databases, actual login/CSRF and JDBC sessions. Installation tests exercise a real MariaDB in
 Testcontainers. During `verify`, Failsafe starts the packaged JAR against
 disposable MariaDB/MinIO containers and checks real HTTP login, JPA-backed admin
 access, WebJars, JDBC-session persistence across restart, and logout. Chromium
@@ -63,6 +63,11 @@ the project license remains BSD-2-Clause. No editor license key is required.
 See the [editor guide](docs/editor.md) for supported content and upgrade checks.
 
 ## Initial administrator and upgrades
+
+Status-only liveness/readiness probes and administrator-only metrics are available.
+Readiness checks the database and selected file storage; the container has a built-in
+readiness healthcheck. See [monitoring and integration tests](docs/monitoring.md)
+for endpoint access, failure detection and operational limits.
 
 For the production profile, restricted database accounts, a persistent local file
 volume, HTTPS/proxy settings and the release workflow, see the
@@ -112,7 +117,8 @@ Previously stored unauthenticated application tokens require a new login.
 HTTP/session rules are tested with the real provider and security filter chain
 with mocked database access. Hash migration and shared login quotas also have real
 MariaDB tests. The packaged-application smoke test also verifies real HTTP login
-and JDBC-session reuse after restart. Broader integration coverage remains in R13.
+and JDBC-session reuse after restart. Full application tests also cover groups,
+comments, stars, labels, attachments and permission changes.
 
 ## Local configuration
 

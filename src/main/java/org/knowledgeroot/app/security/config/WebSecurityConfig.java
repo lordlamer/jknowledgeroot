@@ -27,6 +27,23 @@ public class WebSecurityConfig {
     private final UserContext userContext;
 
     @Bean
+    @org.springframework.core.annotation.Order(0)
+    SecurityFilterChain healthSecurityFilterChain(HttpSecurity http) throws Exception {
+        return http.securityMatcher("/actuator/health", "/actuator/health/liveness", "/actuator/health/readiness")
+                // These routes only accept GET; no session-backed CSRF token is needed.
+                .csrf(csrf -> csrf.disable())
+                // AnonymousAuthenticationFilter builds session-based WebAuthenticationDetails.
+                .anonymous(anonymous -> anonymous.disable())
+                // Even STATELESS SessionManagementFilter inspects requested session IDs.
+                .sessionManagement(session -> session.disable())
+                .securityContext(context -> context.securityContextRepository(new org.springframework.security.web.context.NullSecurityContextRepository()))
+                .requestCache(cache -> cache.disable())
+                .authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/liveness", "/actuator/health/readiness").permitAll()
+                        .anyRequest().denyAll())
+                .build();
+    }
+
+    @Bean
     protected SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         SecurityContextRepository contextRepository = new DelegatingSecurityContextRepository(
                 new RequestAttributeSecurityContextRepository(), new HttpSessionSecurityContextRepository());
@@ -35,6 +52,7 @@ public class WebSecurityConfig {
                 .addFilterBefore(new SessionUserValidationFilter(userContext, contextRepository),
                         AnonymousAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers("/actuator/**").hasRole("ADMIN");
                     // Star endpoints — require an authenticated (non-guest) user. Must come
                     // before the /ui/page/** permitAll rule since the first match wins.
                     auth.requestMatchers(HttpMethod.POST,   "/ui/page/*/star").hasAnyRole("USER", "ADMIN");

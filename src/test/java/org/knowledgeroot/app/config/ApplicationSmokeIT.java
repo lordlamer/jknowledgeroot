@@ -71,6 +71,7 @@ class ApplicationSmokeIT {
                 assertTrue(authenticated.headers().firstValue("location").orElseThrow().endsWith("/login/success"));
                 assertAdministrator(client, context);
                 browserEditingAndUploads(context);
+                monitoringAndDependencyRecovery(client, context);
                 var jdbc = new JdbcTemplate(new DriverManagerDataSource(database.getJdbcUrl(),
                         database.getUsername(), database.getPassword()));
                 assertTrue(jdbc.queryForObject("SELECT COUNT(*) FROM SPRING_SESSION_ATTRIBUTES", Integer.class) > 0);
@@ -91,8 +92,48 @@ class ApplicationSmokeIT {
             try (var local = start(false, "file")) {
                 assertForwardedAddress(client, local, true);
                 localStorageAndUploadLimits(local);
+                Path objects = files.resolve("objects");
+                Path offline = files.resolve("objects-offline");
+                Files.move(objects, offline);
+                try {
+                    assertProbe(client, local, "readiness", 503, "DOWN");
+                    assertProbe(client, local, "liveness", 200, "UP");
+                } finally { Files.move(offline, objects); }
+                assertProbe(client, local, "readiness", 200, "UP");
             }
         }
+    }
+
+    private void monitoringAndDependencyRecovery(HttpClient authenticated, TestServer server) throws Exception {
+        assertEquals(200, get(authenticated, server, "/actuator/metrics/jvm.memory.used").statusCode());
+        assertEquals(200, get(authenticated, server, "/actuator/metrics/http.server.requests").statusCode());
+        assertEquals(404, get(authenticated, server, "/actuator/env").statusCode());
+        try (var anonymous = HttpClient.newBuilder().sslContext(tls).connectTimeout(Duration.ofSeconds(5)).build()) {
+            assertProbe(anonymous, server, "readiness", 200, "UP");
+            assertEquals(302, get(anonymous, server, "/actuator/metrics").statusCode());
+            for (var dependency : List.of(storage, database)) {
+                dependency.getDockerClient().pauseContainerCmd(dependency.getContainerId()).exec();
+                try {
+                    assertProbe(anonymous, server, "readiness", 503, "DOWN");
+                    assertProbe(authenticated, server, "liveness", 200, "UP");
+                } finally { dependency.getDockerClient().unpauseContainerCmd(dependency.getContainerId()).exec(); }
+                assertProbe(anonymous, server, "readiness", 200, "UP");
+                assertEquals(200, get(authenticated, server, "/actuator/metrics/jvm.memory.used").statusCode());
+            }
+        }
+    }
+
+    private void assertProbe(HttpClient client, TestServer server, String group, int status, String state) throws Exception {
+        long deadline = System.nanoTime() + Duration.ofSeconds(30).toNanos();
+        HttpResponse<String> response;
+        do {
+            response = get(client, server, "/actuator/health/" + group);
+            assertTrue(response.headers().allValues("set-cookie").isEmpty(), "Probes must leave login cookies untouched");
+            if (response.statusCode() == status && response.body().equals("{\"status\":\"" + state + "\"}")) return;
+            Thread.sleep(300);
+        } while (System.nanoTime() < deadline);
+        assertEquals(status,response.statusCode(),response.body());
+        assertEquals("{\"status\":\"" + state + "\"}",response.body());
     }
 
     private void assertForwardedAddress(HttpClient client, TestServer server, boolean trusted) throws Exception {
@@ -318,7 +359,7 @@ class ApplicationSmokeIT {
                 var matcher = portPattern.matcher(Files.readString(log));
                 if (matcher.find()) {
                     assertFalse(Files.readString(log).contains("password="), "Startup log must not expose a JDBC password");
-                    return new TestServer(process, Integer.parseInt(matcher.group(1)));
+                    return new TestServer(process, Integer.parseInt(matcher.group(1)), log);
                 }
                 Thread.sleep(100);
             }
@@ -361,7 +402,11 @@ class ApplicationSmokeIT {
         }
     }
 
-    private record TestServer(Process process, int port) implements AutoCloseable {
-        @Override public void close() throws InterruptedException { stop(process); }
+    private record TestServer(Process process, int port, Path log) implements AutoCloseable {
+        @Override public void close() throws Exception {
+            stop(process);
+            Files.copy(log, Path.of(System.getProperty("application.jar")).getParent().resolve("smoke-" + log.getFileName()),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        }
     }
 }

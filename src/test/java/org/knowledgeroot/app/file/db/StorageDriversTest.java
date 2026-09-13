@@ -65,6 +65,7 @@ class StorageDriversTest {
     void bothDriversRoundTripAndDistinguishMissingObjects(String driver) throws Exception {
         FileStorage storage = storage(driver);
         try {
+            assertDoesNotThrow(storage::checkAvailability);
             assertFalse(storage.exists(KEY));
             assertThrows(StoredFileNotFoundException.class, () -> storage.retrieve(KEY));
             byte[] content = new byte[11 * 1024 * 1024];
@@ -111,6 +112,7 @@ class StorageDriversTest {
             var admin = io.minio.MinioClient.builder().endpoint(endpoint()).credentials("storage-test-user", "storage-test-password").build();
             admin.removeBucket(io.minio.RemoveBucketArgs.builder().bucket(bucket).build());
             assertThrows(StorageException.class, () -> storage.exists(KEY));
+            assertThrows(StorageException.class, storage::checkAvailability);
         }
     }
 
