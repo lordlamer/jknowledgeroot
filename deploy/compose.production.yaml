@@ -1,7 +1,7 @@
 # Run with an explicit --env-file and project name. This defines a NEW deployment.
 services:
   database:
-    image: ${KR_DB_IMAGE:-mariadb:12.3.3@sha256:ab1c3dd381940233af12512b97d47b508fd3a0f17fbe3ba388739b7bc17cbc0b}
+    image: ${KR_DB_IMAGE:?Set the verified database image from the same release}
     environment:
       MARIADB_DATABASE: knowledgeroot
       MARIADB_ROOT_PASSWORD: ${KR_DB_ROOT_PASSWORD:?Set a unique database root password}

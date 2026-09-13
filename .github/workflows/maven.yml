@@ -25,23 +25,25 @@ jobs:
           git merge-base --is-ancestor HEAD origin/master
       - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
-          java-version: '25'
+          java-version: '25.0.4+101.0.LTS' # Adoptium API SemVer for 25.0.4.1+1-LTS
           distribution: temurin
           cache: maven
+      - name: Verify JDK security baseline
+        run: grep -Fx 'JAVA_RUNTIME_VERSION="25.0.4.1+1-LTS"' "$JAVA_HOME/release"
       - name: Install Chromium system dependencies
         run: sh ./mvnw -B --no-transfer-progress org.codehaus.mojo:exec-maven-plugin:3.5.0:exec -Dexec.executable=java -Dexec.classpathScope=test '-Dexec.args=-classpath %classpath com.microsoft.playwright.CLI install-deps chromium'
       - name: Verify application and build container
         run: |
           sh ./mvnw -B --no-transfer-progress -Dbuild.revision="$GITHUB_SHA" verify
-          target/frontend/node/node scripts/build-container.mjs knowledgeroot:verified
+          target/frontend/node/node scripts/build-container.mjs knowledgeroot:verified knowledgeroot:database-verified
           test "$(docker image inspect knowledgeroot:verified --format '{{.Config.User}}')" = '10001:10001'
-          sh deploy/smoke-test.sh knowledgeroot:verified
+          sh deploy/smoke-test.sh knowledgeroot:verified knowledgeroot:database-verified
       - name: Audit container operating system
         run: |
           target/frontend/node/node --test scripts/image-audit-policy.test.mjs
           target/frontend/node/node scripts/audit-image.mjs knowledgeroot:verified
       - name: Audit pinned production database operating system
-        run: target/frontend/node/node scripts/audit-image.mjs --database
+        run: target/frontend/node/node scripts/audit-image.mjs --database knowledgeroot:database-verified
       - name: Archive container audit evidence including failures
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -57,7 +59,7 @@ jobs:
       - name: Verify backup, upgrade and rollback from pinned R13 baseline
         run: |
           bash deploy/build-recovery-baseline.sh
-          NODE_BINARY="$PWD/target/frontend/node/node" bash deploy/recovery-smoke-test.sh knowledgeroot:verified knowledgeroot:recovery-baseline
+          NODE_BINARY="$PWD/target/frontend/node/node" bash deploy/recovery-smoke-test.sh knowledgeroot:verified knowledgeroot:recovery-baseline knowledgeroot:database-verified
       - name: Resolve dependencies for release audit
         run: sh ./mvnw -B --no-transfer-progress dependency:tree -DoutputType=json -DoutputFile=target/dependency-tree.json
       - name: Audit Maven and frontend dependencies
@@ -66,10 +68,10 @@ jobs:
       - name: Record artifact identity and validate version agreement
         env:
           RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
-        run: target/frontend/node/node scripts/release-metadata.mjs knowledgeroot:verified
+        run: target/frontend/node/node scripts/release-metadata.mjs knowledgeroot:verified knowledgeroot:database-verified
       - name: Save verified release image
         if: startsWith(github.ref, 'refs/tags/')
-        run: docker save knowledgeroot:verified --output target/release-image.tar
+        run: docker save knowledgeroot:verified knowledgeroot:database-verified --output target/release-image.tar
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: startsWith(github.ref, 'refs/tags/')
         with:
@@ -107,5 +109,9 @@ jobs:
           docker load --input release-image.tar
           docker tag knowledgeroot:verified "lordlamer/knowledgeroot:$RELEASE_TAG"
           docker tag knowledgeroot:verified "lordlamer/knowledgeroot:sha-$COMMIT_SHA"
+          docker tag knowledgeroot:database-verified "lordlamer/knowledgeroot:database-$RELEASE_TAG"
+          docker tag knowledgeroot:database-verified "lordlamer/knowledgeroot:database-sha-$COMMIT_SHA"
+          docker push "lordlamer/knowledgeroot:database-$RELEASE_TAG"
+          docker push "lordlamer/knowledgeroot:database-sha-$COMMIT_SHA"
           docker push "lordlamer/knowledgeroot:$RELEASE_TAG"
           docker push "lordlamer/knowledgeroot:sha-$COMMIT_SHA"

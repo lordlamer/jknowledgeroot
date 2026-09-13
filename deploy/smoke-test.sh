@@ -2,6 +2,7 @@
 # Disposable deployment verification; never uses the operator's .env or existing volumes.
 set -eu
 umask 077
+[ "$#" = 2 ] || { echo 'Usage: smoke-test.sh APP_IMAGE DATABASE_IMAGE' >&2; exit 2; }
 unset KR_APP_IMAGE KR_DB_IMAGE KR_DB_ROOT_PASSWORD KR_DB_PASSWORD KR_MIGRATION_PASSWORD KR_BOOTSTRAP_LOGIN KR_BOOTSTRAP_PASSWORD KR_APP_PORT KR_FORWARD_HEADERS_STRATEGY KR_TRUSTED_PROXY_PATTERN
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 project="knowledgeroot-smoke-$(date +%s)-$$"
@@ -15,6 +16,7 @@ trap cleanup EXIT
 trap 'exit 1' INT TERM
 {
   printf 'KR_APP_IMAGE=%s\n' "${1:?Pass the locally built image tag}"
+  printf 'KR_DB_IMAGE=%s\n' "$2"
   printf 'KR_DB_ROOT_PASSWORD=%s\n' "$(openssl rand -hex 32)"
   printf 'KR_DB_PASSWORD=%s\n' "$(openssl rand -hex 32)"
   printf 'KR_MIGRATION_PASSWORD=%s\n' "$(openssl rand -hex 32)"

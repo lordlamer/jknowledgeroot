@@ -26,7 +26,7 @@ Eine ausgefüllte Kopie mit tatsächlichen Systemdaten gehört in das Betriebsar
 | Prüfung | Vorgehen und erwarteter Nachweis | Status |
 | --- | --- | --- |
 | Artefakte | Manifest und Registry-Digest stimmen mit dem freigegebenen Commit überein; Maven-/npm- und OS-Scanberichte vorhanden. | Offen |
-| Restbefunde | Java- und Datenbank-glibc-Korrekturen aus R19 abschließen. Beide Imageberichte bewerten; `container-findings.md` betrifft das App-Image. Bewertung auf tatsächliche Arbeitsabläufe und Host-/Volume-Rechte übertragen; Verantwortliche, Entscheidung und nächsten Prüftermin festhalten. | Offen |
+| Restbefunde | Laufzeitnachweise aus R19 und beide endgültigen Imageberichte prüfen; `container-findings.md` betrifft das App-Image. Verbleibende App- und Datenbankbefunde auf tatsächliche Arbeitsabläufe und Host-/Volume-Rechte beziehen; Verantwortliche, Entscheidung und nächsten Prüftermin festhalten. | Offen |
 | Installation/Upgrade | In Staging dieselbe Konfiguration und einen geschützten repräsentativen Datenbestand verwenden; Migration und Start ohne Fehler. Alte Writer bleiben gestoppt. | Offen |
 | TLS und Proxy | Gültiges Zertifikat, HTTPS-Zugriff, korrekte Weiterleitungen, Secure/HttpOnly/SameSite-Cookies; App-Port nur für den vorgesehenen Proxy zugänglich. | Offen |
 | Rechte und Gäste | Reale Rollen/Gruppen sowie Gastzugriff prüfen: öffentliche Seite erreichbar, private Seite und deren Datei unzugänglich; Unterseiten erben die vereinbarte Freigabe. | Offen |

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {createReadStream, mkdirSync, mkdtempSync, readFileSync, writeFileSync, copyFileSync, rmSync} from 'node:fs';
-import {devNull, tmpdir} from 'node:os';
+import {tmpdir} from 'node:os';
 import {basename, join, resolve} from 'node:path';
 import {evaluateReport} from './image-audit-policy.mjs';
 
@@ -10,25 +10,12 @@ import {evaluateReport} from './image-audit-policy.mjs';
 const scanner = 'ghcr.io/aquasecurity/trivy:0.74.0@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969';
 const run = args => execFileSync('docker', args, {encoding:'utf8'}).trim();
 const database = process.argv[2] === '--database';
-assert.equal(process.argv.length, 3, 'Pass a local application image or --database');
+assert.equal(process.argv.length, database ? 4 : 3, 'Pass a local application image or --database IMAGE');
 const reportPrefix = database ? 'database-image-audit' : 'image-audit';
-// A failed resolution or pull must also invalidate previous success evidence.
+// A failed image lookup must also invalidate previous success evidence.
 mkdirSync('target', {recursive:true});
 for (const suffix of ['.json', '-summary.json']) rmSync(join('target', reportPrefix + suffix), {force:true});
-let image = process.argv[2];
-if (database) {
-  // Resolve the exact production default without reading an operator env file.
-  const config = JSON.parse(execFileSync('docker', ['compose', '--env-file', devNull,
-    '-f', 'deploy/compose.production.yaml', 'config', '--format', 'json'], {
-    encoding:'utf8', env:{...process.env, KR_DB_IMAGE:'', KR_APP_IMAGE:'knowledgeroot:audit-placeholder',
-      KR_DB_ROOT_PASSWORD:'audit-placeholder', KR_DB_PASSWORD:'audit-placeholder',
-      KR_MIGRATION_PASSWORD:'audit-placeholder', KR_BOOTSTRAP_LOGIN:'', KR_BOOTSTRAP_PASSWORD:'',
-      KR_APP_PORT:'8081', KR_FORWARD_HEADERS_STRATEGY:'none', KR_TRUSTED_PROXY_PATTERN:'(?!)'}
-  }));
-  image = config.services.database.image;
-  assert.match(image, /^mariadb:[0-9.]+@sha256:[a-f0-9]{64}$/, 'Pin the production database image digest');
-  execFileSync('docker', ['pull', image], {stdio:'inherit'});
-}
+const image = process.argv[database ? 3 : 2];
 assert(image && !image.startsWith('-'), 'Pass a locally built image');
 const inspected = JSON.parse(run(['image', 'inspect', image]))[0];
 assert.match(inspected.Id, /^sha256:[a-f0-9]{64}$/);

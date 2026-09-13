@@ -1,0 +1,8 @@
+FROM mariadb:12.3.3@sha256:ab1c3dd381940233af12512b97d47b508fd3a0f17fbe3ba388739b7bc17cbc0b
+# Keep MariaDB and its entrypoint intact; apply available Ubuntu glibc fixes.
+RUN apt-get update && apt-get install -y --no-install-recommends --only-upgrade \
+        libc6=2.39-0ubuntu8.9 libc-bin=2.39-0ubuntu8.9 \
+    && rm -rf /var/lib/apt/lists/*
+ARG BUILD_VERSION=1.0.0-rc.2
+ARG BUILD_REVISION=unknown
+LABEL org.opencontainers.image.version=$BUILD_VERSION org.opencontainers.image.revision=$BUILD_REVISION

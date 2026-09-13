@@ -8,18 +8,23 @@ offen. Backup, Upgrade und Rückkehr beschreibt [recovery.md](recovery.md).
 ## Artefakte zuordnen
 
 Der Maven-Build erzeugt `knowledgeroot-1.0.0-rc.2.jar` und eingebettete Builddaten
-einschließlich Version und optional übergebener Revision. Beispiel unter Bash:
+einschließlich Version und optional übergebener Revision. Für den Build Temurin
+JDK **25.0.4.1+1** verwenden und `JAVA_HOME` darauf setzen. Beispiel unter Bash:
 
 ```sh
 revision=$(git rev-parse HEAD)
 sh ./mvnw -B --no-transfer-progress -Dbuild.revision="$revision" clean verify
-target/frontend/node/node scripts/build-container.mjs knowledgeroot:verified
+target/frontend/node/node scripts/build-container.mjs knowledgeroot:verified knowledgeroot:database-verified
 target/frontend/node/node scripts/audit-image.mjs knowledgeroot:verified
-target/frontend/node/node scripts/audit-image.mjs --database
+target/frontend/node/node scripts/audit-image.mjs --database knowledgeroot:database-verified
 ```
 
 `target/release-manifest.json` nennt Maven-Version, Git-Revision, Änderungen an
-versionierten Dateien, JAR-SHA-256, Image-ID und Basisimage. Unter Windows kann
+versionierten Dateien, JAR-SHA-256, beide Image-IDs/Basisimages, Java-Laufzeit,
+MariaDB-Serverversion und die installierten glibc-Versionen. Die beiden Images
+müssen dieselbe Projektversion und Git-Revision tragen. Fehlende Laufzeitkorrekturen
+brechen die Prüfung ab; alte Manifeste werden vor Build/Validierung entfernt.
+Unter Windows kann
 `target/frontend/node/node.exe` verwendet werden. Lokale Arbeitskopien mit Änderungen
 sind als solche erkennbar und keine Release-Artefakte. Ohne `build.revision` tragen
 die JAR-Builddaten `unknown`; für freigegebene Artefakte die Revision immer mitgeben.
@@ -27,13 +32,18 @@ die JAR-Builddaten `unknown`; für freigegebene Artefakte die Revision immer mit
 Die festgelegte Maven-Ausgabezeit reduziert zeitbedingte Archivunterschiede. Eine
 garantierte bitgleiche Reproduktion über beliebige Betriebssysteme oder JDK-Builds
 wird damit nicht behauptet. Maßgeblich sind Prüfsummen der tatsächlich getesteten
-Artefakte. Die CI veröffentlicht exakt das geprüfte Image aus ihrem Artefakt,
-einschließlich Versions-/Commit-Tags; sie baut es im Publish-Job nicht erneut.
+Artefakte. Die CI veröffentlicht exakt die beiden geprüften Images aus ihrem
+gemeinsamen Artefakt; sie baut sie im Publish-Job nicht erneut. Im vorhandenen
+Repository `lordlamer/knowledgeroot` heißen die Tags für die Anwendung
+`v1.0.0-rc.2` beziehungsweise `sha-<Commit>` und für die Datenbank
+`database-v1.0.0-rc.2` beziehungsweise `database-sha-<Commit>`. Das sind vorbereitete
+Namenskonventionen; veröffentlicht wurde noch nichts. Für das Deployment beide
+Registry-Digests festhalten und explizit als `KR_APP_IMAGE` und `KR_DB_IMAGE` setzen.
 
 ## Freigabeschritte
 
 1. Sauberen Release-Commit auf `master` vorbereiten. Kandidatenversion in der POM
-   und Docker-Standardlabel gemeinsam pflegen. Bei einem Versionswechsel alte
+   und die Standardlabels beider Dockerfiles gemeinsam pflegen. Bei einem Versionswechsel alte
    JARs durch `clean` entfernen, damit das Docker-COPY eindeutig bleibt.
 2. Gesamten Maven-Testlauf, Containerstart und Backup-/Upgrade-/Rollbackprüfung
    bestehen lassen. Vor der Freigabe die Java-/Datenbank-OS-Korrekturen aus
@@ -55,7 +65,7 @@ einschließlich Versions-/Commit-Tags; sie baut es im Publish-Job nicht erneut.
    `v1.0.0-rc.2`, erstellen. Ein abweichender Tag und eine veränderte Arbeitskopie
    werden bei der Artefaktprüfung abgelehnt. Ein Kandidat ist kein endgültiges
    `v1.0.0`-Release.
-5. Image, Release-Manifest, Scanbericht und Betriebsnachweise dauerhaft archivieren.
+5. Beide Images, Release-Manifest, Scanberichte und Betriebsnachweise dauerhaft archivieren.
    Die dreitägige CI-Artefaktaufbewahrung ist kein Release-Archiv. Den veröffentlichten
    Registry-Digest zusätzlich festhalten und im Deployment referenzieren.
 

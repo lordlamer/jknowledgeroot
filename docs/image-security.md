@@ -9,10 +9,10 @@ Veröffentlichung erforderlich. Die Anwendung wird dabei nicht gestartet.
 Nach Maven-Paketierung mit der aktuellen `build.revision`:
 
 ```sh
-target/frontend/node/node scripts/build-container.mjs knowledgeroot:verified
+target/frontend/node/node scripts/build-container.mjs knowledgeroot:verified knowledgeroot:database-verified
 target/frontend/node/node --test scripts/image-audit-policy.test.mjs
 target/frontend/node/node scripts/audit-image.mjs knowledgeroot:verified
-target/frontend/node/node scripts/audit-image.mjs --database
+target/frontend/node/node scripts/audit-image.mjs --database knowledgeroot:database-verified
 ```
 
 Unter Windows heißen die Node-Befehle `target/frontend/node/node.exe`.
@@ -41,10 +41,10 @@ wird ausschließlich das eigens erzeugte temporäre Verzeichnis entfernt.
   Image-ID/Labels, Archivprüfsumme, Scanzeit und Metadaten der Schwachstellendatenbank.
 - `target/database-image-audit.json` und `target/database-image-audit-summary.json`:
   dieselben Nachweise für den Datenbankstandard aus dem Produktions-Compose.
-  `target/frontend/node/node scripts/audit-image.mjs --database` löst diesen mit
-  synthetischen Pflichtwerten und ohne Betreiber-Env-Datei auf, verlangt einen
-  MariaDB-Digest und lädt genau dieses Image. `KR_DB_IMAGE` aus der Shell wird
-  dafür ausdrücklich ignoriert. Eigene betriebliche Overrides separat scannen.
+  `target/frontend/node/node scripts/audit-image.mjs --database knowledgeroot:database-verified`
+  scannt das ausdrücklich übergebene lokal gebaute Datenbankimage über dessen
+  feste Image-ID. Es liest keine Betreiber-Env-Datei und wählt kein Ersatzimage.
+  Eigene betriebliche Overrides separat scannen.
 - Exitcode 0: vollständiger erkannter OS-Paketbestand ohne blockierende Funde.
 - Exitcode ungleich 0: HIGH, CRITICAL oder unbekannter Schweregrad, nicht mehr
   unterstütztes OS, fehlender Paketbestand, inkompatibler Bericht oder technischer
@@ -103,9 +103,9 @@ Die [Bewertung der Containerbefunde](container-findings.md) dokumentiert diesen
 Schritt und die Voraussetzungen der verbleibenden CVEs. Der Scanner prüft
 weiterhin den tatsächlichen Paketbestand ohne Ausnahmen.
 
-## Datenbankimage und offene Laufzeitkorrekturen (R18)
+## Ausgangsbefunde (R18)
 
-Der neue Standard `mariadb:12.3.3` mit Digest
+Der in R18 verwendete Standard `mariadb:12.3.3` mit Digest
 `sha256:ab1c3dd381940233af12512b97d47b508fd3a0f17fbe3ba388739b7bc17cbc0b`
 enthält laut Scan vom 13. September 2026 **151 OS-Pakete und 33 Paketbefunde**:
 26 MEDIUM, sieben LOW, keine HIGH/CRITICAL/UNKNOWN. Die Schweregradregel besteht;
@@ -114,17 +114,51 @@ das ist noch keine betriebliche Freigabe. Zwölf mittlere Befunde in `libc6` und
 im Herstellerimage. Die verbleibenden Befunde betreffen unter anderem Perl,
 SQLite, tar, zlib und native Systembibliotheken. Die Bewertung des App-Images
 in `container-findings.md` lässt sich nicht pauschal auf einen Datenbankprozess
-übertragen. **R19 muss die verfügbaren glibc-Fixes übernehmen und erneut scannen.**
+übertragen. Die Korrektur ist im folgenden R19-Abschnitt beschrieben.
 
 Die separate Java-Prüfung ergab außerdem das Wartungsrelease **25.0.4.1+1**;
-das App-Image verwendet noch **25.0.4+7**. Die
+das damalige App-Image verwendete **25.0.4+7**. Die
 [Java-Releasehinweise](https://www.oracle.com/java/technologies/javase/25-0-4-1-relnotes.html)
 nennen Sicherheitskorrekturen. Die offizielle Adoptium-API bietet die neue
 Temurin-JRE als Archiv an; am Prüftag war das zugehörige Docker-Hub-Tag
-`25.0.4.1_1-jre-noble` nicht verfügbar. **R19 muss das Laufzeitupdate umsetzen
-und testen**, gegebenenfalls mit verifiziertem Herstellerarchiv, sofern das
-Containerimage weiterhin fehlt. Ein bestandener OS-Scan erledigt diesen Punkt
-nicht. Die Produktionsfreigabe bleibt bis zur Korrektur offen.
+`25.0.4.1_1-jre-noble` nicht verfügbar. Ein bestandener OS-Scan erledigt diese
+Laufzeitprüfung nicht.
+
+## Laufzeit- und Datenbankkorrekturen (R19)
+
+Der Dockerbuild lädt das offizielle Temurin-JRE-Archiv für **25.0.4.1+1**, prüft
+dessen im Dockerfile festgelegte SHA-256-Summe und ersetzt das gesamte alte
+JRE-Verzeichnis einschließlich der zugehörigen `JAVA_VERSION`-Metadaten.
+Downloadwerkzeuge bleiben in einer separaten Buildstufe;
+das Laufzeitimage übernimmt ausschließlich das verifizierte JRE-Verzeichnis.
+Für amd64 und arm64 sind eigene Herstellerarchive und Prüfsummen festgelegt;
+andere Architekturen werden abgelehnt. Lokal erprobt wird Linux/amd64.
+Sobald ein geprüftes offizielles Containerimage das Release enthält, kann die
+zusätzliche Buildstufe durch diesen neuen Basis-Digest ersetzt werden.
+
+`deploy/Dockerfile.database` baut auf dem unveränderten MariaDB-12.3.3-Digest
+auf und aktualisiert ausschließlich `libc6` und `libc-bin` auf
+`2.39-0ubuntu8.9`. Datenbankserver und Entrypoint bleiben erhalten. Ein erster
+erneuter Scan erfasst weiterhin **151 Pakete**, jetzt **14 MEDIUM und sieben
+LOW**, ohne HIGH/CRITICAL/UNKNOWN. Alle zwölf zuvor behebbaren glibc-Paketbefunde
+entfallen; für die 21 Restbefunde nennt der Bericht keine verfügbare Korrektur.
+Die verbleibenden Voraussetzungen sind für den Datenbankbetrieb gesondert zu
+bewerten; die App-Einschätzung ist keine Freigabe für den Datenbankprozess.
+
+App und Datenbank werden gemeinsam gebaut und getestet. Das Release-Manifest
+verlangt übereinstimmende Versions-/Revisionslabels beider Images und prüft die
+JRE-, MariaDB- und glibc-Versionen. Die CI transportiert beide geprüften Images
+gemeinsam zum Publish-Job. `KR_DB_IMAGE` ist nun verpflichtend; ein stiller
+Rückfall auf das ungepatchte Herstellerimage ist ausgeschlossen. Eigene
+Overrides sind weiterhin möglich und benötigen eine eigene Prüfung.
+
+Der lokale Maven-Lauf verwendet das offizielle Windows-JDK mit ebenfalls
+geprüfter SHA-256-Summe. In `actions/setup-java` wird die Adoptium-SemVer
+`25.0.4+101.0.LTS` verwendet, die die API für **25.0.4.1+1-LTS** liefert.
+Zusätzlich prüft die CI `JAVA_RUNTIME_VERSION` im installierten JDK, bevor
+Maven läuft. Künftige Wartungsreleases erfordern ein gemeinsames Update dieser
+Vorgaben und der Artefaktprüfung. Die endgültigen Testergebnisse und Imagescans
+stehen im R19-Nachweis der [Roadmap](roadmap.md).
 
 Quellen: [Adoptium JRE-Artefakte für Linux x64](https://api.adoptium.net/v3/assets/latest/25/hotspot?architecture=x64&image_type=jre&os=linux&vendor=eclipse),
 [Trivy v0.74.0](https://github.com/aquasecurity/trivy/releases/tag/v0.74.0),

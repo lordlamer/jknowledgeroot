@@ -1,6 +1,6 @@
 # Produktionskonfiguration und Lieferprozess
 
-Stand: R18, 13. September 2026. Dieser Stand bereitet den Betrieb vor;
+Stand: R19, 13. September 2026. Dieser Stand bereitet den Betrieb vor;
 [Backup und Wiederherstellung](recovery.md) sowie der [Release-Kandidat](release.md)
 sind dokumentiert; die betriebliche Freigabe bleibt offen. Versionskonflikte,
 Historie und Löschverhalten beschreibt [page-history.md](page-history.md). Healthchecks, Metriken und
@@ -24,11 +24,14 @@ Die Produktionsdatei [compose.production.yaml](../deploy/compose.production.yaml
 ist eine getrennte, neue Installation. Bestehende Entwicklungsvolumes nicht
 ungeprüft umhängen; deren Konten und Daten müssen regulär migriert werden.
 
-Neue Produktionsumgebungen verwenden MariaDB **12.3.3 LTS**, auf einen festen
-Image-Digest gepinnt. Die Reihe wird laut [MariaDB-Releasehinweisen](https://mariadb.com/docs/release-notes/community-server/12.3/12.3.3)
-bis Juni 2029 gepflegt. Ein leeres `KR_DB_IMAGE` wählt diesen Standard;
-ein ausdrücklich gesetzter Wert erlaubt die Wiederherstellung mit einer älteren
-gesicherten Version. Für bestehende 12.2.2-Installationen vor dem nächsten
+Neue Produktionsumgebungen verwenden ein gemeinsam mit der Anwendung gebautes
+MariaDB-**12.3.3-LTS**-Image mit zusätzlichen Ubuntu-glibc-Korrekturen. Seine
+Herstellerbasis ist auf einen festen Digest gepinnt. Die Reihe wird laut
+[MariaDB-Releasehinweisen](https://mariadb.com/docs/release-notes/community-server/12.3/12.3.3)
+bis Juni 2029 gepflegt. **`KR_DB_IMAGE` ist verpflichtend**, ein leerer Wert bricht
+die Compose-Konfiguration ab. Nach Veröffentlichung den im Release erfassten
+Datenbank-Digest verwenden; für Rollback ausdrücklich die gesicherte alte Version.
+Für bestehende 12.2.2-Installationen vor dem nächsten
 Compose-Start die alte Imageversion in der Env-Datei festhalten und den
 [logischen Umstieg in neue Volumes](recovery.md#wechsel-von-mariadb-1222-auf-1233)
 verwenden. Der geänderte Standard ist keine Freigabe für ein Upgrade bestehender
@@ -36,14 +39,14 @@ Datenbankdateien. Das Entwicklungs-Compose bleibt dafür zunächst auf 12.2.2.
 
 ## Neue Umgebung starten
 
-1. JDK 25, Docker mit Compose, einen persistenten Datenträger und einen Host mit
+1. Temurin JDK 25.0.4.1+1, Docker mit Compose, einen persistenten Datenträger und einen Host mit
    funktionierendem HTTPS-Proxy bereitstellen. Für einen lokalen Build
    die Befehle mit Versions-/Revisionsnachweis aus [release.md](release.md) verwenden.
    Ein freigegebenes Image später mit
    unveränderlichem Digest statt eines beweglichen Tags referenzieren.
 2. [production.env.example](../deploy/production.env.example) außerhalb des
    Repositorys in eine zugriffsgeschützte Datei kopieren. `KR_APP_IMAGE` konkret
-   setzen. Individuelle Passwörter für root, Laufzeitkonto und Migration vergeben.
+   und `KR_DB_IMAGE` aus demselben Release setzen. Individuelle Passwörter für root, Laufzeitkonto und Migration vergeben.
    Die beiden zuletzt genannten Werte müssen für das Initialisierungsskript
    mindestens 32 Zeichen aus `A–Z`, `a–z`, `0–9`, `_`, `-` enthalten; beispielsweise
    jeweils `openssl rand -hex 32` verwenden. Die Anwendung selbst verlangt diese
@@ -170,7 +173,8 @@ weiterhin regelmäßig geprüft und aktualisiert werden.
 Nur Pushes eines Tags wie `v1.0.0` oder `v1.0.0-rc.2` können den separaten
 Publish-Job starten. Davor wird geprüft, dass der Commit zu `origin/master`
 gehört und der gesamte Verify-Job erfolgreich war. Der Publish-Job lädt exakt
-das dort erzeugte Image und veröffentlicht Versionstag und Commit-Tag; kein
+die dort erzeugten App-/Datenbankimages und veröffentlicht Versions- und Commit-Tags
+gemäß [release.md](release.md); kein
 `latest` und kein erneuter Build mit möglicherweise verändertem Inhalt.
 
 Im Repository sind **noch vom Betreiber einzurichten**: Schutz für `master` und
@@ -190,7 +194,7 @@ Migrationszugänge und einen echten MariaDB-Laufzeitbenutzer ohne DDL-Rechte.
 Er prüft Cookies/HSTS, Anmeldung und Neustart, alte Funktionen, beide Speicherwege
 sowie ignorierte beziehungsweise vertrauenswürdig weitergeleitete Client-IP-Ketten.
 
-`sh deploy/smoke-test.sh knowledgeroot:verified` erzeugt ein zufällig benanntes,
+`sh deploy/smoke-test.sh knowledgeroot:verified knowledgeroot:database-verified` erzeugt ein zufällig benanntes,
 entbehrliches Compose-Projekt mit eigenen Passwörtern und Volumes und entfernt
 **nur dieses Testprojekt einschließlich seiner Volumes** beim Ende. Es prüft
 Ersteinrichtung, HTTP-Erreichbarkeit des internen App-Ports, UID, Schreibrechte,

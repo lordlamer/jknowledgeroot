@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 umask 077
-[[ $# == 2 ]] || { echo 'Usage: recovery-smoke-test.sh NEW_IMAGE PREVIOUS_IMAGE' >&2; exit 2; }
-new_image=$1 old_image=$2
+[[ $# == 3 ]] || { echo 'Usage: recovery-smoke-test.sh NEW_IMAGE PREVIOUS_IMAGE NEW_DATABASE_IMAGE' >&2; exit 2; }
+new_image=$1 old_image=$2 new_database=$3
 # Preserve the old database alongside the old app; never downgrade an upgraded volume.
 old_database=mariadb:12.2.2@sha256:e16f61b8f6ed25111adbb1c5c19bbc2904efc8ed14029999af0cbe1c7ae18bf1
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
@@ -27,7 +27,7 @@ for stage in source upgraded rollback; do
   {
     printf 'KR_APP_IMAGE=%s\n' "$image"
     if [[ "$stage" == upgraded ]]; then
-      printf 'KR_DB_IMAGE=\n' # Exercise the current production default.
+      printf 'KR_DB_IMAGE=%s\n' "$new_database"
     else
       printf 'KR_DB_IMAGE=%s\n' "$old_database"
     fi

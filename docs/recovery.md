@@ -1,6 +1,6 @@
 # Backup, Wiederherstellung und Upgrade
 
-Stand: R18, 13. September 2026. Die Skripte gelten für **eine Instanz mit lokalem
+Stand: R19, 13. September 2026. Die Skripte gelten für **eine Instanz mit lokalem
 Dateispeicher** im unveränderten [Produktions-Compose](../deploy/compose.production.yaml).
 MariaDB und sämtliche Dateien bilden gemeinsam einen Wiederherstellungspunkt.
 Ein SQL-Dump allein reicht nicht. Für externes S3 sind zusätzlich ein konsistenter
@@ -66,8 +66,8 @@ Eine getrennte Env-Datei mit passendem Image, eigenen Datenbankzugangsdaten und
 einem freien Loopback-Port vorbereiten. Bootstrap-Werte leer lassen: Das Backup
 enthält bereits den Administrator. Den neuen Projektnamen und die neuen Volumes
 vor dem Start prüfen. Für eine Wiederherstellung ohne Datenbankupgrade
-`KR_DB_IMAGE` ausdrücklich auf die gesicherte Version setzen: Das leere Feld
-wählt immer den aktuellen Compose-Standard. `manifest.txt` nennt
+`KR_DB_IMAGE` ausdrücklich auf die gesicherte Version setzen; ein leeres Feld
+ist nicht zulässig. `manifest.txt` nennt
 `database_image_ref`, `database_image_id` und `database_version`; ältere Backups
 enthalten nur die beiden letzten Angaben. Das alte Image zusätzlich archivieren,
 da eine lokale Image-ID allein keinen erneuten Registry-Download ermöglicht.
@@ -130,8 +130,8 @@ KR_DB_IMAGE=mariadb:12.2.2@sha256:e16f61b8f6ed25111adbb1c5c19bbc2904efc8ed140299
 
 Writer stoppen und mit den obigen Befehlen einen gemeinsamen Snapshot erstellen.
 Für das neue Projekt eigene leere Volumes, Zugangsdaten und einen freien Port
-verwenden. Dort `KR_DB_IMAGE` leer lassen, um den gepinnten 12.3.3-Standard zu
-verwenden. Zuerst nur die Datenbank starten, dann den Snapshot importieren und
+verwenden. Dort `KR_DB_IMAGE` auf das gemeinsam mit dem neuen App-Image geprüfte
+12.3.3-Datenbankimage setzen. Zuerst nur die Datenbank starten, dann den Snapshot importieren und
 erst danach das neue App-Image starten und abnehmen. Den bisherigen Stand bis
 zur Freigabe behalten. Externe Datenbankkonten, Plugins und eigene
 Serverkonfigurationen benötigen eine zusätzliche Prüfung.
@@ -144,7 +144,7 @@ explizitem 12.2.2-Image in eine weitere leere Umgebung importieren. Eine
 
 ```sh
 bash deploy/build-recovery-baseline.sh
-NODE_BINARY="$PWD/target/frontend/node/node" bash deploy/recovery-smoke-test.sh knowledgeroot:verified knowledgeroot:recovery-baseline
+NODE_BINARY="$PWD/target/frontend/node/node" bash deploy/recovery-smoke-test.sh knowledgeroot:verified knowledgeroot:recovery-baseline knowledgeroot:database-verified
 ```
 
 Der Baseline-Build verwendet den festen R13-Commit
