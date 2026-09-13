@@ -1,6 +1,6 @@
 # Produktionskonfiguration und Lieferprozess
 
-Stand: R16, 13. September 2026. Dieser Stand bereitet den Betrieb vor;
+Stand: R17, 13. September 2026. Dieser Stand bereitet den Betrieb vor;
 [Backup und Wiederherstellung](recovery.md) sowie der [Release-Kandidat](release.md)
 sind dokumentiert; die betriebliche Freigabe bleibt offen. Versionskonflikte,
 Historie und Löschverhalten beschreibt [page-history.md](page-history.md). Healthchecks, Metriken und
@@ -64,7 +64,11 @@ stehen in [recovery.md](recovery.md).
 Das Image verwendet Temurin `25.0.4_7-jre-noble` mit festem Digest und startet als
 UID/GID `10001:10001`. Eine gezielte Ubuntu-glibc-Aktualisierung ergänzt die im
 Basisimage noch fehlende Korrektur; Version und Scan sind in [image-security.md](image-security.md)
-beschrieben. Das Root-Dateisystem ist im Produktions-Compose nur lesbar;
+beschrieben.
+System-Schriftverwaltung und deren Expat-Abhängigkeit sind für den vorhandenen
+Webserver entfernt; serverseitiges Schriftrendering benötigt eine gesonderte
+Abhängigkeitsprüfung. [container-findings.md](container-findings.md) bewertet die
+verbleibenden Befunde. Das Root-Dateisystem ist im Produktions-Compose nur lesbar;
 Capabilities sind entfernt und Privilegienausweitung deaktiviert. Ein neues
 Datei-Volume übernimmt die Besitzrechte aus dem Image. Vorhandene Bind-Mounts
 müssen passend für UID 10001 eingerichtet sein. `/tmp` ist ein begrenztes

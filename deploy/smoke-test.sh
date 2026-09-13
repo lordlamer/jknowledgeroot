@@ -36,6 +36,12 @@ compose exec -T app sh -c 'bash /app/healthcheck'
 compose exec -T app sh -c '
   set -eu
   test "$(id -u)" = 10001
+  for package in fontconfig libfontconfig1 libexpat1; do
+    if dpkg-query --status "$package" >/dev/null 2>&1; then
+      echo "Unexpected server font/XML package: $package" >&2
+      exit 1
+    fi
+  done
   touch /var/lib/knowledgeroot/files/.deployment-write-test
   rm /var/lib/knowledgeroot/files/.deployment-write-test
   if touch /app/forbidden-write 2>/dev/null; then exit 1; fi

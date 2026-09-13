@@ -88,6 +88,11 @@ für diese Anwendung unerreichbar wären. Die Betriebsabnahme muss diese weiterh
 bewerten; insbesondere ist ein bestandener Scan kein Nachweis der Lückenfreiheit.
 Das Ergebnis des abschließenden Scans steht im R16-Nachweis der [Roadmap](roadmap.md).
 
+R17 entfernt anschließend die ungenutzte System-Schriftverwaltung samt Expat.
+Die [Bewertung der Containerbefunde](container-findings.md) dokumentiert diesen
+Schritt und die Voraussetzungen der verbleibenden CVEs. Der Scanner prüft
+weiterhin den tatsächlichen Paketbestand ohne Ausnahmen.
+
 Quellen: [Trivy v0.74.0](https://github.com/aquasecurity/trivy/releases/tag/v0.74.0),
 [Imagearchive scannen](https://trivy.dev/docs/latest/target/container_image/),
 [OS-Pakete und Herstellerbewertungen](https://trivy.dev/docs/dev/guide/scanner/vulnerability/),

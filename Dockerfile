@@ -4,6 +4,10 @@ FROM eclipse-temurin:25.0.4_7-jre-noble@sha256:d120abd9d8d7dec94520ce974ece62d0e
 RUN apt-get update && apt-get install -y --no-install-recommends --only-upgrade \
         libc6=2.39-0ubuntu8.9 libc-bin=2.39-0ubuntu8.9 locales=2.39-0ubuntu8.9 \
     && rm -rf /var/lib/apt/lists/*
+# Pages and attachments are rendered in the browser; the server does not render fonts.
+# Remove the unused native XML parser together with its fontconfig consumers.
+# Do not autoremove unrelated base-image dependencies.
+RUN apt-get purge -y fontconfig libfontconfig1 libexpat1
 RUN groupadd --gid 10001 knowledgeroot && useradd --uid 10001 --gid 10001 --no-create-home knowledgeroot \
     && mkdir -p /app /var/lib/knowledgeroot/files && chown -R 10001:10001 /app /var/lib/knowledgeroot
 WORKDIR /app
