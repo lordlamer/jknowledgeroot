@@ -122,7 +122,7 @@ bestehender Sitzungen und unveränderte Checksummen der historischen Changesets.
 ## Automatisierte Prüfung
 
 `InstallationTest` benötigt eine erreichbare Docker-Engine. Testcontainers startet
-dafür eine temporäre MariaDB 12.2.2 mit isolierten Testdatenbanken und räumt den
+dafür eine temporäre MariaDB 12.3.3 LTS mit isolierten Testdatenbanken und räumt den
 Container anschließend auf. Die Tests lesen keine `.env`- oder lokalen
 Anwendungskonfigurationen. Die Testcontainers-Version wird durch das vorhandene
 Spring-Boot-BOM verwaltet.

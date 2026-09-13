@@ -1,7 +1,7 @@
-# Sicherheitsprüfung des Anwendungsimages
+# Sicherheitsprüfung der Containerimages
 
-Der OSV-Scan für Maven und npm wird durch einen Scan der im Anwendungsimage
-installierten Betriebssystempakete ergänzt. Beide Prüfungen sind vor einer
+Der OSV-Scan für Maven und npm wird durch einen Scan der im Anwendungs- und
+Datenbankimage installierten Betriebssystempakete ergänzt. Diese Prüfungen sind vor einer
 Veröffentlichung erforderlich. Die Anwendung wird dabei nicht gestartet.
 
 ## Lokal ausführen
@@ -12,6 +12,7 @@ Nach Maven-Paketierung mit der aktuellen `build.revision`:
 target/frontend/node/node scripts/build-container.mjs knowledgeroot:verified
 target/frontend/node/node --test scripts/image-audit-policy.test.mjs
 target/frontend/node/node scripts/audit-image.mjs knowledgeroot:verified
+target/frontend/node/node scripts/audit-image.mjs --database
 ```
 
 Unter Windows heißen die Node-Befehle `target/frontend/node/node.exe`.
@@ -38,6 +39,12 @@ wird ausschließlich das eigens erzeugte temporäre Verzeichnis entfernt.
 - `target/image-audit.json`: vollständiger Trivy-Bericht mit Paketbestand und Funden.
 - `target/image-audit-summary.json`: Ergebnis, blockierende Funde, Scanner-Digest,
   Image-ID/Labels, Archivprüfsumme, Scanzeit und Metadaten der Schwachstellendatenbank.
+- `target/database-image-audit.json` und `target/database-image-audit-summary.json`:
+  dieselben Nachweise für den Datenbankstandard aus dem Produktions-Compose.
+  `target/frontend/node/node scripts/audit-image.mjs --database` löst diesen mit
+  synthetischen Pflichtwerten und ohne Betreiber-Env-Datei auf, verlangt einen
+  MariaDB-Digest und lädt genau dieses Image. `KR_DB_IMAGE` aus der Shell wird
+  dafür ausdrücklich ignoriert. Eigene betriebliche Overrides separat scannen.
 - Exitcode 0: vollständiger erkannter OS-Paketbestand ohne blockierende Funde.
 - Exitcode ungleich 0: HIGH, CRITICAL oder unbekannter Schweregrad, nicht mehr
   unterstütztes OS, fehlender Paketbestand, inkompatibler Bericht oder technischer
@@ -56,10 +63,13 @@ Release-Archiv. Scanfehler werden nicht mit `continue-on-error` übergangen.
 
 ## Grenzen
 
-Geprüft werden OS-Pakete des Anwendungsimages anhand der vom Scanner unterstützten
+Geprüft werden OS-Pakete des Anwendungs- und Referenzdatenbankimages anhand der vom Scanner unterstützten
 Herstellerdaten. Manuell installierte Laufzeiten wie die Temurin-JRE werden damit
 nicht vollständig bewertet; ihre Version und Supportlage müssen weiter separat
-gepflegt werden. Maven-/npm-Pakete bleiben beim OSV-Scan. Datenbank-/Proxyimages,
+gepflegt werden. Auch MariaDB-Pakete aus der Herstellerquelle sind mit einer
+Ubuntu-OS-Prüfung nicht vollständig auf Serverlücken untersucht; die gepflegte
+Serverversion und deren Herstellerhinweise bleiben eine eigene Prüfung.
+Maven-/npm-Pakete bleiben beim OSV-Scan. Abweichende Datenbankimages, Proxyimages,
 Hostbetriebssystem, Konfiguration, unbekannte Lücken und die konkrete Erreichbarkeit
 eines verwundbaren Codes sind nicht durch diesen Scan abgenommen.
 
@@ -93,7 +103,31 @@ Die [Bewertung der Containerbefunde](container-findings.md) dokumentiert diesen
 Schritt und die Voraussetzungen der verbleibenden CVEs. Der Scanner prüft
 weiterhin den tatsächlichen Paketbestand ohne Ausnahmen.
 
-Quellen: [Trivy v0.74.0](https://github.com/aquasecurity/trivy/releases/tag/v0.74.0),
+## Datenbankimage und offene Laufzeitkorrekturen (R18)
+
+Der neue Standard `mariadb:12.3.3` mit Digest
+`sha256:ab1c3dd381940233af12512b97d47b508fd3a0f17fbe3ba388739b7bc17cbc0b`
+enthält laut Scan vom 13. September 2026 **151 OS-Pakete und 33 Paketbefunde**:
+26 MEDIUM, sieben LOW, keine HIGH/CRITICAL/UNKNOWN. Die Schweregradregel besteht;
+das ist noch keine betriebliche Freigabe. Zwölf mittlere Befunde in `libc6` und
+`libc-bin` haben bereits einen Ubuntu-Fix in `2.39-0ubuntu8.9`. Dieser fehlt noch
+im Herstellerimage. Die verbleibenden Befunde betreffen unter anderem Perl,
+SQLite, tar, zlib und native Systembibliotheken. Die Bewertung des App-Images
+in `container-findings.md` lässt sich nicht pauschal auf einen Datenbankprozess
+übertragen. **R19 muss die verfügbaren glibc-Fixes übernehmen und erneut scannen.**
+
+Die separate Java-Prüfung ergab außerdem das Wartungsrelease **25.0.4.1+1**;
+das App-Image verwendet noch **25.0.4+7**. Die
+[Java-Releasehinweise](https://www.oracle.com/java/technologies/javase/25-0-4-1-relnotes.html)
+nennen Sicherheitskorrekturen. Die offizielle Adoptium-API bietet die neue
+Temurin-JRE als Archiv an; am Prüftag war das zugehörige Docker-Hub-Tag
+`25.0.4.1_1-jre-noble` nicht verfügbar. **R19 muss das Laufzeitupdate umsetzen
+und testen**, gegebenenfalls mit verifiziertem Herstellerarchiv, sofern das
+Containerimage weiterhin fehlt. Ein bestandener OS-Scan erledigt diesen Punkt
+nicht. Die Produktionsfreigabe bleibt bis zur Korrektur offen.
+
+Quellen: [Adoptium JRE-Artefakte für Linux x64](https://api.adoptium.net/v3/assets/latest/25/hotspot?architecture=x64&image_type=jre&os=linux&vendor=eclipse),
+[Trivy v0.74.0](https://github.com/aquasecurity/trivy/releases/tag/v0.74.0),
 [Imagearchive scannen](https://trivy.dev/docs/latest/target/container_image/),
 [OS-Pakete und Herstellerbewertungen](https://trivy.dev/docs/dev/guide/scanner/vulnerability/),
 [Ubuntu: glibc-Korrektur für Noble](https://ubuntu.com/security/CVE-2026-19499).

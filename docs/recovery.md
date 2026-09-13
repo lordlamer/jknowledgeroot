@@ -1,6 +1,6 @@
 # Backup, Wiederherstellung und Upgrade
 
-Stand: R14, 13. September 2026. Die Skripte gelten für **eine Instanz mit lokalem
+Stand: R18, 13. September 2026. Die Skripte gelten für **eine Instanz mit lokalem
 Dateispeicher** im unveränderten [Produktions-Compose](../deploy/compose.production.yaml).
 MariaDB und sämtliche Dateien bilden gemeinsam einen Wiederherstellungspunkt.
 Ein SQL-Dump allein reicht nicht. Für externes S3 sind zusätzlich ein konsistenter
@@ -65,7 +65,12 @@ vertrauenswürdige Backups importieren: SQL ist ausführbarer Inhalt.
 Eine getrennte Env-Datei mit passendem Image, eigenen Datenbankzugangsdaten und
 einem freien Loopback-Port vorbereiten. Bootstrap-Werte leer lassen: Das Backup
 enthält bereits den Administrator. Den neuen Projektnamen und die neuen Volumes
-vor dem Start prüfen. Die Zielversion von MariaDB zunächst identisch halten.
+vor dem Start prüfen. Für eine Wiederherstellung ohne Datenbankupgrade
+`KR_DB_IMAGE` ausdrücklich auf die gesicherte Version setzen: Das leere Feld
+wählt immer den aktuellen Compose-Standard. `manifest.txt` nennt
+`database_image_ref`, `database_image_id` und `database_version`; ältere Backups
+enthalten nur die beiden letzten Angaben. Das alte Image zusätzlich archivieren,
+da eine lokale Image-ID allein keinen erneuten Registry-Download ermöglicht.
 
 ```sh
 docker compose --project-name knowledgeroot-restored --env-file /secure/restored.env -f deploy/compose.production.yaml up -d --wait database
@@ -111,6 +116,30 @@ geprüften Liquibase-Downgrade. Änderungen nach dem Sicherungszeitpunkt gehen b
 diesem Rückweg verloren; bis zur Freigabe deshalb keine produktiven Schreibzugriffe
 zulassen. Spätere Datenübernahme verlangt eine eigene fachliche Abstimmung.
 
+## Wechsel von MariaDB 12.2.2 auf 12.3.3
+
+Der geprüfte Weg verwendet einen logischen Dump ausschließlich der
+Anwendungsdatenbank. Die MariaDB-Systemtabellen und Datenbankkonten werden im
+neuen Container frisch angelegt; alte `/var/lib/mysql`-Dateien werden nicht
+übernommen. Vor Änderungen am bisherigen Compose-Projekt in dessen Env-Datei
+die alte Datenbank festlegen:
+
+```dotenv
+KR_DB_IMAGE=mariadb:12.2.2@sha256:e16f61b8f6ed25111adbb1c5c19bbc2904efc8ed14029999af0cbe1c7ae18bf1
+```
+
+Writer stoppen und mit den obigen Befehlen einen gemeinsamen Snapshot erstellen.
+Für das neue Projekt eigene leere Volumes, Zugangsdaten und einen freien Port
+verwenden. Dort `KR_DB_IMAGE` leer lassen, um den gepinnten 12.3.3-Standard zu
+verwenden. Zuerst nur die Datenbank starten, dann den Snapshot importieren und
+erst danach das neue App-Image starten und abnehmen. Den bisherigen Stand bis
+zur Freigabe behalten. Externe Datenbankkonten, Plugins und eigene
+Serverkonfigurationen benötigen eine zusätzliche Prüfung.
+
+Beim Rückweg den Snapshot **von vor dem Upgrade** mit altem App-Image und
+explizitem 12.2.2-Image in eine weitere leere Umgebung importieren. Eine
+12.3-Datenbank niemals mit 12.2-Binärdateien auf demselben Volume öffnen.
+
 ## Wiederholbarer Test und Grenzen
 
 ```sh
@@ -135,8 +164,10 @@ mit Datenbankpasswörtern werden entfernt. Die HTTP-Prüfung arbeitet ausschlie�
 auf Loopback und führt Cookies im Testclient selbst; die produktive TLS-/Cookie-
 Prüfung bleibt Bestandteil des separaten JAR-Tests.
 
-Die Referenzprüfung betrifft R13 auf den aktuellen Kandidaten mit derselben
-MariaDB-Version. Historische Schemamigrationen prüfen die bestehenden Java-Tests.
+Die Referenzprüfung betrifft R13 mit MariaDB 12.2.2 auf den aktuellen Kandidaten
+mit MariaDB 12.3.3 und zurück zum R13-Snapshot mit 12.2.2. Der Test prüft die
+tatsächlich gestartete Serverversion in allen drei Umgebungen ausdrücklich.
+Historische Schemamigrationen prüfen die bestehenden Java-Tests auf 12.3.3.
 R14 selbst fügte keine neue Schemamigration hinzu. Der aktuelle R15-Kandidat
 enthält `1.0.11-page-revisions`; die Referenzkette prüft damit auch das Upgrade
 auf die neue Historienstruktur. Ein Rückweg verwendet weiterhin das alte Image

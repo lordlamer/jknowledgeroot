@@ -1,6 +1,6 @@
 # Produktionskonfiguration und Lieferprozess
 
-Stand: R17, 13. September 2026. Dieser Stand bereitet den Betrieb vor;
+Stand: R18, 13. September 2026. Dieser Stand bereitet den Betrieb vor;
 [Backup und Wiederherstellung](recovery.md) sowie der [Release-Kandidat](release.md)
 sind dokumentiert; die betriebliche Freigabe bleibt offen. Versionskonflikte,
 Historie und Löschverhalten beschreibt [page-history.md](page-history.md). Healthchecks, Metriken und
@@ -23,6 +23,16 @@ und Zugangsdaten verpflichtend. Das ändert keine Passwörter vorhandener Volume
 Die Produktionsdatei [compose.production.yaml](../deploy/compose.production.yaml)
 ist eine getrennte, neue Installation. Bestehende Entwicklungsvolumes nicht
 ungeprüft umhängen; deren Konten und Daten müssen regulär migriert werden.
+
+Neue Produktionsumgebungen verwenden MariaDB **12.3.3 LTS**, auf einen festen
+Image-Digest gepinnt. Die Reihe wird laut [MariaDB-Releasehinweisen](https://mariadb.com/docs/release-notes/community-server/12.3/12.3.3)
+bis Juni 2029 gepflegt. Ein leeres `KR_DB_IMAGE` wählt diesen Standard;
+ein ausdrücklich gesetzter Wert erlaubt die Wiederherstellung mit einer älteren
+gesicherten Version. Für bestehende 12.2.2-Installationen vor dem nächsten
+Compose-Start die alte Imageversion in der Env-Datei festhalten und den
+[logischen Umstieg in neue Volumes](recovery.md#wechsel-von-mariadb-1222-auf-1233)
+verwenden. Der geänderte Standard ist keine Freigabe für ein Upgrade bestehender
+Datenbankdateien. Das Entwicklungs-Compose bleibt dafür zunächst auf 12.2.2.
 
 ## Neue Umgebung starten
 

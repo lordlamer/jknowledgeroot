@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /** Real HTTP, JPA, migrations, JDBC sessions and storage initialization, without local configuration. */
 @Testcontainers
 class ApplicationSmokeIT {
-    @Container static final MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:12.2.2");
+    @Container static final MariaDBContainer<?> database = new MariaDBContainer<>(org.knowledgeroot.test.DatabaseImage.MARIADB);
     // Pinned compatibility fixture; the production storage choice remains in R12.
     @Container static final GenericContainer<?> storage = new GenericContainer<>("quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z")
             .withEnv("MINIO_ROOT_USER", "smoke-test-user")

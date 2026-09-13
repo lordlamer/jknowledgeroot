@@ -40,6 +40,8 @@ jobs:
         run: |
           target/frontend/node/node --test scripts/image-audit-policy.test.mjs
           target/frontend/node/node scripts/audit-image.mjs knowledgeroot:verified
+      - name: Audit pinned production database operating system
+        run: target/frontend/node/node scripts/audit-image.mjs --database
       - name: Archive container audit evidence including failures
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -48,6 +50,8 @@ jobs:
           path: |
             target/image-audit.json
             target/image-audit-summary.json
+            target/database-image-audit.json
+            target/database-image-audit-summary.json
           if-no-files-found: warn
           retention-days: 14
       - name: Verify backup, upgrade and rollback from pinned R13 baseline
@@ -76,6 +80,8 @@ jobs:
             target/dependency-audit.json
             target/image-audit.json
             target/image-audit-summary.json
+            target/database-image-audit.json
+            target/database-image-audit-summary.json
           retention-days: 3
           compression-level: 0
   publish:

@@ -34,7 +34,7 @@ import static org.mockito.Mockito.*;
 
 @Testcontainers
 class FileUploadDatabaseTest {
-    @Container static final MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:12.2.2");
+    @Container static final MariaDBContainer<?> database = new MariaDBContainer<>(org.knowledgeroot.test.DatabaseImage.MARIADB);
     @TempDir Path directory;
     private DriverManagerDataSource source;
     private JdbcTemplate jdbc;

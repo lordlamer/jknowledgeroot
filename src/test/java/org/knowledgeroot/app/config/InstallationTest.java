@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Testcontainers
 class InstallationTest {
     @Container
-    static final MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:12.2.2");
+    static final MariaDBContainer<?> database = new MariaDBContainer<>(org.knowledgeroot.test.DatabaseImage.MARIADB);
     private static final String PASSWORD = "a-test-only-password-2026";
     private DataSource dataSource;
     private JdbcTemplate jdbc;

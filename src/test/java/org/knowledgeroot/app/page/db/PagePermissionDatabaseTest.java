@@ -40,7 +40,7 @@ import static org.mockito.Mockito.*;
 @Testcontainers
 class PagePermissionDatabaseTest {
     @Container
-    static final MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:12.2.2");
+    static final MariaDBContainer<?> database = new MariaDBContainer<>(org.knowledgeroot.test.DatabaseImage.MARIADB);
     private JdbcTemplate jdbc;
     private PagePermissionImpl permissions;
     private DataSource dataSource;

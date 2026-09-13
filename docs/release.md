@@ -15,6 +15,7 @@ revision=$(git rev-parse HEAD)
 sh ./mvnw -B --no-transfer-progress -Dbuild.revision="$revision" clean verify
 target/frontend/node/node scripts/build-container.mjs knowledgeroot:verified
 target/frontend/node/node scripts/audit-image.mjs knowledgeroot:verified
+target/frontend/node/node scripts/audit-image.mjs --database
 ```
 
 `target/release-manifest.json` nennt Maven-Version, Git-Revision, Änderungen an
@@ -35,11 +36,14 @@ einschließlich Versions-/Commit-Tags; sie baut es im Publish-Job nicht erneut.
    und Docker-Standardlabel gemeinsam pflegen. Bei einem Versionswechsel alte
    JARs durch `clean` entfernen, damit das Docker-COPY eindeutig bleibt.
 2. Gesamten Maven-Testlauf, Containerstart und Backup-/Upgrade-/Rollbackprüfung
-   bestehen lassen. Dependency-Baum und OSV-Bericht archivieren. Der Workflow führt
+   bestehen lassen. Vor der Freigabe die Java-/Datenbank-OS-Korrekturen aus
+   [R19](roadmap.md#r19--java-wartungsrelease-und-verfügbare-datenbank-os-fixes-übernehmen)
+   abschließen. Dependency-Baum und OSV-Bericht archivieren. Der Workflow führt
    den vorhandenen Scanner nun aus und stoppt bei Funden oder unvollständiger
    Prüfung. OSV erfasst Maven-/npm-Pakete; der zusätzliche
-   [OS-Imagescan](image-security.md) prüft Betriebssystempakete im App-Container.
-   Verbleibende Funde, Datenbank-/Proxyimages und organisationsspezifische
+   [OS-Imagescan](image-security.md) prüft Betriebssystempakete im App-Container
+   und im gepinnten Produktions-Datenbankimage.
+   Verbleibende Funde, Datenbankserver-/JRE-Laufzeit, Proxyimages und organisationsspezifische
    Release-Regeln sind gesondert zu bewerten.
 3. In der Zielumgebung TLS/Proxy, Rechte, Last und Loginquoten, Speicher-/Backupplatz,
    externe Alarmierung und Restore-Zeiten prüfen. Repräsentative eigene Altinhalte

@@ -29,7 +29,7 @@ import static org.mockito.Mockito.*;
 
 @Testcontainers
 class PasswordDatabaseTest {
-    @Container static final MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:12.2.2");
+    @Container static final MariaDBContainer<?> database = new MariaDBContainer<>(org.knowledgeroot.test.DatabaseImage.MARIADB);
     private static final String LEGACY = PasswordHasher.hash("old", PasswordHasher.HASH_METHOD.SHA256, 1000);
     private static final PasswordService passwords = new PasswordService();
     private DataSource source;

@@ -3,11 +3,13 @@ set -euo pipefail
 umask 077
 [[ $# == 2 ]] || { echo 'Usage: recovery-smoke-test.sh NEW_IMAGE PREVIOUS_IMAGE' >&2; exit 2; }
 new_image=$1 old_image=$2
+# Preserve the old database alongside the old app; never downgrade an upgraded volume.
+old_database=mariadb:12.2.2@sha256:e16f61b8f6ed25111adbb1c5c19bbc2904efc8ed14029999af0cbe1c7ae18bf1
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 node=${NODE_BINARY:-node}
 test_id="knowledgeroot-recovery-$(date +%s)-$$"
 work=$(mktemp -d)
-unset KR_APP_IMAGE KR_DB_ROOT_PASSWORD KR_DB_PASSWORD KR_MIGRATION_PASSWORD KR_BOOTSTRAP_LOGIN KR_BOOTSTRAP_PASSWORD KR_APP_PORT KR_FORWARD_HEADERS_STRATEGY KR_TRUSTED_PROXY_PATTERN
+unset KR_APP_IMAGE KR_DB_IMAGE KR_DB_ROOT_PASSWORD KR_DB_PASSWORD KR_MIGRATION_PASSWORD KR_BOOTSTRAP_LOGIN KR_BOOTSTRAP_PASSWORD KR_APP_PORT KR_FORWARD_HEADERS_STRATEGY KR_TRUSTED_PROXY_PATTERN
 compose() { docker compose --project-name "$test_id-$stage" --env-file "$work/$stage.env" -f "$root/deploy/compose.production.yaml" "$@"; }
 cleanup() {
   for stage in source upgraded rollback; do
@@ -24,12 +26,22 @@ for stage in source upgraded rollback; do
   [[ "$stage" != upgraded ]] || image=$new_image
   {
     printf 'KR_APP_IMAGE=%s\n' "$image"
+    if [[ "$stage" == upgraded ]]; then
+      printf 'KR_DB_IMAGE=\n' # Exercise the current production default.
+    else
+      printf 'KR_DB_IMAGE=%s\n' "$old_database"
+    fi
     printf 'KR_DB_ROOT_PASSWORD=%s\nKR_DB_PASSWORD=%s\nKR_MIGRATION_PASSWORD=%s\n' "$(openssl rand -hex 32)" "$(openssl rand -hex 32)" "$(openssl rand -hex 32)"
     printf 'KR_BOOTSTRAP_LOGIN=recovery.admin\nKR_BOOTSTRAP_PASSWORD=%s\nKR_APP_PORT=0\n' "$RECOVERY_TEST_PASSWORD"
   } > "$work/$stage.env"
 done
 sql() { compose exec -T database sh -c 'MYSQL_PWD="$MARIADB_ROOT_PASSWORD" mariadb --protocol=socket --user=root --batch --skip-column-names knowledgeroot'; }
 verify() {
+  database_version=$(printf 'SELECT VERSION();\n' | sql)
+  expected_version=12.2.2
+  [[ "$stage" != upgraded ]] || expected_version=12.3.3
+  [[ "$database_version" == "$expected_version"-* ]] || { echo "Unexpected $stage database: $database_version" >&2; exit 1; }
+  printf '%s database version verified: %s\n' "$stage" "$database_version"
   "$node" "$root/deploy/recovery-http.mjs" "http://$(compose port app 8081)"
   [[ $(printf 'SELECT COUNT(*) FROM tag_content WHERE page_id=102;\n' | sql) == 1 ]]
   [[ $(printf 'SELECT COUNT(*) FROM page_comment WHERE page_id=102;\n' | sql) == 1 ]]

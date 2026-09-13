@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "knowledgeroot.login.source-attempts=10000", "knowledgeroot.login.account-attempts=10000"})
 @AutoConfigureMockMvc
 abstract class IsolatedApplicationTest {
-    static final MariaDBContainer<?> DATABASE = new MariaDBContainer<>("mariadb:12.2.2");
+    static final MariaDBContainer<?> DATABASE = new MariaDBContainer<>(org.knowledgeroot.test.DatabaseImage.MARIADB);
     static final Path STORAGE;
     static {
         DATABASE.start(); // One disposable database for the shared context; Ryuk owns its lifecycle.
