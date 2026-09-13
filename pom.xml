@@ -5,7 +5,7 @@
 
 	<groupId>org.knowledgeroot</groupId>
 	<artifactId>knowledgeroot</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0-rc.1</version>
 	<packaging>jar</packaging>
 
 	<name>knowledgeroot</name>
@@ -22,6 +22,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>25</java.version>
+        <project.build.outputTimestamp>2026-09-13T00:00:00Z</project.build.outputTimestamp>
+        <build.revision>unknown</build.revision>
         <htmx-spring-boot.version>5.1.0</htmx-spring-boot.version>
         <!-- Security fixes newer than Boot 4.1.1's managed Tomcat; remove when the BOM catches up. -->
         <tomcat.version>11.0.25</tomcat.version>
@@ -244,6 +246,14 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals><goal>build-info</goal></goals>
+                        <configuration>
+                            <additionalProperties><revision>${build.revision}</revision></additionalProperties>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>

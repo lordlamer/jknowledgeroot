@@ -1,6 +1,6 @@
 # Roadmap zur Produktionsreife
 
-Stand: 12. September 2026. Grundlage ist die Code- und Build-Prüfung dieses Tages.
+Stand: 13. September 2026. Grundlage ist die Code- und Build-Prüfung vom 12. September 2026.
 
 Ziel ist eine sicher betreibbare, reproduzierbar gebaute Version mit getesteten
 Zugriffsrechten, Migrationen und Wiederherstellung. Der aktuelle Stand ist noch
@@ -15,9 +15,9 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: R14 – Wiederherstellung und Release erproben.**
+**Nächster Schritt: R15 – Bearbeitungskonflikte und Versionshistorie.**
 
-R01 bis R13 sind abgeschlossen. R14 bis R15 sind offen; die Produktionsfreigabe steht weiterhin aus.
+R01 bis R14 sind umgesetzt und lokal geprüft. R15 und die Abnahme der tatsächlichen Betriebsumgebung sind offen; die Produktionsfreigabe steht weiterhin aus.
 
 ## 1. Build und Sicherheit
 
@@ -181,9 +181,14 @@ R01 bis R13 sind abgeschlossen. R14 bis R15 sind offen; die Produktionsfreigabe 
 
 ### R14 – Wiederherstellung und Release erproben
 
-- [ ] Offen
+- [x] Umgesetzt und lokal geprüft am 13. September 2026; externe Release-Freigabe weiterhin ausstehend
 - **Umsetzung:** Backup von Datenbank und Dateien, Wiederherstellung, Upgrade und Rückkehr zur vorherigen Version dokumentieren. Datenkonsistenz zwischen Datenbank und Storage berücksichtigen. Release-Version, Konfigurationsbeispiele und Betriebsanleitung vervollständigen; benötigte Beispieldateien versionieren.
 - **Abnahme:** Restore in eine leere Umgebung wurde praktisch durchgeführt; Inhalte, Rechte und Anhänge sind nutzbar. Upgrade und dokumentierter Rollbackweg wurden mit repräsentativen Bestandsdaten getestet. Release-Artefakt ist reproduzierbar zuordenbar, Tests und Sicherheitsprüfung sind bestanden und alle verbleibenden Einschränkungen dokumentiert.
+- **Sicherung und Restore:** `deploy/recovery.sh` sichert bei gestoppter Anwendung die Datenbank und das gesamte lokale Datei-Volume gemeinsam, ergänzt Image-/Datenbankidentität und SHA-256-Prüfsummen und kennzeichnet unvollständige Backups. Restore prüft die Sicherung vor dem Import und akzeptiert ausschließlich eine leere Datenbank und ein leeres Datei-Volume. Bestehende Daten werden nicht gelöscht; die Anwendung wird nicht automatisch gestartet. [recovery.md](recovery.md) beschreibt Wartungsfenster, vertrauliche Sicherungen, leere Zielumgebung, Abnahme und Fehlerfälle.
+- **Upgrade und Rückkehr:** Der separat gebaute feste R13-Commit `7b85fa137c44b282441b47eb3d1d1f8c3f629e4d` dient als Vorgängerversion. Drei isolierte Compose-Projekte prüfen die gemeinsame Sicherung, den Restore mit dem neuen Kandidaten und die Rückkehr mit altem Image plus Vor-Upgrade-Snapshot. Konten, öffentliche/private Seiten, Gruppenrechte, Labels, Kommentare, Sterne und bytegleiche Anhänge bleiben nutzbar; Änderungen nach dem Snapshot werden beim Rollback verworfen. R14 fügt keine neue Schemamigration hinzu; historische Upgrades bleiben zusätzlich durch die Java-Migrationstests abgedeckt.
+- **Release-Nachweis:** Maven-Version `1.0.0-rc.1`, feste Archivzeit und eingebettete Build-/Revisionsdaten; OCI-Labels und `release-manifest.json` verbinden Version, Commit, Arbeitskopiestatus, JAR-SHA-256 und Image-ID. Die Manifestprüfung vergleicht auch das JAR im Container bytegenau mit dem gebauten Artefakt. Abweichende Release-Tags und veränderte Arbeitskopien werden abgelehnt. Die CI-Konfiguration ergänzt Restore-/Rollbackprüfung, den bestehenden OSV-Scanner und archiviert Manifest/Scanbericht mit dem geprüften Image. [release.md](release.md) hält Freigabe und Grenzen fest; es wurde nichts getaggt oder veröffentlicht.
+- **Geprüft:** Vollständiges `clean verify` mit übergebener Git-Revision: **BUILD SUCCESS, 256 Tests erfolgreich, keine Fehler oder übersprungenen Tests**. Kandidatenimage und separate R13-Baseline gebaut. Produktions-Compose besteht Start und Neustart; die vollständige Backup-/Upgrade-/Rollbackkette besteht einschließlich Ablehnung laufender Writer, beschädigter Sicherungen, befüllter Datei-Volumes und Datenbanken. **277 Paketversionen ohne bekannte Advisories** beim erneuten OSV-Scan. Versions-/Arbeitskopieablehnung, Shell-/JavaScript-Syntax, Workflow mit actionlint 1.7.12 und `git diff --check` geprüft. Testprojekte und ihre Volumes entfernt.
+- **Grenzen:** Referenzbetrieb mit lokalem Dateispeicher und MariaDB 12.2.2; kein S3-Restore, beliebiger historischer Binär-Downgrade oder gemischter Schreibbetrieb. Keine produktive Last-/RPO-/RTO-Messung, vollständige Container-OS-Sicherheitsprüfung, gehostete CI, Registry-Veröffentlichung oder Einrichtung externer Betriebsfreigaben. Der Kandidat stammt noch aus einer als verändert markierten Arbeitskopie. R15 und die konkrete Betriebsabnahme bleiben vor Produktionsfreigabe erforderlich.
 
 ## 5. Mehrbenutzerbetrieb und weitere Verbesserungen
 

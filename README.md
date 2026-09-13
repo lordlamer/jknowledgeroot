@@ -64,6 +64,11 @@ See the [editor guide](docs/editor.md) for supported content and upgrade checks.
 
 ## Initial administrator and upgrades
 
+The current release candidate is **1.0.0-rc.1**. See the
+[release guide](docs/release.md) for artifact identity and remaining approval checks,
+and [backup and recovery](docs/recovery.md) for tested backup, restore, upgrade
+and snapshot rollback procedures for the production Compose deployment.
+
 Status-only liveness/readiness probes and administrator-only metrics are available.
 Readiness checks the database and selected file storage; the container has a built-in
 readiness healthcheck. See [monitoring and integration tests](docs/monitoring.md)

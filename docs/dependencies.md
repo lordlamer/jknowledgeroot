@@ -81,7 +81,21 @@ für die abgefragten Paketversionen zum Prüfzeitpunkt, nicht als allgemeine
 Sicherheitsgarantie. Container, CI-Plugins und die Betriebs-/Releaseprüfungen aus
 R12–R14 bleiben offen.
 
-## Testgrenzen
+## Erneute Prüfung in R14
+
+Am 13. September 2026 wurde der aufgelöste Abhängigkeitsbaum des Kandidaten
+1.0.0-rc.1 einschließlich Actuator erneut gemeinsam mit dem Frontend-Lockfile
+abgefragt: **277 Paketversionen, keine bekannten Advisories, Exitcode 0**.
+Bericht: `target/dependency-audit.json`. Der GitHub-Workflow führt diesen Scan
+jetzt vor jeder Veröffentlichung aus und archiviert den Bericht mit dem
+Release-Nachweis. Container-OS-Pakete sind nicht Bestandteil dieser OSV-Abfrage.
+
+Die folgenden Testgrenzen beschreiben den damaligen R08-Stand. Die inzwischen
+aktiven Integrationstests, Container-/Ausfalltests und Restore-/Rollbackprüfung
+sind in [monitoring.md](monitoring.md), [recovery.md](recovery.md) und der
+[Roadmap](roadmap.md) festgehalten.
+
+## Testgrenzen bei R08
 
 Der vorhandene Testsatz prüft nach der Migration weiterhin Login, Rechte,
 Passwortmigration, parallele Login-Quoten und Datenbank-Upgrades. Der neue

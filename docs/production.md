@@ -1,7 +1,8 @@
 # Produktionskonfiguration und Lieferprozess
 
-Stand: R13, 12. September 2026. Dieser Stand bereitet den Betrieb vor;
-Restore und die endgültige Freigabe bleiben R14–R15. Healthchecks, Metriken und
+Stand: R14, 13. September 2026. Dieser Stand bereitet den Betrieb vor;
+[Backup und Wiederherstellung](recovery.md) sowie der [Release-Kandidat](release.md)
+sind dokumentiert; R15 und die betriebliche Freigabe bleiben offen. Healthchecks, Metriken und
 die erweiterten Integrationstests beschreibt [monitoring.md](monitoring.md).
 
 ## Betriebsmodell
@@ -24,8 +25,8 @@ ungeprüft umhängen; deren Konten und Daten müssen regulär migriert werden.
 
 1. JDK 25, Docker mit Compose, einen persistenten Datenträger und einen Host mit
    funktionierendem HTTPS-Proxy bereitstellen. Für einen lokalen Build
-   `sh ./mvnw -B --no-transfer-progress verify` ausführen, dann
-   `docker build -t knowledgeroot:r12-local .`. Ein freigegebenes Image später mit
+   die Befehle mit Versions-/Revisionsnachweis aus [release.md](release.md) verwenden.
+   Ein freigegebenes Image später mit
    unveränderlichem Digest statt eines beweglichen Tags referenzieren.
 2. [production.env.example](../deploy/production.env.example) außerhalb des
    Repositorys in eine zugriffsgeschützte Datei kopieren. `KR_APP_IMAGE` konkret
@@ -54,7 +55,8 @@ Nur `127.0.0.1:8081` wird auf dem Host veröffentlicht; Datenbank und Dateien ha
 keine öffentlichen Ports. App-Port und bestehende Dienste vor dem Start auf
 Kollisionen prüfen. Die Compose-Datei verwendet eigene benannte Volumes. Beim
 regulären Stoppen niemals `down --volumes` einsetzen: Das würde Daten löschen.
-Backups müssen Datenbank und Objekte zusammen erfassen; Restore-Abnahme folgt R14.
+Backups müssen Datenbank und Objekte zusammen erfassen; Skripte und Restore-Abnahme
+stehen in [recovery.md](recovery.md).
 
 Das Image verwendet Temurin `25.0.4_7-jre-noble` mit festem Digest und startet als
 UID/GID `10001:10001`. Das Root-Dateisystem ist im Produktions-Compose nur lesbar;
@@ -169,13 +171,14 @@ Migrationszugänge und einen echten MariaDB-Laufzeitbenutzer ohne DDL-Rechte.
 Er prüft Cookies/HSTS, Anmeldung und Neustart, alte Funktionen, beide Speicherwege
 sowie ignorierte beziehungsweise vertrauenswürdig weitergeleitete Client-IP-Ketten.
 
-`sh deploy/smoke-test.sh knowledgeroot:r12-local` erzeugt ein zufällig benanntes,
+`sh deploy/smoke-test.sh knowledgeroot:verified` erzeugt ein zufällig benanntes,
 entbehrliches Compose-Projekt mit eigenen Passwörtern und Volumes und entfernt
 **nur dieses Testprojekt einschließlich seiner Volumes** beim Ende. Es prüft
 Ersteinrichtung, HTTP-Erreichbarkeit des internen App-Ports, UID, Schreibrechte,
 verweigerte DDL und Neustart. Das ersetzt keinen HTTPS-Test des produktiven Proxys.
 Gehostete GitHub-Ausführung, Registry-Push, Domain/Zertifikate und die endgültige
-Restore-/Release-Freigabe bleiben externe beziehungsweise spätere Abnahmen.
+Freigabe der tatsächlichen Betriebsumgebung bleiben externe Abnahmen. Der zusätzliche
+Restore-/Upgrade-/Rollbacktest ist in [recovery.md](recovery.md) beschrieben.
 
 Referenzen: [Spring Boot: eingebetteter Server und Proxy-Konfiguration](https://docs.spring.io/spring-boot/how-to/webserver.html),
 [Spring Session: Cookie-Konfiguration](https://docs.spring.io/spring-session/reference/configuration/common.html),
