@@ -45,6 +45,7 @@ public class PageCreationService {
         Integer actor = user.isGuest() ? null : Integer.valueOf(user.getUserId());
         LocalDateTime now = LocalDateTime.now();
         dto.setId(null);
+        dto.setRevision(0L);
         dto.setParent(dto.getParent() == null ? 0 : dto.getParent());
         dto.setCreatedBy(actor);
         dto.setChangedBy(actor);

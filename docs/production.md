@@ -1,8 +1,9 @@
 # Produktionskonfiguration und Lieferprozess
 
-Stand: R14, 13. September 2026. Dieser Stand bereitet den Betrieb vor;
+Stand: R15, 13. September 2026. Dieser Stand bereitet den Betrieb vor;
 [Backup und Wiederherstellung](recovery.md) sowie der [Release-Kandidat](release.md)
-sind dokumentiert; R15 und die betriebliche Freigabe bleiben offen. Healthchecks, Metriken und
+sind dokumentiert; die betriebliche Freigabe bleibt offen. Versionskonflikte,
+Historie und Löschverhalten beschreibt [page-history.md](page-history.md). Healthchecks, Metriken und
 die erweiterten Integrationstests beschreibt [monitoring.md](monitoring.md).
 
 ## Betriebsmodell
@@ -148,7 +149,7 @@ Zugangsdaten und veröffentlichen keine Images. Alle verwendeten Actions sind au
 vollständige Commit-SHAs festgelegt. Die Actions-Versionen und Basisimages müssen
 weiterhin regelmäßig geprüft und aktualisiert werden.
 
-Nur Pushes eines Tags wie `v1.0.0` oder `v1.0.0-rc.1` können den separaten
+Nur Pushes eines Tags wie `v1.0.0` oder `v1.0.0-rc.2` können den separaten
 Publish-Job starten. Davor wird geprüft, dass der Commit zu `origin/master`
 gehört und der gesamte Verify-Job erfolgreich war. Der Publish-Job lädt exakt
 das dort erzeugte Image und veröffentlicht Versionstag und Commit-Tag; kein

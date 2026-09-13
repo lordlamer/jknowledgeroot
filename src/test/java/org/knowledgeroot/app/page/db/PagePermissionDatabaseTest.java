@@ -423,6 +423,7 @@ class PagePermissionDatabaseTest {
 
     private PageDto editDto() {
         return PageDto.builder().id(999).name("updated").content("<p>new text</p>")
+                .revision(jdbc.queryForObject("SELECT revision FROM page WHERE id = 100", Long.class))
                 .createdBy(999).changedBy(999).active(true).deleted(false).build();
     }
 

@@ -29,6 +29,8 @@
     <div class="kr-page-actions" th:if="${canStar} or ${canEdit}">
         <th:block th:if="${canStar}" th:insert="~{page/star-button :: button}"></th:block>
         <th:block th:if="${canEdit}">
+            <a class="kr-btn" th:href="@{'/ui/page/' + ${page.pageId} + '/history'}"
+               th:attr="hx-get='/ui/page/' + ${page.pageId} + '/history'" hx-target="#content" hx-push-url="true">History</a>
             <a class="kr-btn" href="#" title="Share">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
                 Share
@@ -52,8 +54,8 @@
                     <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#fileUploadModal">Upload file</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item text-danger" href="#"
-                           th:attr="hx-delete='/ui/page/' + ${page.pageId}"
-                           hx-target="#content" hx-confirm="Are you sure?">Delete page</a></li>
+                           th:attr="hx-delete='/ui/page/' + ${page.pageId} + '?revision=' + ${page.revision}"
+                           hx-target="#content" hx-confirm="Delete this page? Pages with sub-pages must be emptied first. Administrators can restore deleted pages.">Delete page</a></li>
                 </ul>
             </div>
         </th:block>

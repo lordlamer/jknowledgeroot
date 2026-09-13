@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class PageEditPermissionIntegrationTest extends IsolatedApplicationTest {
     @Test void editorSavesContentLabelsAndServerAuditWithoutChangingGrants() throws Exception {
         var before = jdbc.queryForList("SELECT * FROM page_permission WHERE page_id=? ORDER BY id",pageId);
-        login(editor).perform(post("/ui/page/" + pageId + "/edit").param("name","Edited").param("content","<p>Saved</p>")
+        login(editor).perform(post("/ui/page/" + pageId + "/edit").param("revision", "0").param("name","Edited").param("content","<p>Saved</p>")
                 .param("labels","one, two").param("changedBy",Integer.toString(outsiderId)))
                 .andExpect(status().is3xxRedirection());
         assertEquals("<p>Saved</p>",jdbc.queryForObject("SELECT content FROM page WHERE id=?",String.class,pageId));
@@ -18,13 +18,13 @@ class PageEditPermissionIntegrationTest extends IsolatedApplicationTest {
     }
 
     @Test void readerCannotEditContent() throws Exception {
-        login(reader).perform(post("/ui/page/" + pageId + "/edit").param("name","Denied").param("content","Denied"))
+        login(reader).perform(post("/ui/page/" + pageId + "/edit").param("revision", "0").param("name","Denied").param("content","Denied"))
                 .andExpect(status().isForbidden());
         assertEquals("original",jdbc.queryForObject("SELECT content FROM page WHERE id=?",String.class,pageId));
     }
 
     @Test void editorCannotEscalateSharingThroughTheEditForm() throws Exception {
-        login(editor).perform(post("/ui/page/" + pageId + "/edit").param("name","Denied").param("content","Denied")
+        login(editor).perform(post("/ui/page/" + pageId + "/edit").param("revision", "0").param("name","Denied").param("content","Denied")
                 .param("permissionAdditions[0][roleType]","guest").param("permissionAdditions[0][permissionLevel]","edit"))
                 .andExpect(status().isForbidden());
         assertEquals("original",jdbc.queryForObject("SELECT content FROM page WHERE id=?",String.class,pageId));
@@ -34,7 +34,7 @@ class PageEditPermissionIntegrationTest extends IsolatedApplicationTest {
     @Test void adminUpdatesDeletesAndAddsPermissionsAtomically() throws Exception {
         int readerGrant = jdbc.queryForObject("SELECT id FROM page_permission WHERE page_id=? AND role_id=?",Integer.class,pageId,readerId);
         int editorGrant = jdbc.queryForObject("SELECT id FROM page_permission WHERE page_id=? AND role_id=?",Integer.class,pageId,editorId);
-        login("integration.admin").perform(post("/ui/page/" + pageId + "/edit").param("name","Shared").param("content","Updated")
+        login("integration.admin").perform(post("/ui/page/" + pageId + "/edit").param("revision", "0").param("name","Shared").param("content","Updated")
                 .param("permissionUpdates[" + readerGrant + "]","edit").param("permissionDeletions[]",Integer.toString(editorGrant))
                 .param("permissionAdditions[0][roleType]","guest").param("permissionAdditions[0][roleId]","")
                 .param("permissionAdditions[0][permissionLevel]","view")).andExpect(status().is3xxRedirection());
@@ -46,17 +46,19 @@ class PageEditPermissionIntegrationTest extends IsolatedApplicationTest {
 
     @Test void foreignPermissionIdRollsBackContentAndLabels() throws Exception {
         int foreign = grant(otherPageId,"guest",null,"view");
-        login("integration.admin").perform(post("/ui/page/" + pageId + "/edit").param("name","Rollback").param("content","Rollback")
+        login("integration.admin").perform(post("/ui/page/" + pageId + "/edit").param("revision", "0").param("name","Rollback").param("content","Rollback")
                 .param("labels","rollback-label").param("permissionDeletions[]",Integer.toString(foreign)))
                 .andExpect(status().isNotFound());
         assertEquals("original",jdbc.queryForObject("SELECT content FROM page WHERE id=?",String.class,pageId));
         assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM tag_content WHERE page_id=?",Integer.class,pageId));
         assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM page_permission WHERE id=?",Integer.class,foreign));
+        assertEquals(0L,jdbc.queryForObject("SELECT revision FROM page WHERE id=?",Long.class,pageId));
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM page_history WHERE page_id=?",Integer.class,pageId));
     }
 
     @Test void newChildInheritsAndParentChangesAffectExistingSessions() throws Exception {
         String childName = "child-" + pageId;
-        login(editor).perform(post("/ui/page/new").param("parent",Integer.toString(pageId)).param("name",childName)
+        login(editor).perform(post("/ui/page/new").param("parent",Integer.toString(pageId)).param("revision", "0").param("name",childName)
                 .param("content","Child").param("active","true")).andExpect(status().is3xxRedirection());
         int child = jdbc.queryForObject("SELECT id FROM page WHERE name=?",Integer.class,childName);
         assertTrue(jdbc.queryForObject("SELECT inherit_permissions FROM page WHERE id=?",Boolean.class,child));
@@ -68,7 +70,7 @@ class PageEditPermissionIntegrationTest extends IsolatedApplicationTest {
 
     @Test void missingCsrfCannotChangeStoredContent() throws Exception {
         var session = login(editor);
-        mvc.perform(post("/ui/page/" + pageId + "/edit").cookie(session.cookies).param("name","No CSRF").param("content","Denied"))
+        mvc.perform(post("/ui/page/" + pageId + "/edit").cookie(session.cookies).param("revision", "0").param("name","No CSRF").param("content","Denied"))
                 .andExpect(status().isForbidden());
         assertEquals("original",jdbc.queryForObject("SELECT content FROM page WHERE id=?",String.class,pageId));
     }

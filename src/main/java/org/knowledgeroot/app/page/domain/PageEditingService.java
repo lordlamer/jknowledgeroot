@@ -29,6 +29,7 @@ public class PageEditingService {
         Page page = editablePage(id, actor);
         PageInput.validate(dto);
         PageInput.labels(pageLabels);
+        requireRevision(page, dto.getRevision());
         if (!updates.isEmpty() || !deletions.isEmpty() || !additions.isEmpty()) {
             if (!users.getUserContext().isAdmin()) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
             if (permissions.isInheriting(id)) throw new ResponseStatusException(HttpStatus.CONFLICT);
@@ -62,11 +63,13 @@ public class PageEditingService {
         Integer actor = actor();
         Page page = editablePage(id, actor);
         PageInput.validate(dto);
+        requireRevision(page, dto.getRevision());
         setContent(page, dto, actor, LocalDateTime.now());
         page.setTimeStart(dto.getTimeStart());
         page.setTimeEnd(dto.getTimeEnd());
         if (dto.getActive() != null) page.setActive(dto.getActive());
-        if (dto.getDeleted() != null) page.setDeleted(dto.getDeleted());
+        if (dto.getDeleted() != null && Boolean.TRUE.equals(dto.getDeleted()) != Boolean.TRUE.equals(page.getDeleted()))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Use delete or history restore");
         pages.updatePage(page);
         // Return persisted audit identity and creation fields, never the client-supplied values.
         return new PageDtoConverter().convertAtoB(page);
@@ -83,6 +86,42 @@ public class PageEditingService {
         } catch (EmptyResultDataAccessException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
+    }
+
+    public static void requireRevision(Page page, Long expected) {
+        if (expected == null || expected < 0) throw new ResponseStatusException(HttpStatus.PRECONDITION_REQUIRED, "A revision is required");
+        if (!expected.equals(page.getRevision())) throw new ResponseStatusException(HttpStatus.CONFLICT, "Page has changed");
+    }
+
+    @Transactional
+    public void delete(PageId id, Long revision) {
+        Integer actor = actor();
+        Page page = editablePage(id, actor);
+        requireRevision(page, revision);
+        page.setDeleted(true);
+        page.setChangedBy(actor);
+        page.setChangeDate(LocalDateTime.now());
+        pages.updatePage(page);
+    }
+
+    public Page historyPage(PageId id) {
+        if (users.getUserContext().isAdmin()) return pages.findById(id);
+        return editablePage(id, actor());
+    }
+
+    @Transactional
+    public void restore(PageId id, int historyId, Long revision) {
+        Page page = historyPage(id);
+        requireRevision(page, revision);
+        var previous = pages.findRevision(id, historyId);
+        if (previous.labelsCaptured()) PageInput.labels(previous.labels());
+        page.setName(previous.name());
+        page.setContent(previous.content()); // Re-sanitize historical content with the current policy.
+        page.setDeleted(false);
+        page.setChangedBy(actor());
+        page.setChangeDate(LocalDateTime.now());
+        pages.updatePage(page);
+        if (previous.labelsCaptured()) labels.setForPage(id, previous.labels());
     }
 
     private Integer actor() {

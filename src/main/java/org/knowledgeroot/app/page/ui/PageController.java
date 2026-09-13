@@ -261,7 +261,8 @@ public class PageController {
     }
 
     @DeleteMapping("/ui/page/{pageId}")
-    public ModelAndView deletePage(@PathVariable("pageId") Integer pageId) {
+    public ModelAndView deletePage(@PathVariable("pageId") Integer pageId,
+                                  @RequestParam(required = false) Long revision) {
         // Berechtigungsprüfung
         PageId pid = new PageId(pageId);
         Integer currentUserId = getCurrentUserId();
@@ -270,7 +271,7 @@ public class PageController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
-        pageImpl.deletePageById(pid);
+        pageEditingService.delete(pid, revision);
 
         return new ModelAndView("redirect:/ui/welcome?trigger=reload-sidebar");
     }

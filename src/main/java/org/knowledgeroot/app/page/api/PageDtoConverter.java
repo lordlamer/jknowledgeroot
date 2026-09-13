@@ -11,6 +11,7 @@ public class PageDtoConverter implements Converter<Page, PageDto> {
         PageDto pageDto = new PageDto();
 
         pageDto.setId(from.getPageId().value());
+        pageDto.setRevision(from.getRevision());
         pageDto.setActive(from.getActive());
         pageDto.setName(from.getName());
         pageDto.setParent(from.getParent());
@@ -30,6 +31,7 @@ public class PageDtoConverter implements Converter<Page, PageDto> {
     public Page convertBtoA(PageDto from) {
         return Page.builder()
                 .pageId(from.getId() == null ? null : new PageId(from.getId()))
+                .revision(from.getRevision() == null ? 0L : from.getRevision())
                 .active(from.getActive())
                 .name(from.getName())
                 .parent(from.getParent())

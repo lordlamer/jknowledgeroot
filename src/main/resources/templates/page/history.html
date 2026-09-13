@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
+<head><title>Knowledgeroot :: Page history</title></head>
+<body>
+<header class="kr-page-header">
+    <div class="kr-page-title-wrap"><h1 class="kr-page-title">Page history</h1><p class="mb-0" th:text="${page.name}"></p></div>
+    <div class="kr-page-actions">
+        <a class="kr-btn" th:if="${!page.deleted}" th:href="@{'/ui/page/' + ${page.pageId}}">Current page</a>
+        <a class="kr-btn" th:if="${admin}" href="/ui/page/deleted">Deleted pages</a>
+    </div>
+</header>
+<section class="kr-content-area">
+<p>Saved versions contain the page name, content and captured labels. Restoring keeps current sharing, attachments and page location.</p>
+<p th:if="${page.deleted}" class="alert alert-warning">This page is deleted. Restore a saved version to make it available again. Its parent must be available first.</p>
+<p th:if="${#lists.isEmpty(items)}">No earlier versions have been saved yet.</p>
+<div class="table-responsive"><table th:unless="${#lists.isEmpty(items)}" class="table">
+    <thead><tr><th>Version</th><th>Changed</th><th>Name</th><th></th></tr></thead>
+    <tbody><tr th:each="item : ${items}">
+        <td th:text="${item.revision}"></td><td th:text="${item.changedAt}"></td><td th:text="${item.name}"></td>
+        <td><a th:href="@{'/ui/page/' + ${page.pageId} + '/history/' + ${item.id}}">View version</a></td>
+    </tr></tbody>
+</table></div>
+<a th:if="${start > 0}" th:href="@{'/ui/page/' + ${page.pageId} + '/history'(start=${T(java.lang.Math).max(0, start - 50)})}">Previous</a>
+<a th:if="${hasNext}" th:href="@{'/ui/page/' + ${page.pageId} + '/history'(start=${start + 50})}">Next</a>
+</section>
+</body></html>

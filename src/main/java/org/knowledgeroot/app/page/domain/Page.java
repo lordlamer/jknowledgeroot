@@ -13,6 +13,8 @@ import java.util.List;
 @ToString
 public class Page {
     private PageId pageId;
+    @Builder.Default
+    private Long revision = 0L;
     private Integer parent;
     private String name;
     private String content;

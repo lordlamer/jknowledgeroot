@@ -8,6 +8,7 @@ import org.knowledgeroot.app.page.domain.Page;
 import org.knowledgeroot.app.page.domain.PageDao;
 import org.knowledgeroot.app.page.domain.PageFilter;
 import org.knowledgeroot.app.page.domain.PageId;
+import org.knowledgeroot.app.page.domain.PageRevision;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -49,6 +50,7 @@ public class PageImpl implements PageDao {
         sql.append("""
                 SELECT 
                     id as pageId,
+                    revision,
                     %s,
                     name,
                     content,
@@ -205,6 +207,7 @@ public class PageImpl implements PageDao {
 
                             return Page.builder()
                                     .pageId(new PageId(rs.getInt("pageId")))
+                                    .revision(rs.getLong("revision"))
                                     .parent(rs.getObject("parent", Integer.class))
                                     .name(rs.getString("name"))
                                     .content(rs.getString("content"))
@@ -239,6 +242,7 @@ public class PageImpl implements PageDao {
         return jdbcClient.sql("""
                 SELECT 
                     p.id as pageId,
+                    p.revision,
                     p.parent,
                     p.name,
                     p.content,
@@ -291,6 +295,7 @@ public class PageImpl implements PageDao {
 
                             return Page.builder()
                                     .pageId(new PageId(rs.getInt("pageId")))
+                                    .revision(rs.getLong("revision"))
                                     .parent(rs.getInt("parent"))
                                     .name(rs.getString("name"))
                                     .content(rs.getString("content"))
@@ -318,6 +323,7 @@ public class PageImpl implements PageDao {
      */
     @Override
     public int createPage(Page page) {
+        requireLiveParent(page);
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         int update = jdbcClient.sql("""
@@ -364,6 +370,14 @@ public class PageImpl implements PageDao {
      */
     @Override
     public void updatePage(Page page) {
+        requireLiveParent(page);
+        long current = jdbcClient.sql("SELECT revision FROM page WHERE id = ? FOR UPDATE")
+                .param(page.getPageId().value()).query(Long.class).single();
+        if (!Objects.equals(page.getRevision(), current)) conflict();
+        if (Boolean.TRUE.equals(page.getDeleted()) && !jdbcClient.sql(
+                "SELECT id FROM page WHERE parent = ? AND deleted = FALSE LIMIT 1 FOR UPDATE")
+                .param(page.getPageId().value()).query(Integer.class).list().isEmpty()) conflict();
+        snapshot(page.getPageId());
         int update = jdbcClient.sql("""
                 UPDATE page SET
                     name = ?,
@@ -373,9 +387,10 @@ public class PageImpl implements PageDao {
                     active = ?,
                     changed_by = ?,
                     change_date = ?,
-                    deleted = ?
+                    deleted = ?,
+                    revision = revision + 1
                 WHERE
-                    id = ?
+                    id = ? AND revision = ?
                 """)
                 .params(
                         page.getName(),
@@ -386,31 +401,62 @@ public class PageImpl implements PageDao {
                         page.getChangedBy(),
                         page.getChangeDate(),
                         page.getDeleted(),
-                        page.getPageId().value()
+                        page.getPageId().value(),
+                        page.getRevision()
                 )
                 .update();
 
         Assert.state(update == 1, "Failed to update page: " + page.getName());
+        page.setRevision(current + 1);
     }
 
-    /**
-     * delete all pages
-     */
     @Override
-    public void deleteAllPages() {
-        jdbcClient.sql("delete from page").update();
+    public List<org.knowledgeroot.app.page.domain.PageRevision> listRevisions(PageId id, int start) {
+        return jdbcClient.sql("SELECT id, version, name, change_date, labels_captured FROM page_history WHERE page_id = ? ORDER BY id DESC LIMIT 51 OFFSET ?")
+                .params(id.value(), start).query((rs, row) -> new org.knowledgeroot.app.page.domain.PageRevision(
+                        rs.getInt("id"), rs.getLong("version"), rs.getString("name"), null,
+                        rs.getTimestamp("change_date").toLocalDateTime(), rs.getBoolean("labels_captured"), List.of())).list();
     }
 
-    /**
-     * delete page by given id
-     *
-     * @param pageId page id
-     */
     @Override
-    public void deletePageById(PageId pageId) {
-        jdbcClient.sql("delete from page where id = :id")
-                .param("id", pageId.value())
-                .update();
+    public org.knowledgeroot.app.page.domain.PageRevision findRevision(PageId id, int historyId) {
+        var previous = jdbcClient.sql("SELECT id, version, name, content, change_date, labels_captured FROM page_history WHERE page_id = ? AND id = ?")
+                .params(id.value(), historyId).query((rs, row) -> new org.knowledgeroot.app.page.domain.PageRevision(
+                        rs.getInt("id"), rs.getLong("version"), rs.getString("name"),
+                        org.knowledgeroot.app.sanitizer.Sanitizer.sanitize(rs.getString("content")),
+                        rs.getTimestamp("change_date").toLocalDateTime(), rs.getBoolean("labels_captured"),
+                        List.of())).single();
+        var names = jdbcClient.sql("SELECT name FROM page_history_label WHERE history_id = ? ORDER BY name")
+                .param(historyId).query(String.class).list();
+        return new org.knowledgeroot.app.page.domain.PageRevision(previous.id(), previous.revision(), previous.name(),
+                previous.content(), previous.changedAt(), previous.labelsCaptured(), names);
+    }
+
+    private void requireLiveParent(Page page) {
+        if (page.getParent() != null && page.getParent() > 0) {
+            var live = jdbcClient.sql("SELECT deleted FROM page WHERE id = ? FOR UPDATE")
+                    .param(page.getParent()).query(Boolean.class).optional();
+            if (live.isEmpty() || live.get()) conflict();
+        }
+    }
+
+    private static void conflict() {
+        throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.CONFLICT,
+                "Page changed or hierarchy prevents this operation");
+    }
+
+    private void snapshot(PageId id) {
+        var key = new GeneratedKeyHolder();
+        jdbcClient.sql("""
+                INSERT INTO page_history (page_id, version, parent, name, content, time_start, time_end,
+                    created_by, create_date, changed_by, change_date, active, deleted, labels_captured)
+                SELECT id, revision, parent, name, content, time_start, time_end, created_by, create_date,
+                    changed_by, change_date, active, deleted, TRUE FROM page WHERE id = ?
+                """).param(id.value()).update(key);
+        jdbcClient.sql("""
+                INSERT INTO page_history_label (history_id, name)
+                SELECT DISTINCT ?, t.name FROM tag t JOIN tag_content tc ON tc.tag_id=t.id WHERE tc.page_id=?
+                """).params(key.getKey().intValue(), id.value()).update();
     }
 
     private static String literalPattern(String value) {

@@ -208,6 +208,13 @@ class InstallationTest {
         var filesBefore = jdbc.queryForList("SELECT * FROM file ORDER BY id");
         var checksums = jdbc.queryForList("SELECT ID, MD5SUM FROM DATABASECHANGELOG ORDER BY ORDEREXECUTED");
         var pages = jdbc.queryForList("SELECT * FROM page ORDER BY id");
+        jdbc.update("""
+                INSERT INTO page_history (page_id,version,parent,name,content,created_by,create_date,changed_by,change_date)
+                SELECT id,7,parent,name,content,created_by,create_date,changed_by,change_date FROM page ORDER BY id LIMIT 1
+                """);
+        var historical = jdbc.queryForMap("SELECT id,page_id,version,name,content FROM page_history");
+        historical.put("version", 7L); // The migration widens the existing value to BIGINT.
+        pages.forEach(page -> page.put("revision", page.get("id").equals(historical.get("page_id")) ? 8L : 0L));
         var grants = jdbc.queryForList("SELECT * FROM page_permission ORDER BY id");
         // The new column preserves the original explicit mode for every existing page.
         pages.forEach(page -> page.put("inherit_permissions", false));
@@ -219,6 +226,8 @@ class InstallationTest {
 
         migrate(true);
         migrate(false);
+        assertEquals(historical, jdbc.queryForMap("SELECT id,page_id,version,name,content FROM page_history"));
+        assertFalse(jdbc.queryForObject("SELECT labels_captured FROM page_history",Boolean.class));
         assertEquals(checksums, jdbc.queryForList(
                 "SELECT ID, MD5SUM FROM DATABASECHANGELOG WHERE ORDEREXECUTED <= ? ORDER BY ORDEREXECUTED", checksums.size()));
         assertEquals(grants, jdbc.queryForList("SELECT * FROM page_permission ORDER BY id"));
@@ -237,6 +246,18 @@ class InstallationTest {
         migrate(false);
         assertEquals(pages, jdbc.queryForList("SELECT * FROM page ORDER BY id"));
         assertEquals(3, count("user"));
+    }
+
+    @Test
+    void legacyDeletedPagesReceiveARecoverableSnapshot() throws Exception {
+        migration("classpath:dbupdates/legacy-changelog.xml", "production,development").afterPropertiesSet();
+        int id = jdbc.queryForObject("SELECT MIN(id) FROM page",Integer.class);
+        jdbc.update("UPDATE page SET deleted=TRUE WHERE id=?",id);
+        String content = jdbc.queryForObject("SELECT content FROM page WHERE id=?",String.class,id);
+        migrate(true);
+        assertEquals(content,jdbc.queryForObject("SELECT content FROM page_history WHERE page_id=?",String.class,id));
+        assertTrue(jdbc.queryForObject("SELECT labels_captured FROM page_history WHERE page_id=?",Boolean.class,id));
+        assertEquals(1L,jdbc.queryForObject("SELECT revision FROM page WHERE id=?",Long.class,id));
     }
 
     @Test

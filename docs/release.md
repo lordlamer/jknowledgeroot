@@ -1,13 +1,13 @@
 # Release-Kandidat und Freigabe
 
-Der vorbereitete Stand heißt **1.0.0-rc.1**. Er ist noch keine Produktionsfreigabe.
-Es wurde weder ein Release-Tag erstellt noch ein Image veröffentlicht. R15,
-produktive Lastmessung und die Abnahme der tatsächlichen Betriebsumgebung bleiben
+Der vorbereitete Stand heißt **1.0.0-rc.2**. Er ist noch keine Produktionsfreigabe.
+Es wurde weder ein Release-Tag erstellt noch ein Image veröffentlicht.
+Produktive Lastmessung und die Abnahme der tatsächlichen Betriebsumgebung bleiben
 offen. Backup, Upgrade und Rückkehr beschreibt [recovery.md](recovery.md).
 
 ## Artefakte zuordnen
 
-Der Maven-Build erzeugt `knowledgeroot-1.0.0-rc.1.jar` und eingebettete Builddaten
+Der Maven-Build erzeugt `knowledgeroot-1.0.0-rc.2.jar` und eingebettete Builddaten
 einschließlich Version und optional übergebener Revision. Beispiel unter Bash:
 
 ```sh
@@ -42,10 +42,11 @@ einschließlich Versions-/Commit-Tags; sie baut es im Publish-Job nicht erneut.
    organisationsspezifische Release-Regeln sind gesondert zu erfüllen.
 3. In der Zielumgebung TLS/Proxy, Rechte, Last und Loginquoten, Speicher-/Backupplatz,
    externe Alarmierung und Restore-Zeiten prüfen. Repräsentative eigene Altinhalte
-   im Editor kontrollieren. R15 muss vor breitem Mehrbenutzerbetrieb erledigt sein.
+   im Editor kontrollieren. Versionskonflikte und Wiederherstellung gemäß
+   [page-history.md](page-history.md) auch mit eigenen Arbeitsabläufen abnehmen.
 4. Repository-Schutz und GitHub-Umgebung `release` gemäß [production.md](production.md)
    einrichten. Erst nach Freigabe den passenden Tag, beispielsweise
-   `v1.0.0-rc.1`, erstellen. Ein abweichender Tag und eine veränderte Arbeitskopie
+   `v1.0.0-rc.2`, erstellen. Ein abweichender Tag und eine veränderte Arbeitskopie
    werden bei der Artefaktprüfung abgelehnt. Ein Kandidat ist kein endgültiges
    `v1.0.0`-Release.
 5. Image, Release-Manifest, Scanbericht und Betriebsnachweise dauerhaft archivieren.

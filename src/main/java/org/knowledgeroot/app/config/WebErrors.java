@@ -43,6 +43,17 @@ public class WebErrors extends ResponseEntityExceptionHandler {
         return response(HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(org.springframework.dao.CannotAcquireLockException.class)
+    ResponseEntity<Object> concurrentWrite(Exception ex) { return response(HttpStatus.CONFLICT); }
+
+    @ExceptionHandler(org.springframework.jdbc.UncategorizedSQLException.class)
+    ResponseEntity<Object> databaseFailure(org.springframework.jdbc.UncategorizedSQLException ex) {
+        // MariaDB can reject a locking read after a concurrent commit with ER_CHECKREAD.
+        if (ex.getSQLException() != null && ex.getSQLException().getErrorCode() == 1020)
+            return response(HttpStatus.CONFLICT);
+        return failed(ex);
+    }
+
     @ExceptionHandler(Exception.class)
     ResponseEntity<Object> failed(Exception ex) {
         log.error("Request failed", ex);

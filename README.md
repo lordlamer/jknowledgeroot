@@ -64,10 +64,13 @@ See the [editor guide](docs/editor.md) for supported content and upgrade checks.
 
 ## Initial administrator and upgrades
 
-The current release candidate is **1.0.0-rc.1**. See the
+The current release candidate is **1.0.0-rc.2**. See the
 [release guide](docs/release.md) for artifact identity and remaining approval checks,
 and [backup and recovery](docs/recovery.md) for tested backup, restore, upgrade
 and snapshot rollback procedures for the production Compose deployment.
+Page edits now detect stale revisions. [Page history and deletion](docs/page-history.md)
+explains restoring earlier content, preserving drafts on conflicts, and administrator
+recovery of deleted pages. REST update/delete clients must send the current revision.
 
 Status-only liveness/readiness probes and administrator-only metrics are available.
 Readiness checks the database and selected file storage; the container has a built-in

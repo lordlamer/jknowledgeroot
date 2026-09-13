@@ -15,9 +15,9 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: R15 – Bearbeitungskonflikte und Versionshistorie.**
+**Nächster Schritt: Release-Commit und Abnahme der tatsächlichen Betriebsumgebung.**
 
-R01 bis R14 sind umgesetzt und lokal geprüft. R15 und die Abnahme der tatsächlichen Betriebsumgebung sind offen; die Produktionsfreigabe steht weiterhin aus.
+R01 bis R15 sind umgesetzt und lokal geprüft. Der aktuelle Kandidat ist `1.0.0-rc.2`. Gehostete CI, Repository-/Release-Schutz, TLS/Proxy, produktive Last, Alarmierung sowie eigene Backup-/Wiederanlaufzeiten sind vor der Produktionsfreigabe gemäß [release.md](release.md) abzunehmen. Diese externen Schritte wurden nicht stellvertretend durchgeführt.
 
 ## 1. Build und Sicherheit
 
@@ -194,10 +194,16 @@ R01 bis R14 sind umgesetzt und lokal geprüft. R15 und die Abnahme der tatsächl
 
 ### R15 – Bearbeitungskonflikte und Versionshistorie
 
-- [ ] Offen
+- [x] Umgesetzt und lokal geprüft am 13. September 2026
 - **Umsetzung:** Gleichzeitiges Bearbeiten mittels Versionsprüfung erkennen; vorhandene `page_history`-Struktur zu einer nutzbaren Historie mit Wiederherstellung ausbauen. Löschverhalten einschließlich Unterseiten und zugehöriger Dateien ausdrücklich definieren.
 - **Abnahme:** Veraltete Bearbeitungsstände überschreiben neue Inhalte nicht stillschweigend. Frühere Versionen lassen sich berechtigungskonform anzeigen und wiederherstellen. Löschen hinterlässt keine unerwartet beschädigte Hierarchie.
-- **Einordnung:** Konflikterkennung ist vor breitem Mehrbenutzerbetrieb erforderlich. Umfang und Zeitpunkt der Historienoberfläche können gesondert priorisiert werden.
+- **Konflikte:** Formulare und REST-Änderungen übertragen die geladene Seitenrevision. Die Datenbank prüft sie unter einer Sperre; veraltete Stände ergeben 409, fehlende Revisionen 428. Lokale Freigabeänderungen und Wechsel der Vererbung invalidieren ebenfalls offene Formulare. Gleichzeitiges Speichern einschließlich MariaDBs `ER_CHECKREAD` wird kontrolliert abgelehnt. Der HTMX-Editor samt eigenem Entwurf bleibt nach einem Konflikt erhalten; automatisches Zusammenführen ist nicht enthalten.
+- **Historie:** Vor jeder Inhaltsänderung, Löschung oder Wiederherstellung werden Name, Inhalt, bisherige Seitendaten und Labels atomar gesichert. `History` bietet jeweils 50 Versionen und eine bereinigte Vorschau. Nur aktuelle Bearbeitungsrechte erlauben den Zugriff. Restore übernimmt Name, Inhalt und bekannte Labels; heutige Freigaben, Position und Anhänge bleiben erhalten. Die neue Migration `1.0.11-page-revisions` bewahrt alte Historieneinträge und kennzeichnet deren unbekannte Labels. Bereits gelöschte Altseiten erhalten einen wiederherstellbaren Ausgangsstand.
+- **Löschen:** Seiten mit nicht gelöschten Unterseiten werden nicht gelöscht; paralleles Anlegen und Löschen wird über die Elternsperre abgesichert. Gelöschte Seiten und ihre Dateireferenzen bleiben gespeichert, Downloads sind gesperrt. Administratoren können über `Deleted pages` zuerst Eltern und danach Kinder wiederherstellen. Der pauschale REST-Löschaufruf ist deaktiviert; Änderungen des Löschflags müssen über die vorgesehenen Lösch-/Restore-Vorgänge erfolgen.
+- **Kandidat und Kompatibilität:** Version `1.0.0-rc.2`. [page-history.md](page-history.md) beschreibt Oberfläche, REST-Revisionen, Migration und Grenzen. Vor dem Upgrade sind alte Writer zu stoppen; bisherige API-Clients und offene Formulare benötigen die neue Revision. Versionen und gelöschte Objekte werden noch nicht automatisch ausgedünnt. Aufbewahrung, Lastmessung und externe Betriebsfreigabe bleiben erforderlich.
+- **Geprüft:** Abschließendes `.\mvnw.cmd -B --no-transfer-progress -Dbuild.revision=<Git-Revision> verify`: **BUILD SUCCESS, 265 Tests erfolgreich, keine Fehler oder übersprungenen Tests**. Neue MariaDB-/HTTP-Fälle prüfen konkurrierende Schreibvorgänge, Lösch-/Erstellungsrennen, veraltete und fehlende Revisionen, aktuelle Rechte, CSRF, fremde Historien-IDs, Rollback, bereinigte Altinhalte und Dateizugriff nach Wiederherstellung. Migrationstests bewahren Althistorien und machen bereits gelöschte Seiten wiederherstellbar. Chromium prüft zwei Editortabs mit unverändert erhaltenem Entwurf sowie Historienvorschau und Restore; die neue Ansicht wurde visuell geprüft. Kandidatenimage, bytegleiche JAR-Zuordnung sowie Produktionsstart und Neustart bestehen. Die Backup-/Upgrade-/Rollbackkette mit festem R13-Baseline-Image besteht einschließlich neuer Schemamigration und unveränderter Anhangbytes. Anschließend wurden nur noch die Abstände der Historienansichten angepasst und das endgültige JAR erneut vollständig sowie im Container geprüft. `git diff --check` ohne Fehler; Testprojekte und ihre Volumes entfernt.
+
+- **Sicherheitsprüfung:** Erneuter OSV-Scan für den finalen Kandidaten: **277 Paketversionen, keine bekannten Advisories**. Dependency-Baum und Scanbericht liegen unter `target/`; die Abhängigkeiten wurden in R15 nicht geändert. Der Paketcheck ersetzt keinen vollständigen Container-OS-Scan.
 
 ## Nachweise der Bestandsaufnahme
 

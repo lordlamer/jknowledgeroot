@@ -367,6 +367,7 @@ public class PagePermissionImpl implements PagePermissionDao {
         jdbcClient.sql("SELECT id FROM page WHERE id = :id FOR UPDATE")
                 .param("id", pageId.value()).query(Integer.class).single();
         Assert.state(!isInheriting(pageId), "Switch to local permissions before editing grants");
+        jdbcClient.sql("UPDATE page SET revision = revision + 1 WHERE id = ?").param(pageId.value()).update();
     }
 
     @Override
@@ -392,7 +393,7 @@ public class PagePermissionImpl implements PagePermissionDao {
                     .param("id", pageId.value()).param("actor", actorId)
                     .param("now", LocalDateTime.now()).param("source", source.value()).update();
         }
-        jdbcClient.sql("UPDATE page SET inherit_permissions = :inherit, changed_by = :actor, change_date = :now WHERE id = :id")
+        jdbcClient.sql("UPDATE page SET inherit_permissions = :inherit, changed_by = :actor, change_date = :now, revision = revision + 1 WHERE id = :id")
                 .param("inherit", inherit).param("actor", actorId).param("now", LocalDateTime.now())
                 .param("id", pageId.value()).update();
     }

@@ -2,7 +2,7 @@ FROM eclipse-temurin:25.0.4_7-jre-noble@sha256:d120abd9d8d7dec94520ce974ece62d0e
 RUN groupadd --gid 10001 knowledgeroot && useradd --uid 10001 --gid 10001 --no-create-home knowledgeroot \
     && mkdir -p /app /var/lib/knowledgeroot/files && chown -R 10001:10001 /app /var/lib/knowledgeroot
 WORKDIR /app
-ARG BUILD_VERSION=1.0.0-rc.1
+ARG BUILD_VERSION=1.0.0-rc.2
 ARG BUILD_REVISION=unknown
 LABEL org.opencontainers.image.version=$BUILD_VERSION org.opencontainers.image.revision=$BUILD_REVISION
 COPY --chown=10001:10001 target/*.jar /app/app.jar

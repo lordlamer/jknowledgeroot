@@ -62,7 +62,7 @@ class PageAccessWebTest {
     void guestCannotOpenOrSubmitRootCreationByDefault() throws Exception {
         as(UserDetails.Role.GUEST);
         mvc.perform(get("/ui/page/new").with(caller)).andExpect(status().isForbidden());
-        mvc.perform(post("/ui/page/new").with(caller).with(csrf()).param("name", "blocked"))
+        mvc.perform(post("/ui/page/new").with(caller).with(csrf()).param("revision", "0").param("name", "blocked"))
                 .andExpect(status().isForbidden());
         verify(pages, never()).createPage(any());
     }
@@ -72,7 +72,7 @@ class PageAccessWebTest {
         as(UserDetails.Role.GUEST);
         ReflectionTestUtils.setField(creation, "allowGuestRootCreation", true);
         mvc.perform(post("/ui/page/new").with(caller).with(csrf())
-                        .param("name", "public").param("createdBy", "999"))
+                        .param("revision", "0").param("name", "public").param("createdBy", "999"))
                 .andExpect(redirectedUrl("/ui/page/123?trigger=reload-sidebar"));
         verify(pages).createPage(argThat(page -> page.getCreatedBy() == null && page.getParent() == 0));
         verify(permissions).createDefaultPermissions(new PageId(123), null);
@@ -80,7 +80,7 @@ class PageAccessWebTest {
 
     @Test
     void authenticatedRootCreationUsesSessionIdentity() throws Exception {
-        mvc.perform(post("/ui/page/new").with(caller).with(csrf()).param("name", "private")
+        mvc.perform(post("/ui/page/new").with(caller).with(csrf()).param("revision", "0").param("name", "private")
                         .param("id", "999").param("createdBy", "999"))
                 .andExpect(redirectedUrl("/ui/page/123?trigger=reload-sidebar"));
         verify(pages).createPage(argThat(page -> page.getPageId() == null && page.getCreatedBy() == 2));
@@ -93,7 +93,7 @@ class PageAccessWebTest {
         as(role);
         when(permissions.hasUserPermission(pageId, role == UserDetails.Role.GUEST ? null : 2, EDIT)).thenReturn(false);
         mvc.perform(get("/ui/page/100/new").with(caller)).andExpect(status().isForbidden());
-        mvc.perform(post("/ui/page/new").with(caller).with(csrf()).param("parent", "100").param("name", "child"))
+        mvc.perform(post("/ui/page/new").with(caller).with(csrf()).param("parent", "100").param("revision", "0").param("name", "child"))
                 .andExpect(status().isForbidden());
         verify(pages, never()).createPage(any());
     }
@@ -102,7 +102,7 @@ class PageAccessWebTest {
     void guestWithParentEditMayCreateChildWithoutRootOptIn() throws Exception {
         as(UserDetails.Role.GUEST);
         when(permissions.hasUserPermission(pageId, null, EDIT)).thenReturn(true);
-        mvc.perform(post("/ui/page/new").with(caller).with(csrf()).param("parent", "100").param("name", "child"))
+        mvc.perform(post("/ui/page/new").with(caller).with(csrf()).param("parent", "100").param("revision", "0").param("name", "child"))
                 .andExpect(redirectedUrl("/ui/page/123?trigger=reload-sidebar"));
         verify(pages).createPage(argThat(page -> page.getParent() == 100 && page.getCreatedBy() == null));
         verify(permissions).createDefaultPermissions(new PageId(123), null);
@@ -140,7 +140,7 @@ class PageAccessWebTest {
     @ValueSource(strings = {"permissionUpdates[9]", "permissionDeletions[]", "permissionAdditions[0][roleType]"})
     void forgedPermissionFieldsRejectEntireEditorSubmission(String key) throws Exception {
         mvc.perform(post("/ui/page/100/edit").with(caller).with(csrf())
-                        .param("name", "must not save").param(key, "guest"))
+                        .param("revision", "0").param("name", "must not save").param(key, "guest"))
                 .andExpect(status().isForbidden());
         verify(pages, never()).updatePage(any());
         verify(labels, never()).setForPage(any(), any());
@@ -152,7 +152,7 @@ class PageAccessWebTest {
                 .andExpect(status().isOk()).andExpect(model().attribute("canManagePermissions", false))
                 .andExpect(content().string(not(containsString("id=\"permissions-content\""))));
         verify(permissions, never()).listPermissionsByPageId(any());
-        mvc.perform(post("/ui/page/100/edit").with(caller).with(csrf()).param("name", "updated"))
+        mvc.perform(post("/ui/page/100/edit").with(caller).with(csrf()).param("revision", "0").param("name", "updated"))
                 .andExpect(status().is3xxRedirection());
         verify(pages).updatePage(any());
     }
@@ -160,18 +160,18 @@ class PageAccessWebTest {
     @ParameterizedTest
     @ValueSource(strings = {"", "   "})
     void blankNamesAreRejectedWithoutWriting(String name) throws Exception {
-        mvc.perform(post("/ui/page/100/edit").with(caller).with(csrf()).param("name", name))
+        mvc.perform(post("/ui/page/100/edit").with(caller).with(csrf()).param("revision", "0").param("name", name))
                 .andExpect(status().isBadRequest());
         verify(pages, never()).updatePage(any());
     }
 
     @Test
     void oversizedPageInputIsRejectedBeforeCreation() throws Exception {
-        mvc.perform(post("/ui/page/new").with(caller).with(csrf()).param("name", "x".repeat(256)))
+        mvc.perform(post("/ui/page/new").with(caller).with(csrf()).param("revision", "0").param("name", "x".repeat(256)))
                 .andExpect(status().isBadRequest());
-        mvc.perform(post("/ui/page/new").with(caller).with(csrf()).param("name", "valid").param("content", "x".repeat(65536)))
+        mvc.perform(post("/ui/page/new").with(caller).with(csrf()).param("revision", "0").param("name", "valid").param("content", "x".repeat(65536)))
                 .andExpect(status().isBadRequest());
-        mvc.perform(post("/ui/page/new").with(caller).with(csrf()).param("name", "valid").param("labels", "x".repeat(65)))
+        mvc.perform(post("/ui/page/new").with(caller).with(csrf()).param("revision", "0").param("name", "valid").param("labels", "x".repeat(65)))
                 .andExpect(status().isBadRequest());
         verify(pages, never()).createPage(any());
     }
@@ -179,7 +179,7 @@ class PageAccessWebTest {
     @Test
     void editorProcessesPermissionAdditionsWithGapsInFormIndices() throws Exception {
         as(UserDetails.Role.ADMIN);
-        mvc.perform(post("/ui/page/100/edit").with(caller).with(csrf()).param("name", "updated")
+        mvc.perform(post("/ui/page/100/edit").with(caller).with(csrf()).param("revision", "0").param("name", "updated")
                         .param("permissionAdditions[3][roleType]", "guest")
                         .param("permissionAdditions[3][permissionLevel]", "view"))
                 .andExpect(status().is3xxRedirection());
@@ -194,7 +194,7 @@ class PageAccessWebTest {
                 .createdBy(42).createDate(java.time.LocalDateTime.of(2020, 1, 1, 0, 0)).build());
         mvc.perform(put("/page/100").with(caller).with(csrf()).contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"id":100,"name":"updated","content":"text","active":true,"deleted":false,
+                                {"id":100,"revision":0,"name":"updated","content":"text","active":true,"deleted":false,
                                  "createdBy":999,"changedBy":999,"changeDate":"2000-01-01T00:00:00"}
                                 """))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.createdBy").value(42))
@@ -214,7 +214,7 @@ class PageAccessWebTest {
         mvc.perform(put("/ui/page/100/permission/9").with(caller).with(csrf()).param("permissionLevel", "edit"))
                 .andExpect(status().isConflict());
         mvc.perform(post("/ui/page/100/edit").with(caller).with(csrf())
-                        .param("name", "must not save").param("permissionUpdates[9]", "edit"))
+                        .param("revision", "0").param("name", "must not save").param("permissionUpdates[9]", "edit"))
                 .andExpect(status().isConflict());
         verify(pages, never()).updatePage(any());
         mvc.perform(post("/ui/page/100/permission-mode").with(caller).with(csrf()).param("inherit", "false"))

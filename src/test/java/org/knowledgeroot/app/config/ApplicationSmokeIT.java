@@ -294,6 +294,35 @@ class ApplicationSmokeIT {
             assertFalse(persisted.contains("onerror"), persisted);
             assertFalse(persisted.contains("<script"), persisted);
 
+            // Two real editor tabs must not silently overwrite one another.
+            page.locator("#content a[hx-get$='/edit']").first().click();
+            page.waitForSelector(".tiptap");
+            page.locator(".tiptap").fill("Unsaved local draft");
+            try (var second = context.newPage()) {
+                second.navigate(uri(server, "/ui/page/" + pageId + "/edit").toString());
+                second.waitForSelector(".tiptap");
+                second.locator(".tiptap").fill("Saved in another tab");
+                second.locator("#content form button[type=submit]").first().click();
+                second.waitForSelector("#content a[hx-get$='/edit']");
+            }
+            String localDraft = page.locator(".tiptap").innerHTML();
+            page.locator("#content form button[type=submit]").first().click();
+            page.waitForSelector(".kr-request-error");
+            assertTrue(page.locator(".kr-request-error").innerText().contains("page has changed"));
+            assertEquals(localDraft, page.locator(".tiptap").innerHTML());
+            assertTrue(page.locator(".tiptap").innerText().contains("Unsaved local draft"));
+            assertTrue(jdbc.queryForObject("SELECT content FROM page WHERE id=?",String.class,pageId).contains("Saved in another tab"));
+            page.navigate(uri(server, "/ui/page/" + pageId + "/history").toString());
+            page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("View version")).first().click();
+            page.waitForSelector("article.kr-content");
+            assertTrue(page.locator("article.kr-content").innerText().contains("Existing cell"));
+            page.screenshot(new Page.ScreenshotOptions().setFullPage(true)
+                    .setPath(Path.of(System.getProperty("application.jar")).getParent().resolve("history-smoke.png")));
+            page.onDialog(Dialog::accept);
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Restore this version")).click();
+            page.waitForSelector("#content a[hx-get$='/edit']");
+            assertTrue(jdbc.queryForObject("SELECT content FROM page WHERE id=?",String.class,pageId).contains("Existing cell"));
+
             // Real multipart upload through the application and byte-for-byte download through the new SDK.
             String csrfToken = page.locator("meta[name=_csrf]").getAttribute("content");
             String csrfHeader = page.locator("meta[name=_csrf_header]").getAttribute("content");

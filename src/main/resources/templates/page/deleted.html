@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
+<head><title>Knowledgeroot :: Deleted pages</title></head>
+<body>
+<header class="kr-page-header"><h1 class="kr-page-title">Deleted pages</h1></header>
+<section class="kr-content-area">
+<p>Only administrators can inspect or restore deleted pages. Attachments remain stored. Restore parents before their children.</p>
+<p th:if="${#lists.isEmpty(items)}">No deleted pages.</p>
+<ul><li th:each="item : ${items}"><a th:href="@{'/ui/page/' + ${item.pageId} + '/history'}" th:text="${item.name}"></a></li></ul>
+<a th:if="${start > 0}" th:href="@{/ui/page/deleted(start=${T(java.lang.Math).max(0, start - 50)})}">Previous</a>
+<a th:if="${hasNext}" th:href="@{/ui/page/deleted(start=${start + 50})}">Next</a>
+</section>
+</body></html>

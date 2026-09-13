@@ -137,7 +137,10 @@ Prüfung bleibt Bestandteil des separaten JAR-Tests.
 
 Die Referenzprüfung betrifft R13 auf den aktuellen Kandidaten mit derselben
 MariaDB-Version. Historische Schemamigrationen prüfen die bestehenden Java-Tests.
-R14 selbst fügt keine neue Schemamigration hinzu.
+R14 selbst fügte keine neue Schemamigration hinzu. Der aktuelle R15-Kandidat
+enthält `1.0.11-page-revisions`; die Referenzkette prüft damit auch das Upgrade
+auf die neue Historienstruktur. Ein Rückweg verwendet weiterhin das alte Image
+zusammen mit dem Vor-Upgrade-Snapshot, nicht die bereits migrierte Datenbank.
 Das ist kein Nachweis für beliebige frühere Releases, Datenbank-Downgrades,
 produktive Datenmengen oder S3-Restore. RPO (maximaler Datenverlust), RTO
 (Wiederanlaufzeit), Aufbewahrung und der regelmäßige Restore-Termin sind je Betrieb

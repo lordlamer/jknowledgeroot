@@ -225,14 +225,9 @@ public class PageRestController {
      * @param id page id
      */
     @RequestMapping(value = "/page/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<PageDto> deletePage(@PathVariable("id") Integer id) {
-        Page page = pageImpl.findById(new PageId(id));
-
-        if (page == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        pageImpl.deletePageById(new PageId(id));
+    public ResponseEntity<PageDto> deletePage(@PathVariable("id") Integer id,
+                                             @RequestParam(required = false) Long revision) {
+        pageEditingService.delete(new PageId(id), revision);
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
@@ -242,8 +237,6 @@ public class PageRestController {
      */
     @RequestMapping(value = "/page", method = RequestMethod.DELETE)
     public ResponseEntity<PageDto> deleteAllPages() {
-        pageImpl.deleteAllPages();
-
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
     }
 }

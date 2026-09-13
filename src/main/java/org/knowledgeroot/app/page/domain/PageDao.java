@@ -31,16 +31,9 @@ public interface PageDao {
      */
     void updatePage(Page page);
 
-    /**
-     * delete all pages
-     */
-    void deleteAllPages();
-
-    /**
-     * delete page by given id
-     * @param pageId
-     */
-    void deletePageById(PageId pageId);
+    /** Saved versions, newest first; at most 51 entries for pagination. */
+    List<PageRevision> listRevisions(PageId id, int start);
+    PageRevision findRevision(PageId id, int historyId);
 
 
     /**

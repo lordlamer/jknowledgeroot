@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
+<head><title>Knowledgeroot :: Saved version</title></head>
+<body>
+<header class="kr-page-header">
+    <div class="kr-page-title-wrap">
+        <h1 class="kr-page-title" th:text="${previous.name}"></h1>
+        <p class="mb-0" th:text="'Saved version ' + ${previous.revision} + ' · ' + ${previous.changedAt}"></p>
+    </div>
+    <div class="kr-page-actions"><a class="kr-btn" th:href="@{'/ui/page/' + ${page.pageId} + '/history'}">Back to history</a></div>
+</header>
+<section class="kr-content-area">
+<p th:if="${previous.labelsCaptured}" th:text="'Labels: ' + ${#strings.listJoin(previous.labels, ', ')}"></p>
+<p th:unless="${previous.labelsCaptured}">Labels were not captured for this legacy version. Current labels will be kept.</p>
+<article class="kr-content" th:utext="${previous.content}"></article>
+<form class="mt-4" method="post" th:action="@{'/ui/page/' + ${page.pageId} + '/history/' + ${previous.id} + '/restore'}"
+      th:attr="hx-post='/ui/page/' + ${page.pageId} + '/history/' + ${previous.id} + '/restore'" hx-target="#content"
+      hx-confirm="Restore this name, content and captured labels? The current version will be saved in history.">
+    <input type="hidden" name="revision" th:value="${page.revision}">
+    <button type="submit" class="kr-btn accent">Restore this version</button>
+</form>
+</section>
+</body></html>

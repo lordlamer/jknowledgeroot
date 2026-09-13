@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class PageDto {
     private Integer id;
+    private Long revision;
     private Integer parent;
     private String name;
     private String content;

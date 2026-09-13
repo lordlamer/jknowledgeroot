@@ -17,6 +17,8 @@
 </nav>
 
 <form th:hx-post="'/ui/page/' + ${page.pageId} + '/edit'" hx-target="#content">
+    <input type="hidden" name="revision" th:value="${page.revision}">
+    <p class="form-text">If someone saves this page first, your changes stay here. Open the current page in another tab to compare before reloading.</p>
 
     <header class="kr-page-header">
         <div class="kr-page-title-wrap">
