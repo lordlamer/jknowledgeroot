@@ -13,9 +13,8 @@ einschließlich Version und optional übergebener Revision. Beispiel unter Bash:
 ```sh
 revision=$(git rev-parse HEAD)
 sh ./mvnw -B --no-transfer-progress -Dbuild.revision="$revision" clean verify
-version=$(target/frontend/node/node scripts/release-metadata.mjs --version)
-docker build --build-arg BUILD_VERSION="$version" --build-arg BUILD_REVISION="$revision" --tag knowledgeroot:verified .
-target/frontend/node/node scripts/release-metadata.mjs knowledgeroot:verified
+target/frontend/node/node scripts/build-container.mjs knowledgeroot:verified
+target/frontend/node/node scripts/audit-image.mjs knowledgeroot:verified
 ```
 
 `target/release-manifest.json` nennt Maven-Version, Git-Revision, Änderungen an
@@ -38,12 +37,15 @@ einschließlich Versions-/Commit-Tags; sie baut es im Publish-Job nicht erneut.
 2. Gesamten Maven-Testlauf, Containerstart und Backup-/Upgrade-/Rollbackprüfung
    bestehen lassen. Dependency-Baum und OSV-Bericht archivieren. Der Workflow führt
    den vorhandenen Scanner nun aus und stoppt bei Funden oder unvollständiger
-   Prüfung. OSV erfasst Maven-/npm-Pakete; ein vollständiger Container-OS-Scan und
-   organisationsspezifische Release-Regeln sind gesondert zu erfüllen.
+   Prüfung. OSV erfasst Maven-/npm-Pakete; der zusätzliche
+   [OS-Imagescan](image-security.md) prüft Betriebssystempakete im App-Container.
+   Verbleibende Funde, Datenbank-/Proxyimages und organisationsspezifische
+   Release-Regeln sind gesondert zu bewerten.
 3. In der Zielumgebung TLS/Proxy, Rechte, Last und Loginquoten, Speicher-/Backupplatz,
    externe Alarmierung und Restore-Zeiten prüfen. Repräsentative eigene Altinhalte
    im Editor kontrollieren. Versionskonflikte und Wiederherstellung gemäß
    [page-history.md](page-history.md) auch mit eigenen Arbeitsabläufen abnehmen.
+   Dafür das [Abnahmeprotokoll](operational-acceptance.md) ausfüllen und archivieren.
 4. Repository-Schutz und GitHub-Umgebung `release` gemäß [production.md](production.md)
    einrichten. Erst nach Freigabe den passenden Tag, beispielsweise
    `v1.0.0-rc.2`, erstellen. Ein abweichender Tag und eine veränderte Arbeitskopie

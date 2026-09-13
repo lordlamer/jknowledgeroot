@@ -52,7 +52,8 @@ also checks editor creation/saving, repeated HTMX navigation, rich-text preserva
 malicious paste handling, and a real file upload/download.
 An additional JAR start uses local storage with an invalid MinIO URL and checks
 an upload at the size limit, its download and HTTP 413 above the limit.
-Full browser, storage, and deployment coverage remains in the roadmap.
+The roadmap records the tested browser, storage, deployment and recovery paths
+along with their remaining operational limits.
 
 Spring Boot 4.1.1 manages the framework dependencies. See the
 [dependency and security audit guide](docs/dependencies.md) for migration details,
@@ -68,6 +69,9 @@ The current release candidate is **1.0.0-rc.2**. See the
 [release guide](docs/release.md) for artifact identity and remaining approval checks,
 and [backup and recovery](docs/recovery.md) for tested backup, restore, upgrade
 and snapshot rollback procedures for the production Compose deployment.
+The [container OS audit](docs/image-security.md) complements Maven/npm scanning;
+the [operational acceptance record](docs/operational-acceptance.md) captures the
+checks still needed on the actual target system.
 Page edits now detect stale revisions. [Page history and deletion](docs/page-history.md)
 explains restoring earlier content, preserving drafts on conflicts, and administrator
 recovery of deleted pages. REST update/delete clients must send the current revision.

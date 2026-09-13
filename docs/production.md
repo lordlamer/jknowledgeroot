@@ -1,10 +1,12 @@
 # Produktionskonfiguration und Lieferprozess
 
-Stand: R15, 13. September 2026. Dieser Stand bereitet den Betrieb vor;
+Stand: R16, 13. September 2026. Dieser Stand bereitet den Betrieb vor;
 [Backup und Wiederherstellung](recovery.md) sowie der [Release-Kandidat](release.md)
 sind dokumentiert; die betriebliche Freigabe bleibt offen. Versionskonflikte,
 Historie und Löschverhalten beschreibt [page-history.md](page-history.md). Healthchecks, Metriken und
 die erweiterten Integrationstests beschreibt [monitoring.md](monitoring.md).
+Der [OS-Imagescan](image-security.md) ergänzt die Paketprüfung. Für die tatsächliche
+Zielumgebung steht ein [Abnahmeprotokoll](operational-acceptance.md) bereit.
 
 ## Betriebsmodell
 
@@ -60,7 +62,9 @@ Backups müssen Datenbank und Objekte zusammen erfassen; Skripte und Restore-Abn
 stehen in [recovery.md](recovery.md).
 
 Das Image verwendet Temurin `25.0.4_7-jre-noble` mit festem Digest und startet als
-UID/GID `10001:10001`. Das Root-Dateisystem ist im Produktions-Compose nur lesbar;
+UID/GID `10001:10001`. Eine gezielte Ubuntu-glibc-Aktualisierung ergänzt die im
+Basisimage noch fehlende Korrektur; Version und Scan sind in [image-security.md](image-security.md)
+beschrieben. Das Root-Dateisystem ist im Produktions-Compose nur lesbar;
 Capabilities sind entfernt und Privilegienausweitung deaktiviert. Ein neues
 Datei-Volume übernimmt die Besitzrechte aus dem Image. Vorhandene Bind-Mounts
 müssen passend für UID 10001 eingerichtet sein. `/tmp` ist ein begrenztes

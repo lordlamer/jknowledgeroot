@@ -10,7 +10,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -33,10 +33,23 @@ jobs:
       - name: Verify application and build container
         run: |
           sh ./mvnw -B --no-transfer-progress -Dbuild.revision="$GITHUB_SHA" verify
-          VERSION=$(target/frontend/node/node scripts/release-metadata.mjs --version)
-          docker build --build-arg BUILD_VERSION="$VERSION" --build-arg BUILD_REVISION="$GITHUB_SHA" --tag knowledgeroot:verified .
+          target/frontend/node/node scripts/build-container.mjs knowledgeroot:verified
           test "$(docker image inspect knowledgeroot:verified --format '{{.Config.User}}')" = '10001:10001'
           sh deploy/smoke-test.sh knowledgeroot:verified
+      - name: Audit container operating system
+        run: |
+          target/frontend/node/node --test scripts/image-audit-policy.test.mjs
+          target/frontend/node/node scripts/audit-image.mjs knowledgeroot:verified
+      - name: Archive container audit evidence including failures
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: container-os-audit
+          path: |
+            target/image-audit.json
+            target/image-audit-summary.json
+          if-no-files-found: warn
+          retention-days: 14
       - name: Verify backup, upgrade and rollback from pinned R13 baseline
         run: |
           bash deploy/build-recovery-baseline.sh
@@ -61,6 +74,8 @@ jobs:
             target/release-image.tar
             target/release-manifest.json
             target/dependency-audit.json
+            target/image-audit.json
+            target/image-audit-summary.json
           retention-days: 3
           compression-level: 0
   publish:
