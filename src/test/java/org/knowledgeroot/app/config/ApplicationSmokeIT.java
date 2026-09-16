@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
 /** Real HTTP, JPA, migrations, JDBC sessions and storage initialization, without local configuration. */
 @Testcontainers
@@ -452,11 +453,13 @@ class ApplicationSmokeIT {
             assertEquals("", page.locator("#new-password").inputValue());
             page.setViewportSize(390, 844);
             page.waitForFunction("document.querySelector('.app-main-content').clientWidth >= 380");
-            assertEquals("false", page.locator("#krSidebarToggle").getAttribute("aria-expanded"));
-            page.locator("#krSidebarToggle").click();
-            assertEquals("true", page.locator("#krSidebarToggle").getAttribute("aria-expanded"));
+            // Layout can update before the asynchronous matchMedia change handler runs.
+            var sidebarToggle = page.locator("#krSidebarToggle");
+            assertThat(sidebarToggle).hasAttribute("aria-expanded", "false");
+            sidebarToggle.click();
+            assertThat(sidebarToggle).hasAttribute("aria-expanded", "true");
             page.keyboard().press("Escape");
-            assertEquals("false", page.locator("#krSidebarToggle").getAttribute("aria-expanded"));
+            assertThat(sidebarToggle).hasAttribute("aria-expanded", "false");
             assertTrue((Boolean) page.evaluate("document.querySelector('.app-main-content').scrollWidth <= document.querySelector('.app-main-content').clientWidth + 1"));
             page.locator("form[action='/profile/password']").scrollIntoViewIfNeeded();
             page.screenshot(new Page.ScreenshotOptions().setPath(Path.of("target/product-profile-mobile.png")).setFullPage(true));

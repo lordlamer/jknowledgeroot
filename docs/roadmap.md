@@ -1,6 +1,6 @@
 # Roadmap zur Produktionsreife
 
-Stand: 13. September 2026. Grundlage ist die Code- und Build-Prüfung vom 12. September 2026.
+Stand: 16. September 2026. Grundlage ist die Code- und Build-Prüfung vom 12. September 2026.
 
 Ziel ist eine sicher betreibbare, reproduzierbar gebaute Version mit getesteten
 Zugriffsrechten, Migrationen und Wiederherstellung. Der aktuelle Stand ist noch
@@ -15,20 +15,23 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: R28 committen; danach den aktuellen Stand in der gehosteten CI und im Zielbetrieb abnehmen.**
+**Nächster Schritt: Den in der gehosteten CI gefundenen Browser-Testfehler beheben (R29); danach CI und Zielbetrieb abnehmen.**
 
 R01 bis R26 sind umgesetzt, lokal geprüft und committet; R26-Dokumentation als `c8db67d`. Der aktuelle Kandidat ist `1.0.0-rc.2`. Verbleibende OS-Paketbefunde, gehostete CI für den aktuellen Stand, Repository-/Release-Schutz, TLS/Proxy, produktive Last, Alarmierung sowie eigene Backup-/Wiederanlaufzeiten sind vor der Produktionsfreigabe gemäß [release.md](release.md) abzunehmen. Das [Abnahmeprotokoll](operational-acceptance.md) hält die offenen Angaben und Nachweise fest; [container-findings.md](container-findings.md) und [database-findings.md](database-findings.md) enthalten die getrennte technische Einordnung der Restbefunde.
 
 Am 13. September wurde der vorhandene [erfolgreiche GitHub-Lauf](https://github.com/lordlamer/jknowledgeroot/actions/runs/34764388748)
 für `508ac87` geprüft: Verify einschließlich Build, Scans und Wiederherstellung
-erfolgreich, Veröffentlichung übersprungen. Der Remote-Stand liegt noch sechs
-Commits hinter `c8db67d`; dieser ältere Nachweis deckt R19–R26 nicht ab.
+erfolgreich, Veröffentlichung übersprungen. Dieser ältere Nachweis deckt R19–R28 nicht ab.
+Am 16. September wurde der aktuelle Stand bis `85efac8` auf `origin/master`
+übertragen. Der [erste aktuelle GitHub-Lauf](https://github.com/lordlamer/jknowledgeroot/actions/runs/35145172029)
+scheitert an der mobilen Browserprüfung; Scans und Wiederherstellung wurden noch
+nicht erreicht. Die Korrektur und erneute Prüfung sind in R29 festgehalten.
 
 R23 bis R25 ergänzen den gewünschten Funktionsumfang und sind als `155e710`
 committet. Die vorläufige Administratorregel für
 Verschiebungen und der mögliche E-Mail-Passwortreset sind unten ausdrücklich festgehalten.
 R27 ist als `03735d5` committet. R28 verbessert die daraus gemessene breite
-Seitenhierarchie und ist lokal geprüft; die Änderungen sind noch nicht committet.
+Seitenhierarchie, ist lokal geprüft und als `85efac8` committet.
 
 Die Einträge R01–R26 dokumentieren jeweils den damaligen Prüfstand. Hinweise auf
 damals noch fehlende spätere Schritte oder ausstehende Commits sind historische
@@ -376,7 +379,7 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 
 ### R27 – Wiederholbare Lastszenarien für Suche und Navigation
 
-- [x] Implementiert und lokal geprüft am 13. September 2026; noch nicht committet
+- [x] Implementiert und lokal geprüft am 13. September 2026; committet als `03735d5`
 - **Ausgangslage:** Es fehlte ein wiederholbarer HTTP-Lastvergleich. Die Einzelmessung aus R10 war keine Prüfung gleichzeitiger Requests. Die geplante Nutzung reicht von kleinen internen Installationen bis zu größeren öffentlichen Beständen.
 - **Umsetzung:** `deploy/load-smoke-test.mjs` erzeugt eine entbehrliche Compose-Installation mit synthetischen Seiten, Gast-/Gruppenrechten und vererbenden Unterseiten. Acht Leseabläufe werden mit begrenzter Parallelität nach einem Aufwärmlauf gemessen. Status und Inhalte müssen stimmen; private Gastinhalte zählen als Fehler. Bericht mit Fehlerquote, p50/p95/p99 je Szenario, Durchsatz, Ressourcenmomentaufnahmen sowie Image-/Skriptzuordnung. Seitenzahl, Zweigbreite, Requestzahl, Parallelität und optionales p95-Budget sind begrenzt konfigurierbar. CI ergänzt einen kleinen Lauf und archiviert dessen Bericht auch bei Fehlern.
 - **Abnahme:** 1000 und 10000 Seiten jeweils mit einem und acht Workern ohne falsche Antworten oder Datenfreigaben messen. Der Messhelfer prüft Parallelitätsbegrenzung und verzögerte Antwortkörper mit echtem HTTP; falsche Inhalte, Verbindungsfehler und unzulässige Parameter dürfen keinen Erfolg ergeben. Nach jedem Lauf sind ausschließlich die neu erstellten Testressourcen entfernt.
@@ -385,7 +388,7 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 
 ### R28 – Breite Seitenhierarchien in der Navigation begrenzen
 
-- [x] Implementiert und lokal geprüft am 13. September 2026; noch nicht committet
+- [x] Implementiert und lokal geprüft am 13. September 2026; committet als `85efac8`
 - **Befund:** Bei 10000 Seiten und acht Workern erreicht die Gast-Seitenleiste im kurzen lokalen Lauf p95 **797,09 ms**; die beiden erfolgreichen Gast-Suchszenarien liegen bei **78,97/82,42 ms**. `SidebarController` lädt derzeit alle unmittelbaren Unterseiten und prüft jede Freigabe separat. Die SQL-basierte Sichtbarkeitsfilterung und Pagination aus R10 erfassen diese Navigation noch nicht. Gemessen wurde auf einer Docker-Engine mit sechs CPUs und rund 16 GiB RAM, ohne daraus eine Produktionskapazität abzuleiten.
 - **Umsetzung:** Eigene Navigationsprojektion mit ID, Name, Revision und lesbarem Elternverweis; keine Inhalte oder Anhänge laden. Die bestehende SQL-Sichtbarkeitsregel greift vor `LIMIT 51`. Die Oberfläche zeigt bis zu 50 Einträge und lädt über die letzte sichtbare ID weiter. Nachladen ersetzt nur den Fortsetzungsbutton, Zuklappen nur den jeweiligen Knoten. Die gespeicherte Browsernavigation merkt Aufklapp- und Nachladeoperationen in Reihenfolge und stellt sie mit aktuellen Rechteprüfungen wieder her. Der lokale Filter ist als Filter der geladenen Seiten gekennzeichnet.
 - **Zusätzlicher Browserbefund:** Gemerkte Seiten erscheinen im Baum und im Starred-Reiter. Die bisherige Aktiv-Markierung erfasste nur den ersten Link und konnte damit im ausgeblendeten Reiter landen. Sie markiert jetzt alle passenden Navigationseinträge; der Browserfall prüft eine nachgeladene, gemerkte Seite auch nach einem vollständigen Neuladen.
@@ -393,6 +396,15 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 - **Tests:** Der vollständige serverseitige Lauf besteht mit **280 Surefire-Tests** (`target/r28-verify.log`); sein anschließender Browserlauf deckte die oben korrigierte Starred-Wechselwirkung auf. Nach den Browserkorrekturen bestehen erneut sechs gezielte Controller-/MariaDB-Tests und der vollständige JAR-/Chromium-Test (`target/r28-acceptance.log`, **BUILD SUCCESS**). Geprüft sind breite Root- und Unterseitenebenen, fortbestehende aufgeklappte Nachbarn, Sterne, Aktiv-Markierung, Wiederherstellung nach vollständigem Neuladen, private/gelöschte Seiten, Gruppenentzug und ungültige Parameter. Screenshot unter `target/sidebar-pagination.png`. Containerbuild samt JAR-/Laufzeitzuordnung und `git diff --check` bestehen.
 - **Lastvergleich:** Mit unverändertem R27-Szenario sind **640 gemessene Requests ohne Fehler** erfolgreich. Bei 1000 Seiten liegt das Gesamt-p95 mit einem/acht Workern jetzt bei **37,74/80,69 ms** (vorher **70,46/117,06 ms**); bei 10000 Seiten bei **82,71/133,52 ms** (vorher **649,00/582,54 ms**). Die Gast-Seitenleiste bei 10000 Seiten und acht Workern liegt bei **134,44 ms** statt **797,09 ms**. Maßgeblich sind `target/r28-load-1000.json` und `target/r28-load-10000.json` sowie die aufbewahrten R27-Berichte. Die Abfrage liefert jetzt einen Abschnitt statt der ganzen Ebene; sämtliche weiteren Einträge bleiben über Nachladen erreichbar. Beide neuen Testprojekte und Volumes wurden entfernt.
 - **Grenzen:** Kurze lokale Messungen mit jeweils 20 Werten pro Szenario/Stufe auf geteilter Hardware, kein Produktionsgrenzwert und keine Kapazitätszusage. Aufbewahrung der Navigation nutzt optionalen Browser-Sitzungsspeicher; bei geänderten Freigaben kann die wiederhergestellte Ansicht abweichen. Dependency-/OS-Scans und Restore wurden in R28 nicht erneut ausgeführt; POM, Containerpakete und Datenbankschema bleiben unverändert. Die neuen Images enthalten die Arbeitskopie nach `03735d5` und haben ein vorläufiges Manifest (`dirty: true`, `auditsVerified: false`). Gehostete CI und Zielbetrieb bleiben abzunehmen.
+
+### R29 – Aktuellen Stand in der gehosteten CI prüfen
+
+- [ ] In Arbeit seit 16. September 2026
+- **Befund:** Der erste aktuelle Linux-Lauf besteht die 280 serverseitigen Tests, scheitert aber in `ApplicationSmokeIT` beim Wechsel auf die mobile Ansicht. Die CSS-Breite ist bereits angepasst, während das asynchrone `matchMedia`-Ereignis den ARIA-Zustand der Seitenleiste noch nicht aktualisiert hat. Ein unmittelbares JUnit-Auslesen ist hier nicht mit dem Browserereignis synchronisiert.
+- **Korrektur:** Playwright prüft den erwarteten `aria-expanded`-Wert mit automatischen Wiederholungen und begrenzter Wartezeit nach Größenwechsel, Öffnen und Escape. Alle drei Zustände bleiben verbindlich; keine feste Schlafpause und keine abgeschwächte Assertion.
+- **Lokal geprüft:** Sechs gezielte Controller-/MariaDB-Tests und der vollständige JAR-/Chromium-Test bestehen mit Temurin 25.0.4.1+1 (`target/r29-acceptance.log`, **BUILD SUCCESS**). `git diff --check` besteht.
+- **Abnahme:** Lokaler JAR-/Chromium-Test und anschließend vollständiger GitHub-Lauf einschließlich Container, Proxy, Lastmessung, aktueller Scans und Wiederherstellung. Ein grüner CI-Lauf ersetzt nicht die Abnahme im Zielbetrieb.
+- **Zusätzliche Klärung:** GitHub meldet 78 offene Dependabot-Befunde, darunter 14 kritische und 23 hohe. Die REST-Abfrage ordnet alle dem Manifestpfad `home/runner/work/jknowledgeroot/jknowledgeroot/pom.xml` zu. Der am 16. September gelesene GitHub-SBOM enthält tatsächlich noch Spring Boot 3.5.11, Tomcat 10.1.52, Thymeleaf 3.1.3 und SnakeYAML 1.23. Der aktuelle Build verwendet bereits andere Versionen, etwa Spring Boot 4.1.1 und Tomcat 11.0.25. Aktuelle Scans und die Aktualisierung des GitHub-Abhängigkeitsgraphen müssen getrennt geprüft werden; Meldungen werden nicht pauschal geschlossen. Lokale REST-Nachweise: `target/r29-dependabot-open.json` und `target/r29-github-sbom.json`.
 
 ## Nachweise der Bestandsaufnahme
 
