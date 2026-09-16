@@ -71,3 +71,24 @@ erfasste Labels bleibt deren Zustand ausdrücklich unbekannt.
 Aktueller Seitenstand und Labels werden innerhalb derselben Lesetransaktion geladen.
 Es gelten heutige Bearbeitungsrechte; gelöschte Seiten bleiben Administratoren
 vorbehalten. Vergleichen ändert weder Inhalte noch Freigaben.
+
+## Große Seitenbäume bedienen
+
+Die Seitenleiste zeigt je Ebene zunächst bis zu 50 lesbare Seiten.
+**Load more pages** ergänzt den nächsten Abschnitt in derselben Ebene;
+bereits aufgeklappte Zweige bleiben bestehen. Die Reihenfolge bleibt nach
+Seiten-ID sortiert. Beim Weiterladen werden die aktuellen Freigaben erneut
+berücksichtigt. Die Fortsetzung verwendet die letzte angezeigte ID, damit
+zwischenzeitlich gelöschte frühere Einträge keine weiteren Seiten überspringen.
+
+Auf- und Zuklappen verändert nur den jeweiligen Zweig. Nachgeladene Abschnitte
+und aufgeklappte Zweige werden in der Browsersitzung für ein Neuladen gemerkt;
+bereits entzogene Rechte werden dadurch nicht umgangen. Die aktuelle Seite
+wird auch in nachgeladenen Abschnitten markiert. Sterne bleiben bedienbar.
+**Filter loaded pages** filtert die bereits geladenen Einträge; die globale
+Suche durchsucht weiterhin den gesamten lesbaren Bestand.
+
+Ein Request lädt nur Navigationsdaten (ID, Name, Revision und lesbaren
+Elternverweis), keine Seiteninhalte oder Dateilisten. Die Datenbank wendet
+die Sichtbarkeit vor der Begrenzung an. Die Einschränkungen und Messmethode
+für große Bestände stehen in [load-testing.md](load-testing.md).

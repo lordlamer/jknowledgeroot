@@ -68,114 +68,63 @@
             event.detail.headers[headerMeta.content] = tokenMeta.content;
         });
 
-        function getExpandedSidebarNodeIds() {
-            var sidebar = document.getElementById('sidebar');
-            if (!sidebar) {
-                return [];
-            }
-
-            var expandedNodes = sidebar.querySelectorAll('li.sidebar-node > ul.sidebar-children');
-            var ids = [];
-            for (var i = 0; i < expandedNodes.length; i++) {
-                var parentNode = expandedNodes[i].parentElement;
-                if (!parentNode || !parentNode.id || parentNode.id.indexOf('nav-page-') !== 0) {
-                    continue;
-                }
-                ids.push(parentNode.id.substring('nav-page-'.length));
-            }
-            return ids;
-        }
+        var restoringSidebar = false;
 
         function persistSidebarTreeState() {
-            try {
-                sessionStorage.setItem(SIDEBAR_STATE_KEY, JSON.stringify(getExpandedSidebarNodeIds()));
-            } catch (error) {
-                // ignore storage errors (private mode, quota, etc.)
+            if (restoringSidebar) return;
+            var tree = document.querySelector('#sidebar-tree > .sidebar-tree');
+            if (!tree) return; // Initial HTMX load must not overwrite saved navigation.
+            var steps = [];
+            function visit(list) {
+                if (!list) return;
+                Array.from(list.children).forEach(function (node) {
+                    if (node.hasAttribute('data-sidebar-chunk')) {
+                        steps.push({more: node.getAttribute('data-sidebar-chunk')});
+                    } else if (node.classList.contains('sidebar-node')) {
+                        var children = node.querySelector(':scope > ul.sidebar-children');
+                        if (children) {
+                            steps.push({expand: node.id.substring('nav-page-'.length)});
+                            visit(children);
+                        }
+                    }
+                });
             }
+            visit(tree);
+            try {
+                sessionStorage.setItem(SIDEBAR_STATE_KEY, JSON.stringify(steps));
+            } catch (error) { /* storage may be unavailable */ }
         }
 
-        function loadSidebarTreeState() {
+        async function restoreSidebarTreeState() {
+            if (restoringSidebar || !window.htmx) return;
+            var steps;
             try {
-                var raw = sessionStorage.getItem(SIDEBAR_STATE_KEY);
-                if (!raw) {
-                    return [];
+                steps = JSON.parse(sessionStorage.getItem(SIDEBAR_STATE_KEY) || '[]');
+            } catch (error) { steps = []; }
+            if (!Array.isArray(steps)) return;
+            restoringSidebar = true;
+            try {
+                for (var step of steps) {
+                    // Accept old saved expansion IDs as well as the new ordered operations.
+                    if (typeof step === 'string') step = {expand: step};
+                    if (!step || typeof step !== 'object') continue;
+                    var more = Object.prototype.hasOwnProperty.call(step, 'more');
+                    var id = more ? step.more : step.expand;
+                    if (typeof id !== 'string' || !/^\d{1,10}$/.test(id)) continue;
+                    var node = document.getElementById((more ? 'nav-more-' : 'nav-page-') + id);
+                    if (!node) continue;
+                    var button = node.querySelector(more ? 'button' : ':scope > .sidebar-node-row > .sidebar-toggle');
+                    if (!button || (!more && button.getAttribute('aria-expanded') === 'true')) continue;
+                    // Follow the current continuation, so changed permissions cannot cause duplicate rows.
+                    await htmx.ajax('GET', button.getAttribute('hx-get'), {source: button, target: node, swap: 'outerHTML'});
                 }
-                var parsed = JSON.parse(raw);
-                return Array.isArray(parsed) ? parsed : [];
             } catch (error) {
-                return [];
-            }
-        }
-
-        function expandSidebarNodesSequentially(nodeIds, index) {
-            if (!nodeIds || index >= nodeIds.length) {
+                // Normal HTMX error handling shows the request failure; retain the available tree.
+            } finally {
+                restoringSidebar = false;
                 markActiveSidebarPage();
                 persistSidebarTreeState();
-                return;
             }
-
-            var nodeId = nodeIds[index];
-            var targetId = 'nav-page-' + nodeId;
-            var node = document.getElementById(targetId);
-            if (!node) {
-                expandSidebarNodesSequentially(nodeIds, index + 1);
-                return;
-            }
-
-            var toggle = node.querySelector('button.sidebar-toggle');
-            if (!toggle) {
-                expandSidebarNodesSequentially(nodeIds, index + 1);
-                return;
-            }
-
-            // If the icon points right, node is collapsed and must be expanded.
-            if (!toggle.querySelector('i.bi-chevron-right')) {
-                expandSidebarNodesSequentially(nodeIds, index + 1);
-                return;
-            }
-
-            var hxGet = toggle.getAttribute('hx-get');
-            if (!hxGet || !window.htmx) {
-                expandSidebarNodesSequentially(nodeIds, index + 1);
-                return;
-            }
-
-            var done = false;
-            var timeoutId = null;
-
-            function continueRestore() {
-                if (done) {
-                    return;
-                }
-                done = true;
-                if (timeoutId !== null) {
-                    window.clearTimeout(timeoutId);
-                }
-                document.body.removeEventListener('htmx:afterSwap', onAfterSwap);
-                expandSidebarNodesSequentially(nodeIds, index + 1);
-            }
-
-            function onAfterSwap(event) {
-                if (!event.detail || !event.detail.target) {
-                    return;
-                }
-                if (event.detail.target.id === targetId) {
-                    continueRestore();
-                }
-            }
-
-            document.body.addEventListener('htmx:afterSwap', onAfterSwap);
-            timeoutId = window.setTimeout(continueRestore, 1500);
-            htmx.ajax('GET', hxGet, { target: '#' + targetId, swap: 'outerHTML' });
-        }
-
-        function restoreSidebarTreeState() {
-            var expandedNodeIds = loadSidebarTreeState();
-            if (!expandedNodeIds.length) {
-                markActiveSidebarPage();
-                return;
-            }
-            expandSidebarNodesSequentially(expandedNodeIds, 0);
         }
 
         function markActiveSidebarPage() {
@@ -197,11 +146,10 @@
                 return;
             }
 
-            var activeLink = sidebar.querySelector('a.sidebar-link[data-page-id="' + activePageId + '"]');
-            if (activeLink) {
+            sidebar.querySelectorAll('a.sidebar-link[data-page-id="' + activePageId + '"]').forEach(function (activeLink) {
                 activeLink.classList.add('active');
                 activeLink.setAttribute('aria-current', 'page');
-            }
+            });
         }
 
         document.addEventListener('DOMContentLoaded', markActiveSidebarPage);
@@ -227,12 +175,13 @@
                 markActiveSidebarPage();
             }
 
-            if (event.detail.target.id.indexOf('nav-page-') === 0) {
+            if (/^nav-(page|chunk|more)-/.test(event.detail.target.id)) {
                 persistSidebarTreeState();
                 markActiveSidebarPage();
             }
         });
         document.addEventListener('htmx:pushedIntoHistory', markActiveSidebarPage);
+        window.addEventListener('pagehide', persistSidebarTreeState);
 
         // Theme toggle
         var KR_THEME_KEY = 'kr.theme';
@@ -318,6 +267,11 @@
                             node.style.display = 'none';
                         }
                     });
+                });
+                document.addEventListener('htmx:afterSwap', function (event) {
+                    if (treeFilter.value && (event.detail.target.id === 'sidebar-tree' || /^nav-/.test(event.detail.target.id))) {
+                        treeFilter.dispatchEvent(new Event('input'));
+                    }
                 });
             }
 

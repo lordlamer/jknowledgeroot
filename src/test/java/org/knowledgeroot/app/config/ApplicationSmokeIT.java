@@ -372,9 +372,64 @@ class ApplicationSmokeIT {
             assertEquals(2, page.locator("article.kr-content").count());
             assertTrue(page.locator("#content ins, #content del").count() > 0);
             page.screenshot(new Page.ScreenshotOptions().setPath(Path.of("target/product-version-compare.png")).setFullPage(true));
+            browserSidebarPagination(page, server, jdbc);
             browserProfilePassword(browser, server, jdbc);
             assertTrue(errors.isEmpty(), errors.toString());
         }
+    }
+
+    private void browserSidebarPagination(Page page, TestServer server, JdbcTemplate jdbc) {
+        jdbc.update("INSERT INTO page (name,active,create_date,change_date) VALUES ('Browser navigation root',TRUE,NOW(),NOW())");
+        int root = jdbc.queryForObject("SELECT id FROM page WHERE name='Browser navigation root'", Integer.class);
+        for (int index = 0; index < 55; index++) {
+            jdbc.update("INSERT INTO page (name,active,create_date,change_date) VALUES (?,TRUE,NOW(),NOW())", "Browser extra root " + index);
+        }
+        var children = new ArrayList<Integer>();
+        for (int index = 0; index < 55; index++) {
+            String name = "Browser navigation child " + index;
+            jdbc.update("INSERT INTO page (parent,name,active,create_date,change_date) VALUES (?,?,TRUE,NOW(),NOW())", root, name);
+            children.add(jdbc.queryForObject("SELECT id FROM page WHERE name=?", Integer.class, name));
+        }
+        jdbc.update("INSERT INTO page (parent,name,active,create_date,change_date) VALUES (?,'Browser navigation grandchild',TRUE,NOW(),NOW())", children.getFirst());
+        page.navigate(uri(server, "/ui/page/" + root).toString());
+        page.locator("#nav-page-" + root + " > .sidebar-node-row > .sidebar-toggle").click();
+        String childNodes = "#nav-page-" + root + " > .sidebar-children > .sidebar-node";
+        page.waitForFunction("selector => document.querySelectorAll(selector).length === 50", childNodes);
+        page.locator("#nav-page-" + children.getFirst() + " > .sidebar-node-row > .sidebar-toggle").click();
+        page.waitForSelector("#nav-page-" + children.getFirst() + " > .sidebar-children");
+        page.locator("#nav-more-" + root + " button").click();
+        page.waitForFunction("selector => document.querySelectorAll(selector).length === 55", childNodes);
+        assertEquals(1, page.locator("#nav-page-" + children.getFirst() + " > .sidebar-children").count());
+        page.locator("#nav-more-0 button").click();
+        page.waitForFunction("() => document.querySelectorAll('#sidebar-tree > .sidebar-tree > .sidebar-node').length > 50");
+        var last = page.locator("#nav-page-" + children.getLast());
+        last.locator(".sidebar-star").click();
+        last.locator(".sidebar-star.on").waitFor();
+        last.locator(".sidebar-link").click();
+        page.waitForURL("**/ui/page/" + children.getLast());
+        try {
+            page.waitForSelector("#nav-page-" + children.getLast() + " .sidebar-link[aria-current=page]",
+                    new Page.WaitForSelectorOptions().setTimeout(5000));
+        } catch (RuntimeException failure) {
+            page.screenshot(new Page.ScreenshotOptions().setPath(Path.of("target/sidebar-failure.png")).setFullPage(true));
+            throw new AssertionError((String) page.evaluate("""
+                    () => JSON.stringify({url:location.href, restoring:window.restoringSidebar,
+                      active:[...document.querySelectorAll('#sidebar [aria-current]')].map(e=>e.outerHTML),
+                      loaded:document.querySelectorAll('#sidebar .sidebar-node').length,
+                      state:sessionStorage.getItem('kr.sidebar.expanded')})
+                    """), failure);
+        }
+        page.reload();
+        page.waitForFunction("selector => document.querySelectorAll(selector).length === 55", childNodes);
+        page.waitForFunction("() => document.querySelectorAll('#sidebar-tree > .sidebar-tree > .sidebar-node').length > 50");
+        page.waitForSelector("#nav-page-" + children.getFirst() + " > .sidebar-children");
+        page.waitForSelector("#nav-page-" + children.getLast() + " .sidebar-link[aria-current=page]");
+        assertEquals(1, page.locator("#nav-page-" + children.getLast() + " .sidebar-star.on").count());
+        // Collapsing a nested node must not replace its siblings or hide the second segment.
+        page.locator("#nav-page-" + children.getFirst() + " > .sidebar-node-row > .sidebar-toggle").click();
+        page.waitForSelector("#nav-page-" + children.getFirst() + " > .sidebar-node-row > [aria-expanded=false]");
+        assertEquals(55, page.locator(childNodes).count());
+        page.screenshot(new Page.ScreenshotOptions().setPath(Path.of("target/sidebar-pagination.png")).setFullPage(true));
     }
 
     private void browserProfilePassword(Browser browser, TestServer server, JdbcTemplate jdbc) {

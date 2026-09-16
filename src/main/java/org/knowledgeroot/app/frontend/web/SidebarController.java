@@ -4,22 +4,19 @@ import lombok.RequiredArgsConstructor;
 import org.knowledgeroot.app.page.domain.*;
 import org.knowledgeroot.app.security.context.domain.UserContext;
 import org.knowledgeroot.app.security.context.domain.UserDetails;
+import org.knowledgeroot.app.util.RequestValidation;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
 class SidebarController {
     private final PageDao pageImpl;
-    private final PagePermissionDao pagePermissionImpl;
     private final PageStarDao pageStarDao;
     private final UserContext userContext;
 
@@ -48,57 +45,37 @@ class SidebarController {
      * @param singlePage Single page id
      * @return sidebar template
      */
-    @RequestMapping("/ui/sidebar")
+    @GetMapping("/ui/sidebar")
     public String index(
             Model model,
             @RequestParam(name = "parent", required = false) Integer parent,
-            @RequestParam(name = "singlePage", required = false) Integer singlePage
+            @RequestParam(name = "singlePage", required = false) Integer singlePage,
+            @RequestParam(name = "after", defaultValue = "0") int after
     ) {
         if(parent == null)
             parent = 0;
 
-        PageFilter pageFilter = new PageFilter();
-        pageFilter.setParent(parent);
-
-        List<Page> allPages = pageImpl.listPages(pageFilter);
-
-        // Filter pages based on user permissions - only show pages the user can view
+        RequestValidation.require(parent >= 0 && after >= 0);
+        RequestValidation.id(singlePage);
+        RequestValidation.require(singlePage == null || (parent == 0 && after == 0));
         Integer currentUserId = getCurrentUserId();
-        List<Page> visiblePages = allPages.stream()
-                .filter(page -> pagePermissionImpl.hasUserPermission(
-                        page.getPageId(), 
-                        currentUserId, 
-                        PagePermission.PermissionLevel.VIEW))
-                .collect(Collectors.toList());
-
         model.addAttribute("parentId", parent);
-
-        if(parent == 0) {
-            model.addAttribute("parentPage", null);
-            if(singlePage != null) {
-                Page singlePageObj = pageImpl.findById(new PageId(singlePage));
-                // Check if user can view the single page
-                if (pagePermissionImpl.hasUserPermission(new PageId(singlePage), currentUserId, PagePermission.PermissionLevel.VIEW)) {
-                    model.addAttribute("singlePage", singlePageObj);
-                } else {
-                    model.addAttribute("singlePage", null);
-                }
-            } else {
-                model.addAttribute("singlePage", null);
-            }
-        } else {
-            Page parentPageObj = pageImpl.findById(new PageId(parent));
-            // Check if user can view the parent page
-            if (pagePermissionImpl.hasUserPermission(new PageId(parent), currentUserId, PagePermission.PermissionLevel.VIEW)) {
-                model.addAttribute("parentPage", parentPageObj);
-            } else {
-                model.addAttribute("parentPage", null);
-                model.addAttribute("pages", Collections.emptyList());
-                return "sidebar";
-            }
+        model.addAttribute("after", after);
+        model.addAttribute("pages", List.of());
+        model.addAttribute("hasNext", false);
+        if (singlePage != null) {
+            model.addAttribute("singlePage", pageImpl.findNavigationPage(new PageId(singlePage), currentUserId).orElse(null));
+        } else if (parent != 0) {
+            Page parentPage = pageImpl.findNavigationPage(new PageId(parent), currentUserId).orElse(null);
+            model.addAttribute("parentPage", parentPage);
+            if (parentPage == null) return "fragments/sidebar-entries :: entries";
         }
-
-        model.addAttribute("pages", visiblePages);
+        if (singlePage == null) {
+            List<Page> visiblePages = pageImpl.listNavigationPages(parent, after, currentUserId);
+            model.addAttribute("pages", visiblePages.stream().limit(50).toList());
+            model.addAttribute("hasNext", visiblePages.size() > 50);
+            if (visiblePages.size() > 50) model.addAttribute("nextAfter", visiblePages.get(49).getPageId().value());
+        }
 
         // Provide the set of starred page ids so the sidebar can render the
         // filled star icon for already-starred entries.
@@ -108,7 +85,7 @@ class SidebarController {
         model.addAttribute("starredIds", starredIds);
         model.addAttribute("canStar", currentUserId != null);
 
-        return "sidebar";
+        return singlePage != null ? "sidebar :: single" : after > 0 ? "fragments/sidebar-entries :: entries" : "sidebar";
     }
 
     /**
@@ -119,7 +96,7 @@ class SidebarController {
     public String starred(Model model) {
         Integer currentUserId = getCurrentUserId();
         List<Page> starred = currentUserId == null
-                ? Collections.emptyList()
+                ? List.of()
                 : pageStarDao.listStarredPages(currentUserId);
         model.addAttribute("starred", starred);
         return "fragments/sidebar-starred :: starred";

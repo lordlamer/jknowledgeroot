@@ -1,0 +1,10 @@
+<li xmlns:th="http://www.thymeleaf.org" th:fragment="node(page)" class="sidebar-node" th:id="'nav-page-' + ${page.pageId}">
+    <div class="sidebar-node-row">
+        <button class="sidebar-toggle" type="button" aria-label="Expand page" aria-expanded="false"
+                th:attr="hx-get=@{/ui/sidebar(parent=${page.pageId})}, hx-target='#nav-page-' + ${page.pageId}"
+                hx-swap="outerHTML" hx-disabled-elt="this">
+            <i class="bi bi-chevron-right"></i>
+        </button>
+        <th:block th:insert="~{fragments/sidebar-row :: content(${page}, ${starredIds}, ${canStar})}"></th:block>
+    </div>
+</li>

@@ -1,72 +1,27 @@
 <th:block xmlns:th="http://www.thymeleaf.org">
-
-<!-- Root listing (no parent context) -->
-<th:block th:if="${parentId == 0}">
-
-    <!-- Collapse-a-single-node replacement: render this node by itself -->
-    <th:block th:if="${singlePage != null}">
-        <li class="sidebar-node" th:id="'nav-page-' + ${singlePage.pageId}">
+    <th:block th:fragment="single">
+        <th:block th:if="${singlePage != null}">
+            <th:block th:insert="~{fragments/sidebar-node :: node(${singlePage})}"></th:block>
+        </th:block>
+    </th:block>
+    <th:block th:if="${parentId == 0 and singlePage == null}">
+        <ul class="sidebar-tree">
+            <th:block th:insert="~{fragments/sidebar-entries :: entries}"></th:block>
+        </ul>
+    </th:block>
+    <th:block th:if="${parentId != 0 and parentPage != null}">
+        <li class="sidebar-node" th:id="'nav-page-' + ${parentPage.pageId}">
             <div class="sidebar-node-row">
-                <button class="sidebar-toggle"
-                        type="button"
-                        th:attr="hx-get='/ui/sidebar?parent=' + ${singlePage.pageId}, hx-target='#nav-page-' + ${singlePage.pageId}, hx-swap='outerHTML', aria-label='Expand page'">
-                    <i class="bi bi-chevron-right"></i>
+                <button class="sidebar-toggle" type="button" aria-label="Collapse page" aria-expanded="true"
+                        th:attr="hx-get=@{/ui/sidebar(singlePage=${parentPage.pageId})}, hx-target='#nav-page-' + ${parentPage.pageId}"
+                        hx-swap="outerHTML" hx-disabled-elt="this">
+                    <i class="bi bi-chevron-down"></i>
                 </button>
-                <th:block th:insert="~{fragments/sidebar-row :: content(${singlePage}, ${starredIds}, ${canStar})}"></th:block>
+                <th:block th:insert="~{fragments/sidebar-row :: content(${parentPage}, ${starredIds}, ${canStar})}"></th:block>
             </div>
+            <ul class="sidebar-children">
+                <th:block th:insert="~{fragments/sidebar-entries :: entries}"></th:block>
+            </ul>
         </li>
     </th:block>
-
-    <!-- Top-level workspace listing -->
-    <th:block th:if="${singlePage == null}">
-        <ul class="sidebar-tree">
-            <li class="sidebar-node" th:each="page : ${pages}" th:id="'nav-page-' + ${page.pageId}">
-                <div class="sidebar-node-row">
-                    <button class="sidebar-toggle"
-                            type="button"
-                            th:attr="hx-get='/ui/sidebar?parent=' + ${page.pageId}, hx-target='#nav-page-' + ${page.pageId}, hx-swap='outerHTML', aria-label='Expand page'">
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
-                    <th:block th:insert="~{fragments/sidebar-row :: content(${page}, ${starredIds}, ${canStar})}"></th:block>
-                </div>
-            </li>
-        </ul>
-    </th:block>
-</th:block>
-
-<!-- Expanded node with children -->
-<th:block th:if="${parentId != 0 and parentPage != null}">
-    <li class="sidebar-node" th:id="'nav-page-' + ${parentPage.pageId}">
-        <div class="sidebar-node-row">
-            <th:block th:if="${parentPage.parent == 0}">
-                <button class="sidebar-toggle"
-                        type="button"
-                        th:attr="hx-get='/ui/sidebar?singlePage=' + ${parentPage.pageId}, hx-target='#nav-page-' + ${parentPage.pageId}, hx-swap='outerHTML', aria-label='Collapse page'">
-                    <i class="bi bi-chevron-down"></i>
-                </button>
-            </th:block>
-            <th:block th:unless="${parentPage.parent == 0}">
-                <button class="sidebar-toggle"
-                        type="button"
-                        th:attr="hx-get='/ui/sidebar?parent=' + ${parentPage.parent}, hx-target='#nav-page-' + ${parentPage.parent}, hx-swap='outerHTML', aria-label='Collapse page'">
-                    <i class="bi bi-chevron-down"></i>
-                </button>
-            </th:block>
-            <th:block th:insert="~{fragments/sidebar-row :: content(${parentPage}, ${starredIds}, ${canStar})}"></th:block>
-        </div>
-
-        <ul class="sidebar-children">
-            <li class="sidebar-node" th:each="page : ${pages}" th:id="'nav-page-' + ${page.pageId}">
-                <div class="sidebar-node-row">
-                    <button class="sidebar-toggle"
-                            type="button"
-                            th:attr="hx-get='/ui/sidebar?parent=' + ${page.pageId}, hx-target='#nav-page-' + ${page.pageId}, hx-swap='outerHTML', aria-label='Expand page'">
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
-                    <th:block th:insert="~{fragments/sidebar-row :: content(${page}, ${starredIds}, ${canStar})}"></th:block>
-                </div>
-            </li>
-        </ul>
-    </li>
-</th:block>
 </th:block>

@@ -11,15 +11,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ui.ExtendedModelMap;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.knowledgeroot.app.page.domain.PagePermission.PermissionLevel.VIEW;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class SidebarControllerTest {
     @Mock private PageDao pages;
-    @Mock private PagePermissionDao permissions;
     @Mock private PageStarDao stars;
     @Mock private UserContext userContext;
     private SidebarController controller;
@@ -28,35 +27,45 @@ class SidebarControllerTest {
     void setUp() {
         when(userContext.getUserContext()).thenReturn(UserDetails.builder()
                 .userId("guest").login("guest").role(UserDetails.Role.GUEST).build());
-        controller = new SidebarController(pages, permissions, stars, userContext);
+        controller = new SidebarController(pages, stars, userContext);
     }
 
     @Test
     void guestSeesOnlyReadablePagesAndNoGuessedPrivatePage() {
-        Page visible = page(10);
-        Page hidden = page(99);
-        when(pages.listPages(any())).thenReturn(List.of(visible, hidden));
-        when(pages.findById(new PageId(99))).thenReturn(hidden);
-        when(permissions.hasUserPermission(new PageId(10), null, VIEW)).thenReturn(true);
+        when(pages.findNavigationPage(new PageId(99), null)).thenReturn(Optional.empty());
         ExtendedModelMap model = new ExtendedModelMap();
 
-        controller.index(model, null, 99);
+        assertEquals("sidebar :: single", controller.index(model, null, 99, 0));
 
-        assertEquals(List.of(visible), model.get("pages"));
+        assertEquals(List.of(), model.get("pages"));
         assertNull(model.get("singlePage"));
         verifyNoInteractions(stars);
+        verify(pages, never()).listPages(any());
+        verify(pages, never()).listNavigationPages(anyInt(), anyInt(), any());
     }
 
     @Test
     void expandingPrivateParentDoesNotExposeItsMetadata() {
-        when(pages.listPages(any())).thenReturn(List.of());
-        when(pages.findById(new PageId(99))).thenReturn(page(99));
+        when(pages.findNavigationPage(new PageId(99), null)).thenReturn(Optional.empty());
         ExtendedModelMap model = new ExtendedModelMap();
 
-        controller.index(model, 99, null);
+        controller.index(model, 99, null, 0);
 
         assertNull(model.get("parentPage"));
         assertEquals(List.of(), model.get("pages"));
+        verify(pages, never()).listNavigationPages(anyInt(), anyInt(), any());
+    }
+
+    @Test
+    void nextSegmentUsesLastVisibleIdAndOnlyRendersFiftyEntries() {
+        var rows = java.util.stream.IntStream.rangeClosed(20, 70).mapToObj(this::page).toList();
+        when(pages.listNavigationPages(0, 19, null)).thenReturn(rows);
+        var model = new ExtendedModelMap();
+        assertEquals("fragments/sidebar-entries :: entries", controller.index(model, 0, null, 19));
+        assertEquals(rows.subList(0, 50), model.get("pages"));
+        assertEquals(69, model.get("nextAfter"));
+        assertEquals(true, model.get("hasNext"));
+        verify(pages, never()).findById(any());
     }
 
     private Page page(int id) {

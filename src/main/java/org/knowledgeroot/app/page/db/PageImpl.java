@@ -26,6 +26,30 @@ public class PageImpl implements PageDao {
     private final FileDao fileImpl;
     private final JdbcClient jdbcClient;
 
+    @Override
+    public List<Page> listNavigationPages(int parent, int after, Integer viewer) {
+        org.knowledgeroot.app.util.RequestValidation.require(parent >= 0 && after >= 0);
+        return navigationPages("parent = :parent AND id > :after ORDER BY id LIMIT 51",
+                Map.of("parent", parent, "after", after), viewer);
+    }
+
+    @Override
+    public Optional<Page> findNavigationPage(PageId id, Integer viewer) {
+        return navigationPages("id = :id LIMIT 1", Map.of("id", id.value()), viewer).stream().findFirst();
+    }
+
+    private List<Page> navigationPages(String condition, Map<String, Object> arguments, Integer viewer) {
+        Map<String, Object> params = new HashMap<>(arguments);
+        params.put("viewer", viewer);
+        return jdbcClient.sql(ReadablePagesSql.CTE + """
+                SELECT id, name, revision,
+                    CASE WHEN parent = 0 OR parent IN (SELECT id FROM readable_pages) THEN parent ELSE NULL END AS parent
+                FROM page WHERE id IN (SELECT id FROM readable_pages) AND
+                """ + condition).params(params).query((rs, row) -> Page.builder()
+                .pageId(new PageId(rs.getInt("id"))).name(rs.getString("name"))
+                .revision(rs.getLong("revision")).parent(rs.getObject("parent", Integer.class)).build()).list();
+    }
+
     /**
      * find pages
      *

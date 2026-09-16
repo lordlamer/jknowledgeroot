@@ -15,7 +15,7 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: R27 committen und die gemessene Seitenleisten-Skalierung in R28 verbessern; gehostete CI und konkrete Betriebsabnahme bleiben offen.**
+**Nächster Schritt: R28 committen; danach den aktuellen Stand in der gehosteten CI und im Zielbetrieb abnehmen.**
 
 R01 bis R26 sind umgesetzt, lokal geprüft und committet; R26-Dokumentation als `c8db67d`. Der aktuelle Kandidat ist `1.0.0-rc.2`. Verbleibende OS-Paketbefunde, gehostete CI für den aktuellen Stand, Repository-/Release-Schutz, TLS/Proxy, produktive Last, Alarmierung sowie eigene Backup-/Wiederanlaufzeiten sind vor der Produktionsfreigabe gemäß [release.md](release.md) abzunehmen. Das [Abnahmeprotokoll](operational-acceptance.md) hält die offenen Angaben und Nachweise fest; [container-findings.md](container-findings.md) und [database-findings.md](database-findings.md) enthalten die getrennte technische Einordnung der Restbefunde.
 
@@ -27,6 +27,8 @@ Commits hinter `c8db67d`; dieser ältere Nachweis deckt R19–R26 nicht ab.
 R23 bis R25 ergänzen den gewünschten Funktionsumfang und sind als `155e710`
 committet. Die vorläufige Administratorregel für
 Verschiebungen und der mögliche E-Mail-Passwortreset sind unten ausdrücklich festgehalten.
+R27 ist als `03735d5` committet. R28 verbessert die daraus gemessene breite
+Seitenhierarchie und ist lokal geprüft; die Änderungen sind noch nicht committet.
 
 Die Einträge R01–R26 dokumentieren jeweils den damaligen Prüfstand. Hinweise auf
 damals noch fehlende spätere Schritte oder ausstehende Commits sind historische
@@ -383,10 +385,14 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 
 ### R28 – Breite Seitenhierarchien in der Navigation begrenzen
 
-- [ ] Offen; nächster Codepunkt aus der Messung R27
+- [x] Implementiert und lokal geprüft am 13. September 2026; noch nicht committet
 - **Befund:** Bei 10000 Seiten und acht Workern erreicht die Gast-Seitenleiste im kurzen lokalen Lauf p95 **797,09 ms**; die beiden erfolgreichen Gast-Suchszenarien liegen bei **78,97/82,42 ms**. `SidebarController` lädt derzeit alle unmittelbaren Unterseiten und prüft jede Freigabe separat. Die SQL-basierte Sichtbarkeitsfilterung und Pagination aus R10 erfassen diese Navigation noch nicht. Gemessen wurde auf einer Docker-Engine mit sechs CPUs und rund 16 GiB RAM, ohne daraus eine Produktionskapazität abzuleiten.
-- **Geplante Umsetzung:** Rechte bereits in der Seitenlistenabfrage berücksichtigen und breite Ebenen in begrenzten Abschnitten nachladen. Navigation, markierte Seite und Sterne müssen benutzbar bleiben; keine privaten Titel oder IDs ausgeben.
+- **Umsetzung:** Eigene Navigationsprojektion mit ID, Name, Revision und lesbarem Elternverweis; keine Inhalte oder Anhänge laden. Die bestehende SQL-Sichtbarkeitsregel greift vor `LIMIT 51`. Die Oberfläche zeigt bis zu 50 Einträge und lädt über die letzte sichtbare ID weiter. Nachladen ersetzt nur den Fortsetzungsbutton, Zuklappen nur den jeweiligen Knoten. Die gespeicherte Browsernavigation merkt Aufklapp- und Nachladeoperationen in Reihenfolge und stellt sie mit aktuellen Rechteprüfungen wieder her. Der lokale Filter ist als Filter der geladenen Seiten gekennzeichnet.
+- **Zusätzlicher Browserbefund:** Gemerkte Seiten erscheinen im Baum und im Starred-Reiter. Die bisherige Aktiv-Markierung erfasste nur den ersten Link und konnte damit im ausgeblendeten Reiter landen. Sie markiert jetzt alle passenden Navigationseinträge; der Browserfall prüft eine nachgeladene, gemerkte Seite auch nach einem vollständigen Neuladen.
 - **Abnahme:** Breite Ebenen vollständig über weitere Abschnitte erreichbar, unverändert korrekte Gast-/Gruppenrechte und Navigation. Den bestehenden R27-Lauf vor/nach der Änderung vergleichen; die Zahl geladener Einträge pro Request ist begrenzt. Zeitwerte getrennt von geteiltem Rechner, Warmup und Datenbestand bewerten.
+- **Tests:** Der vollständige serverseitige Lauf besteht mit **280 Surefire-Tests** (`target/r28-verify.log`); sein anschließender Browserlauf deckte die oben korrigierte Starred-Wechselwirkung auf. Nach den Browserkorrekturen bestehen erneut sechs gezielte Controller-/MariaDB-Tests und der vollständige JAR-/Chromium-Test (`target/r28-acceptance.log`, **BUILD SUCCESS**). Geprüft sind breite Root- und Unterseitenebenen, fortbestehende aufgeklappte Nachbarn, Sterne, Aktiv-Markierung, Wiederherstellung nach vollständigem Neuladen, private/gelöschte Seiten, Gruppenentzug und ungültige Parameter. Screenshot unter `target/sidebar-pagination.png`. Containerbuild samt JAR-/Laufzeitzuordnung und `git diff --check` bestehen.
+- **Lastvergleich:** Mit unverändertem R27-Szenario sind **640 gemessene Requests ohne Fehler** erfolgreich. Bei 1000 Seiten liegt das Gesamt-p95 mit einem/acht Workern jetzt bei **37,74/80,69 ms** (vorher **70,46/117,06 ms**); bei 10000 Seiten bei **82,71/133,52 ms** (vorher **649,00/582,54 ms**). Die Gast-Seitenleiste bei 10000 Seiten und acht Workern liegt bei **134,44 ms** statt **797,09 ms**. Maßgeblich sind `target/r28-load-1000.json` und `target/r28-load-10000.json` sowie die aufbewahrten R27-Berichte. Die Abfrage liefert jetzt einen Abschnitt statt der ganzen Ebene; sämtliche weiteren Einträge bleiben über Nachladen erreichbar. Beide neuen Testprojekte und Volumes wurden entfernt.
+- **Grenzen:** Kurze lokale Messungen mit jeweils 20 Werten pro Szenario/Stufe auf geteilter Hardware, kein Produktionsgrenzwert und keine Kapazitätszusage. Aufbewahrung der Navigation nutzt optionalen Browser-Sitzungsspeicher; bei geänderten Freigaben kann die wiederhergestellte Ansicht abweichen. Dependency-/OS-Scans und Restore wurden in R28 nicht erneut ausgeführt; POM, Containerpakete und Datenbankschema bleiben unverändert. Die neuen Images enthalten die Arbeitskopie nach `03735d5` und haben ein vorläufiges Manifest (`dirty: true`, `auditsVerified: false`). Gehostete CI und Zielbetrieb bleiben abzunehmen.
 
 ## Nachweise der Bestandsaufnahme
 

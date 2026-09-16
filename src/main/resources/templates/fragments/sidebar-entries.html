@@ -1,0 +1,14 @@
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="entries">
+    <!-- Keep the loaded segment order when restoring expanded navigation after a refresh. -->
+    <li th:if="${after > 0 and not pages.isEmpty()}" hidden aria-hidden="true"
+        th:id="'nav-chunk-' + ${parentId} + '-' + ${after}" th:attr="data-sidebar-chunk=${parentId}"></li>
+    <th:block th:each="page : ${pages}">
+        <th:block th:insert="~{fragments/sidebar-node :: node(${page})}"></th:block>
+    </th:block>
+    <li th:if="${hasNext}" class="sidebar-more-pages" th:id="'nav-more-' + ${parentId}">
+        <button type="button" class="btn btn-sm btn-link" hx-swap="outerHTML" hx-disabled-elt="this"
+                th:attr="hx-get=@{/ui/sidebar(parent=${parentId},after=${nextAfter})}, hx-target='#nav-more-' + ${parentId}">
+            Load more pages
+        </button>
+    </li>
+</th:block>

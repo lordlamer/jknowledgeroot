@@ -1,6 +1,7 @@
 package org.knowledgeroot.app.page.domain;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PageDao {
     /**
@@ -11,6 +12,10 @@ public interface PageDao {
 
     /** Visible results, including parent redaction, with permissions applied before LIMIT. */
     List<Page> listVisiblePages(PageFilter pageFilter, Integer viewer);
+
+    /** Navigation metadata only; 50 visible entries plus one continuation indicator. */
+    List<Page> listNavigationPages(int parent, int after, Integer viewer);
+    Optional<Page> findNavigationPage(PageId id, Integer viewer);
 
     /**
      * find page by given id
