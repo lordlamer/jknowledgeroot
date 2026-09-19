@@ -73,6 +73,22 @@ jobs:
       - name: Audit Maven and frontend dependencies
         shell: pwsh
         run: ./scripts/audit-dependencies.ps1
+      - name: Test dependency snapshot generation and submission guards
+        run: target/frontend/node/node --test scripts/dependency-snapshot.test.mjs
+      - name: Prepare verified Maven dependency snapshot
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: target/frontend/node/node scripts/dependency-snapshot.mjs create target/dependency-tree.json target/dependency-snapshot.json
+      - name: Archive verified dependency evidence
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: verified-dependencies
+          path: |
+            target/dependency-tree.json
+            target/dependency-snapshot.json
+            target/dependency-audit.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Record artifact identity and validate version agreement
         env:
           RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
@@ -96,6 +112,28 @@ jobs:
             target/database-image-audit-summary.json
           retention-days: 3
           compression-level: 0
+  dependency-graph:
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    concurrency:
+      group: dependency-graph-master
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: verified-dependencies
+          path: target/verified-dependencies
+      - name: Replace legacy Maven dependency snapshot
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/dependency-snapshot.mjs submit target/verified-dependencies/dependency-snapshot.json
   publish:
     needs: verify
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')

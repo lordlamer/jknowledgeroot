@@ -1,6 +1,6 @@
 # Roadmap zur Produktionsreife
 
-Stand: 16. September 2026. Grundlage ist die Code- und Build-Prüfung vom 12. September 2026.
+Stand: 19. September 2026. Grundlage ist die Code- und Build-Prüfung vom 12. September 2026.
 
 Ziel ist eine sicher betreibbare, reproduzierbar gebaute Version mit getesteten
 Zugriffsrechten, Migrationen und Wiederherstellung. Der aktuelle Stand ist noch
@@ -411,11 +411,14 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 
 ### R30 – GitHubs Abhängigkeitsgraphen wieder aktuell halten
 
-- [ ] Offen; aus R29 abgeleitet
+- [ ] Implementiert und lokal geprüft am 19. September 2026; gehostete Abnahme ausstehend
 - **Befund:** Die frühere CI übermittelte Maven-Abhängigkeiten mit `advanced-security/maven-dependency-submission-action` (beispielsweise in Commit `a5a746f`). Im aktuellen Verify-Workflow fehlt diese Übermittlung. GitHubs SBOM nennt weiterhin `maven-dependency-tree-action` als Quelle und führt alte aufgelöste Versionen neben dem aktuellen statisch gelesenen Manifest. Dadurch bleiben Dependabot-Warnungen für bereits ersetzte Versionen sichtbar.
 - **Umsetzung:** Aufgelöste Abhängigkeiten des geprüften Hauptbranches wieder regelmäßig an GitHub übermitteln. Schreibrechte auf diesen Zweck begrenzen; fremde Pull Requests erhalten keine erhöhten Rechte. Die bisherige Snapshot-Quelle berücksichtigen, damit alte Daten nicht zusätzlich bestehen bleiben. OSV- und Containerprüfungen bleiben eigenständige Release-Prüfungen.
 - **Technischer Rahmen:** Laut [GitHub-API-Dokumentation](https://docs.github.com/en/rest/dependency-graph/dependency-submission) bestimmt die Kombination aus `job.correlator` und `detector.name`, welcher Snapshot eine frühere Übermittlung ersetzt. Die bisherigen Werte vor der Umstellung ermitteln; ein neuer Workflowname allein beseitigt die alte Quelle nicht. Die API verlangt `contents: write`; diese Berechtigung gehört ausschließlich in den dafür vorgesehenen vertrauenswürdigen Job.
 - **Abnahme:** Nach einem erfolgreichen Lauf GitHubs SBOM mit dem tatsächlichen Dependency-Baum vergleichen. Alte Boot-/Tomcat-/SnakeYAML-Versionen dürfen nicht als aktuelle Abhängigkeiten erscheinen. Verbleibende Warnungen einzeln gegen den aktuellen Stand prüfen; keine pauschale manuelle Unterdrückung.
+- **Implementiert:** Der Verify-Job erzeugt aus seinem aufgelösten Maven-Baum einen Snapshot und archiviert Baum, Snapshot und OSV-Bericht. Ein separater Job mit `contents: write` läuft ausschließlich nach erfolgreichem Verify auf einem Push nach `master`; Pull Requests und Tags übermitteln nichts. Er übernimmt das Artefakt desselben Laufs, prüft Commit und Run-ID sowie den aktuellen Hauptbranch und sendet erst danach an GitHub. Übermittlungen werden serialisiert; bereits überholte Builds werden übersprungen. Der Token steht nur im Übermittlungsschritt bereit. Der normale Verify-Job behält ausschließlich Leserechte.
+- **Alte Quelle ersetzen:** Die ursprüngliche Action `571e99aab1055c2e71a1e2309b9691de18d6b7d6` verwendete nach Prüfung ihres ausgelieferten Codes `detector.name=maven-dependency-tree-action` und den Jobnamen `build` als Correlator. Der neue Adapter behält diese Identität ausdrücklich bei und verwendet den korrekten relativen Manifestpfad `pom.xml`. Er führt weder den alten Maven-Plugin-Code aus noch unterdrückt er einzelne Warnungen. Frontend-Abhängigkeiten bleiben im vorhandenen npm-Lockfile und im gemeinsamen OSV-Scan erfasst.
+- **Lokal geprüft:** Sechs Node-Tests prüfen Graphkanten, Mehrfachvorkommen, direkte/transitive Beziehungen, Test-/Laufzeitabhängigkeiten, Klassifikatoren, unvollständige Eingaben, fremde/veraltete Builds und API-Fehler. actionlint und `git diff --check` bestehen. Ein frisch aufgelöster Maven-Baum wird zusätzlich durch den echten CLI-Aufruf verarbeitet; Nachweise unter `target/r30-dependency-tree.json` und `target/r30-dependency-snapshot.json`. Abhängigkeiten und Anwendungscode bleiben unverändert.
 
 ## Nachweise der Bestandsaufnahme
 
