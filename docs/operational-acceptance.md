@@ -41,7 +41,7 @@ Eine ausgefüllte Kopie mit tatsächlichen Systemdaten gehört in das Betriebsar
 | Sicherung | Anwendung und andere Writer stoppen; gemeinsame DB-/Dateisicherung mit Prüfsummen erstellen und zugriffsgeschützt außerhalb des App-Hosts ablegen. | Offen |
 | Restore und RTO | Auf einem leeren separaten Ziel wiederherstellen, Konten/Rechte/Inhalte/Dateibytes prüfen; Datenstand und gemessene Dauer erfüllen RPO/RTO. | Offen |
 | Rollback | Vor-Upgrade-Snapshot mit altem Image separat wiederherstellen; Verlust späterer Änderungen ist im Ablauf ausdrücklich berücksichtigt. | Offen |
-| Lieferprozess | Gehostete CI erfolgreich; Branch-/Tag-Schutz sowie GitHub-Umgebung `release` mit Reviewern und ausschließlich dort verfügbaren Registry-Secrets eingerichtet. | CI einschließlich Graph-Übermittlung für `12299dd` am 19. September erfolgreich ([Nachweis](https://github.com/lordlamer/jknowledgeroot/actions/runs/35436954016)); GitHub-Graph geprüft, keine offenen Dependabot-Warnungen. Basis-Rulesets aktiv; erforderliche CI-/PR-Regeln und Freigabekonfiguration offen. |
+| Lieferprozess | Gehostete CI erfolgreich; Branch-/Tag-Schutz sowie GitHub-Umgebung `release` mit Reviewern und ausschließlich dort verfügbaren Registry-Secrets eingerichtet. | CI einschließlich Release-Schutztests und Graph-Übermittlung für `087eae0` am 19. September erfolgreich ([Nachweis](https://github.com/lordlamer/jknowledgeroot/actions/runs/35439935570)). Basis-Rulesets aktiv; erforderliche CI-/PR-Regeln, persönliche Freigaben und positiver Release-Ablauf offen. |
 
 Die jeweiligen Befehle und Grenzen stehen in [production.md](production.md),
 [monitoring.md](monitoring.md), [recovery.md](recovery.md),
