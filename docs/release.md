@@ -73,6 +73,15 @@ Registry-Digests festhalten und explizit als `KR_APP_IMAGE` und `KR_DB_IMAGE` se
    Prüfung. OSV erfasst Maven-/npm-Pakete; der zusätzliche
    [OS-Imagescan](image-security.md) prüft Betriebssystempakete im App-Container
    und im gepinnten Produktions-Datenbankimage.
+   Auf `master` aktualisiert der nachgelagerte Job `dependency-graph` außerdem
+   GitHubs Maven-Abhängigkeiten aus genau diesem geprüften Build. Sein Artefakt
+   `verified-dependencies` enthält Baum, Snapshot und OSV-Bericht (14 Tage).
+   Vor der Freigabe auch diesen Job und die verbleibenden Dependabot-Meldungen
+   prüfen. Bei einer übersprungenen Übermittlung wegen eines neueren Commits
+   zählt der nachfolgende Lauf für den aktuellen Hauptbranch. Pull Requests und
+   Tags übermitteln keinen Snapshot. Die Kennungen `build` und
+   `maven-dependency-tree-action` sind absichtlich mit der früheren Quelle
+   identisch; eine Umbenennung kann alte Abhängigkeiten im Graphen zurücklassen.
    Verbleibende Funde, Datenbankserver-/JRE-Laufzeit, Proxyimages und organisationsspezifische
    Release-Regeln sind gesondert zu bewerten.
 3. In der Zielumgebung TLS/Proxy, Rechte, Last und Loginquoten, Speicher-/Backupplatz,
