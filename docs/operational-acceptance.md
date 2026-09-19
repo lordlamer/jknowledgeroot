@@ -52,7 +52,8 @@ schützt `master` gegen Force-Pushes und Löschen, Ruleset 23697743 schützt
 bestehende `v*`-Tags gegen Änderung und Löschen. R33 ergänzt Ruleset 23698955
 für PR-Pflicht und erfolgreiches `verify` ohne fremde Review-Freigabe sowie die
 Umgebung `release` mit eigener Bestätigung durch `lordlamer`.
-Die beiden Registry-Secrets liegen noch auf Repository-Ebene; vor Veröffentlichung
+Die beiden Registry-Secrets liegen noch auf Repository-Ebene; vor
+Veröffentlichung
 in `release` hinterlegen und anschließend die Repository-Kopien entfernen.
 Der lesende Release-Check besteht mit der neuen Umgebung; der tatsächliche
 Publish-Ablauf bleibt abzunehmen. Nachweise der aktiven Konfiguration:

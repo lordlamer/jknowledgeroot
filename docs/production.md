@@ -188,10 +188,13 @@ gemäß [release.md](release.md); kein
 Im Repository verhindern seit dem 19. September aktive Rulesets Force-Pushes
 und Löschen von `master` sowie Ändern und Löschen bestehender `v*`-Tags.
 Zusätzlich verlangt `master` einen Pull Request mit erfolgreichem `verify` und
-aktuellem Basisbranch; eine fremde Review-Freigabe ist beim alleinigen Entwickler
-nicht erforderlich. Die GitHub-Umgebung `release` verlangt die eigene Bestätigung
+aktuellem Basisbranch; eine fremde Review-Freigabe ist beim alleinigen
+Entwickler
+nicht erforderlich. Die GitHub-Umgebung `release` verlangt die eigene
+Bestätigung
 durch `lordlamer`, erlaubt nur Tags `v*` und keinen Administrator-Bypass.
-**Noch umzustellen** sind `DOCKERHUB_USERNAME` und `DOCKERHUB_TOKEN`: Beide liegen
+**Noch umzustellen** sind `DOCKERHUB_USERNAME` und `DOCKERHUB_TOKEN`: Beide
+liegen
 derzeit als Repository-Secrets vor. Direkt in GitHub als Environment-Secrets in
 `release` hinterlegen, anschließend die Repository-Kopien entfernen und prüfen.
 Das bestehende Imageziel ist `lordlamer/knowledgeroot`; bei einem Fork anpassen.

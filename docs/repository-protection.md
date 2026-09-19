@@ -19,7 +19,8 @@ Zusätzlich gilt das unten beschriebene Ruleset für geprüfte Änderungen.
 
 ## Freigabemodell für einen alleinigen Entwickler
 
-Seit dem 19. September 2026 ist für `master` der Check `verify` von GitHub Actions
+Seit dem 19. September 2026 ist für `master` der Check `verify` von GitHub
+Actions
 (App-ID `15368`, im Repository geprüft) mit aktuellem Basisbranch erforderlich.
 `dependency-graph` darf kein erforderlicher PR-Check werden: Dieser Job läuft
 erst nach einem erfolgreichen Push auf `master`. `publish` läuft nur auf Tags.
@@ -65,11 +66,14 @@ Dokument, in Shellargumente oder in Prüfberichte.
 
 **Noch offen: Registry-Secrets umstellen.** Am 19. September sind
 `DOCKERHUB_USERNAME` und `DOCKERHUB_TOKEN` als Repository-Secrets vorhanden,
-die neue Umgebung enthält noch keine Secrets. GitHub gibt vorhandene Secret-Werte
+die neue Umgebung enthält noch keine Secrets. GitHub gibt vorhandene
+Secret-Werte
 nicht zurück; sie lassen sich deshalb nicht durch Auslesen übernehmen.
 Der Eigentümer hinterlegt beide Werte direkt unter
-[Settings → Environments → release](https://github.com/lordlamer/jknowledgeroot/settings/environments)
-als Environment-Secrets. Anschließend die beiden gleichnamigen Repository-Secrets
+[Settings → Environments →
+release](https://github.com/lordlamer/jknowledgeroot/settings/environments)
+als Environment-Secrets. Anschließend die beiden gleichnamigen
+Repository-Secrets
 unter **Settings → Secrets and variables → Actions** entfernen und die Ablage
 erneut anhand der Namen prüfen. Die bestehenden Repository-Secrets wurden nicht
 verändert. Zugangsdaten nicht in einen Chat oder in Git eingeben.
@@ -100,7 +104,8 @@ einsetzen. Unter Windows kann die projektlokale Node-Binärdatei
 
 ## Abnahme
 
-- Die aktiven Rulesets per API zurücklesen und mit den drei JSON-Dateien vergleichen.
+- Die aktiven Rulesets per API zurücklesen und mit den drei JSON-Dateien
+  vergleichen.
 - Erforderlichen CI-Check und das bestätigte Einzelpersonenmodell kontrollieren.
 - Umgebung und Tag-Regel prüfen; der lesende Release-Check muss erfolgreich sein.
 - Die fehlenden Regeln absichtlich nur in automatisierten Test-Fixtures simulieren;
