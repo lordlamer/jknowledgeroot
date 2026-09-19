@@ -94,6 +94,9 @@ Registry-Digests festhalten und explizit als `KR_APP_IMAGE` und `KR_DB_IMAGE` se
    gehören ebenfalls zur Abnahme; diese Funktionen sind seit R23–R25 enthalten.
 4. Repository-Schutz und GitHub-Umgebung `release` gemäß
    [repository-protection.md](repository-protection.md) vervollständigen.
+   PR-/CI-Pflichtregeln und die eigene Release-Bestätigung durch `lordlamer`
+   sind eingerichtet. Noch offen: Docker-Hub-Secrets ausschließlich in `release`
+   hinterlegen und anschließend die gleichnamigen Repository-Secrets entfernen.
    Die technische Prüfung verlangt konfigurierte Reviewer und ausschließlich
    die Tag-Regel `v*`; bei fehlender Umgebung oder nicht prüfbarer API bricht
    sie vor dem Release-Build beziehungsweise Registry-Login ab.

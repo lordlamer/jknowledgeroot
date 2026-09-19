@@ -41,7 +41,7 @@ Eine ausgefüllte Kopie mit tatsächlichen Systemdaten gehört in das Betriebsar
 | Sicherung | Anwendung und andere Writer stoppen; gemeinsame DB-/Dateisicherung mit Prüfsummen erstellen und zugriffsgeschützt außerhalb des App-Hosts ablegen. | Offen |
 | Restore und RTO | Auf einem leeren separaten Ziel wiederherstellen, Konten/Rechte/Inhalte/Dateibytes prüfen; Datenstand und gemessene Dauer erfüllen RPO/RTO. | Offen |
 | Rollback | Vor-Upgrade-Snapshot mit altem Image separat wiederherstellen; Verlust späterer Änderungen ist im Ablauf ausdrücklich berücksichtigt. | Offen |
-| Lieferprozess | Gehostete CI erfolgreich; Branch-/Tag-Schutz sowie GitHub-Umgebung `release` mit Reviewern und ausschließlich dort verfügbaren Registry-Secrets eingerichtet. | CI einschließlich Release-Schutztests und Graph-Übermittlung für `087eae0` am 19. September erfolgreich ([Nachweis](https://github.com/lordlamer/jknowledgeroot/actions/runs/35439935570)). Basis-Rulesets aktiv; erforderliche CI-/PR-Regeln, persönliche Freigaben und positiver Release-Ablauf offen. |
+| Lieferprozess | Gehostete CI erfolgreich; Branch-/Tag-Schutz sowie GitHub-Umgebung `release` mit Reviewern und ausschließlich dort verfügbaren Registry-Secrets eingerichtet. | CI einschließlich Release-Schutztests und Graph-Übermittlung für `087eae0` am 19. September erfolgreich ([Nachweis](https://github.com/lordlamer/jknowledgeroot/actions/runs/35439935570)). Basis-Rulesets und PR-Pflicht mit `verify` aktiv. Eigene Release-Bestätigung durch `lordlamer`, Administrator-Bypass aus, nur Tags `v*`; API-Abgleich und lesender Release-Check erfolgreich. Secret-Umstellung sowie tatsächlicher PR-Merge und Release-Ablauf offen. |
 
 Die jeweiligen Befehle und Grenzen stehen in [production.md](production.md),
 [monitoring.md](monitoring.md), [recovery.md](recovery.md),
@@ -49,11 +49,14 @@ Die jeweiligen Befehle und Grenzen stehen in [production.md](production.md),
 und [image-security.md](image-security.md).
 Die anfänglich fehlenden Basisregeln wurden in R32 aktiviert: Ruleset 23697742
 schützt `master` gegen Force-Pushes und Löschen, Ruleset 23697743 schützt
-bestehende `v*`-Tags gegen Änderung und Löschen. Erforderliche CI-/PR-Regeln und
-die Umgebung `release` bleiben vor einer Veröffentlichung einzurichten und
-abzunehmen. Der neue lesende Release-Check verweigert eine Veröffentlichung
-bei fehlender Umgebung oder fehlenden Reviewer-/Tag-Regeln. Nachweis der aktiven
-Basisregeln: `target/r32-active-rulesets.json`; Details in
+bestehende `v*`-Tags gegen Änderung und Löschen. R33 ergänzt Ruleset 23698955
+für PR-Pflicht und erfolgreiches `verify` ohne fremde Review-Freigabe sowie die
+Umgebung `release` mit eigener Bestätigung durch `lordlamer`.
+Die beiden Registry-Secrets liegen noch auf Repository-Ebene; vor Veröffentlichung
+in `release` hinterlegen und anschließend die Repository-Kopien entfernen.
+Der lesende Release-Check besteht mit der neuen Umgebung; der tatsächliche
+Publish-Ablauf bleibt abzunehmen. Nachweise der aktiven Konfiguration:
+`target/r32-active-rulesets.json` und `target/r33-repository-after.json`; Details in
 [repository-protection.md](repository-protection.md).
 Der [lokale Proxytest](proxy-testing.md) liefert einen zusätzlichen technischen
 Nachweis für das nginx-Beispiel; die TLS-/Proxy-Abnahme des Zielsystems bleibt offen.
