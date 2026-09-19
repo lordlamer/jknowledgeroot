@@ -22,6 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserImpl implements UserDao {
     private final EntityManager entityManager;
+    private final org.knowledgeroot.app.security.recovery.RecoveryEmailRepository recoveryEmails;
     private final UserEntityConverter userEntityConverter = new UserEntityConverter();
 
     /**
@@ -207,6 +208,7 @@ public class UserImpl implements UserDao {
      */
     @Override
     public void updateUser(User user) {
+        recoveryEmails.invalidateIfChanged(user.getId().value(), user.getEmail());
         // save to database
         entityManager.merge(
             userEntityConverter.convertAtoB(user)

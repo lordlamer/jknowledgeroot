@@ -51,6 +51,9 @@
     </div>
 </form>
 <section class="kr-editor-pane mt-4" aria-labelledby="password-heading">
+    <p th:if="${@environment.getProperty('knowledgeroot.recovery.enabled', 'false') == 'true'}">
+        <a th:href="@{/profile/recovery}">Confirm email for password recovery</a>
+    </p>
     <h2 id="password-heading">Change password</h2>
     <p>Use 16–128 characters. After changing your password, sign in again on all devices.</p>
     <p th:if="${passwordError}" class="alert alert-danger" role="alert" th:text="${passwordError}"></p>

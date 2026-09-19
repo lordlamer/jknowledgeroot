@@ -21,18 +21,20 @@ public class PageMoveController {
                        Model model, HtmxRequest request) {
         var page = moves.movablePage(new PageId(id));
         RequestValidation.require(parent >= 0);
+        if (parent > 0 && !permissions.hasUserPermission(new PageId(parent), moves.actor(), PagePermission.PermissionLevel.VIEW))
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN);
         RequestValidation.text(query, 255);
         start = RequestValidation.start(start);
         var filter = PageFilter.builder().parent(query.isBlank() ? parent : null).query(query.isBlank() ? null : query)
                 .deleted(false).start(start).limit(51).build();
-        // The administrative picker includes all live pages, without loading the whole tree.
-        var items = pages.listPages(filter);
+        // Readable ancestors may be browsed to reach editable children; only editable destinations may be selected.
+        var items = pages.listVisiblePages(filter, moves.actor());
         model.addAttribute("page", page); model.addAttribute("items", items.stream().limit(50).toList());
         model.addAttribute("parent", parent); model.addAttribute("start", start); model.addAttribute("query", query);
         model.addAttribute("hasNext", items.size() > 50); model.addAttribute("inherits", permissions.isInheriting(page.getPageId()));
-        model.addAttribute("destination", parent == 0 ? null : pages.findById(new PageId(parent)));
-        model.addAttribute("validDestination", parent == 0 || pages.getPageHierarchy(new PageId(parent)).stream()
-                .noneMatch(ancestor -> ancestor.getPageId().equals(page.getPageId())));
+        model.addAttribute("destination", parent == 0 ? null : pages.findNavigationPage(new PageId(parent), moves.actor()).orElseThrow());
+        model.addAttribute("validDestination", moves.canUseDestination(parent) && (parent == 0 || pages.getPageHierarchy(new PageId(parent)).stream()
+                .noneMatch(ancestor -> ancestor.getPageId().equals(page.getPageId()))));
         return request.isHtmxRequest() ? "page/move :: body" : "page/move";
     }
 

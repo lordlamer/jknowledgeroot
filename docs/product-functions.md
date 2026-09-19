@@ -21,24 +21,34 @@ erfordert das neue Passwort. Grundlage: [OWASP zu Passwortänderungen](https://c
 Auf schmalen Bildschirmen öffnet der Navigationsknopf die Seitenleiste über dem
 Inhalt. Escape schließt sie wieder; Formularfelder bleiben in der sichtbaren Breite.
 
-**Passwort vergessen per E-Mail** ist vorerst zurückgestellt, bis der gewünschte
-Umfang bestätigt ist. Administratoren können bereits im Benutzerformular ein neues
-Passwort setzen. Ein Selbstbedienungs-Reset benötigt eine eindeutige verifizierte
-Mailadresse, konfigurierbaren Versand, öffentliche Basis-URL, begrenzte Einmal-Tokens,
-Missbrauchsschutz und neutrale Antworten. Siehe [OWASP zur Passwortwiederherstellung](https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html).
+**Passwort vergessen per E-Mail** ist optional verfügbar. Zuerst die Mailadresse
+im Profil speichern und über **Confirm email for password recovery** unter Angabe
+des aktuellen Passworts einen Bestätigungslink anfordern. Erst nach Bestätigung
+kann **Forgot password?** auf der Anmeldeseite einen Reset-Link senden.
+Bestehende Mailadressen werden nicht automatisch als bestätigt übernommen.
+Administratoren können weiterhin im Benutzerformular ein neues Passwort setzen.
+Konfiguration, Ablauf und Grenzen stehen in [account-recovery.md](account-recovery.md).
 
 ## Seiten verschieben
 
-Administratoren wählen **More → Move page**. Die Zielauswahl lässt sich über Ebenen
-durchsuchen oder nach einem Begriff filtern; pro Fenster werden höchstens 50 Ziele
+Angemeldete Bearbeiter wählen **More → Move page**. Die Zielauswahl lässt sich über
+Ebenen durchsuchen oder nach einem Begriff filtern; pro Fenster werden höchstens 50 Ziele
 angezeigt. **Move here** verschiebt die Seite samt Unterseiten. IDs, Links,
 Kommentare, Labels und Anhänge bleiben bestehen.
 
-Verschieben ist zunächst Administratoren vorbehalten, weil es vererbte Freigaben
-verändern kann. Lokale Freigaben bleiben erhalten. Vererbende Seiten übernehmen
-die Rechte der neuen Elternseite; Unterseiten behalten ihren Vererbungsmodus.
+Verschieben erfordert aktuelle Bearbeitungsrechte auf der Ausgangsseite und der
+Zielseite, unter der sie eingeordnet wird. Direkte, geerbte und Gruppenrechte
+zählen; bloßes Leserecht am Ziel reicht nicht. Gäste können nicht verschieben.
+Die Auswahl zeigt nur lesbare Seiten. Lesbare Vorfahren können zum Erreichen
+bearbeitbarer Unterseiten durchlaufen werden. Beim Absenden werden die Rechte
+erneut geprüft. Administratoren behalten ihre bisherigen Möglichkeiten.
+
+Verschieben kann vererbte Freigaben verändern. Lokale Freigaben bleiben erhalten.
+Vererbende Seiten übernehmen die Rechte der neuen Elternseite; Unterseiten behalten
+ihren Vererbungsmodus.
 Beim Verschieben auf die oberste Ebene werden bisherige wirksame Freigaben als
-lokale Rechte übernommen. Die Zielauswahl erläutert diese Auswirkungen.
+lokale Rechte übernommen. Diese oberste Ebene steht angemeldeten Bearbeitern
+wie beim Anlegen einer Hauptseite offen. Die Zielauswahl erläutert die Auswirkungen.
 
 Selbstbezüge, Ziele im eigenen Unterbaum sowie gelöschte oder fehlende Zielvorfahren
 werden abgelehnt. Der bisherige Seitenstand wird in der Historie gesichert.

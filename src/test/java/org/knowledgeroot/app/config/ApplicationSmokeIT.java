@@ -46,6 +46,9 @@ class ApplicationSmokeIT {
             .waitingFor(Wait.forHttp("/minio/health/ready").forPort(9000));
     @TempDir Path files;
     private javax.net.ssl.SSLContext tls;
+    private org.knowledgeroot.test.SmtpInbox inbox;
+    @org.junit.jupiter.api.BeforeEach void startInbox() throws Exception { inbox = new org.knowledgeroot.test.SmtpInbox(); }
+    @org.junit.jupiter.api.AfterEach void stopInbox() throws Exception { if (inbox != null) inbox.close(); }
 
     @Test
     void applicationStartsAndKeepsAuthenticatedJdbcSessionAfterRestart() throws Exception {
@@ -433,7 +436,7 @@ class ApplicationSmokeIT {
         page.screenshot(new Page.ScreenshotOptions().setPath(Path.of("target/sidebar-pagination.png")).setFullPage(true));
     }
 
-    private void browserProfilePassword(Browser browser, TestServer server, JdbcTemplate jdbc) {
+    private void browserProfilePassword(Browser browser, TestServer server, JdbcTemplate jdbc) throws Exception {
         jdbc.update("INSERT INTO user (login,password,active,created_by,create_date,changed_by,change_date) SELECT 'browser.profile',password,TRUE,id,NOW(),id,NOW() FROM user WHERE login='smoke.admin'");
         try (var context = browser.newContext(new Browser.NewContextOptions().setIgnoreHTTPSErrors(true))) {
             context.route("https://fonts.googleapis.com/**", route -> route.fulfill(new Route.FulfillOptions().setContentType("text/css").setBody("")));
@@ -474,7 +477,70 @@ class ApplicationSmokeIT {
             page.waitForURL(uri(server, "/").toString());
             page.navigate(uri(server, "/profile").toString());
             page.waitForSelector("#current-password");
+            browserEditorMoves(page, server, jdbc);
+            browserRecovery(page, server);
         }
+    }
+
+    private void browserEditorMoves(Page page, TestServer server, JdbcTemplate jdbc) {
+        int user = jdbc.queryForObject("SELECT id FROM user WHERE login='browser.profile'", Integer.class);
+        for (String name : List.of("Editor move source", "Editor move target"))
+            jdbc.update("INSERT INTO page(name,active,create_date,change_date) VALUES (?,TRUE,NOW(),NOW())", name);
+        int source = jdbc.queryForObject("SELECT id FROM page WHERE name='Editor move source'", Integer.class);
+        int target = jdbc.queryForObject("SELECT id FROM page WHERE name='Editor move target'", Integer.class);
+        for (int id : List.of(source, target)) jdbc.update("""
+                INSERT INTO page_permission(page_id,role_type,role_id,permission_level,create_date,change_date)
+                VALUES (?,'user',?,?,NOW(),NOW())
+                """, id, user, id == source ? "edit" : "view");
+        page.navigate(uri(server, "/ui/page/" + source).toString());
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("More").setExact(true)).click();
+        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Move page").setExact(true)).click();
+        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Editor move target").setExact(true)).click();
+        assertThat(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Move here"))).isDisabled();
+        jdbc.update("UPDATE page_permission SET permission_level='edit' WHERE page_id=? AND role_id=?", target, user);
+        page.reload();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Move here")).click();
+        page.waitForURL("**/ui/page/" + source + "?trigger=reload-sidebar");
+        assertEquals(target, jdbc.queryForObject("SELECT parent FROM page WHERE id=?", Integer.class, source));
+    }
+
+    private void browserRecovery(Page page, TestServer server) throws Exception {
+        page.navigate(uri(server, "/profile").toString());
+        page.locator("#email").fill("browser.profile@example.org");
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save changes")).click();
+        page.waitForSelector(".kr-alert-info");
+        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Confirm email for password recovery")).click();
+        page.locator("#verify-password").fill("browser-profile-password-2026");
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send confirmation link")).click();
+        page.waitForSelector(".alert-info");
+        openRecoveryMail(page, server);
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Confirm my email")).click();
+        assertThat(page.locator(".kr-login-info")).containsText("Your email is confirmed");
+        page.navigate(uri(server, "/account/forgot-password").toString());
+        page.locator("#recovery-email").fill("browser.profile@example.org");
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send reset link")).click();
+        page.waitForSelector(".kr-login-info");
+        openRecoveryMail(page, server);
+        page.screenshot(new Page.ScreenshotOptions().setPath(Path.of("target/product-password-recovery.png")).setFullPage(true));
+        page.locator("#reset-password").fill("browser-recovered-password-2026");
+        page.locator("#reset-confirmation").fill("browser-recovered-password-2026");
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Set new password")).click();
+        page.waitForURL("**/login?passwordChanged=true");
+        assertFalse(inbox.take().getContent().toString().contains("browser-recovered-password-2026"));
+        page.locator("#loginUsername").fill("browser.profile");
+        page.locator("#loginPassword").fill("browser-recovered-password-2026");
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
+        page.waitForURL(uri(server, "/").toString());
+    }
+
+    private void openRecoveryMail(Page page, TestServer server) throws Exception {
+        var mail = inbox.take();
+        assertEquals("browser.profile@example.org", mail.getAllRecipients()[0].toString());
+        var matcher = Pattern.compile("https://knowledge\\.example(/account/[a-z-]+\\?token=[a-f0-9]{64})").matcher(mail.getContent().toString());
+        assertTrue(matcher.find());
+        // The configured canonical origin is intentional; only this local test maps it to its ephemeral HTTPS port.
+        page.navigate(uri(server, matcher.group(1)).toString());
+        page.waitForURL(url -> url.contains("/account/") && !url.contains("token="));
     }
 
     private TestServer start(boolean bootstrap) throws Exception {
@@ -499,6 +565,11 @@ class ApplicationSmokeIT {
                 "--minio.url=" + (driver.equals("file") ? "invalid" : "http://" + storage.getHost() + ":" + storage.getMappedPort(9000)),
                 "--minio.access-key=smoke-test-user", "--minio.secret-key=smoke-test-password",
                 "--minio.bucket=smoke-test", "--spring.main.banner-mode=off"));
+        command.addAll(List.of("--knowledgeroot.recovery.enabled=true",
+                "--knowledgeroot.recovery.public-url=https://knowledge.example", "--knowledgeroot.recovery.from=noreply@example.org",
+                "--spring.mail.host=" + inbox.host(), "--spring.mail.port=" + inbox.port(),
+                "--spring.mail.properties.mail.smtp.auth=false",
+                "--spring.mail.properties.mail.smtp.starttls.enable=false", "--spring.mail.properties.mail.smtp.starttls.required=false"));
         if (driver.equals("file")) command.addAll(List.of("--spring.servlet.multipart.max-file-size=1KB",
                 "--spring.servlet.multipart.max-request-size=4KB", "--server.forward-headers-strategy=native",
                 "--server.tomcat.remoteip.internal-proxies=127[.]0[.]0[.]1|0:0:0:0:0:0:0:1|::1"));

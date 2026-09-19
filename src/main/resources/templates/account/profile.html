@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
+<head><title>Knowledgeroot :: Recovery email</title></head>
+<body>
+<section class="kr-editor-pane">
+    <h1>Recovery email</h1>
+    <p>Your saved email: <strong th:text="${email}"></strong></p>
+    <p th:if="${verified}" class="alert alert-success">Your email is confirmed. You can use it to reset a forgotten password.</p>
+    <p th:unless="${verified}">Confirm this address before using password recovery. Changing your saved email requires a new confirmation.</p>
+    <p th:if="${sent}" class="alert alert-info" role="status">If this address is eligible, a confirmation link will be sent. The address must belong to only one active account.</p>
+    <p th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></p>
+    <form th:unless="${verified}" method="post" th:action="@{/profile/recovery}">
+        <div class="kr-field"><label for="verify-password">Current password</label>
+            <input id="verify-password" type="password" name="currentPassword" maxlength="1024" autocomplete="current-password" required>
+        </div>
+        <button class="kr-btn accent" type="submit">Send confirmation link</button>
+    </form>
+    <p><a th:href="@{/profile}">Back to profile</a></p>
+</section>
+</body>
+</html>

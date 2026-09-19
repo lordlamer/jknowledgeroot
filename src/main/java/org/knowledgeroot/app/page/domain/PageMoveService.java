@@ -18,12 +18,19 @@ public class PageMoveService {
     private final PagePermissionDao permissions;
     private final UserContext users;
 
-    public void requireAdministrator() {
-        if (!users.getUserContext().isAdmin()) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+    public int actor() {
+        var user = users.getUserContext();
+        if (user.isGuest()) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        return Integer.parseInt(user.getUserId());
+    }
+
+    public boolean canUseDestination(int parent) {
+        return parent == 0 || permissions.hasUserPermission(new PageId(parent), actor(), PagePermission.PermissionLevel.EDIT);
     }
 
     public Page movablePage(PageId id) {
-        requireAdministrator();
+        if (!permissions.hasUserPermission(id, actor(), PagePermission.PermissionLevel.EDIT))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         var page = pages.findById(id);
         if (Boolean.TRUE.equals(page.getDeleted())) throw new ResponseStatusException(HttpStatus.CONFLICT, "Restore the page before moving it.");
         return page;
@@ -31,7 +38,7 @@ public class PageMoveService {
 
     @Transactional(isolation=org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public void move(PageId id, int parent, Long revision) {
-        requireAdministrator();
+        movablePage(id);
         if (parent < 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         // Only structural moves take this mutex. Ordinary edits keep their row-level locks.
         jdbc.sql("SELECT id FROM page_tree_lock WHERE id=1 FOR UPDATE").query(Integer.class).single();
@@ -39,7 +46,10 @@ public class PageMoveService {
         var page = movablePage(id);
         page.setRevision(current);
         PageEditingService.requireRevision(page, revision);
-        if (java.util.Objects.equals(page.getParent(), parent)) return;
+        if (java.util.Objects.equals(page.getParent(), parent)) {
+            if (!canUseDestination(parent)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            return;
+        }
         var visited = new HashSet<Integer>();
         int ancestor = parent;
         while (ancestor > 0) {
@@ -51,6 +61,9 @@ public class PageMoveService {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "The destination is no longer available.");
             ancestor = node.get().parent();
         }
+        // Recheck current source and destination grants after acquiring the tree/row locks.
+        movablePage(id);
+        if (!canUseDestination(parent)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         var subtree = jdbc.sql("""
                 WITH RECURSIVE subtree AS (
                     SELECT id FROM page WHERE id=:id

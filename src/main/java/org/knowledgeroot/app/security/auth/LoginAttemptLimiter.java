@@ -43,6 +43,11 @@ public class LoginAttemptLimiter {
         requireAttempts("password-change-account:" + userId, "password-change-source:" + remoteAddress);
     }
 
+    public void requireRecoveryAttempt(String purpose, String identity, String remoteAddress) {
+        requireAttempts("recovery-" + purpose + "-account:" + identity,
+                "recovery-" + purpose + "-source:" + remoteAddress);
+    }
+
     private void requireAttempts(String accountKey, String sourceKey) {
         removeExpiredBuckets();
         boolean allowed = Boolean.TRUE.equals(transaction.execute(status -> {
