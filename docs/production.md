@@ -198,8 +198,9 @@ Das bestehende Imageziel ist `lordlamer/knowledgeroot`; bei einem Fork anpassen.
 Der Workflow liest die Release-Regeln vor einem Tag-Build und nochmals vor dem
 Registry-Login: Ohne Reviewer und die ausschließliche Tag-Regel `v*` bricht er ab.
 Die eigentliche Freigabe erzwingt GitHub; die Secret-Ablage und der tatsächliche
-Publish-Ablauf bleiben Teil der Betriebsabnahme. Das bestätigte Freigabemodell und die genauen
-Einstellungen stehen in [repository-protection.md](repository-protection.md).
+Publish-Ablauf bleiben Teil der Betriebsabnahme. Das bestätigte Freigabemodell
+und die genauen Einstellungen stehen in
+[repository-protection.md](repository-protection.md).
 Eine Veröffentlichung wurde nicht ausgeführt.
 Der separate Travis-Workflow bleibt eine reine Prüfung ohne Veröffentlichung.
 

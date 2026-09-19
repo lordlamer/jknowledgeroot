@@ -15,7 +15,9 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: Docker-Hub-Secrets in die geschützte Umgebung `release` übernehmen, anschließend die Repository-Kopien entfernen und die offenen Angaben für die Betriebsabnahme klären.**
+**Nächster Schritt: Docker-Hub-Secrets in die geschützte Umgebung `release`
+übernehmen, anschließend die Repository-Kopien entfernen und die offenen Angaben
+für die Betriebsabnahme klären.**
 
 R01 bis R33 sind umgesetzt und geprüft; die vollständige gehostete CI einschließlich Release-Schutztests und Graph-Übermittlung besteht für `087eae0`. R33 ergänzt die per API geprüften GitHub-Einstellungen für einen alleinigen Entwickler. Der in R30 abgeglichene GitHub-Graph enthält alle 199 erwarteten Maven-Pakete; der aktuelle OSV-Scan ist ohne Treffer. Der aktuelle Kandidat ist `1.0.0-rc.2`. Verbleibende OS-Paketbefunde, Registry-Secret-Ablage und tatsächlicher Release-Ablauf, TLS/Proxy, produktive Last, Alarmierung sowie eigene Backup-/Wiederanlaufzeiten sind vor der Produktionsfreigabe gemäß [release.md](release.md) abzunehmen. Vor einem Release sind die Prüfungen für dessen konkreten Commit erneut auszuführen. Das [Abnahmeprotokoll](operational-acceptance.md) hält die offenen Angaben und Nachweise fest; [container-findings.md](container-findings.md) und [database-findings.md](database-findings.md) enthalten die getrennte technische Einordnung der Restbefunde.
 
@@ -458,6 +460,13 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 - **Veröffentlichung:** Umgebung `release` mit `lordlamer` (ID `1414066`) als einzigem Reviewer, `prevent_self_review: false`, `can_admins_bypass: false` und genau einer Ref-Regel vom Typ Tag mit Muster `v*`. Konfigurationen unter `.github/rulesets/master-verification.json` und `.github/environments/`. Der normale Ablauf ist Arbeitsbranch → Pull Request → erfolgreiches Verify → eigener Merge; später Release-Tag → Verify → eigene Bestätigung des Publish-Jobs.
 - **Geprüft:** Konfiguration zurückgelesen und mit den JSON-Vorgaben verglichen; wirksame `master`-Regeln kontrolliert. Der echte lesende Release-Check besteht mit der neuen Umgebung; fünf bestehende Schutztests und `git diff --check` bestehen. Nachweise: `target/r33-repository-before.json`, `target/r33-repository-after.json`, `target/r33-release-check.log` und `target/r33-secret-locations.json`. Anwendung, Abhängigkeiten und Workflow wurden nicht verändert; kein erneuter vollständiger Build.
 - **Offen:** Die beiden Docker-Hub-Secrets sind auf Repository-Ebene vorhanden, `release` enthält noch keine Secrets. Vorhandene Werte sind nicht auslesbar; der Eigentümer muss sie direkt in GitHub als Environment-Secrets hinterlegen. Erst anschließend die Repository-Kopien entfernen und die Ablage erneut prüfen. Kein Secret-Wert gelesen oder geändert. Ein tatsächlicher PR-Merge unter den neuen Regeln, eine Release-Bestätigung und der Publish-Ablauf sind noch nicht praktisch nachgewiesen. Kein Tag, keine Veröffentlichung und keine Produktionsfreigabe.
+
+### R34 – Den verpflichtenden Pull-Request-Ablauf praktisch prüfen
+
+- [ ] Begonnen am 19. September 2026; [Pull Request #262](https://github.com/lordlamer/jknowledgeroot/pull/262) mit R33-Commit `7c203e6`.
+- **Umfang:** Die committeten Konfigurationen und Nachweise über einen Arbeitsbranch mit vollständiger gehosteter CI nach `master` übernehmen. Ohne zusätzliche Person mergen können, während die PR-/CI-Regeln aktiv bleiben. Keine Umgehung oder vorübergehende Abschaltung der Schutzregeln.
+- **Abnahme:** `verify` muss für den aktuellen PR-Stand erfolgreich sein. `dependency-graph` und `publish` bleiben im PR übersprungen. Anschließend regulärer Merge ohne fremde Review-Freigabe; dessen Hauptbranch-Lauf muss ebenfalls bestehen und den Dependency-Snapshot aktualisieren. Die getrennte Release-Bestätigung wird dabei nicht ausgelöst.
+- **Betrieb:** Die Registry-Secrets liegen bei der erneuten Namensprüfung weiterhin nur auf Repository-Ebene (`target/r34-secret-locations.json`). Zielsystem, Domain und HTTPS-Proxy bleiben offen.
 
 ## Nachweise der Bestandsaufnahme
 

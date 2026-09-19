@@ -56,7 +56,8 @@ Die beiden Registry-Secrets liegen noch auf Repository-Ebene; vor Veröffentlich
 in `release` hinterlegen und anschließend die Repository-Kopien entfernen.
 Der lesende Release-Check besteht mit der neuen Umgebung; der tatsächliche
 Publish-Ablauf bleibt abzunehmen. Nachweise der aktiven Konfiguration:
-`target/r32-active-rulesets.json` und `target/r33-repository-after.json`; Details in
+`target/r32-active-rulesets.json` und `target/r33-repository-after.json`;
+Details in
 [repository-protection.md](repository-protection.md).
 Der [lokale Proxytest](proxy-testing.md) liefert einen zusätzlichen technischen
 Nachweis für das nginx-Beispiel; die TLS-/Proxy-Abnahme des Zielsystems bleibt offen.
