@@ -15,15 +15,33 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: Grundschutz und Release-Vorprüfung abnehmen (R32); das Freigabemodell sowie die offenen Angaben für die Betriebsabnahme klären.**
+**Nächster Schritt: Docker-Hub-Secrets in die geschützte Umgebung `release`
+übernehmen, anschließend die Repository-Kopien entfernen und die offenen Angaben
+für die Betriebsabnahme klären.**
 
-R01 bis R31 sind umgesetzt und geprüft; die vollständige gehostete CI einschließlich Graph-Übermittlung besteht für `12299dd`. GitHub führt alle 199 erwarteten Maven-Pakete und keine offenen Dependabot-Warnungen mehr. Der aktuelle Kandidat ist `1.0.0-rc.2`. Verbleibende OS-Paketbefunde, Repository-/Release-Schutz, TLS/Proxy, produktive Last, Alarmierung sowie eigene Backup-/Wiederanlaufzeiten sind vor der Produktionsfreigabe gemäß [release.md](release.md) abzunehmen. Vor einem Release sind die Prüfungen für dessen konkreten Commit erneut auszuführen. Das [Abnahmeprotokoll](operational-acceptance.md) hält die offenen Angaben und Nachweise fest; [container-findings.md](container-findings.md) und [database-findings.md](database-findings.md) enthalten die getrennte technische Einordnung der Restbefunde.
+R01 bis R33 sind umgesetzt und geprüft; die vollständige gehostete CI
+einschließlich Release-Schutztests und Graph-Übermittlung besteht für `087eae0`.
+R33 ergänzt die per API geprüften GitHub-Einstellungen für einen alleinigen
+Entwickler. Der in R30 abgeglichene GitHub-Graph enthält alle 199 erwarteten
+Maven-Pakete; der aktuelle OSV-Scan ist ohne Treffer. Der aktuelle Kandidat ist
+`1.0.0-rc.2`. Verbleibende OS-Paketbefunde, Registry-Secret-Ablage und
+tatsächlicher Release-Ablauf, TLS/Proxy, produktive Last, Alarmierung sowie
+eigene Backup-/Wiederanlaufzeiten sind vor der Produktionsfreigabe gemäß
+[release.md](release.md) abzunehmen. Vor einem Release sind die Prüfungen für
+dessen konkreten Commit erneut auszuführen. Das
+[Abnahmeprotokoll](operational-acceptance.md) hält die offenen Angaben und
+Nachweise fest; [container-findings.md](container-findings.md) und
+[database-findings.md](database-findings.md) enthalten die getrennte technische
+Einordnung der Restbefunde.
 
 Die anfängliche GitHub-Prüfung vom 19. September zeigte fehlenden Branch-/Tag-Schutz
 und eine fehlende Umgebung `release`. R32 aktiviert inzwischen zwei Basis-Rulesets
 gegen das Umschreiben/Löschen der Hauptbranch-Historie und bestehender Release-Tags.
-Noch zu klären ist, ob eine zweite Person Änderungen und Releases freigeben kann;
-CI-/PR-Pflichtregeln und die Umgebung `release` mit Reviewern stehen weiter aus.
+Der Eigentümer arbeitet allein. R33 aktiviert PR-Pflicht und den erforderlichen
+Check `verify` ohne fremde Review-Freigabe; Releases bestätigt `lordlamer`
+selbst
+in der geschützten Umgebung `release`. Die Registry-Secrets liegen noch auf
+Repository-Ebene und müssen vor einer Veröffentlichung umgestellt werden.
 
 Am 13. September wurde der vorhandene [erfolgreiche GitHub-Lauf](https://github.com/lordlamer/jknowledgeroot/actions/runs/34764388748)
 für `508ac87` geprüft: Verify einschließlich Build, Scans und Wiederherstellung
@@ -48,7 +66,11 @@ Nachweise; maßgeblich für die aktuellen offenen Arbeiten ist diese Übersicht.
 
 - [x] Zusätzlichen Funktionsumfang R23–R25 lokal abnehmen: Passwortänderung im Profil, Seitenverschieben und Versionsvergleich.
 - [ ] Zielsystem, Domain, Betreiber/Vertretung, erwartete Nutzer-/Datenmengen und Betriebsgrenzen festlegen.
-- [ ] Den sauberen Release-Commit vollständig in der gehosteten CI prüfen; Branch-/Tag-Schutz, Release-Reviewer und Registry-Secrets einrichten.
+- [x] Branch-/Tag-Schutz, PR-Pflicht mit erfolgreichem `verify` und eigene
+  Release-Bestätigung konfigurieren (R32/R33).
+- [ ] Registry-Secrets ausschließlich in `release` hinterlegen; den sauberen
+  Release-Commit vollständig in der gehosteten CI und den tatsächlichen
+  Freigabe-/Publish-Ablauf prüfen.
 - [ ] Staging mit tatsächlichem Proxy, gültigem TLS-Zertifikat und passender Netzfreigabe abnehmen; eigene Altinhalte, Rollen, Gastzugriff, Redaktion und Anhänge prüfen.
 - [ ] Repräsentative Last messen, Antwortzeit-/Fehlergrenzen festlegen und externe Alarmierung praktisch testen.
 - [ ] Gemeinsame DB-/Dateisicherung außerhalb des App-Hosts einrichten; Restore/Upgrade/Rollback mit eigenen Daten prüfen und zulässigen Datenverlust sowie Wiederanlaufzeit nachweisen.
@@ -439,12 +461,81 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 
 ### R32 – Historie schützen und Release-Freigaben technisch vorprüfen
 
-- [ ] Implementiert und lokal geprüft am 19. September 2026; gehostete Prüfung ausstehend
+- [x] Grundschutz und technische Vorprüfung erledigt am 19. September 2026;
+  committet als `087eae0`. Persönliche Freigaberegeln bleiben offen.
 - **Befund:** `master` war ungeschützt, Rulesets fehlten. Es existiert die Umgebung `knowledgeroot`, aber keine Umgebung `release`. Laut [GitHub-Dokumentation](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments) kann ein Workflow eine fehlende Umgebung automatisch ohne Schutzregeln anlegen. `environment: release` allein garantiert deshalb keine menschliche Freigabe.
 - **Aktivierter Grundschutz:** Ruleset **23697742** verhindert Force-Pushes und Löschen von `master`; Ruleset **23697743** verhindert Ändern und Löschen bestehender `v*`-Tags. Beide sind aktiv, ohne Bypass-Akteure, und wurden nach Anlage per API gegen die versionierten JSON-Konfigurationen unter `.github/rulesets/` geprüft. Normale Pushes, neue Tags und andere Branches bleiben möglich. Es wurden keine Branches, Tags oder Inhalte entfernt und keine Registry-Secrets gelesen. Nachweise: `target/r32-repository-before.json` und `target/r32-active-rulesets.json`.
 - **Release-Vorprüfung:** Der Verify-Job liest bei Tags vor dem Build die Umgebung `release` und ihre Ref-Regeln; der Publish-Job prüft sie erneut vor dem Registry-Login. Mindestens ein konfigurierter Reviewer und ausschließlich die Tag-Regel `v*` sind erforderlich. Fehlende Umgebung, fehlende Reviewer, zusätzliche Branch-Regeln, unvollständige Antworten und API-Fehler führen zum Abbruch. Die Prüfung nutzt nur zusätzliche Leserechte (`actions: read`), verändert keine GitHub-Einstellungen und ist für Einzel- und Fremdfreigabe geeignet.
 - **Lokal geprüft:** Fünf Node-Tests decken beide Freigabemodelle, ungeschützte/fehlerhafte Umgebungen, zusätzliche Ref-Regeln, unvollständige Pagination, HTTP-Fehler, Redirect-Schutz und ungültige Repository-Pfade ab. actionlint und `git diff --check` bestehen. Der echte lesende Aufruf gegen GitHub bricht wegen der noch fehlenden Umgebung erwartungsgemäß mit HTTP 404 ab (`target/r32-release-check-negative.log`); kein Tag wurde angelegt und keine Veröffentlichung ausgelöst.
+- **Gehostet geprüft:** [GitHub-Lauf
+  35439935570](https://github.com/lordlamer/jknowledgeroot/actions/runs/35439935570)
+  für `087eae02e02c456848262d46c17c5039ad9ae072` besteht vollständig: `verify`
+  und `dependency-graph` erfolgreich, `publish` übersprungen. Fünf neue
+  Schutztests, 280 Surefire-Tests und der JAR-/Chromium-Test bestehen.
+  Container-/Proxy-/Last- und Restore-/Upgrade-/Rollbackprüfungen sind
+  erfolgreich; OSV prüft 277 Paketversionen ohne Treffer, beide OS-Scans haben
+  keine blockierenden Befunde. Die Artefakt-/Scan-Zuordnung besteht und GitHub
+  akzeptiert Snapshot 101656459. Protokolle: `target/r32-ci-verify.log` und
+  `target/r32-ci-dependency-graph.log`. Die Release-Tag-Schritte wurden in
+  diesem Master-Lauf nicht ausgeführt; ein realer positiver Freigabeablauf
+  bleibt nach Einrichtung der Umgebung abzunehmen.
 - **Offene Einrichtung:** Review-Modell und gegebenenfalls weitere GitHub-Person klären; anschließend verpflichtenden `verify`-Check mit PR-Regeln und die Umgebung `release` konfigurieren. `dependency-graph` und `publish` sind keine erforderlichen PR-Checks, da sie dort nicht laufen. Administrator-Bypass der Umgebung, richtige Secret-Ablage und echte Freigabe bleiben zusätzlich abzunehmen. Konkrete Konfiguration und Grenzen stehen in [repository-protection.md](repository-protection.md). Der historische Kontext `knowledgeroot` wurde nicht verändert.
+
+### R33 – Freigaberegeln für einen alleinigen Entwickler aktivieren
+
+- [x] GitHub-Konfiguration am 19. September 2026 aktiviert und per API geprüft.
+  Secret-Umstellung und tatsächliche Veröffentlichung bleiben separate offene
+  Abnahmen.
+- **Entscheidung:** Der Eigentümer arbeitet allein. Keine verpflichtende
+  Zustimmung durch eine zweite Person; erfolgreiche CI vor dem Merge und
+  ausdrückliche eigene Bestätigung einer Veröffentlichung bleiben erforderlich.
+- **Hauptbranch:** Zusätzliches Ruleset **23698955** verlangt einen Pull
+  Request, erledigte Review-Kommentare und `verify` von GitHub Actions (App-ID
+  `15368`) mit aktuellem Basisbranch. Null erforderliche Review-Freigaben, keine
+  Code-Owner-/Letzter-Push-/Zusatzfreigabe und keine Bypass-Akteure. Direkte
+  Pushes nach `master` sind damit gesperrt. Die bisherigen Historien-/Tag-Regeln
+  bleiben aktiv; `dependency-graph` und `publish` sind keine erforderlichen
+  PR-Checks.
+- **Veröffentlichung:** Umgebung `release` mit `lordlamer` (ID `1414066`) als
+  einzigem Reviewer, `prevent_self_review: false`, `can_admins_bypass: false`
+  und genau einer Ref-Regel vom Typ Tag mit Muster `v*`. Konfigurationen unter
+  `.github/rulesets/master-verification.json` und `.github/environments/`. Der
+  normale Ablauf ist Arbeitsbranch → Pull Request → erfolgreiches Verify →
+  eigener Merge; später Release-Tag → Verify → eigene Bestätigung des
+  Publish-Jobs.
+- **Geprüft:** Konfiguration zurückgelesen und mit den JSON-Vorgaben verglichen;
+  wirksame `master`-Regeln kontrolliert. Der echte lesende Release-Check besteht
+  mit der neuen Umgebung; fünf bestehende Schutztests und `git diff --check`
+  bestehen. Nachweise: `target/r33-repository-before.json`,
+  `target/r33-repository-after.json`, `target/r33-release-check.log` und
+  `target/r33-secret-locations.json`. Anwendung, Abhängigkeiten und Workflow
+  wurden nicht verändert; kein erneuter vollständiger Build.
+- **Offen:** Die beiden Docker-Hub-Secrets sind auf Repository-Ebene vorhanden,
+  `release` enthält noch keine Secrets. Vorhandene Werte sind nicht auslesbar;
+  der Eigentümer muss sie direkt in GitHub als Environment-Secrets hinterlegen.
+  Erst anschließend die Repository-Kopien entfernen und die Ablage erneut
+  prüfen. Kein Secret-Wert gelesen oder geändert. Ein tatsächlicher PR-Merge
+  unter den neuen Regeln, eine Release-Bestätigung und der Publish-Ablauf sind
+  noch nicht praktisch nachgewiesen. Kein Tag, keine Veröffentlichung und keine
+  Produktionsfreigabe.
+
+### R34 – Den verpflichtenden Pull-Request-Ablauf praktisch prüfen
+
+- [ ] Begonnen am 19. September 2026; [Pull Request
+  #262](https://github.com/lordlamer/jknowledgeroot/pull/262) mit R33-Commit
+  `7c203e6`.
+- **Umfang:** Die committeten Konfigurationen und Nachweise über einen
+  Arbeitsbranch mit vollständiger gehosteter CI nach `master` übernehmen. Ohne
+  zusätzliche Person mergen können, während die PR-/CI-Regeln aktiv bleiben.
+  Keine Umgehung oder vorübergehende Abschaltung der Schutzregeln.
+- **Abnahme:** `verify` muss für den aktuellen PR-Stand erfolgreich sein.
+  `dependency-graph` und `publish` bleiben im PR übersprungen. Anschließend
+  regulärer Merge ohne fremde Review-Freigabe; dessen Hauptbranch-Lauf muss
+  ebenfalls bestehen und den Dependency-Snapshot aktualisieren. Die getrennte
+  Release-Bestätigung wird dabei nicht ausgelöst.
+- **Betrieb:** Die Registry-Secrets liegen bei der erneuten Namensprüfung
+  weiterhin nur auf Repository-Ebene (`target/r34-secret-locations.json`).
+  Zielsystem, Domain und HTTPS-Proxy bleiben offen.
 
 ## Nachweise der Bestandsaufnahme
 
