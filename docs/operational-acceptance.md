@@ -41,17 +41,20 @@ Eine ausgefüllte Kopie mit tatsächlichen Systemdaten gehört in das Betriebsar
 | Sicherung | Anwendung und andere Writer stoppen; gemeinsame DB-/Dateisicherung mit Prüfsummen erstellen und zugriffsgeschützt außerhalb des App-Hosts ablegen. | Offen |
 | Restore und RTO | Auf einem leeren separaten Ziel wiederherstellen, Konten/Rechte/Inhalte/Dateibytes prüfen; Datenstand und gemessene Dauer erfüllen RPO/RTO. | Offen |
 | Rollback | Vor-Upgrade-Snapshot mit altem Image separat wiederherstellen; Verlust späterer Änderungen ist im Ablauf ausdrücklich berücksichtigt. | Offen |
-| Lieferprozess | Gehostete CI erfolgreich; Branch-/Tag-Schutz sowie GitHub-Umgebung `release` mit Reviewern und ausschließlich dort verfügbaren Registry-Secrets eingerichtet. | CI einschließlich Graph-Übermittlung für `12299dd` am 19. September erfolgreich ([Nachweis](https://github.com/lordlamer/jknowledgeroot/actions/runs/35436954016)); GitHub-Graph geprüft, keine offenen Dependabot-Warnungen. Schutzregeln und Freigabekonfiguration offen. |
+| Lieferprozess | Gehostete CI erfolgreich; Branch-/Tag-Schutz sowie GitHub-Umgebung `release` mit Reviewern und ausschließlich dort verfügbaren Registry-Secrets eingerichtet. | CI einschließlich Graph-Übermittlung für `12299dd` am 19. September erfolgreich ([Nachweis](https://github.com/lordlamer/jknowledgeroot/actions/runs/35436954016)); GitHub-Graph geprüft, keine offenen Dependabot-Warnungen. Basis-Rulesets aktiv; erforderliche CI-/PR-Regeln und Freigabekonfiguration offen. |
 
 Die jeweiligen Befehle und Grenzen stehen in [production.md](production.md),
 [monitoring.md](monitoring.md), [recovery.md](recovery.md),
 [page-history.md](page-history.md), [product-functions.md](product-functions.md)
 und [image-security.md](image-security.md).
-Die lesende GitHub-Bestandsprüfung vom 19. September 2026 bestätigt, dass
-`master` nicht geschützt ist und die Umgebung `release` noch nicht existiert.
-Diese Einstellungen wurden nicht verändert; sie bleiben vor einer
-Veröffentlichung einzurichten und abzunehmen. Lokaler Nachweis:
-`target/r30-repository-protection.json`.
+Die anfänglich fehlenden Basisregeln wurden in R32 aktiviert: Ruleset 23697742
+schützt `master` gegen Force-Pushes und Löschen, Ruleset 23697743 schützt
+bestehende `v*`-Tags gegen Änderung und Löschen. Erforderliche CI-/PR-Regeln und
+die Umgebung `release` bleiben vor einer Veröffentlichung einzurichten und
+abzunehmen. Der neue lesende Release-Check verweigert eine Veröffentlichung
+bei fehlender Umgebung oder fehlenden Reviewer-/Tag-Regeln. Nachweis der aktiven
+Basisregeln: `target/r32-active-rulesets.json`; Details in
+[repository-protection.md](repository-protection.md).
 Der [lokale Proxytest](proxy-testing.md) liefert einen zusätzlichen technischen
 Nachweis für das nginx-Beispiel; die TLS-/Proxy-Abnahme des Zielsystems bleibt offen.
 Fehler-/Lasttests nur in einer dafür vorgesehenen Umgebung und einem abgestimmten

@@ -15,14 +15,15 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: Repository-Schutz und Release-Freigaben festlegen sowie die offenen Angaben für die Betriebsabnahme klären.**
+**Nächster Schritt: Grundschutz und Release-Vorprüfung abnehmen (R32); das Freigabemodell sowie die offenen Angaben für die Betriebsabnahme klären.**
 
 R01 bis R31 sind umgesetzt und geprüft; die vollständige gehostete CI einschließlich Graph-Übermittlung besteht für `12299dd`. GitHub führt alle 199 erwarteten Maven-Pakete und keine offenen Dependabot-Warnungen mehr. Der aktuelle Kandidat ist `1.0.0-rc.2`. Verbleibende OS-Paketbefunde, Repository-/Release-Schutz, TLS/Proxy, produktive Last, Alarmierung sowie eigene Backup-/Wiederanlaufzeiten sind vor der Produktionsfreigabe gemäß [release.md](release.md) abzunehmen. Vor einem Release sind die Prüfungen für dessen konkreten Commit erneut auszuführen. Das [Abnahmeprotokoll](operational-acceptance.md) hält die offenen Angaben und Nachweise fest; [container-findings.md](container-findings.md) und [database-findings.md](database-findings.md) enthalten die getrennte technische Einordnung der Restbefunde.
 
-Die lesende GitHub-Prüfung vom 19. September bestätigt: `master` ist ungeschützt,
-es gibt keine Rulesets und die Umgebung `release` fehlt. Diese Einstellungen
-wurden nicht verändert. Noch zu klären ist, ob eine zweite Person Änderungen
-und Releases freigeben kann; daraus ergibt sich das passende Freigabemodell.
+Die anfängliche GitHub-Prüfung vom 19. September zeigte fehlenden Branch-/Tag-Schutz
+und eine fehlende Umgebung `release`. R32 aktiviert inzwischen zwei Basis-Rulesets
+gegen das Umschreiben/Löschen der Hauptbranch-Historie und bestehender Release-Tags.
+Noch zu klären ist, ob eine zweite Person Änderungen und Releases freigeben kann;
+CI-/PR-Pflichtregeln und die Umgebung `release` mit Reviewern stehen weiter aus.
 
 Am 13. September wurde der vorhandene [erfolgreiche GitHub-Lauf](https://github.com/lordlamer/jknowledgeroot/actions/runs/34764388748)
 für `508ac87` geprüft: Verify einschließlich Build, Scans und Wiederherstellung
@@ -435,6 +436,15 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 - **Abnahme:** Aufgelösten Baum und frischen OSV-Scan prüfen, bestehende Speicher- und JAR-/MinIO-/Browserprüfungen bestehen lassen, danach vollständige gehostete CI und R30-Graphvergleich wiederholen.
 - **Lokal geprüft:** 13 Speichertests und der vollständige JAR-/MinIO-/Chromium-Test bestehen (`target/r31-acceptance.log`, **BUILD SUCCESS**). Das ausführbare JAR enthält `bcprov-jdk18on-1.86.jar`. Der neu aufgelöste Baum bestätigt die Version; der frische OSV-Scan meldet bei **277 Paketversionen null Treffer** (`target/r31-dependency-audit.json`). Der R30-Adapter verarbeitet auch diesen Baum erfolgreich mit 199 Maven-Paketen.
 - **Gehostet geprüft:** Derselbe erfolgreiche Lauf wie R30: **280 Surefire-Tests, ein JAR-/Chromium-Test und sechs Snapshot-Tests** bestehen. Containerstart/Neustart, HTTPS-/Header-Isolation sowie Backup/Upgrade/Snapshot-Rollback sind erfolgreich. Der 1000-Seiten-Lastlauf liefert bei einem/vier Workern je 80 Requests ohne Fehler (Gesamt-p95 **61,98/92,67 ms**, keine Produktionskapazitätszusage). OSV bestätigt erneut **277 Paketversionen ohne Treffer**; OS-Scans erfassen 105 App- und 149 Datenbankpakete, jeweils ohne blockierende Befunde. Die abschließende Artefakt-/Scan-Zuordnung mit `--with-audits` besteht. Protokoll: `target/r30-ci-verify.log`. Niedrigere OS-Befunde und die Abnahme im Zielbetrieb bleiben offen; kein Release-Tag und keine Veröffentlichung.
+
+### R32 – Historie schützen und Release-Freigaben technisch vorprüfen
+
+- [ ] Implementiert und lokal geprüft am 19. September 2026; gehostete Prüfung ausstehend
+- **Befund:** `master` war ungeschützt, Rulesets fehlten. Es existiert die Umgebung `knowledgeroot`, aber keine Umgebung `release`. Laut [GitHub-Dokumentation](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments) kann ein Workflow eine fehlende Umgebung automatisch ohne Schutzregeln anlegen. `environment: release` allein garantiert deshalb keine menschliche Freigabe.
+- **Aktivierter Grundschutz:** Ruleset **23697742** verhindert Force-Pushes und Löschen von `master`; Ruleset **23697743** verhindert Ändern und Löschen bestehender `v*`-Tags. Beide sind aktiv, ohne Bypass-Akteure, und wurden nach Anlage per API gegen die versionierten JSON-Konfigurationen unter `.github/rulesets/` geprüft. Normale Pushes, neue Tags und andere Branches bleiben möglich. Es wurden keine Branches, Tags oder Inhalte entfernt und keine Registry-Secrets gelesen. Nachweise: `target/r32-repository-before.json` und `target/r32-active-rulesets.json`.
+- **Release-Vorprüfung:** Der Verify-Job liest bei Tags vor dem Build die Umgebung `release` und ihre Ref-Regeln; der Publish-Job prüft sie erneut vor dem Registry-Login. Mindestens ein konfigurierter Reviewer und ausschließlich die Tag-Regel `v*` sind erforderlich. Fehlende Umgebung, fehlende Reviewer, zusätzliche Branch-Regeln, unvollständige Antworten und API-Fehler führen zum Abbruch. Die Prüfung nutzt nur zusätzliche Leserechte (`actions: read`), verändert keine GitHub-Einstellungen und ist für Einzel- und Fremdfreigabe geeignet.
+- **Lokal geprüft:** Fünf Node-Tests decken beide Freigabemodelle, ungeschützte/fehlerhafte Umgebungen, zusätzliche Ref-Regeln, unvollständige Pagination, HTTP-Fehler, Redirect-Schutz und ungültige Repository-Pfade ab. actionlint und `git diff --check` bestehen. Der echte lesende Aufruf gegen GitHub bricht wegen der noch fehlenden Umgebung erwartungsgemäß mit HTTP 404 ab (`target/r32-release-check-negative.log`); kein Tag wurde angelegt und keine Veröffentlichung ausgelöst.
+- **Offene Einrichtung:** Review-Modell und gegebenenfalls weitere GitHub-Person klären; anschließend verpflichtenden `verify`-Check mit PR-Regeln und die Umgebung `release` konfigurieren. `dependency-graph` und `publish` sind keine erforderlichen PR-Checks, da sie dort nicht laufen. Administrator-Bypass der Umgebung, richtige Secret-Ablage und echte Freigabe bleiben zusätzlich abzunehmen. Konkrete Konfiguration und Grenzen stehen in [repository-protection.md](repository-protection.md). Der historische Kontext `knowledgeroot` wurde nicht verändert.
 
 ## Nachweise der Bestandsaufnahme
 

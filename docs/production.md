@@ -185,13 +185,18 @@ die dort erzeugten App-/Datenbankimages und veröffentlicht Versions- und Commit
 gemäß [release.md](release.md); kein
 `latest` und kein erneuter Build mit möglicherweise verändertem Inhalt.
 
-Im Repository sind **noch vom Betreiber einzurichten**: Schutz für `master` und
-Release-Tags, die GitHub-Umgebung `release` mit berechtigten Reviewern sowie
+Im Repository verhindern seit dem 19. September aktive Rulesets Force-Pushes
+und Löschen von `master` sowie Ändern und Löschen bestehender `v*`-Tags.
+**Noch einzurichten** sind erforderliche CI-/PR-Freigaben, die GitHub-Umgebung
+`release` mit berechtigten Reviewern sowie
 `DOCKERHUB_USERNAME` und `DOCKERHUB_TOKEN` ausschließlich in dieser Umgebung.
 Das bestehende Imageziel ist `lordlamer/knowledgeroot`; bei einem Fork anpassen.
-Ohne konfigurierte Environment-Regeln erzwingt der Workflow allein keine
-menschliche Releasefreigabe. Veröffentlichung beziehungsweise Änderungen an
-Repository-Einstellungen wurden bei der lokalen Umsetzung nicht ausgeführt.
+Der Workflow liest die Release-Regeln vor einem Tag-Build und nochmals vor dem
+Registry-Login: Ohne Reviewer und die ausschließliche Tag-Regel `v*` bricht er ab.
+Die eigentliche Freigabe erzwingt GitHub; Administrator-Bypass und Secret-Ablage
+bleiben Teil der Betriebsabnahme. Das noch offene Freigabemodell und die genauen
+Einstellungen stehen in [repository-protection.md](repository-protection.md).
+Eine Veröffentlichung wurde nicht ausgeführt.
 Der separate Travis-Workflow bleibt eine reine Prüfung ohne Veröffentlichung.
 
 ## Prüfungen und Grenzen
