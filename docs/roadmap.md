@@ -15,17 +15,18 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: Den in der gehosteten CI gefundenen Browser-Testfehler beheben (R29); danach CI und Zielbetrieb abnehmen.**
+**Nächster Schritt: GitHubs veralteten Abhängigkeitsgraphen aktualisieren (R30); parallel die offenen Angaben für die Betriebsabnahme festlegen.**
 
-R01 bis R26 sind umgesetzt, lokal geprüft und committet; R26-Dokumentation als `c8db67d`. Der aktuelle Kandidat ist `1.0.0-rc.2`. Verbleibende OS-Paketbefunde, gehostete CI für den aktuellen Stand, Repository-/Release-Schutz, TLS/Proxy, produktive Last, Alarmierung sowie eigene Backup-/Wiederanlaufzeiten sind vor der Produktionsfreigabe gemäß [release.md](release.md) abzunehmen. Das [Abnahmeprotokoll](operational-acceptance.md) hält die offenen Angaben und Nachweise fest; [container-findings.md](container-findings.md) und [database-findings.md](database-findings.md) enthalten die getrennte technische Einordnung der Restbefunde.
+R01 bis R29 sind umgesetzt und geprüft; die gehostete CI besteht für `9329b03` einschließlich R28 und der R29-Testkorrektur. Der aktuelle Kandidat ist `1.0.0-rc.2`. GitHubs veralteter Abhängigkeitsgraph (R30), verbleibende OS-Paketbefunde, Repository-/Release-Schutz, TLS/Proxy, produktive Last, Alarmierung sowie eigene Backup-/Wiederanlaufzeiten sind vor der Produktionsfreigabe gemäß [release.md](release.md) abzunehmen. Vor einem Release sind die Prüfungen für dessen konkreten Commit erneut auszuführen. Das [Abnahmeprotokoll](operational-acceptance.md) hält die offenen Angaben und Nachweise fest; [container-findings.md](container-findings.md) und [database-findings.md](database-findings.md) enthalten die getrennte technische Einordnung der Restbefunde.
 
 Am 13. September wurde der vorhandene [erfolgreiche GitHub-Lauf](https://github.com/lordlamer/jknowledgeroot/actions/runs/34764388748)
 für `508ac87` geprüft: Verify einschließlich Build, Scans und Wiederherstellung
 erfolgreich, Veröffentlichung übersprungen. Dieser ältere Nachweis deckt R19–R28 nicht ab.
 Am 16. September wurde der aktuelle Stand bis `85efac8` auf `origin/master`
 übertragen. Der [erste aktuelle GitHub-Lauf](https://github.com/lordlamer/jknowledgeroot/actions/runs/35145172029)
-scheitert an der mobilen Browserprüfung; Scans und Wiederherstellung wurden noch
-nicht erreicht. Die Korrektur und erneute Prüfung sind in R29 festgehalten.
+scheiterte an der mobilen Browserprüfung. Die Korrektur ist als `9329b03`
+committet und gepusht; der [anschließende GitHub-Lauf](https://github.com/lordlamer/jknowledgeroot/actions/runs/35148713003)
+ist vollständig erfolgreich. Die Ergebnisse und Grenzen stehen in R29.
 
 R23 bis R25 ergänzen den gewünschten Funktionsumfang und sind als `155e710`
 committet. Die vorläufige Administratorregel für
@@ -399,12 +400,22 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 
 ### R29 – Aktuellen Stand in der gehosteten CI prüfen
 
-- [ ] In Arbeit seit 16. September 2026
+- [x] Erledigt am 16. September 2026; Testkorrektur committet als `9329b03`
 - **Befund:** Der erste aktuelle Linux-Lauf besteht die 280 serverseitigen Tests, scheitert aber in `ApplicationSmokeIT` beim Wechsel auf die mobile Ansicht. Die CSS-Breite ist bereits angepasst, während das asynchrone `matchMedia`-Ereignis den ARIA-Zustand der Seitenleiste noch nicht aktualisiert hat. Ein unmittelbares JUnit-Auslesen ist hier nicht mit dem Browserereignis synchronisiert.
 - **Korrektur:** Playwright prüft den erwarteten `aria-expanded`-Wert mit automatischen Wiederholungen und begrenzter Wartezeit nach Größenwechsel, Öffnen und Escape. Alle drei Zustände bleiben verbindlich; keine feste Schlafpause und keine abgeschwächte Assertion.
 - **Lokal geprüft:** Sechs gezielte Controller-/MariaDB-Tests und der vollständige JAR-/Chromium-Test bestehen mit Temurin 25.0.4.1+1 (`target/r29-acceptance.log`, **BUILD SUCCESS**). `git diff --check` besteht.
 - **Abnahme:** Lokaler JAR-/Chromium-Test und anschließend vollständiger GitHub-Lauf einschließlich Container, Proxy, Lastmessung, aktueller Scans und Wiederherstellung. Ein grüner CI-Lauf ersetzt nicht die Abnahme im Zielbetrieb.
+- **Gehostet geprüft:** [GitHub-Lauf 35148713003](https://github.com/lordlamer/jknowledgeroot/actions/runs/35148713003) für `9329b0396c706f6fce65e6d514b574eecd4f8886`: **Verify erfolgreich**, Publish übersprungen. 280 Surefire-Tests und ein vollständiger JAR-/Chromium-Test ohne Fehler oder übersprungene Tests. Containerstart einschließlich Neustart, HTTPS-/Header-Isolation, Backup, Upgrade und Snapshot-Rollback bestehen. Der synthetische Lauf mit 1000 Seiten liefert bei einem/vier Workern je 80 Requests ohne Fehler, Gesamt-p95 **50,76/97,51 ms**. Das sind Runner-Messwerte ohne Produktionskapazitätszusage.
+- **Aktuelle Sicherheitsnachweise:** OSV prüft **277 Paketversionen ohne Paket-/Advisory-Treffer**. OS-Scans erfassen 105 App- und 149 Datenbankpakete, jeweils **null blockierende Befunde**; dies bedeutet nicht, dass alle niedrigeren Befunde verschwunden sind. Die abschließende Artefakt-/Scan-Zuordnung mit `--with-audits` besteht für denselben Commit. OS-, Proxy- und Lastberichte sind als CI-Artefakt `container-os-audit` mit 14 Tagen Aufbewahrung hinterlegt. Vollständiges Jobprotokoll zusätzlich lokal unter `target/r29-ci-fixed-job.log`. Kein Release-Tag und keine Veröffentlichung.
 - **Zusätzliche Klärung:** GitHub meldet 78 offene Dependabot-Befunde, darunter 14 kritische und 23 hohe. Die REST-Abfrage ordnet alle dem Manifestpfad `home/runner/work/jknowledgeroot/jknowledgeroot/pom.xml` zu. Der am 16. September gelesene GitHub-SBOM enthält tatsächlich noch Spring Boot 3.5.11, Tomcat 10.1.52, Thymeleaf 3.1.3 und SnakeYAML 1.23. Der aktuelle Build verwendet bereits andere Versionen, etwa Spring Boot 4.1.1 und Tomcat 11.0.25. Aktuelle Scans und die Aktualisierung des GitHub-Abhängigkeitsgraphen müssen getrennt geprüft werden; Meldungen werden nicht pauschal geschlossen. Lokale REST-Nachweise: `target/r29-dependabot-open.json` und `target/r29-github-sbom.json`.
+
+### R30 – GitHubs Abhängigkeitsgraphen wieder aktuell halten
+
+- [ ] Offen; aus R29 abgeleitet
+- **Befund:** Die frühere CI übermittelte Maven-Abhängigkeiten mit `advanced-security/maven-dependency-submission-action` (beispielsweise in Commit `a5a746f`). Im aktuellen Verify-Workflow fehlt diese Übermittlung. GitHubs SBOM nennt weiterhin `maven-dependency-tree-action` als Quelle und führt alte aufgelöste Versionen neben dem aktuellen statisch gelesenen Manifest. Dadurch bleiben Dependabot-Warnungen für bereits ersetzte Versionen sichtbar.
+- **Umsetzung:** Aufgelöste Abhängigkeiten des geprüften Hauptbranches wieder regelmäßig an GitHub übermitteln. Schreibrechte auf diesen Zweck begrenzen; fremde Pull Requests erhalten keine erhöhten Rechte. Die bisherige Snapshot-Quelle berücksichtigen, damit alte Daten nicht zusätzlich bestehen bleiben. OSV- und Containerprüfungen bleiben eigenständige Release-Prüfungen.
+- **Technischer Rahmen:** Laut [GitHub-API-Dokumentation](https://docs.github.com/en/rest/dependency-graph/dependency-submission) bestimmt die Kombination aus `job.correlator` und `detector.name`, welcher Snapshot eine frühere Übermittlung ersetzt. Die bisherigen Werte vor der Umstellung ermitteln; ein neuer Workflowname allein beseitigt die alte Quelle nicht. Die API verlangt `contents: write`; diese Berechtigung gehört ausschließlich in den dafür vorgesehenen vertrauenswürdigen Job.
+- **Abnahme:** Nach einem erfolgreichen Lauf GitHubs SBOM mit dem tatsächlichen Dependency-Baum vergleichen. Alte Boot-/Tomcat-/SnakeYAML-Versionen dürfen nicht als aktuelle Abhängigkeiten erscheinen. Verbleibende Warnungen einzeln gegen den aktuellen Stand prüfen; keine pauschale manuelle Unterdrückung.
 
 ## Nachweise der Bestandsaufnahme
 
