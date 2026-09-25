@@ -52,7 +52,7 @@
                            hx-target="#content" hx-push-url="true">Edit page</a></li>
                     <li th:if="${canStar}"><a class="dropdown-item" th:href="@{'/ui/page/' + ${page.pageId} + '/move'}"
                            th:attr="hx-get='/ui/page/' + ${page.pageId} + '/move'" hx-target="#content" hx-push-url="true">Move page</a></li>
-                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#fileUploadModal">Upload file</a></li>
+                    <li><a class="dropdown-item" href="#" data-kr-upload-open>Upload files</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item text-danger" href="#"
                            th:attr="hx-delete='/ui/page/' + ${page.pageId} + '?revision=' + ${page.revision}"
@@ -66,18 +66,58 @@
 <section class="kr-content-area">
     <article class="kr-content" th:utext="${page.content}">Pagecontent…</article>
 
-    <div th:if="${page.files != null and !#lists.isEmpty(page.files)}" style="margin-top:28px">
-        <h3 style="font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--kr-text-3); margin:0 0 10px">Attachments</h3>
-        <div class="kr-attach-row">
-            <a th:each="file : ${page.files}" class="kr-attach-card" th:href="@{'/api/file/' + ${file.fileId}}">
-                <span class="kr-attach-ico" th:text="${file.type != null ? #strings.toUpperCase(file.type) : 'FILE'}">PDF</span>
-                <span>
-                    <span class="kr-n" th:text="${file.name}">filename</span>
-                    <span class="kr-s" th:text="${file.size} + ' bytes'">size</span>
-                </span>
-            </a>
+    <section class="kr-attachments" th:if="${!#lists.isEmpty(files) or canEdit}" aria-labelledby="kr-attachments-title">
+        <div class="kr-attachments-head">
+            <h3 id="kr-attachments-title">Attachments <span class="kr-c-count" th:unless="${#lists.isEmpty(files)}" th:text="${#lists.size(files)}">0</span></h3>
+            <button th:if="${canEdit}" type="button" class="kr-btn sm" data-kr-upload-open>
+                <i class="bi bi-paperclip" aria-hidden="true"></i> Upload files
+            </button>
         </div>
-    </div>
+        <div class="kr-attach-row" th:unless="${#lists.isEmpty(files)}">
+            <div th:each="file : ${files}" class="kr-attach-item"
+                 th:with="ext=${#strings.contains(file.name, '.') ? #strings.toUpperCase(file.name.substring(file.name.lastIndexOf('.') + 1)) : 'FILE'}">
+                <a class="kr-attach-card" th:href="@{/ui/file/{id}/download/{name}(id=${file.id},name=${file.name})}" th:title="'Download ' + ${file.name}">
+                    <span class="kr-attach-ico" th:text="${#strings.length(ext) > 4 ? #strings.substring(ext, 0, 4) : ext}">PDF</span>
+                    <span class="kr-attach-meta">
+                        <span class="kr-n" th:text="${file.name}">filename</span>
+                        <span class="kr-s" th:text="${file.size == null ? '' : (file.size < 1024 ? file.size + ' B' : (file.size < 1048576 ? #numbers.formatDecimal(file.size / 1024.0, 1, 1) + ' KB' : #numbers.formatDecimal(file.size / 1048576.0, 1, 1) + ' MB'))}">size</span>
+                    </span>
+                </a>
+                <button th:if="${canEdit}" type="button" class="kr-attach-del" th:title="'Delete ' + ${file.name}" th:aria-label="'Delete ' + ${file.name}"
+                        th:hx-delete="@{'/ui/file/' + ${file.id}}" hx-target="closest .kr-attach-item" hx-swap="outerHTML"
+                        th:hx-confirm="'Delete the attachment ' + ${file.name} + '?'">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+        <button th:if="${canEdit and #lists.isEmpty(files)}" type="button" class="kr-attach-empty" data-kr-upload-open>
+            <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i>
+            <span>No attachments yet. Drop files here or click to upload.</span>
+        </button>
+    </section>
+
+    <dialog th:if="${canEdit}" id="krUploadDialog" class="kr-dialog" aria-labelledby="krUploadTitle"
+            th:data-page-id="${page.pageId}" th:data-max-files="${uploadMaxFiles}" th:data-max-file-bytes="${uploadMaxFileBytes}">
+        <form method="dialog" class="kr-dialog-body">
+            <header class="kr-dialog-head">
+                <h2 id="krUploadTitle">Upload files</h2>
+                <button type="button" class="kr-iconbtn" data-kr-upload-close aria-label="Close"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+            </header>
+            <label class="kr-dropzone" for="krUploadInput">
+                <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i>
+                <strong>Drop files here or click to choose</strong>
+                <span th:text="'Up to ' + ${uploadMaxFiles} + ' files, ' + ${uploadMaxFileBytes / 1048576} + ' MB each'">Up to 10 files</span>
+                <input id="krUploadInput" type="file" multiple class="visually-hidden">
+            </label>
+            <ul class="kr-upload-list" aria-live="polite"></ul>
+            <div class="kr-upload-progress" hidden><div class="kr-upload-bar"></div></div>
+            <p class="kr-upload-error" role="alert" hidden></p>
+            <footer class="kr-dialog-foot">
+                <button type="button" class="kr-btn" data-kr-upload-close>Cancel</button>
+                <button type="button" class="kr-btn accent" data-kr-upload-submit disabled>Upload</button>
+            </footer>
+        </form>
+    </dialog>
 
     <div th:replace="~{page/comments :: comments}"></div>
 </section>

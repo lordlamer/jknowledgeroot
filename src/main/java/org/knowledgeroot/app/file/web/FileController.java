@@ -55,18 +55,18 @@ class FileController {
     }
 
     /**
-     * Upload a file to the server.
+     * Upload one or more files to a page.
      */
     @PostMapping(
             value = "/ui/file",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     public @ResponseBody ModelAndView uploadFile(
-            @RequestParam("file") MultipartFile file,
+            @RequestParam("file") MultipartFile[] files,
             @RequestParam("pageId") Integer pageId) {
         try {
             org.knowledgeroot.app.util.RequestValidation.id(pageId);
-            if (file.isEmpty()) {
+            if (files.length == 0 || java.util.Arrays.stream(files).anyMatch(MultipartFile::isEmpty)) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is empty");
             }
 
@@ -74,7 +74,7 @@ class FileController {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to upload files for this page");
             }
 
-            fileUploadService.upload(pageId, file);
+            fileUploadService.upload(pageId, files);
             return new ModelAndView("redirect:/ui/page/" + pageId);
         } catch (org.knowledgeroot.app.file.domain.StorageException e) {
             log.error("File storage unavailable", e);

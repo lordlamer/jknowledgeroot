@@ -4,6 +4,9 @@ import io.github.wimdeblauwe.htmx.spring.boot.mvc.HtmxRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.knowledgeroot.app.file.domain.FileDao;
+import org.knowledgeroot.app.file.domain.FileFilter;
+import org.knowledgeroot.app.file.domain.UploadPolicy;
 import org.knowledgeroot.app.page.api.PageDto;
 
 import org.knowledgeroot.app.page.domain.*;
@@ -44,6 +47,8 @@ public class PageController {
     private final UserContext userContext;
     private final PageCreationService pageCreationService;
     private final PageEditingService pageEditingService;
+    private final FileDao fileDao;
+    private final UploadPolicy uploadPolicy;
 
 
     /**
@@ -129,6 +134,11 @@ public class PageController {
         model.addAttribute("canStar", canStar);
         model.addAttribute("pageId", pageId);
         model.addAttribute("starred", canStar && pageStarDao.isStarred(currentUserId, pid));
+
+        // Attachments and upload limits for the upload dialog
+        model.addAttribute("files", fileDao.listFiles(FileFilter.builder().pageId(pid).build()));
+        model.addAttribute("uploadMaxFileBytes", uploadPolicy.maxFileBytes());
+        model.addAttribute("uploadMaxFiles", uploadPolicy.maxFiles());
 
         // Labels
         model.addAttribute("labels", pageLabelDao.listForPage(pid));

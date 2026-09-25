@@ -3,6 +3,7 @@ package org.knowledgeroot.app.page.ui;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -59,6 +60,27 @@ class PageControllerIntegrationTest extends IsolatedApplicationTest {
         login(outsider).perform(get("/ui/file/" + file + "/download/attachment.txt")).andExpect(status().isForbidden());
         login(reader).perform(multipart("/ui/file").file(new MockMultipartFile("file","blocked.txt","text/plain",bytes))
                 .param("pageId",Integer.toString(pageId))).andExpect(status().isForbidden());
+    }
+
+    @Test void uploadedFilesAreListedOnThePageAndCanBeDeleted() throws Exception {
+        var client = login(editor);
+        client.perform(get("/ui/page/" + pageId)).andExpect(status().isOk())
+                .andExpect(content().string(containsString("id=\"krUploadDialog\"")))
+                .andExpect(content().string(containsString("No attachments yet")));
+        client.perform(multipart("/ui/file").file(new MockMultipartFile("file","first notes.txt","text/plain",new byte[]{1}))
+                .file(new MockMultipartFile("file","second.pdf","application/pdf",new byte[2048]))
+                .param("pageId",Integer.toString(pageId))).andExpect(status().is3xxRedirection());
+        int first = jdbc.queryForObject("SELECT id FROM file WHERE page_id=? AND name='first notes.txt'",Integer.class,pageId);
+        assertEquals(2,jdbc.queryForObject("SELECT COUNT(*) FROM file WHERE page_id=? AND deleted=FALSE",Integer.class,pageId));
+        login(reader).perform(get("/ui/page/" + pageId)).andExpect(status().isOk())
+                .andExpect(content().string(containsString("/ui/file/" + first + "/download/first%20notes.txt")))
+                .andExpect(content().string(containsString("2.0 KB")))
+                .andExpect(content().string(not(containsString("krUploadDialog"))))
+                .andExpect(content().string(not(containsString("hx-delete=\"/ui/file/"))));
+        login(reader).perform(delete("/ui/file/" + first)).andExpect(status().isForbidden());
+        client.perform(delete("/ui/file/" + first)).andExpect(status().isOk());
+        client.perform(get("/ui/page/" + pageId)).andExpect(content().string(not(containsString("first notes.txt"))))
+                .andExpect(content().string(containsString("second.pdf")));
     }
 
     @Test void probesExposeOnlyStatusAndMetricsRequireCurrentAdminRole() throws Exception {

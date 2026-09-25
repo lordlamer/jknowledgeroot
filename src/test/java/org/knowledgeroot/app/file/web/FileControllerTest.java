@@ -11,6 +11,7 @@ import org.knowledgeroot.app.security.context.domain.UserDetails;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.charset.StandardCharsets;
@@ -96,7 +97,7 @@ class FileControllerTest {
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> controller.uploadFile(multipartFile, 10)
+                () -> controller.uploadFile(new MultipartFile[]{multipartFile}, 10)
         );
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());

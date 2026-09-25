@@ -45,6 +45,8 @@ class PageAccessWebTest {
     @MockitoBean GroupDao groups;
     @MockitoBean UserContext userContext;
     @MockitoBean DatabaseAuthentificationProvider provider;
+    @MockitoBean org.knowledgeroot.app.file.domain.FileDao files;
+    @MockitoBean org.knowledgeroot.app.file.domain.UploadPolicy uploadPolicy;
     private RequestPostProcessor caller;
     private final PageId pageId = new PageId(100);
 
