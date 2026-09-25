@@ -4,9 +4,12 @@ import io.github.wimdeblauwe.htmx.spring.boot.mvc.HtmxRequest;
 import lombok.RequiredArgsConstructor;
 import org.knowledgeroot.app.page.domain.*;
 import org.knowledgeroot.app.util.RequestValidation;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -16,23 +19,33 @@ public class PageMoveController {
     private final PagePermissionDao permissions;
 
     @GetMapping("/ui/page/{id}/move")
-    public String form(@PathVariable int id, @RequestParam(defaultValue="0") int parent,
+    public String form(@PathVariable int id, @RequestParam(required=false) Integer parent,
                        @RequestParam(defaultValue="0") int start, @RequestParam(defaultValue="") String query,
                        Model model, HtmxRequest request) {
         var page = moves.movablePage(new PageId(id));
+        int currentParent = page.getParent() == null ? 0 : page.getParent();
+        // Start browsing at the page's current location when the user may see it.
+        if (parent == null) parent = currentParent > 0 && canView(currentParent) ? currentParent : 0;
         RequestValidation.require(parent >= 0);
-        if (parent > 0 && !permissions.hasUserPermission(new PageId(parent), moves.actor(), PagePermission.PermissionLevel.VIEW))
-            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN);
+        if (parent > 0 && !canView(parent)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         RequestValidation.text(query, 255);
         start = RequestValidation.start(start);
         var filter = PageFilter.builder().parent(query.isBlank() ? parent : null).query(query.isBlank() ? null : query)
                 .deleted(false).start(start).limit(51).build();
         // Readable ancestors may be browsed to reach editable children; only editable destinations may be selected.
         var items = pages.listVisiblePages(filter, moves.actor());
-        model.addAttribute("page", page); model.addAttribute("items", items.stream().limit(50).toList());
+        var destinationPath = path(parent);
+        boolean insideSubtree = destinationPath.stream().anyMatch(ancestor -> ancestor.getPageId().equals(page.getPageId()));
+        model.addAttribute("page", page); model.addAttribute("items", items.stream().limit(50)
+                .filter(item -> !item.getPageId().equals(page.getPageId())).toList());
         model.addAttribute("parent", parent); model.addAttribute("start", start); model.addAttribute("query", query);
         model.addAttribute("hasNext", items.size() > 50); model.addAttribute("inherits", permissions.isInheriting(page.getPageId()));
-        model.addAttribute("destination", parent == 0 ? null : pages.findNavigationPage(new PageId(parent), moves.actor()).orElseThrow());
+        model.addAttribute("destination", parent == 0 ? null : pages.findNavigationPage(new PageId(parent), moves.actor())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
+        model.addAttribute("destinationPath", destinationPath);
+        model.addAttribute("currentPath", path(currentParent));
+        model.addAttribute("alreadyHere", parent == currentParent);
+        model.addAttribute("insideSubtree", insideSubtree);
         model.addAttribute("validDestination", moves.canUseDestination(parent) && (parent == 0 || pages.getPageHierarchy(new PageId(parent)).stream()
                 .noneMatch(ancestor -> ancestor.getPageId().equals(page.getPageId()))));
         return request.isHtmxRequest() ? "page/move :: body" : "page/move";
@@ -42,5 +55,16 @@ public class PageMoveController {
     public String move(@PathVariable int id, @RequestParam int parent, @RequestParam(required=false) Long revision) {
         moves.move(new PageId(id), parent, revision);
         return "redirect:/ui/page/" + id + "?trigger=reload-sidebar";
+    }
+
+    private boolean canView(int pageId) {
+        return permissions.hasUserPermission(new PageId(pageId), moves.actor(), PagePermission.PermissionLevel.VIEW);
+    }
+
+    /** Root-to-leaf path of a page, limited to ancestors the user may see. */
+    private List<Page> path(int pageId) {
+        if (pageId == 0) return List.of();
+        return pages.getPageHierarchy(new PageId(pageId)).stream()
+                .filter(ancestor -> canView(ancestor.getPageId().value())).toList();
     }
 }

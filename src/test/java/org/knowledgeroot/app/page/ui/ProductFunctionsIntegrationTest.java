@@ -108,6 +108,18 @@ class ProductFunctionsIntegrationTest extends IsolatedApplicationTest {
         assertEquals("original", jdbc.queryForObject("SELECT content FROM page WHERE id=?", String.class, child));
     }
 
+    @Test void movePickerStartsAtCurrentLocationAndHidesTheMovedPage() throws Exception {
+        jdbc.update("UPDATE page SET parent=? WHERE id=?", otherPageId, pageId);
+        var admin = login("integration.admin");
+        String url = "/ui/page/" + pageId + "/move";
+        admin.perform(get(url)).andExpect(status().isOk())
+                .andExpect(content().string(containsString("name=\"parent\" value=\"" + otherPageId + "\"")))
+                .andExpect(content().string(containsString("The page is already here.")));
+        admin.perform(get(url).param("parent", "0")).andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("parent=" + pageId + "\""))))
+                .andExpect(content().string(not(containsString("The page is already here."))));
+    }
+
     @Test void movesRejectReadersCsrfCyclesDeletedTargetsAndStaleRevisions() throws Exception {
         String url = "/ui/page/" + pageId + "/move";
         login(reader).perform(get(url)).andExpect(status().isForbidden());
