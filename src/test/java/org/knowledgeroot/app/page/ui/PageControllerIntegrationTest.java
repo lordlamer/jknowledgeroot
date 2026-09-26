@@ -83,6 +83,25 @@ class PageControllerIntegrationTest extends IsolatedApplicationTest {
                 .andExpect(content().string(containsString("second.pdf")));
     }
 
+    @Test void searchRendersHighlightedHitsWithVisiblePathAndEscapesTheQuery() throws Exception {
+        String name = jdbc.queryForObject("SELECT name FROM page WHERE id=?", String.class, pageId);
+        jdbc.update("UPDATE page SET parent=?, content='<p>Findme &amp; more</p>' WHERE id=?", otherPageId, pageId);
+        String parentName = jdbc.queryForObject("SELECT name FROM page WHERE id=?", String.class, otherPageId);
+        var client = login(editor);
+        client.perform(get("/search").param("q", "findme")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("class=\"kr-result\"")))
+                .andExpect(content().string(containsString("<mark>Findme</mark> &amp; more")))
+                .andExpect(content().string(containsString(name)))
+                .andExpect(content().string(not(containsString(parentName))));
+        grant(otherPageId, "user", editorId, "view");
+        client.perform(get("/search").param("q", "findme")).andExpect(content().string(containsString(parentName)));
+        client.perform(get("/search").param("q", "<script>x</script>")).andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("<script>x</script>"))))
+                .andExpect(content().string(containsString("No results for")));
+        client.perform(get("/search").param("q", " ")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("What are you looking for?")));
+    }
+
     @Test void probesExposeOnlyStatusAndMetricsRequireCurrentAdminRole() throws Exception {
         for (String endpoint : new String[]{"/actuator/health","/actuator/health/liveness","/actuator/health/readiness"}) {
             mvc.perform(get(endpoint)).andExpect(status().isOk()).andExpect(jsonPath("$.status").value("UP"))
