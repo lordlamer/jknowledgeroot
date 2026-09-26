@@ -102,6 +102,18 @@ class PageControllerIntegrationTest extends IsolatedApplicationTest {
                 .andExpect(content().string(containsString("What are you looking for?")));
     }
 
+    @Test void historyLinksToDeletedPagesOnlyForDeletedPagesAndAdministrators() throws Exception {
+        String url = "/ui/page/" + pageId + "/history";
+        var admin = login("integration.admin");
+        admin.perform(get(url).header("HX-Request", "true")).andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("/ui/page/deleted"))))
+                .andExpect(content().string(containsString("Current page")));
+        jdbc.update("UPDATE page SET deleted=TRUE WHERE id=?", pageId);
+        admin.perform(get(url).header("HX-Request", "true")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("href=\"/ui/page/deleted\"")))
+                .andExpect(content().string(not(containsString("Current page"))));
+    }
+
     @Test void probesExposeOnlyStatusAndMetricsRequireCurrentAdminRole() throws Exception {
         for (String endpoint : new String[]{"/actuator/health","/actuator/health/liveness","/actuator/health/readiness"}) {
             mvc.perform(get(endpoint)).andExpect(status().isOk()).andExpect(jsonPath("$.status").value("UP"))

@@ -4,6 +4,8 @@
 <body>
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
+        <li class="breadcrumb-item" th:if="${page.deleted and admin}"><a href="/ui/page/deleted" hx-get="/ui/page/deleted"
+                                                                          hx-target="#content" hx-push-url="true">Deleted pages</a></li>
         <li class="breadcrumb-item" th:unless="${page.deleted}"><a th:href="@{'/ui/page/' + ${page.pageId}}" th:text="${page.name}">Page</a></li>
         <li class="breadcrumb-item" th:if="${page.deleted}" th:text="${page.name}">Page</li>
         <li class="breadcrumb-item active" aria-current="page">History</li>
@@ -14,9 +16,8 @@
         <h1 class="kr-page-title">Page history</h1>
         <p class="kr-page-subtitle mb-0">Saved versions contain the page name, content and captured labels. Restoring keeps current sharing, attachments and page location.</p>
     </div>
-    <div class="kr-page-actions">
-        <a class="kr-btn" th:if="${!page.deleted}" th:href="@{'/ui/page/' + ${page.pageId}}">Current page</a>
-        <a class="kr-btn" th:if="${admin}" href="/ui/page/deleted">Deleted pages</a>
+    <div class="kr-page-actions" th:unless="${page.deleted}">
+        <a class="kr-btn" th:href="@{'/ui/page/' + ${page.pageId}}">Current page</a>
     </div>
 </header>
 <section class="kr-content-area kr-history">
