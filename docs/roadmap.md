@@ -15,14 +15,21 @@ nicht zur Produktion freigegeben.
 - Änderungen an bereits angewendeten Datenbankschemata erfolgen über neue Migrationen.
 - Offene Produktentscheidungen werden vor der davon abhängigen Implementierung geklärt. Unabhängige Arbeiten können weitergehen.
 
-**Nächster Schritt: Docker-Hub-Secrets in die geschützte Umgebung `release`
-übernehmen, anschließend die Repository-Kopien entfernen und die offenen Angaben
-für die Betriebsabnahme klären.**
+**Der vereinbarte Funktionsumfang für 1.0 ist umgesetzt und lokal geprüft.**
+R35 erweitert das Verschieben auf berechtigte Bearbeiter; R36 ergänzt
+Passwortwiederherstellung per bestätigter Mailadresse. Als Nächstes steht die
+praktische Abnahme mit eigenen Inhalten und Rollen an. Weitere Funktionswünsche
+werden anhand dieser Nutzung priorisiert; offene Betriebs- und Release-Abnahmen
+bleiben Voraussetzung für die Produktionsfreigabe.
 
-R01 bis R33 sind umgesetzt und geprüft; die vollständige gehostete CI
-einschließlich Release-Schutztests und Graph-Übermittlung besteht für `087eae0`.
+R01 bis R34 sind umgesetzt und geprüft; die vollständige gehostete CI
+einschließlich Release-Schutztests und Graph-Übermittlung besteht für `6722957`.
+Dieser gehostete Nachweis deckt die neuen Änderungen R35/R36 noch nicht ab.
+R35/R36 sind lokal mit 297 Tests einschließlich JAR-/Chromium-Abnahme geprüft;
+der aktualisierte OSV-Scan prüft 282 Paketversionen ohne Treffer.
 R33 ergänzt die per API geprüften GitHub-Einstellungen für einen alleinigen
-Entwickler. Der in R30 abgeglichene GitHub-Graph enthält alle 199 erwarteten
+Entwickler; R34 weist den regulären PR-Merge unter diesen Regeln nach.
+Der in R30 abgeglichene GitHub-Graph enthält alle 199 erwarteten
 Maven-Pakete; der aktuelle OSV-Scan ist ohne Treffer. Der aktuelle Kandidat ist
 `1.0.0-rc.2`. Verbleibende OS-Paketbefunde, Registry-Secret-Ablage und
 tatsächlicher Release-Ablauf, TLS/Proxy, produktive Last, Alarmierung sowie
@@ -39,8 +46,7 @@ und eine fehlende Umgebung `release`. R32 aktiviert inzwischen zwei Basis-Rulese
 gegen das Umschreiben/Löschen der Hauptbranch-Historie und bestehender Release-Tags.
 Der Eigentümer arbeitet allein. R33 aktiviert PR-Pflicht und den erforderlichen
 Check `verify` ohne fremde Review-Freigabe; Releases bestätigt `lordlamer`
-selbst
-in der geschützten Umgebung `release`. Die Registry-Secrets liegen noch auf
+selbst in der geschützten Umgebung `release`. Die Registry-Secrets liegen auf
 Repository-Ebene und müssen vor einer Veröffentlichung umgestellt werden.
 
 Am 13. September wurde der vorhandene [erfolgreiche GitHub-Lauf](https://github.com/lordlamer/jknowledgeroot/actions/runs/34764388748)
@@ -53,8 +59,8 @@ committet und gepusht; der [anschließende GitHub-Lauf](https://github.com/lordl
 ist vollständig erfolgreich. Die Ergebnisse und Grenzen stehen in R29.
 
 R23 bis R25 ergänzen den gewünschten Funktionsumfang und sind als `155e710`
-committet. Die vorläufige Administratorregel für
-Verschiebungen und der mögliche E-Mail-Passwortreset sind unten ausdrücklich festgehalten.
+committet. Die damalige Administratorregel für Verschiebungen wird durch R35
+ersetzt; der inzwischen bestätigte E-Mail-Passwortreset wird mit R36 umgesetzt.
 R27 ist als `03735d5` committet. R28 verbessert die daraus gemessene breite
 Seitenhierarchie, ist lokal geprüft und als `85efac8` committet.
 
@@ -65,6 +71,8 @@ Nachweise; maßgeblich für die aktuellen offenen Arbeiten ist diese Übersicht.
 ### Noch offen bis zur Produktionsfreigabe
 
 - [x] Zusätzlichen Funktionsumfang R23–R25 lokal abnehmen: Passwortänderung im Profil, Seitenverschieben und Versionsvergleich.
+- [x] Erweiterungen R35/R36 lokal abnehmen: Verschieben durch berechtigte
+  Bearbeiter und Passwort vergessen per bestätigter E-Mail.
 - [ ] Zielsystem, Domain, Betreiber/Vertretung, erwartete Nutzer-/Datenmengen und Betriebsgrenzen festlegen.
 - [x] Branch-/Tag-Schutz, PR-Pflicht mit erfolgreichem `verify` und eigene
   Release-Bestätigung konfigurieren (R32/R33).
@@ -521,9 +529,10 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 
 ### R34 – Den verpflichtenden Pull-Request-Ablauf praktisch prüfen
 
-- [ ] Begonnen am 19. September 2026; [Pull Request
-  #262](https://github.com/lordlamer/jknowledgeroot/pull/262) mit R33-Commit
-  `7c203e6`.
+- [x] Erledigt am 19. September 2026; R33-Commit `7c203e6` und ergänzende
+  Markdown-Korrekturen über
+  [PR #262](https://github.com/lordlamer/jknowledgeroot/pull/262) als `6722957`
+  zusammengeführt. Hauptbranch-CI erfolgreich.
 - **Umfang:** Die committeten Konfigurationen und Nachweise über einen
   Arbeitsbranch mit vollständiger gehosteter CI nach `master` übernehmen. Ohne
   zusätzliche Person mergen können, während die PR-/CI-Regeln aktiv bleiben.
@@ -536,6 +545,97 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 - **Betrieb:** Die Registry-Secrets liegen bei der erneuten Namensprüfung
   weiterhin nur auf Repository-Ebene (`target/r34-secret-locations.json`).
   Zielsystem, Domain und HTTPS-Proxy bleiben offen.
+- **Zusätzliche Prüfung:** Die vorhandene Codacy-Integration beanstandete
+  Zeilenlängen in geänderten Markdown-Absätzen. Die Absätze sind umgebrochen;
+  der Inhaltsvergleich bestätigt reine Whitespace-Änderungen. Codacy ist für
+  `c04934d` erfolgreich. Keine Analyse-Regel wurde deaktiviert oder umgangen.
+- **PR-Abnahme:** Der abschließende
+  [CI](https://github.com/lordlamer/jknowledgeroot/actions/runs/35446310887)
+  für PR-Head `c04934d` ist erfolgreich. Er baut den von GitHub erzeugten
+  Test-Merge `5142f800562cfb85f91f3444b8b8763b28963bf7` und besteht 280
+  Surefire-Tests, den JAR-/Chromium-Test, Containerstart/-neustart, HTTPS,
+  Lastmessung, Sicherheitsprüfungen und Backup/Upgrade/Snapshot-Rollback.
+  `dependency-graph` und `publish` bleiben erwartungsgemäß übersprungen.
+- **Merge:** Nach erneutem Abgleich von Head, Basisbranch, erfolgreichen Checks
+  und aktiven Regeln wurde der PR regulär durch `lordlamer` zusammengeführt:
+  `6722957f58f53135a1ad9046b1b098d2d7a75bb1`. Keine fremde Review-Freigabe,
+  keine Bypass-Akteure und keine zeitweise Abschaltung von Regeln. GitHub
+  bestätigt den Merge und die weiterhin wirksamen Regeln. Nachweise:
+  `target/r34-pr-final-before-merge.json`, `target/r34-pr-after-merge.json` und
+  `target/r34-pr-final-ci-verify.log`.
+- **Hauptbranch-Abnahme:** Der anschließende
+  [CI](https://github.com/lordlamer/jknowledgeroot/actions/runs/35446832945)
+  für `6722957` besteht vollständig: `verify` und `dependency-graph`
+  erfolgreich, `publish` übersprungen. Erneut 280 Surefire-Tests und ein
+  JAR-/Chromium-Test ohne Fehler oder übersprungene Tests; Container-/HTTPS-
+  und Wiederherstellungstests erfolgreich. Der Lastlauf mit 1000 Seiten und
+  einem/vier Workern liefert je 80 Requests ohne Fehler, p95 **47,95/83,80 ms**.
+  OSV prüft 277 Paketversionen ohne Treffer; die OS-Scans prüfen 105 App- und
+  149 Datenbankpakete ohne blockierende Befunde. Die Artefaktzuordnung besteht;
+  GitHub akzeptiert Snapshot **101669381** mit 199 Maven-Paketen. Nachweise:
+  `target/r34-master-ci-verify.log` und
+  `target/r34-master-ci-dependency-graph.log`.
+- **Grenzen:** Runner-Messungen, keine Kapazitätszusage für den Zielbetrieb.
+  Niedrigere OS-Befunde sind weiterhin betrieblich zu bewerten.
+  Kein Release-Tag, keine Veröffentlichung und keine Produktionsfreigabe.
+  Die Abnahmenachweise selbst ändern den damals geprüften Anwendungscode und
+  Workflow nicht; die nachfolgenden Funktionen R35/R36 benötigen einen neuen CI-Lauf.
+
+### R35 – Verschieben durch berechtigte Bearbeiter
+
+- [x] Lokal umgesetzt und geprüft am 19. September 2026.
+- **Entscheidung:** Angemeldete Bearbeiter dürfen eine Seite samt Unterseiten
+  verschieben, wenn sie die Ausgangsseite und die Zielseite bearbeiten dürfen.
+  Direkte, geerbte und Gruppenrechte gelten; Leserecht allein reicht nicht.
+- **Umgesetzt:** Menü für Bearbeiter, sichtbarkeitsgefilterte Zielauswahl und
+  erneute Berechtigungsprüfung beim Absenden nach Erwerb der Struktursperren.
+  Gäste bleiben ausgeschlossen. Auf der obersten Ebene bleiben wirksame Rechte
+  als lokale Freigaben erhalten; das Verschieben dorthin ist wie das Anlegen
+  einer Hauptseite für angemeldete Bearbeiter möglich.
+- **Abnahme:** Tests für fehlende Ausgangs-/Zielrechte, entzogene Rechte und
+  Gruppenmitgliedschaft, geerbte Zielrechte, unsichtbare Ziele und Gastzugriff.
+  Der echte Browser prüft das deaktivierte Ziel mit Leserecht und die erfolgreiche
+  Verschiebung nach Vergabe von Bearbeitungsrechten. Bestehende Prüfungen für
+  Unterbaum, Historie, Revisionskonflikte und parallele Verschiebungen bleiben aktiv.
+- **Geprüft:** Vollständiges `verify` mit 296 erfolgreichen Surefire-Tests und
+  einem erfolgreichen JAR-/Chromium-Test, keine Fehler oder übersprungenen Tests.
+  Darunter 14 Tests in `ProductFunctionsIntegrationTest`. Nachweis:
+  `target/r35-r36-verify.log`. Noch nicht gehostet geprüft.
+
+### R36 – Passwort vergessen per bestätigter Mailadresse
+
+- [x] Lokal umgesetzt und geprüft am 19. September 2026.
+- **Entscheidung:** Selbstbedienungs-Reset per E-Mail ergänzen. Bestehende
+  Mailadressen gelten erst nach Bestätigung als geeignet.
+- **Umgesetzt:** Bestätigung aus dem Profil mit aktuellem Passwort; öffentliche
+  neutrale Reset-Anforderung; zweifache Eingabe des neuen Passworts; Ende alter
+  Anmeldungen und Änderungsbenachrichtigung. Adressänderungen im Profil oder in
+  der Benutzerverwaltung entfernen Bestätigung und ausstehende Links.
+- **Schutz:** Zufällige Einmal-Tokens mit 30 Minuten Gültigkeit, ausschließlich
+  Digests in Datenbank und JDBC-Sitzungen, getrennte persistente Quoten, CSRF,
+  feste HTTPS-Origin, keine Token-Ausgabe im Formular, keine Änderung durch GET.
+  Gleichzeitiger Gebrauch eines Links kann nur einmal erfolgreich sein.
+- **Einrichtung:** Standardmäßig aus; SMTP und öffentliche URL sind konfigurierbar.
+  Migration `1.0.13-account-recovery`, Boot-verwalteter Mail-Starter und begrenzter
+  asynchroner Versand. Bedienung und Grenzen in
+  [account-recovery.md](account-recovery.md).
+- **Abnahme:** Integrationstests für Verifikation/Reset, Ablauf, erneute Ausstellung,
+  Replay, geänderte Konten, neutrale Antworten, Quoten, Versandfehler und parallele
+  Nutzung. Chromium prüft Profilbestätigung, echten lokalen SMTP-Empfang, Reset
+  und erneute Anmeldung am gepackten JAR. Keine Mails an externe Empfänger.
+- **Geprüft:** Vollständiges `verify` mit 296 Surefire-Tests und einem
+  JAR-/Chromium-Test erfolgreich, darunter zehn Recovery-Integrationstests und
+  zwei Konfigurationstests. Nach abschließender SMTP-Servernamenprüfung wurde
+  das JAR erneut gebaut und mit Konfigurations- sowie JAR-/Chromium-Test geprüft;
+  ebenfalls erfolgreich. Die mobile Reset-Ansicht wurde visuell kontrolliert.
+  Aktualisierter Dependency-Baum und OSV-Scan: 282 Paketversionen, null Treffer.
+  Compose-Konfiguration mit Testwerten und `git diff --check` ohne Fehler.
+  Nachweise: `target/r35-r36-verify.log`, `target/r35-r36-final-check.log`,
+  `target/r35-r36-dependency-audit.log`, `target/dependency-audit.json` und
+  `target/product-password-recovery.png`.
+- **Grenzen:** Warteschlange ist nicht dauerhaft. Tatsächliche Zustellung und
+  Absenderkonfiguration im Zielbetrieb bleiben vor Aktivierung zu prüfen.
+  Kein neuer gehosteter CI-Lauf und keine Produktionsfreigabe.
 
 ## Nachweise der Bestandsaufnahme
 

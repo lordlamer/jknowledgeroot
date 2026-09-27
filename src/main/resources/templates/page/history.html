@@ -2,41 +2,85 @@
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
 <head><title>Knowledgeroot :: Page history</title></head>
 <body>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item" th:if="${page.deleted and admin}"><a href="/ui/page/deleted" hx-get="/ui/page/deleted"
+                                                                          hx-target="#content" hx-push-url="true">Deleted pages</a></li>
+        <li class="breadcrumb-item" th:unless="${page.deleted}"><a th:href="@{'/ui/page/' + ${page.pageId}}" th:text="${page.name}">Page</a></li>
+        <li class="breadcrumb-item" th:if="${page.deleted}" th:text="${page.name}">Page</li>
+        <li class="breadcrumb-item active" aria-current="page">History</li>
+    </ol>
+</nav>
 <header class="kr-page-header">
-    <div class="kr-page-title-wrap"><h1 class="kr-page-title">Page history</h1><p class="mb-0" th:text="${page.name}"></p></div>
-    <div class="kr-page-actions">
-        <a class="kr-btn" th:if="${!page.deleted}" th:href="@{'/ui/page/' + ${page.pageId}}">Current page</a>
-        <a class="kr-btn" th:if="${admin}" href="/ui/page/deleted">Deleted pages</a>
+    <div class="kr-page-title-wrap">
+        <h1 class="kr-page-title">Page history</h1>
+        <p class="kr-page-subtitle mb-0">Saved versions contain the page name, content and captured labels. Restoring keeps current sharing, attachments and page location.</p>
+    </div>
+    <div class="kr-page-actions" th:unless="${page.deleted}">
+        <a class="kr-btn" th:href="@{'/ui/page/' + ${page.pageId}}">Current page</a>
     </div>
 </header>
-<section class="kr-content-area">
-<p>Saved versions contain the page name, content and captured labels. Restoring keeps current sharing, attachments and page location.</p>
-<p th:if="${page.deleted}" class="alert alert-warning">This page is deleted. Restore a saved version to make it available again. Its parent must be available first.</p>
-<p th:if="${#lists.isEmpty(items)}">No earlier versions have been saved yet.</p>
-<p th:if="${selected != null}" class="alert alert-info" th:text="'Selected version ' + ${selected.revision} + '. Choose another saved version below, or continue browsing the history.'"></p>
-<div class="table-responsive"><table th:unless="${#lists.isEmpty(items)}" class="table">
-    <thead><tr><th>Version</th><th>Changed</th><th>Name</th><th></th></tr></thead>
-    <tbody><tr th:each="item : ${items}">
-        <td th:text="${item.revision}"></td><td th:text="${item.changedAt}"></td><td th:text="${item.name}"></td>
-        <td><a th:href="@{'/ui/page/' + ${page.pageId} + '/history/' + ${item.id}}">View version</a>
-            · <a th:href="@{'/ui/page/' + ${page.pageId} + '/history/compare'(from=${item.id})}">Compare with current</a>
-            · <a th:href="@{'/ui/page/' + ${page.pageId} + '/history'(start=${start},compareFrom=${item.id})}">Select for comparison</a>
-            <th:block th:if="${selected != null}"> · <a th:href="@{'/ui/page/' + ${page.pageId} + '/history/compare'(from=${selected.id},to=${item.id})}">Compare with selected</a></th:block></td>
-    </tr></tbody>
-</table></div>
-<form th:unless="${#lists.isEmpty(items)}" method="get" th:action="@{'/ui/page/' + ${page.pageId} + '/history/compare'}" class="kr-editor-pane mb-3">
-    <h2>Compare versions</h2>
-    <p>The selectors show the saved versions on this history page.</p>
-    <div class="kr-form-row">
-        <div class="kr-field"><label for="compare-from">Earlier version</label>
-            <select id="compare-from" name="from"><option th:each="item : ${items}" th:value="${item.id}" th:text="'Version ' + ${item.revision} + ' · ' + ${item.changedAt}"></option></select></div>
-        <div class="kr-field"><label for="compare-to">Compare with</label>
-            <select id="compare-to" name="to"><option value="0">Current version</option>
-                <option th:each="item : ${items}" th:value="${item.id}" th:text="'Version ' + ${item.revision} + ' · ' + ${item.changedAt}"></option></select></div>
+<section class="kr-content-area kr-history">
+    <div th:if="${page.deleted}" class="kr-callout warn" role="status">This page is deleted. Restore a saved version to make it available again. Its parent must be available first.</div>
+    <div th:if="${selected != null}" class="kr-callout kr-history-selection" role="status">
+        <span th:text="'Version ' + ${selected.revision} + ' is selected. Choose another version below to compare it.'"></span>
+        <a class="kr-btn sm ghost" th:href="@{'/ui/page/' + ${page.pageId} + '/history'(start=${start})}">Clear selection</a>
     </div>
-    <button type="submit" class="kr-btn accent">Compare versions</button>
-</form>
-<a th:if="${start > 0}" th:href="@{'/ui/page/' + ${page.pageId} + '/history'(start=${T(java.lang.Math).max(0, start - 50)},compareFrom=${selected?.id})}">Previous</a>
-<a th:if="${hasNext}" th:href="@{'/ui/page/' + ${page.pageId} + '/history'(start=${start + 50},compareFrom=${selected?.id})}">Next</a>
+
+    <div th:if="${#lists.isEmpty(items)}" class="kr-history-empty">No earlier versions have been saved yet.</div>
+
+    <div class="kr-tbl-scroll" th:unless="${#lists.isEmpty(items)}">
+    <table class="kr-tbl kr-history-tbl">
+        <thead><tr><th>Version</th><th>Changed</th><th>Name</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+        <tr th:if="${start == 0 and !page.deleted}" class="is-current">
+            <td><span class="kr-version current">Current</span></td>
+            <td class="kr-history-date" th:text="${#temporals.format(page.changeDate, 'dd.MM.yyyy HH:mm')}"></td>
+            <td class="kr-history-name" th:text="${page.name}"></td>
+            <td><div class="actions">
+                <a class="kr-btn sm" th:href="@{'/ui/page/' + ${page.pageId}}">Open page</a>
+                <a th:if="${selected != null}" class="kr-btn sm accent" th:href="@{'/ui/page/' + ${page.pageId} + '/history/compare'(from=${selected.id})}">Compare with selected</a>
+            </div></td>
+        </tr>
+        <tr th:each="item : ${items}" th:with="isSelected=${selected != null and selected.id == item.id}"
+            th:classappend="${isSelected} ? 'is-selected'">
+            <td><span class="kr-version" th:text="'v' + ${item.revision}"></span></td>
+            <td class="kr-history-date" th:text="${#temporals.format(item.changedAt, 'dd.MM.yyyy HH:mm')}"></td>
+            <td class="kr-history-name" th:text="${item.name}"></td>
+            <td><div class="actions">
+                <a class="kr-btn sm" th:href="@{'/ui/page/' + ${page.pageId} + '/history/' + ${item.id}}">View version</a>
+                <a class="kr-btn sm" th:href="@{'/ui/page/' + ${page.pageId} + '/history/compare'(from=${item.id})}">Compare with current</a>
+                <span th:if="${isSelected}" class="kr-pill role">Selected</span>
+                <th:block th:unless="${isSelected}">
+                    <a th:if="${selected == null}" class="kr-btn sm ghost" th:href="@{'/ui/page/' + ${page.pageId} + '/history'(start=${start},compareFrom=${item.id})}">Select for comparison</a>
+                    <a th:if="${selected != null}" class="kr-btn sm accent" th:href="@{'/ui/page/' + ${page.pageId} + '/history/compare'(from=${selected.id},to=${item.id})}">Compare with selected</a>
+                </th:block>
+            </div></td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <nav class="kr-pager" th:if="${start > 0 or hasNext}" aria-label="History pages">
+        <a class="kr-btn sm" th:if="${start > 0}" th:href="@{'/ui/page/' + ${page.pageId} + '/history'(start=${T(java.lang.Math).max(0, start - 50)},compareFrom=${selected?.id})}">← Previous</a>
+        <span class="kr-pager-info" th:text="'Versions ' + ${start + 1} + '–' + ${start + #lists.size(items)}"></span>
+        <a class="kr-btn sm" th:if="${hasNext}" th:href="@{'/ui/page/' + ${page.pageId} + '/history'(start=${start + 50},compareFrom=${selected?.id})}">Next →</a>
+    </nav>
+
+    <form th:unless="${#lists.isEmpty(items)}" method="get" th:action="@{'/ui/page/' + ${page.pageId} + '/history/compare'}" class="kr-panel kr-history-compare">
+        <div class="kr-panel-head">
+            <h2>Compare versions</h2>
+            <p>The selectors show the saved versions on this history page.</p>
+        </div>
+        <div class="kr-form-row">
+            <div class="kr-field"><label for="compare-from">Earlier version</label>
+                <select id="compare-from" name="from"><option th:each="item : ${items}" th:value="${item.id}" th:selected="${selected != null and selected.id == item.id}"
+                        th:text="'Version ' + ${item.revision} + ' · ' + ${#temporals.format(item.changedAt, 'dd.MM.yyyy HH:mm')}"></option></select></div>
+            <div class="kr-field"><label for="compare-to">Compare with</label>
+                <select id="compare-to" name="to"><option value="0">Current version</option>
+                    <option th:each="item : ${items}" th:value="${item.id}" th:text="'Version ' + ${item.revision} + ' · ' + ${#temporals.format(item.changedAt, 'dd.MM.yyyy HH:mm')}"></option></select></div>
+        </div>
+        <button type="submit" class="kr-btn accent">Compare versions</button>
+    </form>
 </section>
 </body></html>

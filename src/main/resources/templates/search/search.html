@@ -5,44 +5,69 @@
     <title>Knowledgeroot Search</title>
 </head>
 <body>
-<div class="kr-page-wrap">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb" style="padding-left:0; padding-right:0">
-            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Search</li>
-        </ol>
-    </nav>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Search</li>
+    </ol>
+</nav>
+<header class="kr-page-header">
+    <div class="kr-page-title-wrap">
+        <h1 class="kr-page-title">Search</h1>
+        <form class="kr-search-page-form" action="/search" method="get" role="search"
+              hx-get="/search" hx-target="#content" hx-push-url="true">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="search" name="q" th:value="${searchQuery}" maxlength="200" placeholder="Search pages…"
+                   aria-label="Search pages" autocomplete="off">
+            <button type="submit" class="kr-btn accent">Search</button>
+        </form>
+    </div>
+</header>
+<section class="kr-content-area kr-search-results">
+    <p class="kr-search-summary" th:unless="${#strings.isEmpty(searchQuery) or #lists.isEmpty(pages)}">
+        <span th:text="${hasNext or start > 0} ? ${'Results ' + (start + 1) + '–' + (start + #lists.size(pages))} : (${#lists.size(pages) == 1} ? '1 result' : ${#lists.size(pages) + ' results'})">20 results</span>
+        for <span class="kr-search-emph" th:text="${searchQuery}">query</span>
+    </p>
 
-    <h1 class="kr-page-title" style="margin-top:10px">
-        Results for <span class="kr-search-emph" th:text="${searchQuery}">query</span>
-    </h1>
-    <p class="kr-page-subtitle" th:text="${pages.size()} + ' results on this page'">0 results</p>
-
-
-    <div th:if="${pages.size() == 0}" class="alert kr-alert-info" role="alert">
-        No content found for search query: <strong th:text="${searchQuery}">xxx</strong>
+    <div th:if="${#strings.isEmpty(searchQuery)}" class="kr-search-empty">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <strong>What are you looking for?</strong>
+        <span>Search page titles and content.</span>
+    </div>
+    <div th:if="${!#strings.isEmpty(searchQuery) and #lists.isEmpty(pages)}" class="kr-search-empty" role="status">
+        <i class="bi bi-emoji-neutral" aria-hidden="true"></i>
+        <strong>No results for “<span th:text="${searchQuery}">query</span>”</strong>
+        <span th:text="${start > 0} ? 'There are no further results.' : 'Check the spelling or try a shorter or more general term.'">Try another term.</span>
     </div>
 
-    <div>
+    <div class="kr-result-list" th:unless="${#lists.isEmpty(pages)}">
         <a th:each="page : ${pages}"
            class="kr-result"
            th:href="@{/ui/page/{id}(id=${page.id})}"
            th:attr="hx-get=@{/ui/page/{id}(id=${page.id})}"
-           hx-target="#content" hx-push-url="true"
-           style="display:block; text-decoration:none; color:inherit;">
-            <div class="kr-r-crumb">Page</div>
-            <h3 class="kr-r-title" th:text="${page.name}">Title</h3>
-            <div class="kr-r-snip" th:text="${page.snippet}">Snippet…</div>
+           hx-target="#content" hx-push-url="true">
+            <div class="kr-r-crumb">
+                <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
+                <span th:if="${#lists.isEmpty(page.path)}">Top level</span>
+                <th:block th:each="name, stat : ${page.path}"><span th:text="${name}">Parent</span><span th:unless="${stat.last}" class="kr-r-sep">/</span></th:block>
+            </div>
+            <h3 class="kr-r-title"><th:block th:each="part : ${page.title}"><mark th:if="${part.match}" th:text="${part.text}"></mark><th:block th:unless="${part.match}" th:text="${part.text}"></th:block></th:block></h3>
+            <div class="kr-r-snip" th:unless="${#lists.isEmpty(page.excerpt)}"><th:block th:each="part : ${page.excerpt}"><mark th:if="${part.match}" th:text="${part.text}"></mark><th:block th:unless="${part.match}" th:text="${part.text}"></th:block></th:block></div>
+            <div class="kr-r-meta" th:if="${page.changed != null}">
+                <span th:text="'Updated ' + ${#temporals.format(page.changed, 'dd.MM.yyyy HH:mm')}">Updated</span>
+            </div>
         </a>
     </div>
-    <nav aria-label="Search result pages" class="d-flex gap-3 mt-4">
-        <a th:if="${start > 0}" th:href="@{/search(q=${searchQuery},start=${previousStart})}"
+
+    <nav aria-label="Search result pages" class="kr-pager" th:if="${start > 0 or hasNext}">
+        <a th:if="${start > 0}" class="kr-btn sm" th:href="@{/search(q=${searchQuery},start=${previousStart})}"
            th:attr="hx-get=@{/search(q=${searchQuery},start=${previousStart})}"
-           hx-target="#content" hx-push-url="true">Previous</a>
-        <a th:if="${hasNext}" th:href="@{/search(q=${searchQuery},start=${nextStart})}"
+           hx-target="#content" hx-push-url="true"><span aria-hidden="true">← </span>Previous</a>
+        <span class="kr-pager-info" th:text="'Page ' + ${start / 20 + 1}">Page 1</span>
+        <a th:if="${hasNext}" class="kr-btn sm" th:href="@{/search(q=${searchQuery},start=${nextStart})}"
            th:attr="hx-get=@{/search(q=${searchQuery},start=${nextStart})}"
-           hx-target="#content" hx-push-url="true">Next</a>
+           hx-target="#content" hx-push-url="true">Next<span aria-hidden="true"> →</span></a>
     </nav>
-</div>
+</section>
 </body>
 </html>

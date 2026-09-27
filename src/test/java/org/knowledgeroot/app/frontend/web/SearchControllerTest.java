@@ -38,6 +38,35 @@ class SearchControllerTest {
     }
 
     @Test
+    void snippetsAreCentredOnTheMatchAndHighlightedCaseInsensitively() {
+        String snippet = SearchController.snippet("<p>" + "lead ".repeat(200) + "the Needle here " + "tail ".repeat(200) + "</p>", "needle");
+        assertTrue(snippet.startsWith("…") && snippet.endsWith("…"), snippet);
+        assertTrue(snippet.contains("the Needle here"));
+        assertTrue(snippet.length() <= 302);
+        assertEquals(List.of(new SearchController.Part("A ", false), new SearchController.Part("wiki", true),
+                        new SearchController.Part(" and ", false), new SearchController.Part("WIKI", true)),
+                SearchController.highlight("A wiki and WIKI", "wiki"));
+        assertEquals(List.of(new SearchController.Part("<b>", false)), SearchController.highlight("<b>", "x"));
+    }
+
+    @Test
+    void resultPathsStopAtHiddenAncestorsAndReuseLookups() {
+        when(users.getUserContext()).thenReturn(UserDetails.builder().role(UserDetails.Role.GUEST).build());
+        when(pages.listVisiblePages(any(), isNull())).thenReturn(List.of(
+                Page.builder().pageId(new PageId(10)).parent(3).name("One").content("wiki").build(),
+                Page.builder().pageId(new PageId(11)).parent(3).name("Two").content("wiki").build()));
+        when(pages.findNavigationPage(new PageId(3), null)).thenReturn(java.util.Optional.of(
+                Page.builder().pageId(new PageId(3)).parent(2).name("Guides").build()));
+        when(pages.findNavigationPage(new PageId(2), null)).thenReturn(java.util.Optional.empty());
+        var model = new ExtendedModelMap();
+        controller.showSearch("wiki", 0, model, request);
+        var hits = (List<SearchController.SearchHit>) model.get("pages");
+        assertEquals(List.of("Guides"), hits.get(0).path());
+        assertEquals(List.of("Guides"), hits.get(1).path());
+        verify(pages, times(1)).findNavigationPage(new PageId(3), null);
+    }
+
+    @Test
     void blankSearchDoesNotReadAllPages() {
         when(users.getUserContext()).thenReturn(UserDetails.builder().role(UserDetails.Role.GUEST).build());
         var model = new ExtendedModelMap();

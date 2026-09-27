@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: appHead(~{::title})}"><title>Knowledgeroot :: Account recovery</title></head>
+<body class="kr-login-page">
+<main class="kr-login-right">
+    <section class="kr-login-card">
+        <h1 th:text="${purpose == 'reset' ? 'Reset password' : 'Confirm email'}"></h1>
+        <p th:if="${confirmed}" class="kr-login-info" role="status">Your email is confirmed. You can now request password reset links.</p>
+        <p th:if="${error}" class="kr-login-alert" role="alert" th:text="${error}"></p>
+        <p th:if="${!confirmed and !hasToken}">Open the link from your email. If it has expired, request a new link.</p>
+        <form th:if="${hasToken and !confirmed}" method="post"
+              th:action="@{${purpose == 'reset' ? '/account/reset-password' : '/account/verify-email'}}">
+            <th:block th:if="${purpose == 'reset'}">
+                <p>Use 16–128 characters. Sign in again on all devices afterwards.</p>
+                <div class="kr-field"><label for="reset-password">New password</label>
+                    <input id="reset-password" type="password" name="newPassword" minlength="16" maxlength="128" autocomplete="new-password" required>
+                </div>
+                <div class="kr-field"><label for="reset-confirmation">Repeat new password</label>
+                    <input id="reset-confirmation" type="password" name="confirmPassword" minlength="16" maxlength="128" autocomplete="new-password" required>
+                </div>
+            </th:block>
+            <button class="kr-btn primary" type="submit" th:text="${purpose == 'reset' ? 'Set new password' : 'Confirm my email'}"></button>
+        </form>
+        <p><a th:href="@{/account/forgot-password}">Request a new reset link</a></p>
+        <p><a th:href="@{/login}">Back to sign in</a></p>
+    </section>
+</main>
+</body>
+</html>

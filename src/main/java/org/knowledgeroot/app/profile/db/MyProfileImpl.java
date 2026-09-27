@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 class MyProfileImpl implements MyProfileDao {
     private final JdbcClient jdbcClient;
     private final UserContext userContext;
+    private final org.knowledgeroot.app.security.recovery.RecoveryEmailRepository recoveryEmails;
 
     /**
      * find my profile
@@ -45,6 +46,7 @@ class MyProfileImpl implements MyProfileDao {
      * @param myProfile
      */
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public void updateMyProfile(MyProfile myProfile) {
         UserDetails userDetails = userContext.getUserContext();
 
@@ -52,6 +54,7 @@ class MyProfileImpl implements MyProfileDao {
             throw new IllegalStateException("Guest user can't update profile");
         }
 
+        recoveryEmails.invalidateIfChanged(Integer.parseInt(userDetails.getUserId()), myProfile.getEmail());
         jdbcClient
                 .sql("UPDATE user SET email = ?, first_name = ?, last_name = ?, login = ? WHERE id = ?")
                 .params(

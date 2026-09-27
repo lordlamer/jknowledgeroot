@@ -26,6 +26,7 @@ public class UploadPolicy {
     }
 
     public long maxFileBytes() { return maxFileBytes; }
+    public int maxFiles() { return maxFiles; }
 
     public void validate(MultipartFile[] uploads) {
         if (uploads == null || uploads.length == 0) badRequest();

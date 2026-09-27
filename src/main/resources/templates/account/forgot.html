@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: appHead(~{::title})}"><title>Knowledgeroot :: Forgot password</title></head>
+<body class="kr-login-page">
+<main class="kr-login-right">
+    <form class="kr-login-card" method="post" th:action="@{/account/forgot-password}">
+        <h1>Forgot your password?</h1>
+        <p>Enter the email address you confirmed in your profile.</p>
+        <p th:if="${sent}" class="kr-login-info" role="status">If the address belongs to an eligible account, a reset link will be sent. Check your inbox or try again later.</p>
+        <div class="kr-field"><label for="recovery-email">Email</label>
+            <input id="recovery-email" type="email" name="email" maxlength="255" autocomplete="email" required>
+        </div>
+        <button class="kr-btn primary" type="submit">Send reset link</button>
+        <p><a th:href="@{/login}">Back to sign in</a></p>
+        <p>If you have not confirmed your email, contact your administrator.</p>
+    </form>
+</main>
+</body>
+</html>

@@ -108,10 +108,22 @@ class ProductFunctionsIntegrationTest extends IsolatedApplicationTest {
         assertEquals("original", jdbc.queryForObject("SELECT content FROM page WHERE id=?", String.class, child));
     }
 
-    @Test void movesRejectNonAdminsCsrfCyclesDeletedTargetsAndStaleRevisions() throws Exception {
+    @Test void movePickerStartsAtCurrentLocationAndHidesTheMovedPage() throws Exception {
+        jdbc.update("UPDATE page SET parent=? WHERE id=?", otherPageId, pageId);
+        var admin = login("integration.admin");
         String url = "/ui/page/" + pageId + "/move";
-        login(editor).perform(get(url)).andExpect(status().isForbidden());
-        login(editor).perform(post(url).param("parent", "0").param("revision", "0")).andExpect(status().isForbidden());
+        admin.perform(get(url)).andExpect(status().isOk())
+                .andExpect(content().string(containsString("name=\"parent\" value=\"" + otherPageId + "\"")))
+                .andExpect(content().string(containsString("The page is already here.")));
+        admin.perform(get(url).param("parent", "0")).andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("parent=" + pageId + "\""))))
+                .andExpect(content().string(not(containsString("The page is already here."))));
+    }
+
+    @Test void movesRejectReadersCsrfCyclesDeletedTargetsAndStaleRevisions() throws Exception {
+        String url = "/ui/page/" + pageId + "/move";
+        login(reader).perform(get(url)).andExpect(status().isForbidden());
+        login(reader).perform(post(url).param("parent", "0").param("revision", "0")).andExpect(status().isForbidden());
         var admin = login("integration.admin");
         mvc.perform(post(url).cookie(admin.cookies).param("parent", "0").param("revision", "0")).andExpect(status().isForbidden());
         admin.perform(post(url).param("parent", "0")).andExpect(status().is(428));
@@ -122,6 +134,70 @@ class ProductFunctionsIntegrationTest extends IsolatedApplicationTest {
         admin.perform(post(url).param("parent", String.valueOf(otherPageId)).param("revision", "0")).andExpect(status().isConflict());
         assertEquals(0, parent(pageId)); assertEquals(0, revision(pageId));
         assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM page_history WHERE page_id=?", Integer.class, pageId));
+    }
+
+    @Test void editorNeedsEditOnBothSourceAndDestinationAndPickerHidesPrivatePages() throws Exception {
+        var client = login(editor);
+        String url = "/ui/page/" + pageId + "/move";
+        String privateName = jdbc.queryForObject("SELECT name FROM page WHERE id=?", String.class, otherPageId);
+        client.perform(get("/ui/page/" + pageId)).andExpect(content().string(containsString("Move page")));
+        client.perform(get(url).param("query", privateName)).andExpect(status().isOk())
+                .andExpect(content().string(not(containsString(">" + privateName + "</a>"))));
+        client.perform(get(url).param("parent", "" + otherPageId)).andExpect(status().isForbidden());
+        client.perform(post(url).param("parent", "" + otherPageId).param("revision", "0")).andExpect(status().isForbidden());
+        int permission = grant(otherPageId, "user", editorId, "view");
+        client.perform(get(url).param("parent", "" + otherPageId)).andExpect(status().isOk())
+                .andExpect(content().string(containsString("Choose a destination you can edit")));
+        client.perform(post(url).param("parent", "" + otherPageId).param("revision", "0")).andExpect(status().isForbidden());
+        assertEquals(0, revision(pageId));
+        jdbc.update("UPDATE page_permission SET permission_level='edit' WHERE id=?", permission);
+        client.perform(post(url).param("parent", "" + otherPageId).param("revision", "0")).andExpect(status().isFound());
+        assertEquals(otherPageId, parent(pageId));
+        assertEquals(editorId, jdbc.queryForObject("SELECT changed_by FROM page WHERE id=?", Integer.class, pageId));
+        assertEquals(0, jdbc.queryForObject("SELECT parent FROM page_history WHERE id=?", Integer.class, latest(pageId)));
+    }
+
+    @Test void inheritedDestinationEditRightsAllowMovesAndRevocationIsRechecked() throws Exception {
+        int destination = page("inherited-target-" + pageId);
+        jdbc.update("UPDATE page SET parent=?,inherit_permissions=TRUE WHERE id=?", otherPageId, destination);
+        int grant = grant(otherPageId, "user", editorId, "edit");
+        var client = login(editor);
+        String url = "/ui/page/" + pageId + "/move";
+        client.perform(get(url).param("parent", "" + destination)).andExpect(status().isOk());
+        jdbc.update("DELETE FROM page_permission WHERE id=?", grant);
+        client.perform(post(url).param("parent", "" + destination).param("revision", "0")).andExpect(status().isForbidden());
+        grant(otherPageId, "user", editorId, "edit");
+        client.perform(post(url).param("parent", "" + destination).param("revision", "0")).andExpect(status().isFound());
+        assertEquals(destination, parent(pageId));
+        client.perform(post(url).param("parent", "0").param("revision", "1")).andExpect(status().isFound());
+        assertEquals(0, parent(pageId));
+    }
+
+    @Test void sourceRevocationAndGuestEditGrantsCannotBypassMoveAuthorization() throws Exception {
+        grant(otherPageId, "user", editorId, "edit");
+        var client = login(editor);
+        String url = "/ui/page/" + pageId + "/move";
+        client.perform(get(url)).andExpect(status().isOk());
+        jdbc.update("DELETE FROM page_permission WHERE page_id=? AND role_id=?", pageId, editorId);
+        client.perform(post(url).param("parent", "" + otherPageId).param("revision", "0")).andExpect(status().isForbidden());
+        grant(pageId, "guest", null, "edit"); grant(otherPageId, "guest", null, "edit");
+        mvc.perform(get(url)).andExpect(status().isForbidden());
+        assertEquals(0, parent(pageId)); assertEquals(0, revision(pageId));
+    }
+
+    @Test void destinationGroupEditGrantsAreEffectiveAndMembershipRevocationIsImmediate() throws Exception {
+        String groupName = "move-editors-" + pageId;
+        jdbc.update("INSERT INTO `group` (name,active,created_by,create_date,changed_by,change_date) VALUES (?,1,?,NOW(),?,NOW())", groupName, adminId, adminId);
+        int group = jdbc.queryForObject("SELECT id FROM `group` WHERE name=?", Integer.class, groupName);
+        jdbc.update("INSERT INTO group_member(group_id,member_id,member_type) VALUES (?,?,'user')", group, editorId);
+        grant(otherPageId, "group", group, "edit");
+        var client = login(editor); String url = "/ui/page/" + pageId + "/move";
+        client.perform(get(url).param("parent", "" + otherPageId)).andExpect(status().isOk());
+        jdbc.update("DELETE FROM group_member WHERE group_id=? AND member_id=?", group, editorId);
+        client.perform(post(url).param("parent", "" + otherPageId).param("revision", "0")).andExpect(status().isForbidden());
+        jdbc.update("INSERT INTO group_member(group_id,member_id,member_type) VALUES (?,?,'user')", group, editorId);
+        client.perform(post(url).param("parent", "" + otherPageId).param("revision", "0")).andExpect(status().isFound());
+        assertEquals(otherPageId, parent(pageId));
     }
 
     @Test void simultaneousOppositeMovesCannotCreateACycle() throws Exception {

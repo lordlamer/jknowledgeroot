@@ -118,9 +118,14 @@ Administrator-Bypass und die alleinige Tag-Regel per API zurückgelesen.
 Der echte lesende Release-Check besteht. Nachweise:
 `target/r33-repository-after.json`, `target/r33-release-check.log` und
 `target/r33-secret-locations.json` (nur Secret-Namen).
-Es wurde kein Test-Tag und keine Veröffentlichung erzeugt. Ein tatsächlicher
-PR-Merge mit Pflichtprüfung und eine Release-Bestätigung sind damit noch nicht
-praktisch nachgewiesen; der vollständige Publish-Ablauf bleibt Teil der Abnahme.
+Der Pull-Request-Ablauf wurde anschließend mit
+[PR #262](https://github.com/lordlamer/jknowledgeroot/pull/262) praktisch
+geprüft: `verify` und Codacy erfolgreich für `c04934d`, keine Review-Freigabe,
+regulärer Merge durch `lordlamer` als `6722957`. Die Regeln waren vor und nach
+dem Merge aktiv; es wurden keine Ausnahmen eingerichtet. Nachweise:
+`target/r34-pr-final-before-merge.json` und `target/r34-pr-after-merge.json`.
+Es wurde kein Test-Tag und keine Veröffentlichung erzeugt. Die tatsächliche
+Release-Bestätigung und der Publish-Ablauf bleiben Teil der Abnahme.
 
 GitHub kann eine im Workflow genannte, fehlende Umgebung automatisch ohne
 Schutzregeln anlegen. Deshalb genügt `environment: release` allein nicht.
