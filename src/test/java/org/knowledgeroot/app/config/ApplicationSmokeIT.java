@@ -366,8 +366,10 @@ class ApplicationSmokeIT {
             page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Move page").setExact(true)).click();
             page.locator("#destination-query").fill("Browser move destination");
             page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Search").setExact(true)).click();
-            page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Browser move destination").setExact(true)).click();
-            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Move here")).click();
+            page.waitForURL("**/ui/page/" + pageId + "/move?*query=*");
+            page.locator(".kr-move-list").getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName("Browser move destination").setExact(true)).click();
+            page.waitForURL("**/ui/page/" + pageId + "/move?parent=" + destination);
+            page.locator(".kr-move-footer button[type=submit]:not([disabled])").click();
             page.waitForURL("**/ui/page/" + pageId + "?trigger=reload-sidebar");
             assertEquals(destination, jdbc.queryForObject("SELECT parent FROM page WHERE id=?", Integer.class, pageId));
             page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("History").setExact(true)).click();
@@ -495,11 +497,13 @@ class ApplicationSmokeIT {
         page.navigate(uri(server, "/ui/page/" + source).toString());
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("More").setExact(true)).click();
         page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Move page").setExact(true)).click();
-        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Editor move target").setExact(true)).click();
-        assertThat(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Move here"))).isDisabled();
+        page.waitForURL("**/ui/page/" + source + "/move");
+        page.locator(".kr-move-list").getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName("Editor move target").setExact(true)).click();
+        page.waitForURL("**/ui/page/" + source + "/move?parent=" + target);
+        assertThat(page.locator(".kr-move-footer button[type=submit]")).isDisabled();
         jdbc.update("UPDATE page_permission SET permission_level='edit' WHERE page_id=? AND role_id=?", target, user);
         page.reload();
-        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Move here")).click();
+        page.locator(".kr-move-footer button[type=submit]:not([disabled])").click();
         page.waitForURL("**/ui/page/" + source + "?trigger=reload-sidebar");
         assertEquals(target, jdbc.queryForObject("SELECT parent FROM page WHERE id=?", Integer.class, source));
     }

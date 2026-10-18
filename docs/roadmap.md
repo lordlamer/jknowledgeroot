@@ -1,6 +1,6 @@
 # Roadmap zur Produktionsreife
 
-Stand: 19. September 2026. Grundlage ist die Code- und Build-Prüfung vom 12. September 2026.
+Stand: 18. Oktober 2026. Grundlage ist die Code- und Build-Prüfung vom 12. September 2026.
 
 Ziel ist eine sicher betreibbare, reproduzierbar gebaute Version mit getesteten
 Zugriffsrechten, Migrationen und Wiederherstellung. Der aktuelle Stand ist noch
@@ -24,9 +24,9 @@ bleiben Voraussetzung für die Produktionsfreigabe.
 
 R01 bis R34 sind umgesetzt und geprüft; die vollständige gehostete CI
 einschließlich Release-Schutztests und Graph-Übermittlung besteht für `6722957`.
-Dieser gehostete Nachweis deckt die neuen Änderungen R35/R36 noch nicht ab.
-R35/R36 sind lokal mit 297 Tests einschließlich JAR-/Chromium-Abnahme geprüft;
-der aktualisierte OSV-Scan prüft 282 Paketversionen ohne Treffer.
+R35/R36 und weitere Oberflächenänderungen sind seit PR #263 (`dae3244`) auf
+`master`; die gehostete CI dafür scheiterte im Browser-Test. R37 behebt den
+Test lokal; ein erneuter grüner CI-Lauf für den korrigierten Commit steht aus.
 R33 ergänzt die per API geprüften GitHub-Einstellungen für einen alleinigen
 Entwickler; R34 weist den regulären PR-Merge unter diesen Regeln nach.
 Der in R30 abgeglichene GitHub-Graph enthält alle 199 erwarteten
@@ -76,6 +76,9 @@ Nachweise; maßgeblich für die aktuellen offenen Arbeiten ist diese Übersicht.
 - [ ] Zielsystem, Domain, Betreiber/Vertretung, erwartete Nutzer-/Datenmengen und Betriebsgrenzen festlegen.
 - [x] Branch-/Tag-Schutz, PR-Pflicht mit erfolgreichem `verify` und eigene
   Release-Bestätigung konfigurieren (R32/R33).
+- [ ] Grünen gehosteten CI-Lauf für den korrigierten Commit aus R37 nachweisen
+  und klären, warum PR #263 trotz fehlgeschlagenem Pflicht-Check `verify`
+  zusammengeführt werden konnte; Regel gegebenenfalls nachschärfen.
 - [ ] Registry-Secrets ausschließlich in `release` hinterlegen; den sauberen
   Release-Commit vollständig in der gehosteten CI und den tatsächlichen
   Freigabe-/Publish-Ablauf prüfen.
@@ -636,6 +639,56 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 - **Grenzen:** Warteschlange ist nicht dauerhaft. Tatsächliche Zustellung und
   Absenderkonfiguration im Zielbetrieb bleiben vor Aktivierung zu prüfen.
   Kein neuer gehosteter CI-Lauf und keine Produktionsfreigabe.
+
+### R37 – Gehostete CI nach PR #263 wiederherstellen
+
+- [x] Lokal umgesetzt und geprüft am 18. Oktober 2026.
+- **Befund:** PR #263 (`dae3244`, 27. September 2026) bringt R35/R36 sowie
+  weitere Oberflächenänderungen auf `master`: Dialog zum Hochladen von Anhängen
+  mit Mehrfachauswahl, Anzeige und Löschen von Anhängen, überarbeitete
+  Suchergebnisseite, Verschiebe-Dialog mit Start am aktuellen Standort,
+  angepasste Historien-/Vergleichsansicht. Die gehosteten Läufe
+  [36322263730](https://github.com/lordlamer/jknowledgeroot/actions/runs/36322263730)
+  (PR) und
+  [36322599460](https://github.com/lordlamer/jknowledgeroot/actions/runs/36322599460)
+  (`master`) scheitern im Schritt „Verify application and build container“.
+  Lokal reproduziert: 302 Surefire-Tests bestehen, `ApplicationSmokeIT` bricht
+  mit einer Playwright-Strict-Mode-Verletzung ab. Der Locator für das
+  Verschiebeziel „Browser move destination“ trifft seit dem neuen Dialog zwei
+  Links: den Eintrag der Seitenleiste und den gleichnamigen Eintrag der
+  Zielliste.
+- **Prozessbefund:** Der PR wurde sechs Minuten nach Start des CI-Laufs
+  zusammengeführt; der erforderliche Check `verify` war zu diesem Zeitpunkt
+  nicht erfolgreich und ist für den Merge-Commit als fehlgeschlagen
+  verzeichnet. Die in [repository-protection.md](repository-protection.md)
+  beschriebene Regel hat den Merge damit praktisch nicht verhindert. Vor einem
+  Release ist zu klären, wie dieser Merge möglich war (Administrator-Bypass
+  oder Merge vor Abschluss des Checks), und die Regel entsprechend zu prüfen.
+- **Umgesetzt:** Der Browser-Test wählt das Ziel ausschließlich innerhalb der
+  Zielliste des Dialogs. Zusätzlich wartet er nach Suche und Zielauswahl auf
+  die von HTMX gesetzte URL und klickt „Move here“ erst, wenn der Button im
+  neuen Inhalt aktiviert ist: HTMX setzt die URL kurz vor dem abgeschlossenen
+  Austausch von `#content`, sodass ein sofortiger Klick noch den deaktivierten
+  Button der vorherigen Ansicht traf. Dieselbe Synchronisation gilt für den
+  Verschiebe-Ablauf des Bearbeiters. Debug-Ausgaben bestätigten, dass der
+  Server den Button für ein gültiges Ziel aktiviert ausliefert; Anwendungscode
+  und Templates bleiben unverändert. `.env.example` und
+  `config/application-local.properties.example` sind jetzt versioniert; das
+  README verwies bisher auf nicht eingecheckte Dateien. Beide enthalten
+  ausschließlich Platzhalterwerte.
+- **Geprüft:** Vollständiges lokales `clean verify` auf `dae3244` vor der
+  Korrektur reproduziert den CI-Fehler: 302 Surefire-Tests erfolgreich,
+  JAR-/Chromium-Test fehlgeschlagen. Nach der Korrektur besteht das
+  vollständige `clean verify` mit **302 Surefire-Tests und einem
+  JAR-/Chromium-Test, keine Fehler oder übersprungenen Tests** (Temurin 25+36
+  unter Windows, Docker-Engine 29.8.0). `git diff --check` ohne Befund.
+  Container-, Proxy-, Last- und Wiederherstellungsschritte der CI wurden lokal
+  nicht wiederholt; sie laufen im gehosteten Lauf für den Commit.
+- **Grenzen:** Die neuen Oberflächenfunktionen aus PR #263 haben außer dem
+  bestehenden JAR-/Chromium-Test keine eigene dokumentierte Abnahme; die
+  praktische Prüfung mit eigenen Inhalten steht im
+  [Abnahmeprotokoll](operational-acceptance.md). Gehostete Bestätigung,
+  Release-Tag und Produktionsfreigabe stehen aus.
 
 ## Nachweise der Bestandsaufnahme
 
