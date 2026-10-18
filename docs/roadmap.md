@@ -724,6 +724,12 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
   externer S3-Dienst eine eigene Auswahl bleibt. Quellen:
   [Docker-Hub-Löschung](https://github.com/dandi/dandi-cli/pull/1921),
   [quay.io-Anmeldepflicht](https://byteiota.com/minio-docker-hub-quay-anonymous-pull-fix/).
+- **Lastszenario angepasst:** Nach dem Fixture-Wechsel scheiterte der gehostete
+  Lauf im Warmup des Lastlaufs (`2 !== 0`): Das Szenario `guest-search-empty`
+  erwartete den Text „0 results“, den die in PR #263 neu gestaltete Suchseite
+  nicht mehr ausgibt; sie zeigt stattdessen „No results for …“. Das Szenario
+  prüft jetzt diesen Text. Übrige Szenarien (öffentliche/private Inhalte,
+  Seitenleiste, 403 für Gäste) blieben im Warmup fehlerfrei.
 - **Grenzen:** Die neuen Oberflächenfunktionen aus PR #263 haben außer dem
   bestehenden JAR-/Chromium-Test keine eigene dokumentierte Abnahme; die
   praktische Prüfung mit eigenen Inhalten steht im
