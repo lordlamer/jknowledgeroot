@@ -76,6 +76,8 @@ Nachweise; maßgeblich für die aktuellen offenen Arbeiten ist diese Übersicht.
 - [ ] Zielsystem, Domain, Betreiber/Vertretung, erwartete Nutzer-/Datenmengen und Betriebsgrenzen festlegen.
 - [x] Branch-/Tag-Schutz, PR-Pflicht mit erfolgreichem `verify` und eigene
   Release-Bestätigung konfigurieren (R32/R33).
+- [ ] Jackson 2.21.5/3.1.5 und DOMPurify 3.4.15 auf die korrigierten Versionen
+  heben, OSV-Scan ohne Treffer nachweisen (siehe R37).
 - [ ] Grünen gehosteten CI-Lauf für den korrigierten Commit aus R37 nachweisen
   und klären, warum PR #263 trotz fehlgeschlagenem Pflicht-Check `verify`
   zusammengeführt werden konnte; Regel gegebenenfalls nachschärfen.
@@ -687,8 +689,14 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 - **Grenzen:** Die neuen Oberflächenfunktionen aus PR #263 haben außer dem
   bestehenden JAR-/Chromium-Test keine eigene dokumentierte Abnahme; die
   praktische Prüfung mit eigenen Inhalten steht im
-  [Abnahmeprotokoll](operational-acceptance.md). Gehostete Bestätigung,
-  Release-Tag und Produktionsfreigabe stehen aus.
+  [Abnahmeprotokoll](operational-acceptance.md). Der am 18. Oktober 2026
+  wiederholte OSV-Scan meldet **16 Zuordnungen bei 282 Paketversionen**:
+  Jackson 2.21.5 und Jackson 3.1.5 (Boot-verwaltet, Korrekturen in 2.21.7
+  beziehungsweise 3.1.7) sowie DOMPurify 3.4.15 (Korrektur in 3.4.16).
+  Der CI-Schritt „Audit Maven and frontend dependencies“ scheitert damit
+  auch nach der Testkorrektur; GitHub meldet sechs offene Dependabot-Funde.
+  Das Dependency-Update erfolgt gemäß Arbeitsweise getrennt. Gehostete
+  Bestätigung, Release-Tag und Produktionsfreigabe stehen aus.
 
 ## Nachweise der Bestandsaufnahme
 
