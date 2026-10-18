@@ -8,7 +8,6 @@ import org.knowledgeroot.app.file.domain.StorageException;
 import org.knowledgeroot.app.file.domain.StoredFileNotFoundException;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import java.io.ByteArrayInputStream;
@@ -20,10 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Testcontainers
 class StorageDriversTest {
-    @Container static final GenericContainer<?> minio = new GenericContainer<>("quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z")
-            .withEnv("MINIO_ROOT_USER", "storage-test-user").withEnv("MINIO_ROOT_PASSWORD", "storage-test-password")
-            .withCommand("server /data").withExposedPorts(9000)
-            .waitingFor(Wait.forHttp("/minio/health/ready").forPort(9000));
+    @Container static final GenericContainer<?> minio = org.knowledgeroot.test.StorageImage.container("storage-test-user", "storage-test-password");
     @TempDir Path directory;
     private static final String KEY = "sha256-" + "a".repeat(64);
 
@@ -120,6 +116,6 @@ class StorageDriversTest {
         return driver.equals("file") ? new FileSystemStorage(directory.toString())
                 : new MinioStorage(endpoint(), "storage-test-user", "storage-test-password", "objects-" + UUID.randomUUID());
     }
-    private String endpoint() { return "http://" + minio.getHost() + ":" + minio.getMappedPort(9000); }
+    private String endpoint() { return "http://" + minio.getHost() + ":" + minio.getMappedPort(org.knowledgeroot.test.StorageImage.PORT); }
     private void close(FileStorage storage) throws Exception { if (storage instanceof AutoCloseable closeable) closeable.close(); }
 }

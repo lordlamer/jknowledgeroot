@@ -686,7 +686,9 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
   unter Windows, Docker-Engine 29.8.0). `git diff --check` ohne Befund.
   Nach dem Dependency-Update besteht ein weiteres vollständiges `clean verify`
   mit denselben 302 Surefire-Tests und dem JAR-/Chromium-Test; der OSV-Scan
-  auf dem neu aufgelösten Baum ist ohne Treffer.
+  auf dem neu aufgelösten Baum ist ohne Treffer. Mit dem RustFS-Fixture besteht
+  ein drittes vollständiges `clean verify` erneut mit 302 Surefire-Tests und dem
+  JAR-/Chromium-Test; das MinIO-Image wird dabei nicht mehr benötigt.
   Container-, Proxy-, Last- und Wiederherstellungsschritte der CI wurden lokal
   nicht wiederholt; sie laufen im gehosteten Lauf für den Commit.
 - **Dependency-Update:** Der am 18. Oktober 2026 wiederholte OSV-Scan meldete
@@ -700,6 +702,28 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
   Überschreibung wie bei Tomcat), DOMPurify 3.4.17 im Frontend-Lockfile.
   Danach: **282 Paketversionen, null Zuordnungen, Exitcode 0**. Details und
   Einordnung in [dependencies.md](dependencies.md).
+- **Testfixture ersetzt:** Der gehostete Lauf für den Branch scheiterte in
+  `StorageDriversTest` mit „Can't get Docker image:
+  quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z“. MinIO hat seine
+  öffentlichen Images zurückgezogen: Docker Hub löschte `minio/minio` Mitte
+  September 2026, quay.io verlangt seit dem 24. September eine Anmeldung;
+  `docker manifest inspect` findet weder das gepinnte Tag noch `latest`. Lokal
+  bestanden die Tests nur dank des zwischengespeicherten Images. Adobe S3Mock
+  5.2.3 wurde geprüft und verworfen: `CompleteMultipartUpload` des
+  MinIO-Java-SDK 9.0.3 ohne Teil-Prüfsummen scheitert dort mit `BadRequest`
+  ([S3Mock #3034](https://github.com/adobe/S3Mock/issues/3034), laut Melder
+  auch in 5.2.0 noch offen). Das Fixture für Tests und Entwicklungs-Compose ist
+  jetzt **RustFS 1.0.3** (Apache-2.0, MinIO-kompatible S3-API), per Digest
+  gepinnt in `org.knowledgeroot.test.StorageImage` und `docker-compose.yaml`;
+  Port 9000, Zugangsdaten über `RUSTFS_ACCESS_KEY`/`RUSTFS_SECRET_KEY`, in
+  Tests mit `RUSTFS_UNSAFE_BYPASS_DISK_CHECK=true` wegen des
+  Overlay-Dateisystems. Alle 13 Storage-Tests bestehen dagegen, darunter
+  11-MiB-Multipart, gleichzeitige Uploads und der entfernte Bucket. RustFS ist
+  keine Betriebsempfehlung; Produktion ist nicht betroffen, da
+  [production.md](production.md) keinen MinIO-Server voraussetzt und ein
+  externer S3-Dienst eine eigene Auswahl bleibt. Quellen:
+  [Docker-Hub-Löschung](https://github.com/dandi/dandi-cli/pull/1921),
+  [quay.io-Anmeldepflicht](https://byteiota.com/minio-docker-hub-quay-anonymous-pull-fix/).
 - **Grenzen:** Die neuen Oberflächenfunktionen aus PR #263 haben außer dem
   bestehenden JAR-/Chromium-Test keine eigene dokumentierte Abnahme; die
   praktische Prüfung mit eigenen Inhalten steht im

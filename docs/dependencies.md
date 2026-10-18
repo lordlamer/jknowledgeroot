@@ -127,12 +127,13 @@ wenn der Abhängigkeitsgraph nach dem Merge erneut übermittelt wurde.
 Der vorhandene Testsatz prüft nach der Migration weiterhin Login, Rechte,
 Passwortmigration, parallele Login-Quoten und Datenbank-Upgrades. Der neue
 `ApplicationSmokeIT` startet das fertig gebaute JAR in separaten Java-Prozessen
-mit echtem HTTP-Server und isolierten MariaDB-/MinIO-Containern. Failsafe führt
+mit echtem HTTP-Server und isolierten MariaDB-/S3-Containern. Failsafe führt
 ihn bei `verify` nach dem Packaging aus. Er prüft Thymeleaf, versionslose WebJars,
 Formularlogin mit CSRF, die Admin-API über JPA, Passwortausblendung und JDBC-Sitzungen
 über einen Neustart ohne erneute Bootstrap-Zugangsdaten sowie Logout.
 
-Der Test nutzt eine festgelegte ältere MinIO-Version als Kompatibilitätsfixture,
+Der Test nutzte eine festgelegte ältere MinIO-Version als Kompatibilitätsfixture
+(seit R37 RustFS, siehe [storage.md](storage.md)),
 nicht als Empfehlung für den Produktionsbetrieb. Er umfasst auch die
 Browser-/Upload-/Downloadprüfung aus R08. Vollständige Storage-Grenzfälle, weitere
 Browser, Container- und Restoretests bleiben in R11–R14. Die zwei bereits
