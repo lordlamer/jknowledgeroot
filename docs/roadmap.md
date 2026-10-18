@@ -87,7 +87,7 @@ Nachweise; maßgeblich für die aktuellen offenen Arbeiten ist diese Übersicht.
 - [ ] Staging mit tatsächlichem Proxy, gültigem TLS-Zertifikat und passender Netzfreigabe abnehmen; eigene Altinhalte, Rollen, Gastzugriff, Redaktion und Anhänge prüfen.
 - [ ] Repräsentative Last messen, Antwortzeit-/Fehlergrenzen festlegen und externe Alarmierung praktisch testen.
 - [ ] Gemeinsame DB-/Dateisicherung außerhalb des App-Hosts einrichten; Restore/Upgrade/Rollback mit eigenen Daten prüfen und zulässigen Datenverlust sowie Wiederanlaufzeit nachweisen.
-- [ ] Aktuelle Sicherheitsberichte einschließlich Betreiberproxy bewerten, verbleibende Befunde mit Verantwortlichen und Prüftermin entscheiden; anschließend Freigabe dokumentieren, Images veröffentlichen und Nachweise dauerhaft archivieren.
+- [ ] Aktuelle Sicherheitsberichte einschließlich Betreiberproxy bewerten, insbesondere die seit September neuen mittleren OS-Befunde (R37), verbleibende Befunde mit Verantwortlichen und Prüftermin entscheiden; anschließend Freigabe dokumentieren, Images veröffentlichen und Nachweise dauerhaft archivieren.
 
 ## 1. Build und Sicherheit
 
@@ -730,6 +730,18 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
   nicht mehr ausgibt; sie zeigt stattdessen „No results for …“. Das Szenario
   prüft jetzt diesen Text. Übrige Szenarien (öffentliche/private Inhalte,
   Seitenleiste, 403 für Gäste) blieben im Warmup fehlerfrei.
+- **Container-OS-Korrektur:** Die lokale Nachbildung der verbleibenden
+  CI-Schritte zeigte in App- und Datenbankimage den hohen Befund
+  CVE-2026-84782 (`openssl`/`libssl3t64` 3.0.13-0ubuntu3.15, Fix
+  3.0.13-0ubuntu3.16). Beide Dockerfiles aktualisieren die zwei Pakete in der
+  bestehenden Update-Schicht auf die feste Ubuntu-Version. Danach bestehen
+  beide OS-Scans ohne blockierende Funde (App 105 Pakete, 27 MEDIUM/vier LOW;
+  Datenbank 149 Pakete, 40 MEDIUM/sieben LOW), der Deploy-Smoke-Test
+  einschließlich Neustart, der Lastlauf (80 Requests je Stufe ohne Fehler,
+  p95 97,19/100,62 ms lokal), die Wiederherstellungskette 12.2.2 → 12.3.3 →
+  12.2.2 und die Artefaktzuordnung mit `--with-audits`. Die seit September
+  hinzugekommenen mittleren Befunde sind in [image-security.md](image-security.md)
+  festgehalten und vor einer Freigabe zu bewerten.
 - **Grenzen:** Die neuen Oberflächenfunktionen aus PR #263 haben außer dem
   bestehenden JAR-/Chromium-Test keine eigene dokumentierte Abnahme; die
   praktische Prüfung mit eigenen Inhalten steht im

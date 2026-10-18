@@ -166,6 +166,29 @@ Maven läuft. Künftige Wartungsreleases erfordern ein gemeinsames Update dieser
 Vorgaben und der Artefaktprüfung. Die endgültigen Testergebnisse und Imagescans
 stehen im R19-Nachweis der [Roadmap](roadmap.md).
 
+## Nachprüfung vom 18. Oktober 2026 (R37)
+
+Die gehostete Prüfung des Branches zu R37 und der lokale Scan desselben Standes
+melden in **beiden** Images einen neuen hohen Befund:
+[CVE-2026-84782](https://ubuntu.com/security/CVE-2026-84782) in `openssl` und
+`libssl3t64` 3.0.13-0ubuntu3.15, veröffentlicht am 29. September 2026. Ubuntu
+stellt die Korrektur `3.0.13-0ubuntu3.16` bereit; die gepinnten Temurin- und
+MariaDB-Digests enthalten sie noch nicht. Beide Dockerfiles erweitern deshalb die
+bestehende gezielte Update-Schicht um `openssl` und `libssl3t64` in dieser
+festen Version. Die Paketquelle bleibt die signierte Ubuntu-Paketverwaltung;
+ein künftig fehlendes Paket lässt den Build scheitern.
+
+Ergebnis nach dem Rebuild: App-Image **105 Pakete, 27 MEDIUM und vier LOW**
+(25 CVEs); Datenbankimage **149 Pakete, 40 MEDIUM und sieben LOW** (30 CVEs).
+Keine HIGH/CRITICAL/UNKNOWN, die Schweregradregel besteht, die
+Artefaktzuordnung mit `--with-audits` ebenfalls. Gegenüber dem 19. September
+(acht beziehungsweise 13 MEDIUM) sind zahlreiche neue mittlere Befunde
+hinzugekommen. Die Bewertungen in [container-findings.md](container-findings.md)
+und [database-findings.md](database-findings.md) beziehen sich weiterhin auf den
+Stand vom 13. September; die neuen mittleren Befunde sind vor einer Freigabe
+gemäß [Abnahmeprotokoll](operational-acceptance.md) zu bewerten. Ein bestandener
+Schweregrad-Filter ist keine Produktionsfreigabe.
+
 ## Datenbankbewertung und entbehrliche Pakete (R20)
 
 Die [gesonderte Datenbankbewertung](database-findings.md) untersucht die

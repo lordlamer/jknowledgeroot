@@ -20,10 +20,12 @@ FROM eclipse-temurin:25.0.4_7-jre-noble@sha256:d120abd9d8d7dec94520ce974ece62d0e
 RUN rm -rf /opt/java/openjdk
 COPY --from=runtime-download /tmp/updated-jre /opt/java/openjdk
 RUN java -version
-# Ubuntu USN-8737: the pinned Temurin image still contains glibc 2.39-0ubuntu8.8.
+# Ubuntu USN-8737: the pinned Temurin image still contains glibc 2.39-0ubuntu8.8, and
+# CVE-2026-84782 (HIGH, fixed in Ubuntu openssl 3.0.13-0ubuntu3.16) is still open in it.
 # Remove this layer once a verified Temurin digest includes these fixes.
 RUN apt-get update && apt-get install -y --no-install-recommends --only-upgrade \
         libc6=2.39-0ubuntu8.9 libc-bin=2.39-0ubuntu8.9 locales=2.39-0ubuntu8.9 \
+        openssl=3.0.13-0ubuntu3.16 libssl3t64=3.0.13-0ubuntu3.16 \
     && rm -rf /var/lib/apt/lists/*
 # Pages and attachments are rendered in the browser; the server does not render fonts.
 # Remove the unused native XML parser together with its fontconfig consumers.
