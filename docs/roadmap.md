@@ -76,8 +76,8 @@ Nachweise; maßgeblich für die aktuellen offenen Arbeiten ist diese Übersicht.
 - [ ] Zielsystem, Domain, Betreiber/Vertretung, erwartete Nutzer-/Datenmengen und Betriebsgrenzen festlegen.
 - [x] Branch-/Tag-Schutz, PR-Pflicht mit erfolgreichem `verify` und eigene
   Release-Bestätigung konfigurieren (R32/R33).
-- [ ] Jackson 2.21.5/3.1.5 und DOMPurify 3.4.15 auf die korrigierten Versionen
-  heben, OSV-Scan ohne Treffer nachweisen (siehe R37).
+- [x] Jackson 2.21.5/3.1.5 und DOMPurify 3.4.15 auf die korrigierten Versionen
+  gehoben, OSV-Scan lokal ohne Treffer (R37); gehosteter Nachweis steht aus.
 - [ ] Grünen gehosteten CI-Lauf für den korrigierten Commit aus R37 nachweisen
   und klären, warum PR #263 trotz fehlgeschlagenem Pflicht-Check `verify`
   zusammengeführt werden konnte; Regel gegebenenfalls nachschärfen.
@@ -684,19 +684,29 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
   vollständige `clean verify` mit **302 Surefire-Tests und einem
   JAR-/Chromium-Test, keine Fehler oder übersprungenen Tests** (Temurin 25+36
   unter Windows, Docker-Engine 29.8.0). `git diff --check` ohne Befund.
+  Nach dem Dependency-Update besteht ein weiteres vollständiges `clean verify`
+  mit denselben 302 Surefire-Tests und dem JAR-/Chromium-Test; der OSV-Scan
+  auf dem neu aufgelösten Baum ist ohne Treffer.
   Container-, Proxy-, Last- und Wiederherstellungsschritte der CI wurden lokal
   nicht wiederholt; sie laufen im gehosteten Lauf für den Commit.
+- **Dependency-Update:** Der am 18. Oktober 2026 wiederholte OSV-Scan meldete
+  für `dae3244` **16 Zuordnungen bei 282 Paketversionen**: Jackson 2.21.5 und
+  3.1.5 (Boot-verwaltet) sowie DOMPurify 3.4.15; der CI-Schritt „Audit Maven
+  and frontend dependencies“ wäre damit auch nach der Testkorrektur
+  gescheitert, GitHub meldete sechs offene Dependabot-Funde. Abweichend von
+  der sonst getrennten Vorgehensweise wurde das Update auf Wunsch im selben
+  Branch umgesetzt: POM-Properties `jackson-2-bom.version` 2.21.8 und
+  `jackson-bom.version` 3.1.8 (neueste Patchstände derselben Minor-Linie,
+  Überschreibung wie bei Tomcat), DOMPurify 3.4.17 im Frontend-Lockfile.
+  Danach: **282 Paketversionen, null Zuordnungen, Exitcode 0**. Details und
+  Einordnung in [dependencies.md](dependencies.md).
 - **Grenzen:** Die neuen Oberflächenfunktionen aus PR #263 haben außer dem
   bestehenden JAR-/Chromium-Test keine eigene dokumentierte Abnahme; die
   praktische Prüfung mit eigenen Inhalten steht im
-  [Abnahmeprotokoll](operational-acceptance.md). Der am 18. Oktober 2026
-  wiederholte OSV-Scan meldet **16 Zuordnungen bei 282 Paketversionen**:
-  Jackson 2.21.5 und Jackson 3.1.5 (Boot-verwaltet, Korrekturen in 2.21.7
-  beziehungsweise 3.1.7) sowie DOMPurify 3.4.15 (Korrektur in 3.4.16).
-  Der CI-Schritt „Audit Maven and frontend dependencies“ scheitert damit
-  auch nach der Testkorrektur; GitHub meldet sechs offene Dependabot-Funde.
-  Das Dependency-Update erfolgt gemäß Arbeitsweise getrennt. Gehostete
-  Bestätigung, Release-Tag und Produktionsfreigabe stehen aus.
+  [Abnahmeprotokoll](operational-acceptance.md). Die Dependabot-Meldungen
+  für `master` schließen sich erst mit der erneuten Graph-Übermittlung nach
+  dem Merge. Gehostete Bestätigung, Release-Tag und Produktionsfreigabe
+  stehen aus.
 
 ## Nachweise der Bestandsaufnahme
 
