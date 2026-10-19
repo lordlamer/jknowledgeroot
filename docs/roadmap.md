@@ -27,6 +27,8 @@ einschließlich Release-Schutztests und Graph-Übermittlung besteht für `672295
 R35/R36 und weitere Oberflächenänderungen sind seit PR #263 (`dae3244`) auf
 `master`; die gehostete CI dafür scheiterte im Browser-Test. R37 behebt dies,
 und der gehostete Lauf für den gemergten Stand `2f3f345` besteht vollständig.
+R38 hebt die Basisimages auf die Digests vom 17. Oktober 2026 an; der
+gehostete Lauf für `00cebae` besteht ebenfalls vollständig.
 R33 ergänzt die per API geprüften GitHub-Einstellungen für einen alleinigen
 Entwickler; R34 weist den regulären PR-Merge unter diesen Regeln nach.
 Der in R30 abgeglichene GitHub-Graph enthält alle 199 erwarteten
@@ -782,7 +784,7 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
   149 Pakete, 28 MEDIUM/sieben LOW); Artefaktzuordnung mit `--with-audits`;
   Lastlauf 1000 Seiten mit 80 Requests je Stufe ohne Fehler (p95 93,67/98,28 ms
   lokal); Wiederherstellungskette 12.2.2 → 12.3.3 → 12.2.2. Gehosteter Lauf
-  steht aus.
+  siehe Hauptbranch-Abnahme.
 - **Restbefunde:** Für keinen verbleibenden Befund gibt es eine Ubuntu-Korrektur.
   [container-findings.md](container-findings.md) und
   [database-findings.md](database-findings.md) enthalten je Befund die geprüfte
@@ -792,6 +794,13 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
   wenn die betroffene Funktion in den Containern nicht erreichbar ist; Prüfung
   vor jedem Release und monatlich; HIGH/CRITICAL lösen sofort einen Rebuild aus.
   Die Entscheidung dazu ist nicht Teil dieses Eintrags.
+- **Hauptbranch-Abnahme:** PR #266 wurde am 19. Oktober 2026 nach erfolgreichem
+  Pflicht-Check `verify` regulär zusammengeführt (Squash-Commit `00cebae`).
+  Der anschließende
+  [CI-Lauf 39236347454](https://github.com/lordlamer/jknowledgeroot/actions/runs/39236347454)
+  für `master` besteht vollständig: `verify` und `dependency-graph`
+  erfolgreich, `publish` übersprungen. Die neuen Basisdigests sind damit
+  gehostet bestätigt. Kein Release-Tag und keine Veröffentlichung.
 - **Grenzen:** Lokal Windows/x64 für Maven und Linux/amd64 für Container; arm64
   ist in beiden Digests enthalten, aber nicht als laufendes Deployment
   abgenommen. Kein Tag, keine Veröffentlichung, keine Produktionsfreigabe.
