@@ -1,32 +1,8 @@
-FROM eclipse-temurin:25.0.4_7-jre-noble@sha256:d120abd9d8d7dec94520ce974ece62d0e4eed8576eb00bbc84e6128307ab48ef AS runtime-download
-# The official container tag lags the Temurin security release. Replace the whole
-# JRE with the immutable upstream archive; never combine files from two versions.
-ARG TARGETARCH
-RUN set -eux; apt-get update; apt-get install -y --no-install-recommends curl; \
-    case "$TARGETARCH" in \
-      amd64) arch=x64; checksum=1731a34baadec5479258ea0202e4d5d865d2efeee60cb0c7d7eb056fe96ca219 ;; \
-      arm64) arch=aarch64; checksum=34828cbb93ed31c281c84ecb31ddab655d11a802f263c1fc019d42e9e0230fed ;; \
-      *) echo "Unsupported JRE architecture: $TARGETARCH" >&2; exit 1 ;; \
-    esac; \
-    curl --fail --location --retry 3 --proto '=https' --proto-redir '=https' \
-      "https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.4.1%2B1/OpenJDK25U-jre_${arch}_linux_hotspot_25.0.4.1_1.tar.gz" -o /tmp/jre.tar.gz; \
-    echo "$checksum  /tmp/jre.tar.gz" | sha256sum --check --strict; \
-    mkdir /tmp/updated-jre; \
-    tar --extract --gzip --file /tmp/jre.tar.gz --directory /tmp/updated-jre --strip-components=1 --no-same-owner; \
-    rm /tmp/jre.tar.gz; \
-    grep -Fx 'JAVA_RUNTIME_VERSION="25.0.4.1+1-LTS"' /tmp/updated-jre/release
-
-FROM eclipse-temurin:25.0.4_7-jre-noble@sha256:d120abd9d8d7dec94520ce974ece62d0e4eed8576eb00bbc84e6128307ab48ef
-RUN rm -rf /opt/java/openjdk
-COPY --from=runtime-download /tmp/updated-jre /opt/java/openjdk
+FROM eclipse-temurin:25.0.4.1_1-jre-noble@sha256:3f2223fe04b750aa5a8179e29b5c9a1ddf7665fc9bb08bfe11ad01d143bc13a5
+# The pinned Temurin digest (17 October 2026) ships JRE 25.0.4.1+1 together with the
+# Ubuntu glibc 2.39-0ubuntu8.9 and openssl 3.0.13-0ubuntu3.16 fixes; the earlier
+# archive download and targeted package upgrades are therefore no longer needed.
 RUN java -version
-# Ubuntu USN-8737: the pinned Temurin image still contains glibc 2.39-0ubuntu8.8, and
-# CVE-2026-84782 (HIGH, fixed in Ubuntu openssl 3.0.13-0ubuntu3.16) is still open in it.
-# Remove this layer once a verified Temurin digest includes these fixes.
-RUN apt-get update && apt-get install -y --no-install-recommends --only-upgrade \
-        libc6=2.39-0ubuntu8.9 libc-bin=2.39-0ubuntu8.9 locales=2.39-0ubuntu8.9 \
-        openssl=3.0.13-0ubuntu3.16 libssl3t64=3.0.13-0ubuntu3.16 \
-    && rm -rf /var/lib/apt/lists/*
 # Pages and attachments are rendered in the browser; the server does not render fonts.
 # Remove the unused native XML parser together with its fontconfig consumers.
 # Do not autoremove unrelated base-image dependencies.

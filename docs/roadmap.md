@@ -1,6 +1,6 @@
 # Roadmap zur Produktionsreife
 
-Stand: 18. Oktober 2026. Grundlage ist die Code- und Build-Prüfung vom 12. September 2026.
+Stand: 19. Oktober 2026. Grundlage ist die Code- und Build-Prüfung vom 12. September 2026.
 
 Ziel ist eine sicher betreibbare, reproduzierbar gebaute Version mit getesteten
 Zugriffsrechten, Migrationen und Wiederherstellung. Der aktuelle Stand ist noch
@@ -88,7 +88,7 @@ Nachweise; maßgeblich für die aktuellen offenen Arbeiten ist diese Übersicht.
 - [ ] Staging mit tatsächlichem Proxy, gültigem TLS-Zertifikat und passender Netzfreigabe abnehmen; eigene Altinhalte, Rollen, Gastzugriff, Redaktion und Anhänge prüfen.
 - [ ] Repräsentative Last messen, Antwortzeit-/Fehlergrenzen festlegen und externe Alarmierung praktisch testen.
 - [ ] Gemeinsame DB-/Dateisicherung außerhalb des App-Hosts einrichten; Restore/Upgrade/Rollback mit eigenen Daten prüfen und zulässigen Datenverlust sowie Wiederanlaufzeit nachweisen.
-- [ ] Aktuelle Sicherheitsberichte einschließlich Betreiberproxy bewerten, insbesondere die seit September neuen mittleren OS-Befunde (R37), verbleibende Befunde mit Verantwortlichen und Prüftermin entscheiden; anschließend Freigabe dokumentieren, Images veröffentlichen und Nachweise dauerhaft archivieren.
+- [ ] Aktuelle Sicherheitsberichte einschließlich Betreiberproxy bewerten, insbesondere die in R38 je Befund vorbereiteten mittleren OS-Befunde ohne Fix, verbleibende Befunde mit Verantwortlichen und Prüftermin entscheiden; anschließend Freigabe dokumentieren, Images veröffentlichen und Nachweise dauerhaft archivieren.
 
 ## 1. Build und Sicherheit
 
@@ -759,6 +759,42 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
   für `master` schließen sich erst mit der erneuten Graph-Übermittlung nach
   dem Merge. Gehostete Bestätigung, Release-Tag und Produktionsfreigabe
   stehen aus.
+
+### R38 – Basisimages aktualisieren und Update-Schichten entfernen
+
+- [x] Lokal umgesetzt und geprüft am 19. Oktober 2026.
+- **Anlass:** Die OS-Scans aus R37 zeigten in beiden Images mittlere Befunde
+  mit verfügbarem Ubuntu-Fix (Perl, DBI, FreeType, libpng) sowie die in R19/R37
+  manuell nachgezogenen glibc- und OpenSSL-Korrekturen. Seit dem 17. Oktober
+  2026 stehen ein offizielles Temurin-Tag `25.0.4.1_1-jre-noble` und ein neu
+  gebauter MariaDB-12.3.3-Digest bereit, die alle diese Stände enthalten.
+- **Umgesetzt:** Beide Dockerfiles pinnen die neuen Digests. Die
+  JRE-Archiv-Buildstufe mit Prüfsummen und die gezielten `apt`-Update-Schichten
+  entfallen; Paketentfernungen, Benutzer, Labels, Healthcheck und Entrypoint
+  bleiben unverändert. `DatabaseImage` verwendet den neuen MariaDB-Digest.
+  `release-metadata.mjs` prüft weiterhin JRE 25.0.4.1+1, MariaDB 12.3.3 und
+  glibc 2.39-0ubuntu8.9 und besteht ohne Änderung. Details in
+  [image-security.md](image-security.md).
+- **Geprüft:** Vollständiges `clean verify` mit **302 Surefire-Tests und einem
+  JAR-/Chromium-Test** gegen den neuen Datenbankdigest; Containerbuild,
+  Nutzerprüfung und Deploy-Smoke-Test einschließlich Neustart; beide OS-Scans
+  **ohne blockierende Funde** (App 105 Pakete, 23 MEDIUM/vier LOW; Datenbank
+  149 Pakete, 28 MEDIUM/sieben LOW); Artefaktzuordnung mit `--with-audits`;
+  Lastlauf 1000 Seiten mit 80 Requests je Stufe ohne Fehler (p95 93,67/98,28 ms
+  lokal); Wiederherstellungskette 12.2.2 → 12.3.3 → 12.2.2. Gehosteter Lauf
+  steht aus.
+- **Restbefunde:** Für keinen verbleibenden Befund gibt es eine Ubuntu-Korrektur.
+  [container-findings.md](container-findings.md) und
+  [database-findings.md](database-findings.md) enthalten je Befund die geprüfte
+  Erreichbarkeit (PCRE2, GnuTLS, dash, glibc, tar, zlib, LOW-Pakete) und die
+  offene Spalte für die Betreiberentscheidung. Vorgeschlagene Regel für das
+  Abnahmeprotokoll: mittlere Befunde ohne verfügbaren Fix gelten als akzeptiert,
+  wenn die betroffene Funktion in den Containern nicht erreichbar ist; Prüfung
+  vor jedem Release und monatlich; HIGH/CRITICAL lösen sofort einen Rebuild aus.
+  Die Entscheidung dazu ist nicht Teil dieses Eintrags.
+- **Grenzen:** Lokal Windows/x64 für Maven und Linux/amd64 für Container; arm64
+  ist in beiden Digests enthalten, aber nicht als laufendes Deployment
+  abgenommen. Kein Tag, keine Veröffentlichung, keine Produktionsfreigabe.
 
 ## Nachweise der Bestandsaufnahme
 

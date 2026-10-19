@@ -189,6 +189,32 @@ Stand vom 13. September; die neuen mittleren Befunde sind vor einer Freigabe
 gemäß [Abnahmeprotokoll](operational-acceptance.md) zu bewerten. Ein bestandener
 Schweregrad-Filter ist keine Produktionsfreigabe.
 
+## Basisimages vom 17. Oktober 2026 (R38)
+
+Docker Hub liefert seit dem 17. Oktober 2026 das offizielle Tag
+`eclipse-temurin:25.0.4.1_1-jre-noble` (Digest
+`sha256:3f2223fe04b750aa5a8179e29b5c9a1ddf7665fc9bb08bfe11ad01d143bc13a5`) und
+einen neu gebauten `mariadb:12.3.3`-Digest
+(`sha256:99c125f103f5d081ebbc9ffe064e63daf7f688ac33a5f7f29af2d7260a96debf`).
+Beide wurden vor der Übernahme per `dpkg-query` geprüft: Sie enthalten
+JRE **25.0.4.1+1**, glibc `2.39-0ubuntu8.9`, openssl `3.0.13-0ubuntu3.16`,
+Perl `5.38.2-3.2ubuntu0.6`, `libdbi-perl 1.643-4ubuntu0.4`, FreeType
+`2.13.2+dfsg-1ubuntu0.2` und libpng `1.6.43-5ubuntu0.7`. Die JRE-Archivstufe
+aus R19 und die gezielten Update-Schichten beider Dockerfiles entfallen damit,
+wie dort vorgesehen. Die Paketentfernungen aus R17 (fontconfig, Expat) und R20
+(GPG, SQLite) bleiben bestehen; das Testfixture `DatabaseImage` verwendet
+denselben MariaDB-Digest.
+
+Ergebnis: App-Image **105 Pakete, 23 MEDIUM und vier LOW** (21 CVEs),
+Datenbankimage **149 Pakete, 28 MEDIUM und sieben LOW** (24 CVEs). Für keinen
+verbleibenden Befund nennt Ubuntu eine verfügbare Korrektur; alle liegen in
+PCRE2, GnuTLS, dash, glibc, tar, zlib sowie den bekannten LOW-Paketen. Die
+Erreichbarkeit ist in [container-findings.md](container-findings.md) und
+[database-findings.md](database-findings.md) je Befund festgehalten; die
+betriebliche Entscheidung bleibt offen. Vollständiges `verify`, Deploy-Smoke-Test,
+Lastlauf, Wiederherstellungskette und Artefaktzuordnung mit `--with-audits`
+bestehen auf den neuen Digests.
+
 ## Datenbankbewertung und entbehrliche Pakete (R20)
 
 Die [gesonderte Datenbankbewertung](database-findings.md) untersucht die
