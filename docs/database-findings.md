@@ -1,6 +1,7 @@
 # Bewertung der Datenbank-Containerbefunde
 
-Stand: 13. September 2026, R20. Diese technische Bewertung betrifft das gemeinsam
+Stand: 13. September 2026, R20; am 18. Oktober 2026 zählt der Scan 40 MEDIUM und sieben LOW,
+siehe [image-security.md](image-security.md). Diese technische Bewertung betrifft das gemeinsam
 mit Knowledgeroot gebaute MariaDB-12.3.3-Image für eine einzelne Instanz.
 Sie ersetzt weder die Bewertung des Hostsystems noch die betriebliche Freigabe.
 Die [App-Bewertung](container-findings.md) gilt nicht automatisch für MariaDB.

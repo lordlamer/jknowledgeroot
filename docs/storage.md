@@ -25,8 +25,10 @@ sämtliche referenzierten Objekte unter unveränderten Schlüsseln vollständig 
 den neuen Speicher kopiert und ihre Inhalte geprüft werden. Seit R12 ist lokaler
 Speicher für eine einzelne Instanz der dokumentierte Standard in
 [production.md](production.md). Ein externer S3-Dienst für mehrere Instanzen
-benötigt eine eigene Auswahl und Abnahme; das gepinnte MinIO-Testimage bleibt
-eine Kompatibilitätsfixture.
+benötigt eine eigene Auswahl und Abnahme. Das Testfixture für den S3-Treiber ist
+seit R37 RustFS 1.0.3 per Digest; MinIO hat seine öffentlichen Images im
+September 2026 zurückgezogen. RustFS prüft die konfigurierten Zugangsdaten, ist
+aber keine Betriebsempfehlung.
 
 ## Grenzen und Ressourcen
 

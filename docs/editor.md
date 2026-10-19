@@ -26,7 +26,7 @@ beliebiges HTML wird nicht unverändert weitergereicht. Vor einem Release sind
 repräsentative eigene Bestandsinhalte zusätzlich zu den automatisierten Beispielen
 zu prüfen.
 
-DOMPurify 3.4.15 bereinigt vorhandene Inhalte vor der Editorinitialisierung und HTML
+DOMPurify 3.4.17 bereinigt vorhandene Inhalte vor der Editorinitialisierung und HTML
 beim Einfügen. Skripte, Eventhandler und aktive Einbettungen werden entfernt.
 Der serverseitige HTML Sanitizer bleibt die maßgebliche Prüfung beim Speichern;
 clientseitige Bereinigung ersetzt keine Rechte- oder Inhaltsprüfung im Backend.

@@ -115,7 +115,7 @@ try {
   const scenarios = [
     {...guest, name:'guest-search', path:'/search?q=loadfixture'},
     {...guest, name:'guest-search-offset', path:'/search?q=loadfixture&start=20'},
-    {...guest, required:'0 results', name:'guest-search-empty', path:'/search?q=absentfixture'},
+    {...guest, required:'No results for', name:'guest-search-empty', path:'/search?q=absentfixture'},
     {...guest, name:'guest-page', path:`/ui/page/${publicPage}`},
     {...guest, name:'guest-sidebar', path:'/ui/sidebar?parent=1001'},
     {...guest, status:403, required:null, name:'guest-private-denied', path:`/ui/page/${privatePage}`},

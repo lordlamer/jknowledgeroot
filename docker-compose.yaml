@@ -12,24 +12,30 @@
     networks:
       - knowledgeroot-network
 
-  minio:
-    container_name: knowledgeroot_minio
+  rustfs:
+    container_name: knowledgeroot_rustfs
     # Development compatibility fixture only; production uses deploy/compose.production.yaml.
-    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
-    command: server --console-address ":9001" /data
+    # MinIO withdrew its public images in September 2026; RustFS offers a MinIO-compatible S3 API
+    # (Apache-2.0) and keeps port 9000, so KR_MINIO_URL stays unchanged.
+    image: rustfs/rustfs@sha256:9ca9559533b537d10482fe923288b676ad08f92a7069d9a17327fbae3cab688b
     environment:
-      MINIO_ROOT_USER: ${KR_MINIO_ROOT_USER:?Set a development MinIO user}
-      MINIO_ROOT_PASSWORD: ${KR_MINIO_ROOT_PASSWORD:?Set a development MinIO password}
+      RUSTFS_ACCESS_KEY: ${KR_MINIO_ROOT_USER:?Set a development storage access key}
+      RUSTFS_SECRET_KEY: ${KR_MINIO_ROOT_PASSWORD:?Set a development storage secret key}
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_CONSOLE_ENABLE: "true"
     volumes:
-      - minio_data:/data
+      - rustfs_data:/data
     ports:
       - "127.0.0.1:9000:9000"
       - "127.0.0.1:9001:9001"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9000/health"]
       interval: 30s
-      timeout: 20s
+      timeout: 10s
       retries: 3
+      start_period: 40s
     restart: unless-stopped
     networks:
       - knowledgeroot-network
@@ -40,4 +46,4 @@ networks:
 
 volumes:
   mariadb:
-  minio_data:
+  rustfs_data:

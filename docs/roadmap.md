@@ -1,6 +1,6 @@
 # Roadmap zur Produktionsreife
 
-Stand: 19. September 2026. Grundlage ist die Code- und Build-Prüfung vom 12. September 2026.
+Stand: 18. Oktober 2026. Grundlage ist die Code- und Build-Prüfung vom 12. September 2026.
 
 Ziel ist eine sicher betreibbare, reproduzierbar gebaute Version mit getesteten
 Zugriffsrechten, Migrationen und Wiederherstellung. Der aktuelle Stand ist noch
@@ -24,9 +24,9 @@ bleiben Voraussetzung für die Produktionsfreigabe.
 
 R01 bis R34 sind umgesetzt und geprüft; die vollständige gehostete CI
 einschließlich Release-Schutztests und Graph-Übermittlung besteht für `6722957`.
-Dieser gehostete Nachweis deckt die neuen Änderungen R35/R36 noch nicht ab.
-R35/R36 sind lokal mit 297 Tests einschließlich JAR-/Chromium-Abnahme geprüft;
-der aktualisierte OSV-Scan prüft 282 Paketversionen ohne Treffer.
+R35/R36 und weitere Oberflächenänderungen sind seit PR #263 (`dae3244`) auf
+`master`; die gehostete CI dafür scheiterte im Browser-Test. R37 behebt den
+Test lokal; ein erneuter grüner CI-Lauf für den korrigierten Commit steht aus.
 R33 ergänzt die per API geprüften GitHub-Einstellungen für einen alleinigen
 Entwickler; R34 weist den regulären PR-Merge unter diesen Regeln nach.
 Der in R30 abgeglichene GitHub-Graph enthält alle 199 erwarteten
@@ -76,13 +76,18 @@ Nachweise; maßgeblich für die aktuellen offenen Arbeiten ist diese Übersicht.
 - [ ] Zielsystem, Domain, Betreiber/Vertretung, erwartete Nutzer-/Datenmengen und Betriebsgrenzen festlegen.
 - [x] Branch-/Tag-Schutz, PR-Pflicht mit erfolgreichem `verify` und eigene
   Release-Bestätigung konfigurieren (R32/R33).
+- [x] Jackson 2.21.5/3.1.5 und DOMPurify 3.4.15 auf die korrigierten Versionen
+  gehoben, OSV-Scan lokal ohne Treffer (R37); gehosteter Nachweis steht aus.
+- [ ] Grünen gehosteten CI-Lauf für den korrigierten Commit aus R37 nachweisen
+  und klären, warum PR #263 trotz fehlgeschlagenem Pflicht-Check `verify`
+  zusammengeführt werden konnte; Regel gegebenenfalls nachschärfen.
 - [ ] Registry-Secrets ausschließlich in `release` hinterlegen; den sauberen
   Release-Commit vollständig in der gehosteten CI und den tatsächlichen
   Freigabe-/Publish-Ablauf prüfen.
 - [ ] Staging mit tatsächlichem Proxy, gültigem TLS-Zertifikat und passender Netzfreigabe abnehmen; eigene Altinhalte, Rollen, Gastzugriff, Redaktion und Anhänge prüfen.
 - [ ] Repräsentative Last messen, Antwortzeit-/Fehlergrenzen festlegen und externe Alarmierung praktisch testen.
 - [ ] Gemeinsame DB-/Dateisicherung außerhalb des App-Hosts einrichten; Restore/Upgrade/Rollback mit eigenen Daten prüfen und zulässigen Datenverlust sowie Wiederanlaufzeit nachweisen.
-- [ ] Aktuelle Sicherheitsberichte einschließlich Betreiberproxy bewerten, verbleibende Befunde mit Verantwortlichen und Prüftermin entscheiden; anschließend Freigabe dokumentieren, Images veröffentlichen und Nachweise dauerhaft archivieren.
+- [ ] Aktuelle Sicherheitsberichte einschließlich Betreiberproxy bewerten, insbesondere die seit September neuen mittleren OS-Befunde (R37), verbleibende Befunde mit Verantwortlichen und Prüftermin entscheiden; anschließend Freigabe dokumentieren, Images veröffentlichen und Nachweise dauerhaft archivieren.
 
 ## 1. Build und Sicherheit
 
@@ -636,6 +641,114 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 - **Grenzen:** Warteschlange ist nicht dauerhaft. Tatsächliche Zustellung und
   Absenderkonfiguration im Zielbetrieb bleiben vor Aktivierung zu prüfen.
   Kein neuer gehosteter CI-Lauf und keine Produktionsfreigabe.
+
+### R37 – Gehostete CI nach PR #263 wiederherstellen
+
+- [x] Lokal umgesetzt und geprüft am 18. Oktober 2026.
+- **Befund:** PR #263 (`dae3244`, 27. September 2026) bringt R35/R36 sowie
+  weitere Oberflächenänderungen auf `master`: Dialog zum Hochladen von Anhängen
+  mit Mehrfachauswahl, Anzeige und Löschen von Anhängen, überarbeitete
+  Suchergebnisseite, Verschiebe-Dialog mit Start am aktuellen Standort,
+  angepasste Historien-/Vergleichsansicht. Die gehosteten Läufe
+  [36322263730](https://github.com/lordlamer/jknowledgeroot/actions/runs/36322263730)
+  (PR) und
+  [36322599460](https://github.com/lordlamer/jknowledgeroot/actions/runs/36322599460)
+  (`master`) scheitern im Schritt „Verify application and build container“.
+  Lokal reproduziert: 302 Surefire-Tests bestehen, `ApplicationSmokeIT` bricht
+  mit einer Playwright-Strict-Mode-Verletzung ab. Der Locator für das
+  Verschiebeziel „Browser move destination“ trifft seit dem neuen Dialog zwei
+  Links: den Eintrag der Seitenleiste und den gleichnamigen Eintrag der
+  Zielliste.
+- **Prozessbefund:** Der PR wurde sechs Minuten nach Start des CI-Laufs
+  zusammengeführt; der erforderliche Check `verify` war zu diesem Zeitpunkt
+  nicht erfolgreich und ist für den Merge-Commit als fehlgeschlagen
+  verzeichnet. Die in [repository-protection.md](repository-protection.md)
+  beschriebene Regel hat den Merge damit praktisch nicht verhindert. Vor einem
+  Release ist zu klären, wie dieser Merge möglich war (Administrator-Bypass
+  oder Merge vor Abschluss des Checks), und die Regel entsprechend zu prüfen.
+- **Umgesetzt:** Der Browser-Test wählt das Ziel ausschließlich innerhalb der
+  Zielliste des Dialogs. Zusätzlich wartet er nach Suche und Zielauswahl auf
+  die von HTMX gesetzte URL und klickt „Move here“ erst, wenn der Button im
+  neuen Inhalt aktiviert ist: HTMX setzt die URL kurz vor dem abgeschlossenen
+  Austausch von `#content`, sodass ein sofortiger Klick noch den deaktivierten
+  Button der vorherigen Ansicht traf. Dieselbe Synchronisation gilt für den
+  Verschiebe-Ablauf des Bearbeiters. Debug-Ausgaben bestätigten, dass der
+  Server den Button für ein gültiges Ziel aktiviert ausliefert; Anwendungscode
+  und Templates bleiben unverändert. `.env.example` und
+  `config/application-local.properties.example` sind jetzt versioniert; das
+  README verwies bisher auf nicht eingecheckte Dateien. Beide enthalten
+  ausschließlich Platzhalterwerte.
+- **Geprüft:** Vollständiges lokales `clean verify` auf `dae3244` vor der
+  Korrektur reproduziert den CI-Fehler: 302 Surefire-Tests erfolgreich,
+  JAR-/Chromium-Test fehlgeschlagen. Nach der Korrektur besteht das
+  vollständige `clean verify` mit **302 Surefire-Tests und einem
+  JAR-/Chromium-Test, keine Fehler oder übersprungenen Tests** (Temurin 25+36
+  unter Windows, Docker-Engine 29.8.0). `git diff --check` ohne Befund.
+  Nach dem Dependency-Update besteht ein weiteres vollständiges `clean verify`
+  mit denselben 302 Surefire-Tests und dem JAR-/Chromium-Test; der OSV-Scan
+  auf dem neu aufgelösten Baum ist ohne Treffer. Mit dem RustFS-Fixture besteht
+  ein drittes vollständiges `clean verify` erneut mit 302 Surefire-Tests und dem
+  JAR-/Chromium-Test; das MinIO-Image wird dabei nicht mehr benötigt.
+  Container-, Proxy-, Last- und Wiederherstellungsschritte der CI wurden lokal
+  nicht wiederholt; sie laufen im gehosteten Lauf für den Commit.
+- **Dependency-Update:** Der am 18. Oktober 2026 wiederholte OSV-Scan meldete
+  für `dae3244` **16 Zuordnungen bei 282 Paketversionen**: Jackson 2.21.5 und
+  3.1.5 (Boot-verwaltet) sowie DOMPurify 3.4.15; der CI-Schritt „Audit Maven
+  and frontend dependencies“ wäre damit auch nach der Testkorrektur
+  gescheitert, GitHub meldete sechs offene Dependabot-Funde. Abweichend von
+  der sonst getrennten Vorgehensweise wurde das Update auf Wunsch im selben
+  Branch umgesetzt: POM-Properties `jackson-2-bom.version` 2.21.8 und
+  `jackson-bom.version` 3.1.8 (neueste Patchstände derselben Minor-Linie,
+  Überschreibung wie bei Tomcat), DOMPurify 3.4.17 im Frontend-Lockfile.
+  Danach: **282 Paketversionen, null Zuordnungen, Exitcode 0**. Details und
+  Einordnung in [dependencies.md](dependencies.md).
+- **Testfixture ersetzt:** Der gehostete Lauf für den Branch scheiterte in
+  `StorageDriversTest` mit „Can't get Docker image:
+  quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z“. MinIO hat seine
+  öffentlichen Images zurückgezogen: Docker Hub löschte `minio/minio` Mitte
+  September 2026, quay.io verlangt seit dem 24. September eine Anmeldung;
+  `docker manifest inspect` findet weder das gepinnte Tag noch `latest`. Lokal
+  bestanden die Tests nur dank des zwischengespeicherten Images. Adobe S3Mock
+  5.2.3 wurde geprüft und verworfen: `CompleteMultipartUpload` des
+  MinIO-Java-SDK 9.0.3 ohne Teil-Prüfsummen scheitert dort mit `BadRequest`
+  ([S3Mock #3034](https://github.com/adobe/S3Mock/issues/3034), laut Melder
+  auch in 5.2.0 noch offen). Das Fixture für Tests und Entwicklungs-Compose ist
+  jetzt **RustFS 1.0.3** (Apache-2.0, MinIO-kompatible S3-API), per Digest
+  gepinnt in `org.knowledgeroot.test.StorageImage` und `docker-compose.yaml`;
+  Port 9000, Zugangsdaten über `RUSTFS_ACCESS_KEY`/`RUSTFS_SECRET_KEY`, in
+  Tests mit `RUSTFS_UNSAFE_BYPASS_DISK_CHECK=true` wegen des
+  Overlay-Dateisystems. Alle 13 Storage-Tests bestehen dagegen, darunter
+  11-MiB-Multipart, gleichzeitige Uploads und der entfernte Bucket. RustFS ist
+  keine Betriebsempfehlung; Produktion ist nicht betroffen, da
+  [production.md](production.md) keinen MinIO-Server voraussetzt und ein
+  externer S3-Dienst eine eigene Auswahl bleibt. Quellen:
+  [Docker-Hub-Löschung](https://github.com/dandi/dandi-cli/pull/1921),
+  [quay.io-Anmeldepflicht](https://byteiota.com/minio-docker-hub-quay-anonymous-pull-fix/).
+- **Lastszenario angepasst:** Nach dem Fixture-Wechsel scheiterte der gehostete
+  Lauf im Warmup des Lastlaufs (`2 !== 0`): Das Szenario `guest-search-empty`
+  erwartete den Text „0 results“, den die in PR #263 neu gestaltete Suchseite
+  nicht mehr ausgibt; sie zeigt stattdessen „No results for …“. Das Szenario
+  prüft jetzt diesen Text. Übrige Szenarien (öffentliche/private Inhalte,
+  Seitenleiste, 403 für Gäste) blieben im Warmup fehlerfrei.
+- **Container-OS-Korrektur:** Die lokale Nachbildung der verbleibenden
+  CI-Schritte zeigte in App- und Datenbankimage den hohen Befund
+  CVE-2026-84782 (`openssl`/`libssl3t64` 3.0.13-0ubuntu3.15, Fix
+  3.0.13-0ubuntu3.16). Beide Dockerfiles aktualisieren die zwei Pakete in der
+  bestehenden Update-Schicht auf die feste Ubuntu-Version. Danach bestehen
+  beide OS-Scans ohne blockierende Funde (App 105 Pakete, 27 MEDIUM/vier LOW;
+  Datenbank 149 Pakete, 40 MEDIUM/sieben LOW), der Deploy-Smoke-Test
+  einschließlich Neustart, der Lastlauf (80 Requests je Stufe ohne Fehler,
+  p95 97,19/100,62 ms lokal), die Wiederherstellungskette 12.2.2 → 12.3.3 →
+  12.2.2 und die Artefaktzuordnung mit `--with-audits`. Die seit September
+  hinzugekommenen mittleren Befunde sind in [image-security.md](image-security.md)
+  festgehalten und vor einer Freigabe zu bewerten.
+- **Grenzen:** Die neuen Oberflächenfunktionen aus PR #263 haben außer dem
+  bestehenden JAR-/Chromium-Test keine eigene dokumentierte Abnahme; die
+  praktische Prüfung mit eigenen Inhalten steht im
+  [Abnahmeprotokoll](operational-acceptance.md). Die Dependabot-Meldungen
+  für `master` schließen sich erst mit der erneuten Graph-Übermittlung nach
+  dem Merge. Gehostete Bestätigung, Release-Tag und Produktionsfreigabe
+  stehen aus.
 
 ## Nachweise der Bestandsaufnahme
 

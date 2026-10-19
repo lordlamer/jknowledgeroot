@@ -11,7 +11,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -38,12 +37,8 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
 @Testcontainers
 class ApplicationSmokeIT {
     @Container static final MariaDBContainer<?> database = new MariaDBContainer<>(org.knowledgeroot.test.DatabaseImage.MARIADB);
-    // Pinned compatibility fixture; the production storage choice remains in R12.
-    @Container static final GenericContainer<?> storage = new GenericContainer<>("quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z")
-            .withEnv("MINIO_ROOT_USER", "smoke-test-user")
-            .withEnv("MINIO_ROOT_PASSWORD", "smoke-test-password")
-            .withCommand("server /data").withExposedPorts(9000)
-            .waitingFor(Wait.forHttp("/minio/health/ready").forPort(9000));
+    // Pinned compatibility fixture (RustFS); the production storage choice remains with the operator.
+    @Container static final GenericContainer<?> storage = org.knowledgeroot.test.StorageImage.container("smoke-test-user", "smoke-test-password");
     @TempDir Path files;
     private javax.net.ssl.SSLContext tls;
     private org.knowledgeroot.test.SmtpInbox inbox;
@@ -366,8 +361,10 @@ class ApplicationSmokeIT {
             page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Move page").setExact(true)).click();
             page.locator("#destination-query").fill("Browser move destination");
             page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Search").setExact(true)).click();
-            page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Browser move destination").setExact(true)).click();
-            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Move here")).click();
+            page.waitForURL("**/ui/page/" + pageId + "/move?*query=*");
+            page.locator(".kr-move-list").getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName("Browser move destination").setExact(true)).click();
+            page.waitForURL("**/ui/page/" + pageId + "/move?parent=" + destination);
+            page.locator(".kr-move-footer button[type=submit]:not([disabled])").click();
             page.waitForURL("**/ui/page/" + pageId + "?trigger=reload-sidebar");
             assertEquals(destination, jdbc.queryForObject("SELECT parent FROM page WHERE id=?", Integer.class, pageId));
             page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("History").setExact(true)).click();
@@ -495,11 +492,13 @@ class ApplicationSmokeIT {
         page.navigate(uri(server, "/ui/page/" + source).toString());
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("More").setExact(true)).click();
         page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Move page").setExact(true)).click();
-        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Editor move target").setExact(true)).click();
-        assertThat(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Move here"))).isDisabled();
+        page.waitForURL("**/ui/page/" + source + "/move");
+        page.locator(".kr-move-list").getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName("Editor move target").setExact(true)).click();
+        page.waitForURL("**/ui/page/" + source + "/move?parent=" + target);
+        assertThat(page.locator(".kr-move-footer button[type=submit]")).isDisabled();
         jdbc.update("UPDATE page_permission SET permission_level='edit' WHERE page_id=? AND role_id=?", target, user);
         page.reload();
-        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Move here")).click();
+        page.locator(".kr-move-footer button[type=submit]:not([disabled])").click();
         page.waitForURL("**/ui/page/" + source + "?trigger=reload-sidebar");
         assertEquals(target, jdbc.queryForObject("SELECT parent FROM page WHERE id=?", Integer.class, source));
     }
@@ -562,7 +561,7 @@ class ApplicationSmokeIT {
                 "--knowledgeroot.bootstrap.login=" + (bootstrap ? "smoke.admin" : ""),
                 "--knowledgeroot.bootstrap.password=" + (bootstrap ? "smoke-test-password-2026" : ""),
                 "--knowledgeroot.storage.driver=" + driver, "--file.storage-dir=" + files.resolve("objects"),
-                "--minio.url=" + (driver.equals("file") ? "invalid" : "http://" + storage.getHost() + ":" + storage.getMappedPort(9000)),
+                "--minio.url=" + (driver.equals("file") ? "invalid" : "http://" + storage.getHost() + ":" + storage.getMappedPort(org.knowledgeroot.test.StorageImage.PORT)),
                 "--minio.access-key=smoke-test-user", "--minio.secret-key=smoke-test-password",
                 "--minio.bucket=smoke-test", "--spring.main.banner-mode=off"));
         command.addAll(List.of("--knowledgeroot.recovery.enabled=true",

@@ -1,6 +1,7 @@
 # Bewertung der verbleibenden Containerbefunde
 
-Stand: 13. September 2026, R17. Diese technische Bewertung ist eine Grundlage für
+Stand: 13. September 2026, R17; am 18. Oktober 2026 zählt der Scan 27 MEDIUM und vier LOW,
+siehe [image-security.md](image-security.md). Diese technische Bewertung ist eine Grundlage für
 die Betriebsabnahme und keine erteilte Risikoakzeptanz. Herstellerstatus und
 Paketbestand beziehen sich auf diesen Zeitpunkt und das geprüfte App-Image.
 Die vollständigen Scannerberichte bleiben unverändert; es gibt keine Ignore-Liste.

@@ -95,17 +95,45 @@ aktiven Integrationstests, Container-/Ausfalltests und Restore-/Rollbackprüfung
 sind in [monitoring.md](monitoring.md), [recovery.md](recovery.md) und der
 [Roadmap](roadmap.md) festgehalten.
 
+## Erneute Prüfung in R37
+
+Am 18. Oktober 2026 meldete derselbe Scan für den Stand `dae3244` **16
+Zuordnungen bei 282 Paketversionen**, alle zu Advisories, die nach dem
+19. September veröffentlicht wurden:
+
+| Paket | Version | Advisories | Korrektur |
+|---|---|---|---|
+| `com.fasterxml.jackson.core:jackson-core` | 2.21.5 | GHSA-7hhh-6rmp-j9qf, GHSA-p6pp-m3f8-5c89 | 2.21.7 |
+| `com.fasterxml.jackson.core:jackson-databind` | 2.21.5 | GHSA-cxp5-3px4-pw24, GHSA-gx83-3vf8-gh7j, GHSA-q4xh-88c3-wmh7, GHSA-wjgm-6hv5-3cvf, GHSA-wv8q-qhhj-9h54 | 2.21.7 |
+| `tools.jackson.core:jackson-core` | 3.1.5 | dieselben zwei Core-Advisories | 3.1.7 |
+| `tools.jackson.core:jackson-databind` | 3.1.5 | dieselben fünf Databind-Advisories | 3.1.7 |
+| `dompurify` (Frontend-Lockfile) | 3.4.15 | GHSA-6688-9rhm-gjv2, GHSA-p98j-92pf-mc4p | 3.4.16 |
+
+Beide Jackson-Generationen kommen über das Boot-BOM 4.1.1 (`jackson-2-bom.version`,
+`jackson-bom.version`). Das POM überschreibt sie wie bereits Tomcat auf die
+jeweils neueste Patchversion derselben Minor-Linie, **2.21.8** und **3.1.8**;
+die Überschreibung entfällt, sobald ein Boot-Release diese Stände verwaltet.
+DOMPurify steht im Lockfile auf **3.4.17**. Nach dem Update: **282
+Paketversionen geprüft, null Zuordnungen, Exitcode 0**. Die beiden
+DOMPurify-Advisories betreffen den Modus `IN_PLACE` und Hooks, die der Editor
+nicht verwendet; die Bibliothek wird dennoch aktualisiert. Die Jackson-Funde
+betreffen Parser-/Deserialisierungs-Grenzfälle; eine Erreichbarkeit über die
+REST-API wurde nicht einzeln nachgewiesen, die Versionen werden vorsorglich
+ersetzt. Die GitHub-Dependabot-Meldungen für `master` schließen sich erst,
+wenn der Abhängigkeitsgraph nach dem Merge erneut übermittelt wurde.
+
 ## Testgrenzen bei R08
 
 Der vorhandene Testsatz prüft nach der Migration weiterhin Login, Rechte,
 Passwortmigration, parallele Login-Quoten und Datenbank-Upgrades. Der neue
 `ApplicationSmokeIT` startet das fertig gebaute JAR in separaten Java-Prozessen
-mit echtem HTTP-Server und isolierten MariaDB-/MinIO-Containern. Failsafe führt
+mit echtem HTTP-Server und isolierten MariaDB-/S3-Containern. Failsafe führt
 ihn bei `verify` nach dem Packaging aus. Er prüft Thymeleaf, versionslose WebJars,
 Formularlogin mit CSRF, die Admin-API über JPA, Passwortausblendung und JDBC-Sitzungen
 über einen Neustart ohne erneute Bootstrap-Zugangsdaten sowie Logout.
 
-Der Test nutzt eine festgelegte ältere MinIO-Version als Kompatibilitätsfixture,
+Der Test nutzte eine festgelegte ältere MinIO-Version als Kompatibilitätsfixture
+(seit R37 RustFS, siehe [storage.md](storage.md)),
 nicht als Empfehlung für den Produktionsbetrieb. Er umfasst auch die
 Browser-/Upload-/Downloadprüfung aus R08. Vollständige Storage-Grenzfälle, weitere
 Browser, Container- und Restoretests bleiben in R11–R14. Die zwei bereits

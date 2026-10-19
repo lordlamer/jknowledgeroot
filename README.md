@@ -46,7 +46,7 @@ The build compiles the application, runs the enabled tests, and creates the
 executable JAR in `target/`. The previously disabled integration classes now use
 isolated databases, actual login/CSRF and JDBC sessions. Installation tests exercise a real MariaDB in
 Testcontainers. During `verify`, Failsafe starts the packaged JAR against
-disposable MariaDB/MinIO containers and checks real HTTP login, JPA-backed admin
+disposable MariaDB/RustFS containers and checks real HTTP login, JPA-backed admin
 access, WebJars, JDBC-session persistence across restart, and logout. Chromium
 also checks editor creation/saving, repeated HTMX navigation, rich-text preservation,
 malicious paste handling, and a real file upload/download.
