@@ -28,7 +28,8 @@ R35/R36 und weitere Oberflächenänderungen sind seit PR #263 (`dae3244`) auf
 `master`; die gehostete CI dafür scheiterte im Browser-Test. R37 behebt dies,
 und der gehostete Lauf für den gemergten Stand `2f3f345` besteht vollständig.
 R38 hebt die Basisimages auf die Digests vom 17. Oktober 2026 an; der
-gehostete Lauf für `00cebae` besteht ebenfalls vollständig.
+gehostete Lauf für `00cebae` besteht ebenfalls vollständig. R39 veröffentlicht
+den Kandidaten als Tag `v1.0.0-rc.2` (Commit `4620661`) auf Docker Hub.
 R33 ergänzt die per API geprüften GitHub-Einstellungen für einen alleinigen
 Entwickler; R34 weist den regulären PR-Merge unter diesen Regeln nach.
 Der in R30 abgeglichene GitHub-Graph enthält alle 199 erwarteten
@@ -84,9 +85,10 @@ Nachweise; maßgeblich für die aktuellen offenen Arbeiten ist diese Übersicht.
 - [ ] Klären, warum PR #263 trotz fehlgeschlagenem Pflicht-Check `verify`
   zusammengeführt werden konnte; Regel gegebenenfalls nachschärfen. PR #264
   wurde regelkonform erst nach grünem Check gemergt.
-- [ ] Registry-Secrets ausschließlich in `release` hinterlegen; den sauberen
-  Release-Commit vollständig in der gehosteten CI und den tatsächlichen
-  Freigabe-/Publish-Ablauf prüfen.
+- [x] Tatsächlichen Freigabe-/Publish-Ablauf mit Tag `v1.0.0-rc.2` durchgespielt (R39).
+- [ ] Registry-Secrets ausschließlich in `release` hinterlegen und die
+  gleichnamigen Repository-Secrets entfernen; Release-Manifest, Images und
+  Scanberichte des Tag-Laufs vor Ablauf der CI-Aufbewahrung archivieren.
 - [ ] Staging mit tatsächlichem Proxy, gültigem TLS-Zertifikat und passender Netzfreigabe abnehmen; eigene Altinhalte, Rollen, Gastzugriff, Redaktion und Anhänge prüfen.
 - [ ] Repräsentative Last messen, Antwortzeit-/Fehlergrenzen festlegen und externe Alarmierung praktisch testen.
 - [ ] Gemeinsame DB-/Dateisicherung außerhalb des App-Hosts einrichten; Restore/Upgrade/Rollback mit eigenen Daten prüfen und zulässigen Datenverlust sowie Wiederanlaufzeit nachweisen.
@@ -804,6 +806,30 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 - **Grenzen:** Lokal Windows/x64 für Maven und Linux/amd64 für Container; arm64
   ist in beiden Digests enthalten, aber nicht als laufendes Deployment
   abgenommen. Kein Tag, keine Veröffentlichung, keine Produktionsfreigabe.
+
+### R39 – Release-Kandidat v1.0.0-rc.2 getaggt und veröffentlicht
+
+- [x] Durchgeführt am 19. Oktober 2026.
+- **Ablauf:** Annotierter Tag `v1.0.0-rc.2` auf `4620661` nach grünem
+  Master-Lauf gesetzt. Der
+  [Tag-Lauf 39252289002](https://github.com/lordlamer/jknowledgeroot/actions/runs/39252289002)
+  bestand Tag-/Abstammungsprüfung, Prüfung der Umgebung `release` und das
+  vollständige `verify`; der Publish-Job wartete auf die Bestätigung durch
+  `lordlamer` und veröffentlichte danach die beiden geprüften Images.
+- **Registry:** `lordlamer/knowledgeroot:v1.0.0-rc.2` und
+  `sha-4620661…` mit Digest `sha256:133cd6896b1e74487468b3b9215f6293c253e360bccf56bb5bbf1ba7de3e2d7f`;
+  `database-v1.0.0-rc.2` und `database-sha-4620661…` mit Digest
+  `sha256:fc7a5d37c2f55b706fca664e454b9687b9defb7ebd7e27b54eda95cb4583f469` (jeweils 13:09 UTC).
+  Für Deployments ausschließlich diese Digests als `KR_APP_IMAGE` und
+  `KR_DB_IMAGE` verwenden.
+- **Befunde:** Das Docker-Hub-Tag `latest` zeigt weiterhin auf ein Image vom
+  21. Februar 2026 und ist für diesen Stand nicht gültig; der Workflow setzt es
+  absichtlich nicht. Die Docker-Hub-Secrets lagen beim Publish noch auf
+  Repository-Ebene; der Umzug in die Umgebung `release` bleibt offen. Die
+  CI-Artefakte (Release-Manifest, Images, Scanberichte) verfallen nach drei
+  beziehungsweise 14 Tagen und sind vor Ablauf dauerhaft zu archivieren.
+- **Grenzen:** Ein Kandidat ist kein `v1.0.0` und keine Produktionsfreigabe.
+  Die betrieblichen Abnahmen aus der Checkliste bleiben bestehen.
 
 ## Nachweise der Bestandsaufnahme
 
