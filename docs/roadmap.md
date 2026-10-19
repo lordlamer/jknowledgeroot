@@ -25,8 +25,8 @@ bleiben Voraussetzung für die Produktionsfreigabe.
 R01 bis R34 sind umgesetzt und geprüft; die vollständige gehostete CI
 einschließlich Release-Schutztests und Graph-Übermittlung besteht für `6722957`.
 R35/R36 und weitere Oberflächenänderungen sind seit PR #263 (`dae3244`) auf
-`master`; die gehostete CI dafür scheiterte im Browser-Test. R37 behebt den
-Test lokal; ein erneuter grüner CI-Lauf für den korrigierten Commit steht aus.
+`master`; die gehostete CI dafür scheiterte im Browser-Test. R37 behebt dies,
+und der gehostete Lauf für den gemergten Stand `2f3f345` besteht vollständig.
 R33 ergänzt die per API geprüften GitHub-Einstellungen für einen alleinigen
 Entwickler; R34 weist den regulären PR-Merge unter diesen Regeln nach.
 Der in R30 abgeglichene GitHub-Graph enthält alle 199 erwarteten
@@ -78,9 +78,10 @@ Nachweise; maßgeblich für die aktuellen offenen Arbeiten ist diese Übersicht.
   Release-Bestätigung konfigurieren (R32/R33).
 - [x] Jackson 2.21.5/3.1.5 und DOMPurify 3.4.15 auf die korrigierten Versionen
   gehoben, OSV-Scan lokal ohne Treffer (R37); gehosteter Nachweis steht aus.
-- [ ] Grünen gehosteten CI-Lauf für den korrigierten Commit aus R37 nachweisen
-  und klären, warum PR #263 trotz fehlgeschlagenem Pflicht-Check `verify`
-  zusammengeführt werden konnte; Regel gegebenenfalls nachschärfen.
+- [x] Grüner gehosteter CI-Lauf für den korrigierten Stand (R37, `2f3f345`).
+- [ ] Klären, warum PR #263 trotz fehlgeschlagenem Pflicht-Check `verify`
+  zusammengeführt werden konnte; Regel gegebenenfalls nachschärfen. PR #264
+  wurde regelkonform erst nach grünem Check gemergt.
 - [ ] Registry-Secrets ausschließlich in `release` hinterlegen; den sauberen
   Release-Commit vollständig in der gehosteten CI und den tatsächlichen
   Freigabe-/Publish-Ablauf prüfen.
@@ -742,6 +743,15 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
   12.2.2 und die Artefaktzuordnung mit `--with-audits`. Die seit September
   hinzugekommenen mittleren Befunde sind in [image-security.md](image-security.md)
   festgehalten und vor einer Freigabe zu bewerten.
+- **Hauptbranch-Abnahme:** PR #264 wurde am 19. Oktober 2026 nach erfolgreichem
+  Pflicht-Check `verify` für den PR-Kopf `a05f2c3` regulär zusammengeführt
+  (Squash-Commit `2f3f345`). Der anschließende
+  [CI-Lauf 39210160225](https://github.com/lordlamer/jknowledgeroot/actions/runs/39210160225)
+  für `master` besteht vollständig: `verify` und `dependency-graph`
+  erfolgreich, `publish` übersprungen. Damit sind Testsynchronisation,
+  Dependency-Update, RustFS-Fixture, Lastszenario und OpenSSL-Korrektur
+  gehostet bestätigt; der Abhängigkeitsgraph ist für den neuen Stand
+  übermittelt. Kein Release-Tag und keine Veröffentlichung.
 - **Grenzen:** Die neuen Oberflächenfunktionen aus PR #263 haben außer dem
   bestehenden JAR-/Chromium-Test keine eigene dokumentierte Abnahme; die
   praktische Prüfung mit eigenen Inhalten steht im
