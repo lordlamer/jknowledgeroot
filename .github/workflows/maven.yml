@@ -103,11 +103,11 @@ jobs:
         env:
           RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
         run: target/frontend/node/node scripts/release-metadata.mjs knowledgeroot:verified knowledgeroot:database-verified --with-audits
-      - name: Save verified release image
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Save verified images for publication
+        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         run: docker save knowledgeroot:verified knowledgeroot:database-verified --output target/release-image.tar
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         with:
           name: verified-release-image
           path: |
@@ -144,6 +144,43 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/dependency-snapshot.mjs submit target/verified-dependencies/dependency-snapshot.json
+  publish-master:
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    concurrency:
+      group: publish-master
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: verified-release-image
+      - name: Publish the verified master build as latest
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          # A slower run for an older commit must not move latest backwards.
+          if [ "$(git rev-parse origin/master)" != "$COMMIT_SHA" ]; then
+            echo "master has moved past $COMMIT_SHA; not publishing latest from this run"
+            exit 0
+          fi
+          trap 'docker logout >/dev/null 2>&1 || true' EXIT
+          printf '%s' "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
+          docker load --input release-image.tar
+          docker tag knowledgeroot:verified lordlamer/knowledgeroot:latest
+          docker tag knowledgeroot:database-verified lordlamer/knowledgeroot:database-latest
+          docker push lordlamer/knowledgeroot:database-latest
+          docker push lordlamer/knowledgeroot:latest
   publish:
     needs: verify
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')

@@ -122,6 +122,24 @@ REST-API wurde nicht einzeln nachgewiesen, die Versionen werden vorsorglich
 ersetzt. Die GitHub-Dependabot-Meldungen für `master` schließen sich erst,
 wenn der Abhängigkeitsgraph nach dem Merge erneut übermittelt wurde.
 
+## Erneute Prüfung am 23. Oktober 2026 (R41)
+
+Der gehostete Scan meldet [GHSA-crwc-vw2r-qr6m](https://github.com/advisories/GHSA-crwc-vw2r-qr6m)
+(CVE-2026-113730, veröffentlicht am 21. Oktober 2026) für `ognl:ognl 3.3.4`,
+das ausschließlich transitiv über das Boot-verwaltete `org.thymeleaf:thymeleaf`
+3.1.5 in den Baum kommt; die Korrektur liegt erst in OGNL 3.4.13. Die
+Anwendung verwendet Thymeleafs Spring-Dialekt, der Ausdrücke ausschließlich
+mit SpringEL auswertet: `SpringStandardDialect` und
+`SPELVariableExpressionEvaluator` enthalten keinen OGNL-Verweis, und
+`StandardDialect` erzeugt den OGNL-Evaluator nur in der von Spring
+überschriebenen Methode. Das POM schließt OGNL deshalb über
+`dependencyManagement` von Thymeleaf aus, statt eine für Thymeleaf 3.1 nicht
+freigegebene OGNL-3.4-Linie zu erzwingen. Ergebnis: **280 Paketversionen, null
+Zuordnungen, Exitcode 0**; vollständiges `clean verify` mit 302 Surefire-Tests
+und dem JAR-/Chromium-Test rendert alle Templates ohne OGNL. Ein späterer
+Wechsel auf den reinen `StandardDialect` ohne Spring würde OGNL wieder
+benötigen.
+
 ## Testgrenzen bei R08
 
 Der vorhandene Testsatz prüft nach der Migration weiterhin Login, Rechte,

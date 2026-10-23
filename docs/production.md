@@ -178,12 +178,18 @@ Zugangsdaten und veröffentlichen keine Images. Alle verwendeten Actions sind au
 vollständige Commit-SHAs festgelegt. Die Actions-Versionen und Basisimages müssen
 weiterhin regelmäßig geprüft und aktualisiert werden.
 
-Nur Pushes eines Tags wie `v1.0.0` oder `v1.0.0-rc.2` können den separaten
-Publish-Job starten. Davor wird geprüft, dass der Commit zu `origin/master`
-gehört und der gesamte Verify-Job erfolgreich war. Der Publish-Job lädt exakt
-die dort erzeugten App-/Datenbankimages und veröffentlicht Versions- und Commit-Tags
-gemäß [release.md](release.md); kein
-`latest` und kein erneuter Build mit möglicherweise verändertem Inhalt.
+Jeder grüne Lauf auf `master` veröffentlicht die dort geprüften Images
+automatisch und ohne Freigabe als `lordlamer/knowledgeroot:latest` und
+`database-latest`; ein Lauf, dessen Commit beim Publizieren nicht mehr die
+Spitze von `master` ist, überspringt das, damit `latest` nie zurückspringt.
+`latest` ist damit der letzte gemergte Entwicklungsstand, keine freigegebene
+Version. Nur Pushes eines Tags wie `v1.0.0` oder `v1.0.0-rc.2` starten den
+separaten, durch die Umgebung `release` bestätigten Publish-Job. Davor wird
+geprüft, dass der Commit zu `origin/master` gehört und der gesamte Verify-Job
+erfolgreich war. Beide Publish-Jobs laden exakt die im Verify-Job erzeugten
+App-/Datenbankimages und bauen nicht erneut; der Tag-Job veröffentlicht
+Versions- und Commit-Tags gemäß [release.md](release.md). Produktive
+Deployments referenzieren Digests, nicht `latest`.
 
 Im Repository verhindern seit dem 19. September aktive Rulesets Force-Pushes
 und Löschen von `master` sowie Ändern und Löschen bestehender `v*`-Tags.
@@ -193,11 +199,12 @@ Entwickler
 nicht erforderlich. Die GitHub-Umgebung `release` verlangt die eigene
 Bestätigung
 durch `lordlamer`, erlaubt nur Tags `v*` und keinen Administrator-Bypass.
-**Noch umzustellen** sind `DOCKERHUB_USERNAME` und `DOCKERHUB_TOKEN`: Beide
-liegen
-derzeit als Repository-Secrets vor. Direkt in GitHub als Environment-Secrets in
-`release` hinterlegen, anschließend die Repository-Kopien entfernen und prüfen.
-Das bestehende Imageziel ist `lordlamer/knowledgeroot`; bei einem Fork anpassen.
+`DOCKERHUB_USERNAME` und `DOCKERHUB_TOKEN` liegen als Repository-Secrets vor und
+werden vom Job `publish-master` ohne Umgebung benötigt. Für den Tag-Job können
+zusätzlich gleichnamige Secrets in `release` hinterlegt werden; ein eigenes,
+auf das Repository `lordlamer/knowledgeroot` begrenztes Docker-Hub-Token ist
+empfohlen. Das bestehende Imageziel ist `lordlamer/knowledgeroot`; bei einem
+Fork anpassen.
 Der Workflow liest die Release-Regeln vor einem Tag-Build und nochmals vor dem
 Registry-Login: Ohne Reviewer und die ausschließliche Tag-Regel `v*` bricht er ab.
 Die eigentliche Freigabe erzwingt GitHub; die Secret-Ablage und der tatsächliche

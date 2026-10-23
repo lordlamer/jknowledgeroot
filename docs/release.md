@@ -1,9 +1,16 @@
 # Release-Kandidat und Freigabe
 
-Der vorbereitete Stand heißt **1.0.0-rc.2**. Er ist noch keine Produktionsfreigabe.
-Es wurde weder ein Release-Tag erstellt noch ein Image veröffentlicht.
-Produktive Lastmessung und die Abnahme der tatsächlichen Betriebsumgebung bleiben
-offen. Backup, Upgrade und Rückkehr beschreibt [recovery.md](recovery.md).
+Der Kandidat **1.0.0-rc.2** ist seit dem 19. Oktober 2026 als Tag
+`v1.0.0-rc.2` auf Commit `4620661` veröffentlicht: Der
+[Tag-Lauf 39252289002](https://github.com/lordlamer/jknowledgeroot/actions/runs/39252289002)
+bestand `verify`, und nach Bestätigung der Umgebung `release` liegen beide
+Images auf Docker Hub (`lordlamer/knowledgeroot:v1.0.0-rc.2`, Digest
+`sha256:133cd6896b1e74487468b3b9215f6293c253e360bccf56bb5bbf1ba7de3e2d7f`;
+`lordlamer/knowledgeroot:database-v1.0.0-rc.2`, Digest
+`sha256:fc7a5d37c2f55b706fca664e454b9687b9defb7ebd7e27b54eda95cb4583f469`).
+Das ist noch keine Produktionsfreigabe. Produktive Lastmessung und die Abnahme
+der tatsächlichen Betriebsumgebung bleiben offen. Backup, Upgrade und Rückkehr
+beschreibt [recovery.md](recovery.md).
 
 ## Artefakte zuordnen
 
@@ -57,7 +64,10 @@ gemeinsamen Artefakt; sie baut sie im Publish-Job nicht erneut. Im vorhandenen
 Repository `lordlamer/knowledgeroot` heißen die Tags für die Anwendung
 `v1.0.0-rc.2` beziehungsweise `sha-<Commit>` und für die Datenbank
 `database-v1.0.0-rc.2` beziehungsweise `database-sha-<Commit>`. Das sind vorbereitete
-Namenskonventionen; veröffentlicht wurde noch nichts. Für das Deployment beide
+Namenskonventionen; seit dem 19. Oktober 2026 sind sie für 1.0.0-rc.2 belegt.
+Unabhängig davon veröffentlicht jeder grüne Lauf auf `master` automatisch
+`latest` und `database-latest` (seit 23. Oktober 2026): den letzten gemergten
+Stand, ohne Freigabe und ohne Betriebsabnahme. Für das Deployment beide
 Registry-Digests festhalten und explizit als `KR_APP_IMAGE` und `KR_DB_IMAGE` setzen.
 
 ## Freigabeschritte
