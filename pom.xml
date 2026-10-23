@@ -195,6 +195,19 @@
                 <artifactId>bcprov-jdk18on</artifactId>
                 <version>1.86</version>
             </dependency>
+            <!-- Thymeleaf's Spring dialect evaluates expressions with SpringEL only; drop the unused OGNL
+                 engine (GHSA-crwc-vw2r-qr6m in 3.3.4) instead of carrying a reflection-based evaluator. -->
+            <dependency>
+                <groupId>org.thymeleaf</groupId>
+                <artifactId>thymeleaf</artifactId>
+                <version>${thymeleaf.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>ognl</groupId>
+                        <artifactId>ognl</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

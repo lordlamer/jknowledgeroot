@@ -855,6 +855,19 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
   ungeeignet; dort gelten Digests. Jeder Master-Push belegt zusätzlich
   Artefaktspeicher für drei Tage. Ein auf das Repository begrenztes
   Docker-Hub-Token ist empfohlen, aber noch nicht eingerichtet.
+### R41 – OGNL-Befund durch Ausschluss beheben
+
+- [x] Lokal umgesetzt und geprüft am 23. Oktober 2026.
+- **Befund:** Der Scan-Schritt „Audit Maven and frontend dependencies“ scheitert
+  seit dem 21. Oktober 2026 an GHSA-crwc-vw2r-qr6m in `ognl:ognl 3.3.4`
+  (transitiv über Thymeleaf 3.1.5, Fix erst in OGNL 3.4.13).
+- **Umgesetzt:** OGNL wird im `dependencyManagement` von `org.thymeleaf:thymeleaf`
+  ausgeschlossen. Der Spring-Dialekt wertet Ausdrücke nur mit SpringEL aus und
+  lädt den OGNL-Pfad nicht; Begründung in [dependencies.md](dependencies.md).
+- **Geprüft:** OSV-Scan mit **280 Paketversionen ohne Treffer**; vollständiges
+  `clean verify` mit **302 Surefire-Tests und einem JAR-/Chromium-Test**
+  erfolgreich, keine `NoClassDefFoundError`. Gehosteter Nachweis mit dem PR.
+- **Grenzen:** Gilt nur, solange Thymeleaf über die Spring-Integration läuft.
 
 ## Nachweise der Bestandsaufnahme
 
