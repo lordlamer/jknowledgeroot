@@ -64,7 +64,10 @@ gemeinsamen Artefakt; sie baut sie im Publish-Job nicht erneut. Im vorhandenen
 Repository `lordlamer/knowledgeroot` heißen die Tags für die Anwendung
 `v1.0.0-rc.2` beziehungsweise `sha-<Commit>` und für die Datenbank
 `database-v1.0.0-rc.2` beziehungsweise `database-sha-<Commit>`. Das sind vorbereitete
-Namenskonventionen; seit dem 19. Oktober 2026 sind sie für 1.0.0-rc.2 belegt. Für das Deployment beide
+Namenskonventionen; seit dem 19. Oktober 2026 sind sie für 1.0.0-rc.2 belegt.
+Unabhängig davon veröffentlicht jeder grüne Lauf auf `master` automatisch
+`latest` und `database-latest` (seit 23. Oktober 2026): den letzten gemergten
+Stand, ohne Freigabe und ohne Betriebsabnahme. Für das Deployment beide
 Registry-Digests festhalten und explizit als `KR_APP_IMAGE` und `KR_DB_IMAGE` setzen.
 
 ## Freigabeschritte

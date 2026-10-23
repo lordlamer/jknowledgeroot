@@ -60,11 +60,12 @@ Unter **Settings → Environments → release** mindestens einen *Required revie
 eintragen und *Prevent self-review* entsprechend dem gewählten Modell setzen.
 Administrator-Bypass für die Umgebung deaktivieren. Unter *Deployment branches
 and tags* ausschließlich **Tag `v*`** erlauben; keine Branch-Regel und keine
-zusätzlichen Muster. `DOCKERHUB_USERNAME` und `DOCKERHUB_TOKEN` ausschließlich
-als Secrets dieser Umgebung hinterlegen. Geheimnisse gehören nicht in dieses
+zusätzlichen Muster. `DOCKERHUB_USERNAME` und `DOCKERHUB_TOKEN` bleiben als
+Repository-Secrets erforderlich, weil `publish-master` sie ohne Umgebung für
+`latest` verwendet; optional gleichnamige Kopien in `release`. Geheimnisse gehören nicht in dieses
 Dokument, in Shellargumente oder in Prüfberichte.
 
-**Noch offen: Registry-Secrets umstellen.** Am 19. September sind
+**Stand der Registry-Secrets.** Am 19. September sind
 `DOCKERHUB_USERNAME` und `DOCKERHUB_TOKEN` als Repository-Secrets vorhanden,
 die neue Umgebung enthält noch keine Secrets. GitHub gibt vorhandene
 Secret-Werte
