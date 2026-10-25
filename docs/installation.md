@@ -21,7 +21,9 @@ praktisch erprobte Restore stehen weiterhin aus.
    Das individuell gewählte Passwort muss 16–128 Zeichen lang sein; empfohlen ist
    ein vom Passwortmanager erzeugtes Passwort. Keine Zugangsdaten in Git oder
    in Kommandozeilenargumenten ablegen.
-4. Die Anwendung mit `java -jar target/knowledgeroot-0.0.1-SNAPSHOT.jar` starten.
+4. Die Anwendung mit `java -jar knowledgeroot-<Version>.jar` starten; die JAR
+   liegt nach `./mvnw verify` unter `target/` oder ab `v1.0.0-rc.3` zusammen mit
+   `SHA256SUMS` als Asset des jeweiligen GitHub-Releases (siehe [release.md](release.md)).
    Zunächst laufen die Migrationen, danach wird genau ein aktiver Administrator
    angelegt. Fehlende oder ungültige Bootstrap-Werte brechen den Start ab;
    ein teilweise angelegtes Konto bleibt dabei nicht zurück. Das migrierte Schema
@@ -44,7 +46,7 @@ Passwortregeln, Hashmigration und Login-Drosselung stehen in [authentication.md]
 Nur mit einer separaten, entbehrlichen Entwicklungsdatenbank starten:
 
 ```sh
-java -jar target/knowledgeroot-0.0.1-SNAPSHOT.jar --spring.profiles.active=development
+java -jar target/knowledgeroot-<Version>.jar --spring.profiles.active=development
 ```
 
 Das Profil setzt `knowledgeroot.demo-data.enabled=true`; erst die Kombination aus

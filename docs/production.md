@@ -188,8 +188,9 @@ separaten, durch die Umgebung `release` bestätigten Publish-Job. Davor wird
 geprüft, dass der Commit zu `origin/master` gehört und der gesamte Verify-Job
 erfolgreich war. Beide Publish-Jobs laden exakt die im Verify-Job erzeugten
 App-/Datenbankimages und bauen nicht erneut; der Tag-Job veröffentlicht
-Versions- und Commit-Tags gemäß [release.md](release.md). Produktive
-Deployments referenzieren Digests, nicht `latest`.
+Versions- und Commit-Tags gemäß [release.md](release.md) und legt anschließend
+ein GitHub-Release mit der geprüften JAR, dem Manifest, den Auditberichten und
+`SHA256SUMS` an. Produktive Deployments referenzieren Digests, nicht `latest`.
 
 Im Repository verhindern seit dem 19. September aktive Rulesets Force-Pushes
 und Löschen von `master` sowie Ändern und Löschen bestehender `v*`-Tags.

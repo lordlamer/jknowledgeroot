@@ -1,6 +1,6 @@
 # Roadmap zur Produktionsreife
 
-Stand: 23. Oktober 2026. Grundlage ist die Code- und Build-Prüfung vom 12. September 2026.
+Stand: 25. Oktober 2026. Grundlage ist die Code- und Build-Prüfung vom 12. September 2026.
 
 Ziel ist eine sicher betreibbare, reproduzierbar gebaute Version mit getesteten
 Zugriffsrechten, Migrationen und Wiederherstellung. Der aktuelle Stand ist noch
@@ -33,8 +33,9 @@ den Kandidaten als Tag `v1.0.0-rc.2` (Commit `4620661`) auf Docker Hub.
 R33 ergänzt die per API geprüften GitHub-Einstellungen für einen alleinigen
 Entwickler; R34 weist den regulären PR-Merge unter diesen Regeln nach.
 Der in R30 abgeglichene GitHub-Graph enthält alle 199 erwarteten
-Maven-Pakete; der aktuelle OSV-Scan ist ohne Treffer. Der aktuelle Kandidat ist
-`1.0.0-rc.2`. Verbleibende OS-Paketbefunde, Registry-Secret-Ablage und
+Maven-Pakete; der aktuelle OSV-Scan ist ohne Treffer. R42 bereitet den
+Kandidaten `1.0.0-rc.3` vor, dessen Tag zusätzlich ein GitHub-Release mit der
+geprüften JAR anlegt. Verbleibende OS-Paketbefunde, Registry-Secret-Ablage und
 tatsächlicher Release-Ablauf, TLS/Proxy, produktive Last, Alarmierung sowie
 eigene Backup-/Wiederanlaufzeiten sind vor der Produktionsfreigabe gemäß
 [release.md](release.md) abzunehmen. Vor einem Release sind die Prüfungen für
@@ -86,6 +87,8 @@ Nachweise; maßgeblich für die aktuellen offenen Arbeiten ist diese Übersicht.
   zusammengeführt werden konnte; Regel gegebenenfalls nachschärfen. PR #264
   wurde regelkonform erst nach grünem Check gemergt.
 - [x] Tatsächlichen Freigabe-/Publish-Ablauf mit Tag `v1.0.0-rc.2` durchgespielt (R39).
+- [ ] Tag `v1.0.0-rc.3` setzen, Umgebung `release` bestätigen und das erste
+  GitHub-Release mit JAR, `SHA256SUMS` und Auditberichten prüfen (R42).
 - [ ] Release-Manifest, Images und Scanberichte des Tag-Laufs vor Ablauf der
   CI-Aufbewahrung archivieren; eigenes, auf das Repository begrenztes
   Docker-Hub-Token für die automatische `latest`-Veröffentlichung einrichten.
@@ -868,6 +871,44 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
   `clean verify` mit **302 Surefire-Tests und einem JAR-/Chromium-Test**
   erfolgreich, keine `NoClassDefFoundError`. Gehosteter Nachweis mit dem PR.
 - **Grenzen:** Gilt nur, solange Thymeleaf über die Spring-Integration läuft.
+
+### R42 – Release-JAR als GitHub-Release veröffentlichen und 1.0.0-rc.3 vorbereiten
+
+- [x] Lokal umgesetzt und geprüft am 25. Oktober 2026; gehosteter Nachweis mit
+  dem Tag `v1.0.0-rc.3` steht aus.
+- **Ziel:** Die geprüfte JAR soll ohne Docker und ohne GitHub-Anmeldung unter
+  einer stabilen Adresse herunterladbar sein, etwa für den Link auf der Homepage.
+  Workflow-Artefakte eignen sich dafür nicht (Anmeldung, drei Tage Aufbewahrung,
+  keine feste Adresse).
+- **Umgesetzt:** `scripts/release-assets.mjs assemble` stellt im Verify-Job aus
+  dem endgültigen Manifest JAR, `release-manifest.json`, `dependency-audit.json`,
+  beide OS-Scan-Zusammenfassungen und `SHA256SUMS` unter `target/release-assets/`
+  zusammen. Die JAR-Prüfsumme muss dem Manifest entsprechen; veränderter
+  Arbeitsbaum, ungeprüfte Audits, abweichender Tag oder fehlende Nachweise
+  brechen ab. Bei Tags wird das Verzeichnis als Artefakt `release-assets`
+  gesichert. Der Publish-Job lädt es, erzeugt nach dem Registry-Push mit
+  `gh release create --verify-tag` ein GitHub-Release zum Tag, hängt die Assets
+  an und schreibt JAR-Prüfsumme, beide Registry-Digests, Revision und Laufzeiten
+  in die Notizen (`notes`-Modus); Vorabversionen werden als Pre-Release markiert,
+  ein vorhandenes Release nur um Assets ergänzt. Details in
+  [release.md](release.md#github-release-und-jar-download).
+- **Rechte:** Nur der Tag-Publish-Job erhält `contents: write`; er läuft weiterhin
+  hinter der Umgebung `release`, und die Rulesets schützen `master` sowie
+  bestehende `v*`-Tags. Die Schutzprüfung bleibt lesend
+  ([repository-protection.md](repository-protection.md)).
+- **Version:** Kandidat `1.0.0-rc.3` in POM, beiden Dockerfiles, README,
+  Installations-, Release- und Abnahmedokumentation; `installation.md` nennt
+  statt des veralteten Snapshot-Namens die versionierte JAR und den Download.
+- **Geprüft:** `node --test scripts/release-assets.test.mjs` mit vier Tests
+  (Zusammenstellung und Prüfsummenformat, abgelehnte Manifeste und fehlende
+  Nachweise, Pre-Release-Erkennung, Notizen mit Digests) erfolgreich; der Test
+  läuft auch im Verify-Job vor dem Zusammenstellen. Workflow mit actionlint
+  geprüft. Der vollständige gehostete Ablauf einschließlich Release-Erstellung
+  wird erst mit dem Tag nachgewiesen.
+- **Grenzen:** Keine Signatur der Assets; die Prüfsumme belegt nur die
+  Übereinstimmung mit dem CI-Build. Die JAR benötigt Java 25 und eine eigene
+  MariaDB; das Image bleibt der empfohlene Weg. `--generate-notes` übernimmt
+  die PR-Titel seit dem vorherigen Tag ungefiltert.
 
 ## Nachweise der Bestandsaufnahme
 

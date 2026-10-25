@@ -83,8 +83,11 @@ Der Workflow prüft bei Release-Tags vor dem Build und nochmals im Publish-Job
 vor dem Registry-Login die tatsächlich gelesene GitHub-Konfiguration. Fehlt die
 Umgebung, ein Reviewer oder die genaue Tag-Beschränkung, bricht er ab. Das gilt
 auch bei nicht lesbarer API, fehlender Berechtigung oder unvollständiger Antwort.
-Ein Timer allein genügt nicht. Beide Aufrufe verwenden nur `actions: read` und
-`contents: read`; die Prüfung ändert keine Einstellungen.
+Ein Timer allein genügt nicht. Die Prüfung selbst ist lesend und ändert keine
+Einstellungen. Seit R42 besitzt der Tag-Publish-Job zusätzlich `contents: write`,
+um das GitHub-Release mit den geprüften Assets anzulegen. Dieses Token entsteht
+erst nach der Bestätigung der Umgebung `release`; die Rulesets verhindern
+weiterhin Änderungen an `master` und an bestehenden `v*`-Tags.
 
 Die erneute Prüfung erkennt beispielsweise eine zwischenzeitlich entfernte
 Reviewer-Regel. Sie belegt, dass eine Freigaberegel konfiguriert ist; die
