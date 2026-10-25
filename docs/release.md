@@ -1,5 +1,10 @@
 # Release-Kandidat und Freigabe
 
+Der nächste Kandidat **1.0.0-rc.3** ist in POM, beiden Dockerfiles und
+Dokumentation vorbereitet. Sein Tag `v1.0.0-rc.3` veröffentlicht zusätzlich zu
+den Images erstmals ein GitHub-Release mit der geprüften JAR (R42, siehe
+[GitHub-Release und JAR-Download](#github-release-und-jar-download)).
+
 Der Kandidat **1.0.0-rc.2** ist seit dem 19. Oktober 2026 als Tag
 `v1.0.0-rc.2` auf Commit `4620661` veröffentlicht: Der
 [Tag-Lauf 39252289002](https://github.com/lordlamer/jknowledgeroot/actions/runs/39252289002)
@@ -14,7 +19,7 @@ beschreibt [recovery.md](recovery.md).
 
 ## Artefakte zuordnen
 
-Der Maven-Build erzeugt `knowledgeroot-1.0.0-rc.2.jar` und eingebettete Builddaten
+Der Maven-Build erzeugt `knowledgeroot-<Version>.jar` (etwa `knowledgeroot-1.0.0-rc.3.jar`) und eingebettete Builddaten
 einschließlich Version und optional übergebener Revision. Für den Build Temurin
 JDK **25.0.4.1+1** verwenden und `JAVA_HOME` darauf setzen. Beispiel unter Bash:
 
@@ -70,6 +75,42 @@ Unabhängig davon veröffentlicht jeder grüne Lauf auf `master` automatisch
 Stand, ohne Freigabe und ohne Betriebsabnahme. Für das Deployment beide
 Registry-Digests festhalten und explizit als `KR_APP_IMAGE` und `KR_DB_IMAGE` setzen.
 
+## GitHub-Release und JAR-Download
+
+Die geprüfte JAR ist ab `v1.0.0-rc.3` ohne Docker erhältlich. Workflow-Artefakte
+sind dafür ungeeignet: Sie verlangen eine GitHub-Anmeldung, haben keine stabile
+Adresse und laufen nach drei Tagen ab. Stattdessen legt der Tag-Publish-Job nach
+dem Registry-Push ein GitHub-Release zum Tag an:
+
+1. Im Verify-Job stellt `scripts/release-assets.mjs assemble` aus dem endgültigen
+   Manifest die Assets unter `target/release-assets/` zusammen: die JAR,
+   `release-manifest.json`, `dependency-audit.json`, beide OS-Scan-Zusammenfassungen
+   und `SHA256SUMS` im Format von `sha256sum`. Die JAR-Prüfsumme muss dem
+   Manifest entsprechen; ein veränderter Arbeitsbaum, ungeprüfte Audits oder ein
+   abweichender Tag brechen den Schritt ab. Bei Tags wird das Verzeichnis als
+   Artefakt `release-assets` (drei Tage) gesichert.
+2. Der Publish-Job lädt dieses Artefakt und erzeugt nach dem Push mit
+   `gh release create --verify-tag` das Release. Die Notizen nennen JAR-Prüfsumme,
+   beide Registry-Digests, Git-Revision und Laufzeiten; GitHub ergänzt die
+   automatisch generierten Änderungshinweise. Tags mit Vorabversion wie
+   `v1.0.0-rc.3` werden als Pre-Release markiert. Existiert das Release bereits,
+   werden nur die Assets ersetzt (`--clobber`), damit ein wiederholter Lauf keine
+   Dubletten anlegt. Dafür besitzt ausschließlich dieser Job `contents: write`.
+
+Download und Prüfung, beispielsweise für `v1.0.0-rc.3`:
+
+```sh
+base=https://github.com/lordlamer/jknowledgeroot/releases/download/v1.0.0-rc.3
+curl -fsSLO "$base/knowledgeroot-1.0.0-rc.3.jar"
+curl -fsSLO "$base/SHA256SUMS"
+sha256sum -c --ignore-missing SHA256SUMS
+```
+
+Die Prüfsumme belegt die Übereinstimmung mit dem in der CI geprüften Build;
+eine Signatur der Assets gibt es nicht. Die JAR benötigt Java 25 und eine
+erreichbare MariaDB mit der Konfiguration aus [installation.md](installation.md)
+und [production.md](production.md); das Container-Image bleibt der empfohlene Weg.
+
 ## Freigabeschritte
 
 1. Sauberen Release-Commit auf `master` vorbereiten. Kandidatenversion in der POM
@@ -111,11 +152,13 @@ Registry-Digests festhalten und explizit als `KR_APP_IMAGE` und `KR_DB_IMAGE` se
    die Tag-Regel `v*`; bei fehlender Umgebung oder nicht prüfbarer API bricht
    sie vor dem Release-Build beziehungsweise Registry-Login ab.
    Erst nach Freigabe den passenden Tag, beispielsweise
-   `v1.0.0-rc.2`, erstellen. Ein abweichender Tag und eine veränderte Arbeitskopie
+   `v1.0.0-rc.3`, erstellen. Ein abweichender Tag und eine veränderte Arbeitskopie
    werden bei der Artefaktprüfung abgelehnt. Ein Kandidat ist kein endgültiges
    `v1.0.0`-Release.
 5. Beide Images, Release-Manifest, Scanberichte und Betriebsnachweise dauerhaft archivieren.
-   Die dreitägige CI-Artefaktaufbewahrung ist kein Release-Archiv. Den veröffentlichten
+   Die dreitägige CI-Artefaktaufbewahrung ist kein Release-Archiv; das GitHub-Release
+   hält ab `v1.0.0-rc.3` JAR, Manifest und Auditberichte dauerhaft vor, die
+   Images selbst liegen nur in der Registry. Den veröffentlichten
    Registry-Digest zusätzlich festhalten und im Deployment referenzieren.
 
 Die automatisierte Prüfung kann lokale und technische Nachweise liefern. Domain,

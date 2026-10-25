@@ -65,7 +65,8 @@ See the [editor guide](docs/editor.md) for supported content and upgrade checks.
 
 ## Initial administrator and upgrades
 
-The current release candidate is **1.0.0-rc.2**. See the
+The current release candidate is **1.0.0-rc.3**. Release tags publish the Docker
+images and a GitHub release that carries the verified JAR with checksums. See the
 [release guide](docs/release.md) for artifact identity and remaining approval checks,
 and [backup and recovery](docs/recovery.md) for tested backup, restore, upgrade
 and snapshot rollback procedures for the production Compose deployment.

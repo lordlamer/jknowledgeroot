@@ -2,7 +2,7 @@
 
 Dieses Protokoll ist für die konkrete Staging-/Produktionsumgebung auszufüllen.
 Lokale Tests ersetzen die Abnahme auf dem Zielsystem nicht. Der aktuelle Kandidat
-ist `1.0.0-rc.2`; eine Produktionsfreigabe wurde noch nicht erteilt.
+ist `1.0.0-rc.3`; eine Produktionsfreigabe wurde noch nicht erteilt.
 
 ## Umgebung und Verantwortliche
 

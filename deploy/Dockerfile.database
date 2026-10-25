@@ -6,6 +6,6 @@ FROM mariadb:12.3.3@sha256:99c125f103f5d081ebbc9ffe064e63daf7f688ac33a5f7f29af2d
 # Keep gpgv and the installed keyring for APT signature verification.
 # Do not autoremove MariaDB's Perl, networking or other runtime dependencies.
 RUN apt-get purge -y gpg libsqlite3-0
-ARG BUILD_VERSION=1.0.0-rc.2
+ARG BUILD_VERSION=1.0.0-rc.3
 ARG BUILD_REVISION=unknown
 LABEL org.opencontainers.image.version=$BUILD_VERSION org.opencontainers.image.revision=$BUILD_REVISION
