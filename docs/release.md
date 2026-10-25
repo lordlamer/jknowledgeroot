@@ -1,9 +1,22 @@
 # Release-Kandidat und Freigabe
 
-Der nächste Kandidat **1.0.0-rc.3** ist in POM, beiden Dockerfiles und
-Dokumentation vorbereitet. Sein Tag `v1.0.0-rc.3` veröffentlicht zusätzlich zu
-den Images erstmals ein GitHub-Release mit der geprüften JAR (R42, siehe
-[GitHub-Release und JAR-Download](#github-release-und-jar-download)).
+Der Kandidat **1.0.0-rc.3** ist seit dem 25. Oktober 2026 als Tag `v1.0.0-rc.3`
+auf Commit `46c5aa0` veröffentlicht: Der
+[Tag-Lauf 40180456687](https://github.com/lordlamer/jknowledgeroot/actions/runs/40180456687)
+bestand `verify`, und nach Bestätigung der Umgebung `release` liegen beide
+Images auf Docker Hub (`lordlamer/knowledgeroot:v1.0.0-rc.3`, Digest
+`sha256:f9f483afc6df705927385c7a72d2d04846f0da98841a4558883c503bbbc3adff`;
+`lordlamer/knowledgeroot:database-v1.0.0-rc.3`, Digest
+`sha256:04634a6d57d046a25d3c65b06a994756c14a7a38d8892570454be388a7b78dfc`).
+Erstmals gibt es dazu das
+[GitHub-Release v1.0.0-rc.3](https://github.com/lordlamer/jknowledgeroot/releases/tag/v1.0.0-rc.3)
+mit `knowledgeroot-1.0.0-rc.3.jar` (SHA-256
+`47f0cf16ebe75757c7ed79b63e408a7e8ee88e0bb97e43c9e1cc2e561d1ed2c7`), `SHA256SUMS`,
+Manifest und Auditberichten (R42, siehe
+[GitHub-Release und JAR-Download](#github-release-und-jar-download)). Der
+parallele `master`-Lauf desselben Commits hat `latest` mit einem eigenen,
+abweichenden Digest veröffentlicht; beide Läufe bauen getrennt, bitgleiche
+Images werden nicht behauptet. Das ist noch keine Produktionsfreigabe.
 
 Der Kandidat **1.0.0-rc.2** ist seit dem 19. Oktober 2026 als Tag
 `v1.0.0-rc.2` auf Commit `4620661` veröffentlicht: Der

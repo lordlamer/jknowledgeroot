@@ -11,7 +11,7 @@ ist `1.0.0-rc.3`; eine Produktionsfreigabe wurde noch nicht erteilt.
 | Datum / prüfende Person | Offen |
 | Domain und Staging-/Produktionssystem | Offen |
 | Betreiber / Vertretung / Alarmempfänger | Offen |
-| Release-Commit, Registry-Digest und Manifest | Commit `4620661`, Tag `v1.0.0-rc.2`, Lauf 39252289002; App-Digest `sha256:133cd6896b1e74487468b3b9215f6293c253e360bccf56bb5bbf1ba7de3e2d7f`, Datenbank-Digest `sha256:fc7a5d37c2f55b706fca664e454b9687b9defb7ebd7e27b54eda95cb4583f469`. Manifest und Scanberichte aus dem Lauf archivieren; Abnahme offen |
+| Release-Commit, Registry-Digest und Manifest | Commit `46c5aa0`, Tag `v1.0.0-rc.3`, Lauf 40180456687; App-Digest `sha256:f9f483afc6df705927385c7a72d2d04846f0da98841a4558883c503bbbc3adff`, Datenbank-Digest `sha256:04634a6d57d046a25d3c65b06a994756c14a7a38d8892570454be388a7b78dfc`. Manifest, Auditberichte und JAR liegen dauerhaft im GitHub-Release; Abnahme offen |
 | Datenbankversion, Speicherort und Proxyversion | Offen |
 | CPU/RAM, freier DB-/Datei-/Temp-/Backupplatz | Offen |
 | Nutzung / erwartete gleichzeitige Nutzer und Datenmenge | Intern und öffentlich; anfangs eher klein, später auch größere Bestände. Konkrete Parallelität und Datenmenge offen. |

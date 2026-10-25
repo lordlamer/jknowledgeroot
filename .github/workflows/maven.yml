@@ -207,6 +207,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0 # previous release tag for the generated notes
       - name: Recheck release protection before using registry credentials
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -247,9 +248,12 @@ jobs:
           db_digest=$(docker image inspect "lordlamer/knowledgeroot:database-$RELEASE_TAG" --format '{{index .RepoDigests 0}}')
           node scripts/release-assets.mjs notes release-assets "$RELEASE_TAG" "${app_digest#*@}" "${db_digest#*@}" > release-notes.md
           case "$RELEASE_TAG" in *-*) prerelease=--prerelease ;; *) prerelease= ;; esac
+          # Generated notes cover the range since the previous v* tag on this history, not since the previous GitHub release.
+          previous_tag=$(git tag --list 'v[0-9]*' --sort=-v:refname --merged "$RELEASE_TAG" | grep -vx "$RELEASE_TAG" | head -n 1)
           if gh release view "$RELEASE_TAG" --json id >/dev/null 2>&1; then
             gh release upload "$RELEASE_TAG" release-assets/* --clobber
           else
             gh release create "$RELEASE_TAG" --verify-tag --title "Knowledgeroot $RELEASE_TAG" \
-              --notes-file release-notes.md --generate-notes ${prerelease:+"$prerelease"} release-assets/*
+              --notes-file release-notes.md --generate-notes ${previous_tag:+--notes-start-tag "$previous_tag"} \
+              ${prerelease:+"$prerelease"} release-assets/*
           fi
