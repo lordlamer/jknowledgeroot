@@ -33,9 +33,9 @@ den Kandidaten als Tag `v1.0.0-rc.2` (Commit `4620661`) auf Docker Hub.
 R33 ergänzt die per API geprüften GitHub-Einstellungen für einen alleinigen
 Entwickler; R34 weist den regulären PR-Merge unter diesen Regeln nach.
 Der in R30 abgeglichene GitHub-Graph enthält alle 199 erwarteten
-Maven-Pakete; der aktuelle OSV-Scan ist ohne Treffer. R42 bereitet den
-Kandidaten `1.0.0-rc.3` vor, dessen Tag zusätzlich ein GitHub-Release mit der
-geprüften JAR anlegt. Verbleibende OS-Paketbefunde, Registry-Secret-Ablage und
+Maven-Pakete; der aktuelle OSV-Scan ist ohne Treffer. R42 veröffentlicht den
+Kandidaten `1.0.0-rc.3` (Commit `46c5aa0`) auf Docker Hub und erstmals als
+GitHub-Release mit der geprüften JAR. Verbleibende OS-Paketbefunde, Registry-Secret-Ablage und
 tatsächlicher Release-Ablauf, TLS/Proxy, produktive Last, Alarmierung sowie
 eigene Backup-/Wiederanlaufzeiten sind vor der Produktionsfreigabe gemäß
 [release.md](release.md) abzunehmen. Vor einem Release sind die Prüfungen für
@@ -87,8 +87,8 @@ Nachweise; maßgeblich für die aktuellen offenen Arbeiten ist diese Übersicht.
   zusammengeführt werden konnte; Regel gegebenenfalls nachschärfen. PR #264
   wurde regelkonform erst nach grünem Check gemergt.
 - [x] Tatsächlichen Freigabe-/Publish-Ablauf mit Tag `v1.0.0-rc.2` durchgespielt (R39).
-- [ ] Tag `v1.0.0-rc.3` setzen, Umgebung `release` bestätigen und das erste
-  GitHub-Release mit JAR, `SHA256SUMS` und Auditberichten prüfen (R42).
+- [x] Tag `v1.0.0-rc.3` gesetzt, Umgebung `release` bestätigt und das erste
+  GitHub-Release mit JAR, `SHA256SUMS` und Auditberichten geprüft (R42).
 - [ ] Release-Manifest, Images und Scanberichte des Tag-Laufs vor Ablauf der
   CI-Aufbewahrung archivieren; eigenes, auf das Repository begrenztes
   Docker-Hub-Token für die automatische `latest`-Veröffentlichung einrichten.
@@ -874,8 +874,8 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 
 ### R42 – Release-JAR als GitHub-Release veröffentlichen und 1.0.0-rc.3 vorbereiten
 
-- [x] Lokal umgesetzt und geprüft am 25. Oktober 2026; gehosteter Nachweis mit
-  dem Tag `v1.0.0-rc.3` steht aus.
+- [x] Umgesetzt am 25. Oktober 2026 und mit dem Tag `v1.0.0-rc.3` gehostet
+  nachgewiesen.
 - **Ziel:** Die geprüfte JAR soll ohne Docker und ohne GitHub-Anmeldung unter
   einer stabilen Adresse herunterladbar sein, etwa für den Link auf der Homepage.
   Workflow-Artefakte eignen sich dafür nicht (Anmeldung, drei Tage Aufbewahrung,
@@ -903,12 +903,30 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
   (Zusammenstellung und Prüfsummenformat, abgelehnte Manifeste und fehlende
   Nachweise, Pre-Release-Erkennung, Notizen mit Digests) erfolgreich; der Test
   läuft auch im Verify-Job vor dem Zusammenstellen. Workflow mit actionlint
-  geprüft. Der vollständige gehostete Ablauf einschließlich Release-Erstellung
-  wird erst mit dem Tag nachgewiesen.
+  geprüft.
+- **Gehosteter Nachweis:** PR #269 bestand `verify` einschließlich des neuen
+  Zusammenstellungsschritts. Nach dem Merge (`46c5aa0`) veröffentlichte der
+  [Tag-Lauf 40180456687](https://github.com/lordlamer/jknowledgeroot/actions/runs/40180456687)
+  nach Bestätigung der Umgebung die Images `v1.0.0-rc.3`
+  (`sha256:f9f483af…`) und `database-v1.0.0-rc.3` (`sha256:04634a6d…`) und das
+  [GitHub-Release v1.0.0-rc.3](https://github.com/lordlamer/jknowledgeroot/releases/tag/v1.0.0-rc.3)
+  als Pre-Release mit sechs Assets. Die heruntergeladene JAR besteht
+  `sha256sum -c SHA256SUMS`, ihre Prüfsumme und die eingebetteten Builddaten
+  (Version, Revision) stimmen mit dem Manifest überein, und die Digests in den
+  Notizen entsprechen den Registry-Digests der Tags. Die JAR startet lokal mit
+  Java 25 gegen MariaDB 12.3 in 12,5 s; Health `UP`, Anmeldung mit den
+  Demo-Zugangsdaten erfolgreich. Der parallele `master`-Lauf hat `latest`
+  mit abweichendem Digest aus einem eigenen Build desselben Commits veröffentlicht.
+- **Nachtrag:** GitHubs generierte Notizen beziehen sich auf das vorherige
+  *Release*, nicht auf den vorherigen Tag. Da `v1.0.0-rc.2` kein Release hatte,
+  listeten sie zunächst sämtliche PRs seit 2020; die Notizen von rc.3 wurden
+  per API auf den Bereich seit `v1.0.0-rc.2` gekürzt. Der Publish-Job übergibt
+  künftig den vorherigen `v*`-Tag der Historie als `--notes-start-tag` und
+  lädt dafür die Tags mit (`fetch-depth: 0`).
 - **Grenzen:** Keine Signatur der Assets; die Prüfsumme belegt nur die
   Übereinstimmung mit dem CI-Build. Die JAR benötigt Java 25 und eine eigene
   MariaDB; das Image bleibt der empfohlene Weg. `--generate-notes` übernimmt
-  die PR-Titel seit dem vorherigen Tag ungefiltert.
+  die PR-Titel seit dem vorherigen `v*`-Tag ungefiltert.
 
 ## Nachweise der Bestandsaufnahme
 
