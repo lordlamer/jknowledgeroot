@@ -24,7 +24,7 @@ import java.util.Optional;
 
 @Controller
 @RequiredArgsConstructor
-class SearchController {
+public class SearchController {
     private static final int PAGE_SIZE = 20;
     private static final int SNIPPET_LENGTH = 300;
     private static final int MAX_PATH_DEPTH = 12;
@@ -66,7 +66,7 @@ class SearchController {
     }
 
     /** Plain-text excerpt centred on the first match, or the beginning of the page when only the title matches. */
-    static String snippet(String html, String term) {
+    public static String snippet(String html, String term) {
         if (html == null) return "";
         String text = HtmlUtils.htmlUnescape(html.replaceAll("<[^>]*>", " ")).replaceAll("\\s+", " ").trim();
         if (text.length() <= SNIPPET_LENGTH) return text;

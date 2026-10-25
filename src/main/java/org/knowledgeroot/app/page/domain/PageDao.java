@@ -17,6 +17,9 @@ public interface PageDao {
     List<Page> listNavigationPages(int parent, int after, Integer viewer);
     Optional<Page> findNavigationPage(PageId id, Integer viewer);
 
+    /** The given parents that have at least one child the viewer may see. */
+    java.util.Set<Integer> parentsWithVisibleChildren(java.util.Collection<Integer> parents, Integer viewer);
+
     /**
      * find page by given id
      * @param pageId

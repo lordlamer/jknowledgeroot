@@ -98,6 +98,12 @@ must rotate or disable remaining demo credentials before upgrading outside
 development. See the [installation and upgrade guide](docs/installation.md)
 for bootstrap rules, migration checks, and session schema ownership.
 
+## Mobile app and client API
+
+The Knowledgeroot Flutter app uses the JSON API under `/api/v1` with the regular
+session and CSRF protection. See the [client API guide](docs/client-api.md) for
+endpoints, authentication and the accompanying utf8mb4 migration.
+
 ## Page permissions
 
 New child pages dynamically inherit their parent's permissions. New root pages

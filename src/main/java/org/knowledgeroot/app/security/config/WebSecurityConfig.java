@@ -11,7 +11,13 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.util.matcher.AnyRequestMatcher;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.context.DelegatingSecurityContextRepository;
@@ -45,14 +51,17 @@ public class WebSecurityConfig {
 
     @Bean
     protected SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        SecurityContextRepository contextRepository = new DelegatingSecurityContextRepository(
-                new RequestAttributeSecurityContextRepository(), new HttpSessionSecurityContextRepository());
+        SecurityContextRepository contextRepository = securityContextRepository();
         return http
                 .securityContext(context -> context.securityContextRepository(contextRepository))
                 .addFilterBefore(new SessionUserValidationFilter(userContext, contextRepository),
                         AnonymousAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers("/actuator/**").hasRole("ADMIN");
+                    // Client API: guests may read public pages like in the web UI; the controllers
+                    // apply page permissions and reject guest writes themselves.
+                    auth.requestMatchers("/api/v1/admin/**").hasRole("ADMIN");
+                    auth.requestMatchers("/api/v1/**").permitAll();
                     // Star endpoints — require an authenticated (non-guest) user. Must come
                     // before the /ui/page/** permitAll rule since the first match wins.
                     auth.requestMatchers(HttpMethod.POST,   "/ui/page/*/star").hasAnyRole("USER", "ADMIN");
@@ -117,9 +126,28 @@ public class WebSecurityConfig {
                         .permitAll()
                 )
                 .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRepository(csrfTokenRepository())
                 )
+                // App clients get a status code instead of the browser login redirect.
+                // A single registered entry point would become the default for every route,
+                // so the browser login redirect is registered explicitly for everything else.
+                .exceptionHandling(exceptions -> exceptions
+                        .defaultAuthenticationEntryPointFor(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                                PathPatternRequestMatcher.withDefaults().matcher("/api/v1/**"))
+                        .defaultAuthenticationEntryPointFor(new LoginUrlAuthenticationEntryPoint("/login"),
+                                AnyRequestMatcher.INSTANCE))
                 .build();
+    }
+
+    /** Session-backed security context storage, shared with the client API login. */
+    public static SecurityContextRepository securityContextRepository() {
+        return new DelegatingSecurityContextRepository(
+                new RequestAttributeSecurityContextRepository(), new HttpSessionSecurityContextRepository());
+    }
+
+    /** Stateless cookie repository; separate instances with these settings are interchangeable. */
+    public static CsrfTokenRepository csrfTokenRepository() {
+        return CookieCsrfTokenRepository.withHttpOnlyFalse();
     }
 
     @Autowired

@@ -158,9 +158,8 @@ public class UserImpl implements UserDao {
      */
     @Override
     public User findById(UserId userId) {
-        return userEntityConverter.convertBtoA(
-            findEntityById(userId.value())
-        );
+        UserEntity entity = findEntityById(userId.value());
+        return entity == null ? null : userEntityConverter.convertBtoA(entity);
     }
 
     /**
