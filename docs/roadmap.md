@@ -35,8 +35,10 @@ Entwickler; R34 weist den regulären PR-Merge unter diesen Regeln nach.
 Der in R30 abgeglichene GitHub-Graph enthält alle 199 erwarteten
 Maven-Pakete; der aktuelle OSV-Scan ist ohne Treffer. R42 veröffentlicht den
 Kandidaten `1.0.0-rc.3` (Commit `46c5aa0`) auf Docker Hub und erstmals als
-GitHub-Release mit der geprüften JAR. Verbleibende OS-Paketbefunde, Registry-Secret-Ablage und
-tatsächlicher Release-Ablauf, TLS/Proxy, produktive Last, Alarmierung sowie
+GitHub-Release mit der geprüften JAR. R43 entfernt auf Entscheidung des
+Eigentümers die manuelle Release-Bestätigung; ein gepushter Tag veröffentlicht
+nach erfolgreichem `verify` ohne weiteren Schritt. Verbleibende
+OS-Paketbefunde, TLS/Proxy, produktive Last, Alarmierung sowie
 eigene Backup-/Wiederanlaufzeiten sind vor der Produktionsfreigabe gemäß
 [release.md](release.md) abzunehmen. Vor einem Release sind die Prüfungen für
 dessen konkreten Commit erneut auszuführen. Das
@@ -49,9 +51,9 @@ Die anfängliche GitHub-Prüfung vom 19. September zeigte fehlenden Branch-/Tag-
 und eine fehlende Umgebung `release`. R32 aktiviert inzwischen zwei Basis-Rulesets
 gegen das Umschreiben/Löschen der Hauptbranch-Historie und bestehender Release-Tags.
 Der Eigentümer arbeitet allein. R33 aktiviert PR-Pflicht und den erforderlichen
-Check `verify` ohne fremde Review-Freigabe; Releases bestätigt `lordlamer`
-selbst in der geschützten Umgebung `release`. Die Registry-Secrets liegen auf
-Repository-Ebene und müssen vor einer Veröffentlichung umgestellt werden.
+Check `verify` ohne fremde Review-Freigabe. Die in R33 eingerichtete
+Umgebung `release` mit eigener Bestätigung ist seit R43 wieder entfernt; die
+Registry-Secrets bleiben auf Repository-Ebene.
 
 Am 13. September wurde der vorhandene [erfolgreiche GitHub-Lauf](https://github.com/lordlamer/jknowledgeroot/actions/runs/34764388748)
 für `508ac87` geprüft: Verify einschließlich Build, Scans und Wiederherstellung
@@ -79,7 +81,8 @@ Nachweise; maßgeblich für die aktuellen offenen Arbeiten ist diese Übersicht.
   Bearbeiter und Passwort vergessen per bestätigter E-Mail.
 - [ ] Zielsystem, Domain, Betreiber/Vertretung, erwartete Nutzer-/Datenmengen und Betriebsgrenzen festlegen.
 - [x] Branch-/Tag-Schutz, PR-Pflicht mit erfolgreichem `verify` und eigene
-  Release-Bestätigung konfigurieren (R32/R33).
+  Release-Bestätigung konfigurieren (R32/R33); die Bestätigung ist in R43 auf
+  Entscheidung des Eigentümers wieder entfallen.
 - [x] Jackson 2.21.5/3.1.5 und DOMPurify 3.4.15 auf die korrigierten Versionen
   gehoben, OSV-Scan lokal ohne Treffer (R37); gehosteter Nachweis steht aus.
 - [x] Grüner gehosteter CI-Lauf für den korrigierten Stand (R37, `2f3f345`).
@@ -89,6 +92,8 @@ Nachweise; maßgeblich für die aktuellen offenen Arbeiten ist diese Übersicht.
 - [x] Tatsächlichen Freigabe-/Publish-Ablauf mit Tag `v1.0.0-rc.2` durchgespielt (R39).
 - [x] Tag `v1.0.0-rc.3` gesetzt, Umgebung `release` bestätigt und das erste
   GitHub-Release mit JAR, `SHA256SUMS` und Auditberichten geprüft (R42).
+- [x] Manuelle Release-Freigabe abgeschafft: Umgebung `release` und
+  Schutzskript entfernt, Tag-Push veröffentlicht direkt (R43).
 - [ ] Release-Manifest, Images und Scanberichte des Tag-Laufs vor Ablauf der
   CI-Aufbewahrung archivieren; eigenes, auf das Repository begrenztes
   Docker-Hub-Token für die automatische `latest`-Veröffentlichung einrichten.
@@ -927,6 +932,38 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
   Übereinstimmung mit dem CI-Build. Die JAR benötigt Java 25 und eine eigene
   MariaDB; das Image bleibt der empfohlene Weg. `--generate-notes` übernimmt
   die PR-Titel seit dem vorherigen `v*`-Tag ungefiltert.
+
+### R43 – Manuelle Release-Freigabe entfernen
+
+- [x] Umgesetzt am 25. Oktober 2026.
+- **Entscheidung:** Der Eigentümer will Releases nicht mehr manuell bestätigen.
+  Der bisherige Klick in der Umgebung `release` war beim alleinigen Entwickler
+  ein zweiter Schritt desselben Kontos nach dem bewussten Tag-Push; die
+  Registry-Secrets lagen ohnehin auf Repository-Ebene, sodass die Umgebung sie
+  nicht zusätzlich schützte.
+- **Umgesetzt:** Der Job `publish` läuft ohne `environment`. Die beiden
+  Schritte der lesenden Schutzprüfung im Verify- und Publish-Job sowie
+  `scripts/release-protection.mjs` samt Test sind entfernt; die dafür
+  benötigte Berechtigung `actions: read` entfällt in beiden Jobs. Die
+  API-Konfigurationen unter `.github/environments/` sind gelöscht, ebenso die
+  Umgebung `release` auf GitHub (sie enthielt keine Secrets oder Variablen).
+- **Verbleibende Sicherungen:** `publish` startet nur für Tags `v*` auf
+  Commits aus `origin/master` nach vollständigem `verify`; der Tag muss der
+  Maven-Version entsprechen, Arbeitskopie sauber und Audits bestanden. Die
+  Rulesets gegen Umschreiben von `master` und bestehenden `v*`-Tags bleiben
+  aktiv. PRs erhalten weiterhin keine Registry-Zugangsdaten.
+- **Doku:** [repository-protection.md](repository-protection.md) beschreibt
+  das neue Modell, die Folgen eines versehentlichen Tags und den Weg zurück zu
+  einer Bestätigung; [production.md](production.md), [release.md](release.md)
+  und das [Abnahmeprotokoll](operational-acceptance.md) sind angepasst.
+- **Geprüft:** Workflow mit actionlint 1.7.7 geprüft; `node --test
+  scripts/release-assets.test.mjs` weiterhin erfolgreich. Keine Veränderung
+  an Build, Tests oder Images.
+- **Grenzen:** Ein versehentlich oder von einem kompromittierten Rechner
+  gepushter Tag veröffentlicht nach dem Verify-Lauf ohne Rückfrage. Der Tag
+  selbst lässt sich danach nicht löschen; Docker-Hub-Tags und GitHub-Release
+  müssten von Hand entfernt werden. Ein gehosteter Nachweis des Tag-Laufs ohne
+  Umgebung steht mit dem nächsten Tag an.
 
 ## Nachweise der Bestandsaufnahme
 

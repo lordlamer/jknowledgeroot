@@ -156,18 +156,16 @@ und [production.md](production.md); das Container-Image bleibt der empfohlene We
    Passwortwechsel mit mehreren Sitzungen, Verschieben einschließlich vererbter
    Freigaben und Versionsvergleiche gemäß [product-functions.md](product-functions.md)
    gehören ebenfalls zur Abnahme; diese Funktionen sind seit R23–R25 enthalten.
-4. Repository-Schutz und GitHub-Umgebung `release` gemäß
-   [repository-protection.md](repository-protection.md) vervollständigen.
-   PR-/CI-Pflichtregeln und die eigene Release-Bestätigung durch `lordlamer`
-   sind eingerichtet. Noch offen: Docker-Hub-Secrets ausschließlich in `release`
-   hinterlegen und anschließend die gleichnamigen Repository-Secrets entfernen.
-   Die technische Prüfung verlangt konfigurierte Reviewer und ausschließlich
-   die Tag-Regel `v*`; bei fehlender Umgebung oder nicht prüfbarer API bricht
-   sie vor dem Release-Build beziehungsweise Registry-Login ab.
-   Erst nach Freigabe den passenden Tag, beispielsweise
-   `v1.0.0-rc.3`, erstellen. Ein abweichender Tag und eine veränderte Arbeitskopie
-   werden bei der Artefaktprüfung abgelehnt. Ein Kandidat ist kein endgültiges
-   `v1.0.0`-Release.
+4. Repository-Schutz gemäß [repository-protection.md](repository-protection.md)
+   prüfen: Rulesets gegen Umschreiben von `master` und bestehenden `v*`-Tags
+   sowie PR-Pflicht mit erfolgreichem `verify` sind aktiv. Eine manuelle
+   Release-Bestätigung gibt es seit R43 nicht mehr: Der Push des Tags ist die
+   Freigabe, der Publish-Job startet direkt nach erfolgreichem `verify`.
+   Deshalb den passenden Tag, beispielsweise `v1.0.0-rc.3`, erst nach
+   abgeschlossener Abnahme erstellen. Ein abweichender Tag und eine veränderte
+   Arbeitskopie werden bei der Artefaktprüfung abgelehnt; ein veröffentlichter
+   Tag lässt sich nicht mehr verschieben oder löschen. Ein Kandidat ist kein
+   endgültiges `v1.0.0`-Release.
 5. Beide Images, Release-Manifest, Scanberichte und Betriebsnachweise dauerhaft archivieren.
    Die dreitägige CI-Artefaktaufbewahrung ist kein Release-Archiv; das GitHub-Release
    hält ab `v1.0.0-rc.3` JAR, Manifest und Auditberichte dauerhaft vor, die
