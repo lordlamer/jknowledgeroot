@@ -183,9 +183,10 @@ automatisch und ohne Freigabe als `lordlamer/knowledgeroot:latest` und
 `database-latest`; ein Lauf, dessen Commit beim Publizieren nicht mehr die
 Spitze von `master` ist, überspringt das, damit `latest` nie zurückspringt.
 `latest` ist damit der letzte gemergte Entwicklungsstand, keine freigegebene
-Version. Nur Pushes eines Tags wie `v1.0.0` oder `v1.0.0-rc.2` starten den
-separaten, durch die Umgebung `release` bestätigten Publish-Job. Davor wird
-geprüft, dass der Commit zu `origin/master` gehört und der gesamte Verify-Job
+Version. Nur Pushes eines Tags wie `v1.0.0` oder `v1.0.0-rc.3` starten den
+separaten Publish-Job; seit R43 läuft er ohne manuelle Freigabe, der Tag-Push
+ist die Entscheidung. Davor wird geprüft, dass der Tag der Maven-Version
+entspricht, der Commit zu `origin/master` gehört und der gesamte Verify-Job
 erfolgreich war. Beide Publish-Jobs laden exakt die im Verify-Job erzeugten
 App-/Datenbankimages und bauen nicht erneut; der Tag-Job veröffentlicht
 Versions- und Commit-Tags gemäß [release.md](release.md) und legt anschließend
@@ -197,22 +198,17 @@ und Löschen von `master` sowie Ändern und Löschen bestehender `v*`-Tags.
 Zusätzlich verlangt `master` einen Pull Request mit erfolgreichem `verify` und
 aktuellem Basisbranch; eine fremde Review-Freigabe ist beim alleinigen
 Entwickler
-nicht erforderlich. Die GitHub-Umgebung `release` verlangt die eigene
-Bestätigung
-durch `lordlamer`, erlaubt nur Tags `v*` und keinen Administrator-Bypass.
-`DOCKERHUB_USERNAME` und `DOCKERHUB_TOKEN` liegen als Repository-Secrets vor und
-werden vom Job `publish-master` ohne Umgebung benötigt. Für den Tag-Job können
-zusätzlich gleichnamige Secrets in `release` hinterlegt werden; ein eigenes,
-auf das Repository `lordlamer/knowledgeroot` begrenztes Docker-Hub-Token ist
-empfohlen. Das bestehende Imageziel ist `lordlamer/knowledgeroot`; bei einem
-Fork anpassen.
-Der Workflow liest die Release-Regeln vor einem Tag-Build und nochmals vor dem
-Registry-Login: Ohne Reviewer und die ausschließliche Tag-Regel `v*` bricht er ab.
-Die eigentliche Freigabe erzwingt GitHub; die Secret-Ablage und der tatsächliche
-Publish-Ablauf bleiben Teil der Betriebsabnahme. Das bestätigte Freigabemodell
-und die genauen Einstellungen stehen in
-[repository-protection.md](repository-protection.md).
-Eine Veröffentlichung wurde nicht ausgeführt.
+nicht erforderlich. Eine GitHub-Umgebung mit Reviewer gibt es seit R43 nicht
+mehr: Wer einen Tag `v*` pusht, veröffentlicht damit nach erfolgreichem
+`verify` Images und GitHub-Release. `DOCKERHUB_USERNAME` und
+`DOCKERHUB_TOKEN` liegen als Repository-Secrets vor und werden von beiden
+Publish-Jobs verwendet; ein eigenes, auf das Repository
+`lordlamer/knowledgeroot` begrenztes Docker-Hub-Token ist empfohlen. Das
+bestehende Imageziel ist `lordlamer/knowledgeroot`; bei einem Fork anpassen.
+Das Freigabemodell, die verbleibenden Sicherungen und der Weg zurück zu einer
+manuellen Bestätigung stehen in
+[repository-protection.md](repository-protection.md). Der Publish-Ablauf ist
+mit `v1.0.0-rc.2` und `v1.0.0-rc.3` nachgewiesen ([release.md](release.md)).
 Der separate Travis-Workflow bleibt eine reine Prüfung ohne Veröffentlichung.
 
 ## Prüfungen und Grenzen

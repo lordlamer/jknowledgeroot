@@ -1,8 +1,9 @@
 # Repository- und Release-Schutz
 
-Der Schutz besteht aus getrennten Ebenen: unveränderliche Historie und Release-Tags,
-geprüfte Änderungen am Hauptbranch und eine bewusste Freigabe der Veröffentlichung.
-Der technische Release-Check ersetzt weder die GitHub-Freigabe noch die Betriebsabnahme.
+Der Schutz besteht aus getrennten Ebenen: unveränderliche Historie und Release-Tags
+sowie geprüfte Änderungen am Hauptbranch. Die Veröffentlichung eines Release-Tags
+läuft seit R43 ohne manuelle Freigabe; der Push des Tags ist die Entscheidung.
+Die Rulesets ersetzen nicht die Betriebsabnahme.
 
 ## Schutz der bestehenden Historie
 
@@ -31,15 +32,15 @@ Löschen bleiben verboten.
 | --- | --- | --- |
 | Änderungen an `master` | PR mit erfolgreichem `verify`, keine fremde Review-Freigabe erforderlich | PR mit erfolgreichem `verify` und mindestens einer fremden Freigabe |
 | Neue Commits im PR | CI erneut prüfen | CI erneut prüfen, alte Freigaben verwerfen |
-| Reviewer der Umgebung `release` | Repository-Eigentümer | Benannte weitere Person oder Team |
-| Prevent self-review | Aus; bewusste eigene Release-Bestätigung bleibt erforderlich | An |
+| Veröffentlichung eines `v*`-Tags | Automatisch nach erfolgreichem `verify`; der Tag-Push durch den Eigentümer ist die Freigabe | Zusätzliche Bestätigung durch eine weitere Person in einer GitHub-Umgebung |
 
 Der Eigentümer hat das Modell **Einzelperson** bestätigt. Ruleset **23698955**
 setzt es ohne Bypass-Akteure um; die Konfiguration liegt unter
 [master-verification.json](../.github/rulesets/master-verification.json).
 Es verlangt weder Code-Owner-Freigaben noch die Zustimmung einer weiteren Person
-zum letzten Push oder zu nicht zugeordneten Änderungen. Die zweite Spalte der
-Tabelle beschreibt eine eigene Bestätigung, kein Vier-Augen-Prinzip.
+zum letzten Push oder zu nicht zugeordneten Änderungen. Die Spalte
+**Einzelperson** beschreibt kein Vier-Augen-Prinzip: Wer `master` ändern und
+Tags pushen darf, veröffentlicht damit auch.
 
 Neue Änderungen gehen auf einen Arbeitsbranch und anschließend als Pull Request
 nach `master`. Direkte Pushes nach `master` sind gesperrt. Nach erfolgreichem
@@ -47,93 +48,75 @@ nach `master`. Direkte Pushes nach `master` sind gesperrt. Nach erfolgreichem
 Ist der Basisbranch inzwischen weitergelaufen, muss der PR aktualisiert und
 erneut geprüft werden. Auch reine Dokumentationsänderungen durchlaufen `verify`.
 
-## Umgebung `release` einrichten und prüfen
+## Veröffentlichung von Release-Tags
 
-Die Umgebung **release** ist eingerichtet: Reviewer **lordlamer** (Benutzer-ID
-`1414066`), eigene Bestätigung erlaubt, Administrator-Bypass deaktiviert und
-ausschließlich Tags mit Muster `v*` zugelassen. Die API-Konfigurationen stehen
-unter [release.json](../.github/environments/release.json) und
-[release-tag-policy.json](../.github/environments/release-tag-policy.json).
-Die Benutzer-ID ist repositoryspezifisch und bei einem Fork anzupassen.
+Bis R42 lief der Tag-Publish-Job in der GitHub-Umgebung `release`, die eine
+eigene Bestätigung durch `lordlamer` verlangte; ein lesendes Skript prüfte diese
+Regel vor dem Build und vor dem Registry-Login. Seit R43 (25. Oktober 2026)
+entfällt beides auf Entscheidung des Eigentümers: Der Job `publish` startet
+direkt nach erfolgreichem `verify`, die Umgebung `release` ist gelöscht (sie
+enthielt keine Secrets oder Variablen), und die früheren Konfigurationen unter
+`.github/environments/` sowie `scripts/release-protection.mjs` sind entfernt.
+Der Klick war beim alleinigen Entwickler ein zweiter Schritt desselben Kontos
+nach dem bewussten Tag-Push; die Registry-Secrets lagen ohnehin auf
+Repository-Ebene, sodass die Umgebung sie nicht zusätzlich schützte.
 
-Unter **Settings → Environments → release** mindestens einen *Required reviewer*
-eintragen und *Prevent self-review* entsprechend dem gewählten Modell setzen.
-Administrator-Bypass für die Umgebung deaktivieren. Unter *Deployment branches
-and tags* ausschließlich **Tag `v*`** erlauben; keine Branch-Regel und keine
-zusätzlichen Muster. `DOCKERHUB_USERNAME` und `DOCKERHUB_TOKEN` bleiben als
-Repository-Secrets erforderlich, weil `publish-master` sie ohne Umgebung für
-`latest` verwendet; optional gleichnamige Kopien in `release`. Geheimnisse gehören nicht in dieses
-Dokument, in Shellargumente oder in Prüfberichte.
+Was die Veröffentlichung weiterhin absichert:
 
-**Stand der Registry-Secrets.** Am 19. September sind
-`DOCKERHUB_USERNAME` und `DOCKERHUB_TOKEN` als Repository-Secrets vorhanden,
-die neue Umgebung enthält noch keine Secrets. GitHub gibt vorhandene
-Secret-Werte
-nicht zurück; sie lassen sich deshalb nicht durch Auslesen übernehmen.
-Der Eigentümer hinterlegt beide Werte direkt unter
-[Settings → Environments →
-release](https://github.com/lordlamer/jknowledgeroot/settings/environments)
-als Environment-Secrets. Anschließend die beiden gleichnamigen
-Repository-Secrets
-unter **Settings → Secrets and variables → Actions** entfernen und die Ablage
-erneut anhand der Namen prüfen. Die bestehenden Repository-Secrets wurden nicht
-verändert. Zugangsdaten nicht in einen Chat oder in Git eingeben.
+- `publish` läuft nur für Pushes von Tags `v*`, deren Commit zu `origin/master`
+  gehört, und erst nach dem vollständigen Verify-Job mit Tests, Containerstart,
+  Proxy-/Lasttest und OS-Audits. Pull Requests und Branches erhalten keine
+  Registry-Zugangsdaten.
+- Der Tag muss der Maven-Version entsprechen, die Arbeitskopie sauber und die
+  Audits bestanden sein; sonst bricht die Zusammenstellung der Release-Assets
+  im Verify-Job ab ([release.md](release.md#github-release-und-jar-download)).
+- Die Rulesets verhindern weiterhin das Umschreiben von `master` und das
+  Verschieben oder Löschen bestehender `v*`-Tags. Ein veröffentlichter Tag
+  bleibt dauerhaft auf seinem Commit.
+- Tags pushen kann nur, wer Schreibrechte auf das Repository hat; beim
+  alleinigen Entwickler ist das der Eigentümer.
 
-Der Workflow prüft bei Release-Tags vor dem Build und nochmals im Publish-Job
-vor dem Registry-Login die tatsächlich gelesene GitHub-Konfiguration. Fehlt die
-Umgebung, ein Reviewer oder die genaue Tag-Beschränkung, bricht er ab. Das gilt
-auch bei nicht lesbarer API, fehlender Berechtigung oder unvollständiger Antwort.
-Ein Timer allein genügt nicht. Die Prüfung selbst ist lesend und ändert keine
-Einstellungen. Seit R42 besitzt der Tag-Publish-Job zusätzlich `contents: write`,
-um das GitHub-Release mit den geprüften Assets anzulegen. Dieses Token entsteht
-erst nach der Bestätigung der Umgebung `release`; die Rulesets verhindern
-weiterhin Änderungen an `master` und an bestehenden `v*`-Tags.
+Folgen: Ein versehentlich gepushter Tag veröffentlicht nach dem Verify-Lauf
+ohne Rückfrage Images und ein GitHub-Release. Der Tag selbst lässt sich danach
+nicht löschen; Docker-Hub-Tags und das GitHub-Release müssten von Hand entfernt
+und der Stand durch einen neuen Tag ersetzt werden. Ein kompromittiertes Konto
+oder ein kompromittierter Rechner des Eigentümers kann ohne weiteren Schritt
+veröffentlichen. Dieses Risiko trägt der Eigentümer bewusst.
 
-Die erneute Prüfung erkennt beispielsweise eine zwischenzeitlich entfernte
-Reviewer-Regel. Sie belegt, dass eine Freigaberegel konfiguriert ist; die
-eigentliche Freigabe erzwingt GitHub. Administrator-Bypass, Secret-Ablage,
-Reviewer-Berechtigungen und eine tatsächliche Release-Bestätigung sind zusätzlich
-bei der Betriebsabnahme zu kontrollieren. Ein erfolgreicher Test mit simulierten
-API-Antworten ist keine Freigabe des realen Zielsystems.
+Soll wieder eine Bestätigung verlangt werden: im Job `publish` die Zeile
+`environment: release` eintragen und die Umgebung unter **Settings →
+Environments** mit mindestens einem *Required reviewer* und ausschließlich der
+Tag-Regel `v*` anlegen. GitHub legt eine im Workflow genannte, fehlende Umgebung
+sonst automatisch ohne Schutzregeln an; `environment: release` allein genügt
+deshalb nicht. Siehe
+[GitHub: Umgebungen verwalten](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).
 
-Lesender Aufruf mit einem bereits sicher bereitgestellten Token:
-
-```sh
-GITHUB_REPOSITORY=lordlamer/jknowledgeroot node scripts/release-protection.mjs
-```
-
-`GITHUB_TOKEN` muss im Prozess vorhanden sein. Nicht als Literal in den Aufruf
-einsetzen. Unter Windows kann die projektlokale Node-Binärdatei
-`target/frontend/node/node.exe` verwendet werden.
+`DOCKERHUB_USERNAME` und `DOCKERHUB_TOKEN` liegen als Repository-Secrets vor
+und werden von `publish-master` (für `latest`) und `publish` (für Versionstags)
+verwendet. Ein eigenes, auf das Repository `lordlamer/knowledgeroot` begrenztes
+Docker-Hub-Token ist empfohlen. Geheimnisse gehören nicht in dieses Dokument,
+in Shellargumente oder in Prüfberichte. Seit R42 besitzt der Job `publish`
+zusätzlich `contents: write`, um das GitHub-Release mit den geprüften Assets
+anzulegen; die Rulesets verhindern weiterhin Änderungen an `master` und an
+bestehenden `v*`-Tags.
 
 ## Abnahme
 
 - Die aktiven Rulesets per API zurücklesen und mit den drei JSON-Dateien
   vergleichen.
 - Erforderlichen CI-Check und das bestätigte Einzelpersonenmodell kontrollieren.
-- Umgebung und Tag-Regel prüfen; der lesende Release-Check muss erfolgreich sein.
-- Die fehlenden Regeln absichtlich nur in automatisierten Test-Fixtures simulieren;
-  dafür keine echte Schutzregel deaktivieren und keinen Release-Tag erzeugen.
+- Prüfen, dass der Job `publish` keine Umgebung referenziert, nur für Tags `v*`
+  läuft und `verify` voraussetzt.
 - Die eigentliche Veröffentlichung erst nach [Betriebsabnahme](operational-acceptance.md)
-  gemäß [release.md](release.md) freigeben.
+  gemäß [release.md](release.md) durch den Tag auslösen.
 
-Am 19. September wurden die aktiven Regeln, der Reviewer, der ausgeschaltete
-Administrator-Bypass und die alleinige Tag-Regel per API zurückgelesen.
-Der echte lesende Release-Check besteht. Nachweise:
-`target/r33-repository-after.json`, `target/r33-release-check.log` und
-`target/r33-secret-locations.json` (nur Secret-Namen).
-Der Pull-Request-Ablauf wurde anschließend mit
+Am 19. September wurden die aktiven Regeln per API zurückgelesen; Nachweis:
+`target/r33-repository-after.json`. Der Pull-Request-Ablauf wurde anschließend mit
 [PR #262](https://github.com/lordlamer/jknowledgeroot/pull/262) praktisch
 geprüft: `verify` und Codacy erfolgreich für `c04934d`, keine Review-Freigabe,
 regulärer Merge durch `lordlamer` als `6722957`. Die Regeln waren vor und nach
 dem Merge aktiv; es wurden keine Ausnahmen eingerichtet. Nachweise:
 `target/r34-pr-final-before-merge.json` und `target/r34-pr-after-merge.json`.
-Es wurde kein Test-Tag und keine Veröffentlichung erzeugt. Die tatsächliche
-Release-Bestätigung und der Publish-Ablauf bleiben Teil der Abnahme.
-
-GitHub kann eine im Workflow genannte, fehlende Umgebung automatisch ohne
-Schutzregeln anlegen. Deshalb genügt `environment: release` allein nicht.
-Siehe [GitHub: Umgebungen verwalten](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).
-Die lesende Prüfung nutzt die dokumentierten APIs für
-[Umgebungen](https://docs.github.com/en/rest/deployments/environments) und
-[Branch-/Tag-Beschränkungen](https://docs.github.com/en/rest/deployments/branch-policies).
+Der Publish-Ablauf ist mit den Tags `v1.0.0-rc.2` und `v1.0.0-rc.3` nachgewiesen
+([release.md](release.md)); beide liefen noch mit Bestätigung der inzwischen
+entfernten Umgebung.
