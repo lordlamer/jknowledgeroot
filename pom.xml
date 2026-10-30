@@ -195,6 +195,18 @@
                 <artifactId>bcprov-jdk18on</artifactId>
                 <version>1.86</version>
             </dependency>
+            <!-- MinIO 9.0.3 brings Guava 33.6.0 (GHSA-xxph-c9ww-hj94) and snappy-java 1.1.10.8
+                 (GHSA-gwq9-9ffj-mvrv, GHSA-q233-g92q-qxp6, GHSA-xqrx-qh46-34m7); remove when it catches up. -->
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>33.7.2-jre</version>
+            </dependency>
+            <dependency>
+                <groupId>org.xerial.snappy</groupId>
+                <artifactId>snappy-java</artifactId>
+                <version>1.1.10.12</version>
+            </dependency>
             <!-- Thymeleaf's Spring dialect evaluates expressions with SpringEL only; drop the unused OGNL
                  engine (GHSA-crwc-vw2r-qr6m in 3.3.4) instead of carrying a reflection-based evaluator. -->
             <dependency>

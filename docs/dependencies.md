@@ -140,6 +140,27 @@ und dem JAR-/Chromium-Test rendert alle Templates ohne OGNL. Ein späterer
 Wechsel auf den reinen `StandardDialect` ohne Spring würde OGNL wieder
 benötigen.
 
+## Erneute Prüfung am 30. Oktober 2026 (R46)
+
+Der gehostete Scan meldet vier am 27. Oktober 2026 veröffentlichte Advisories
+für Bibliotheken, die ausschließlich transitiv über `io.minio:minio 9.0.3` in
+den Baum kommen: [GHSA-xxph-c9ww-hj94](https://github.com/advisories/GHSA-xxph-c9ww-hj94)
+(HIGH, unkontrollierte Speicherbelegung bei der Deserialisierung) für
+`com.google.guava:guava 33.6.0-jre`, Korrektur in 33.7.2, sowie
+[GHSA-gwq9-9ffj-mvrv](https://github.com/advisories/GHSA-gwq9-9ffj-mvrv),
+[GHSA-q233-g92q-qxp6](https://github.com/advisories/GHSA-q233-g92q-qxp6) (beide
+HIGH) und [GHSA-xqrx-qh46-34m7](https://github.com/advisories/GHSA-xqrx-qh46-34m7)
+(MODERATE) für `org.xerial.snappy:snappy-java 1.1.10.8` (Pufferüberlauf,
+unbegrenzte Speicherbelegung und JVM-Absturz beim Entpacken), Korrektur in
+1.1.10.9. Die Anwendung ruft keine der beiden Bibliotheken direkt auf; sie
+dienen dem MinIO-Client. Das POM setzt über `dependencyManagement` Guava
+33.7.2-jre und snappy-java 1.1.10.12 (aktuelle Linie, OSV ohne Treffer), wie
+schon für BouncyCastle. Ergebnis: **280 Paketversionen, null Zuordnungen,
+Exitcode 0**; die MinIO- und Dateispeichertests (`StorageDriversTest`,
+`FileUploadDatabaseTest`, `FileRestControllerTest`) bestehen mit den neuen
+Versionen. Die Überschreibungen entfallen, sobald eine MinIO-Version die
+korrigierten Stände selbst verwaltet.
+
 ## Testgrenzen bei R08
 
 Der vorhandene Testsatz prüft nach der Migration weiterhin Login, Rechte,
