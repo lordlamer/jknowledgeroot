@@ -5,7 +5,7 @@
 
 	<groupId>org.knowledgeroot</groupId>
 	<artifactId>knowledgeroot</artifactId>
-	<version>1.0.0-rc.3</version>
+	<version>1.1.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>knowledgeroot</name>

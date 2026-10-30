@@ -1,5 +1,11 @@
 # Release-Kandidat und Freigabe
 
+Seit dem 30. Oktober 2026 trägt `master` die Entwicklungsversion
+**1.1.0-SNAPSHOT**; `latest` entsteht daraus. Die 1.0-Linie wird auf dem
+Wartungsbranch `release/1.0` stabilisiert, dort bleibt die Version
+`1.0.0-rc.3`, bis das endgültige `v1.0.0` getaggt wird. Tags mit
+SNAPSHOT-Version lehnt die Artefaktprüfung ab.
+
 Der Kandidat **1.0.0-rc.3** ist seit dem 25. Oktober 2026 als Tag `v1.0.0-rc.3`
 auf Commit `46c5aa0` veröffentlicht: Der
 [Tag-Lauf 40180456687](https://github.com/lordlamer/jknowledgeroot/actions/runs/40180456687)
