@@ -1,4 +1,4 @@
-FROM eclipse-temurin:25.0.4.1_1-jre-noble@sha256:3f2223fe04b750aa5a8179e29b5c9a1ddf7665fc9bb08bfe11ad01d143bc13a5
+FROM eclipse-temurin:25.0.4.1_1-jre-noble@sha256:ce8543ddd3070ccbeaac2106a74c9387ddeb8d47a1c43348345715c1ef245c7f
 # The pinned Temurin digest (17 October 2026) ships JRE 25.0.4.1+1 together with the
 # Ubuntu glibc 2.39-0ubuntu8.9 and openssl 3.0.13-0ubuntu3.16 fixes; the earlier
 # archive download and targeted package upgrades are therefore no longer needed.

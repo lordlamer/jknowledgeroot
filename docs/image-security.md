@@ -215,6 +215,29 @@ betriebliche Entscheidung bleibt offen. Vollständiges `verify`, Deploy-Smoke-Te
 Lastlauf, Wiederherstellungskette und Artefaktzuordnung mit `--with-audits`
 bestehen auf den neuen Digests.
 
+## App-Basisimage vom 27. Oktober 2026 (R45)
+
+Am 30. Oktober 2026 blockierte der gehostete Scan des App-Images erstmals mit
+einem HIGH-Befund: [CVE-2026-111497](https://ubuntu.com/security/CVE-2026-111497)
+in `libbrotli1 1.1.0-2build2`, Ubuntu-Korrektur `1.1.0-2ubuntu0.1`. Docker Hub
+liefert seit dem 27. Oktober 2026 einen neuen Build des Tags
+`eclipse-temurin:25.0.4.1_1-jre-noble` (Digest
+`sha256:ce8543ddd3070ccbeaac2106a74c9387ddeb8d47a1c43348345715c1ef245c7f`), der
+per `dpkg-query` geprüft die korrigierte `libbrotli1` und zusätzlich
+`zlib1g 1:1.3.dfsg-3.1ubuntu2.3` enthält; JRE **25.0.4.1+1**, glibc
+`2.39-0ubuntu8.9` und OpenSSL `3.0.13-0ubuntu3.16` sind unverändert, sodass
+`release-metadata.mjs` ohne Anpassung besteht. Das Dockerfile pinnt diesen
+Digest; das Datenbankimage bleibt auf dem Stand von R38 (sein Scan besteht).
+
+Ergebnis des lokalen Scans: App-Image **105 Pakete, 23 MEDIUM und vier LOW**
+(21 CVEs), keine blockierenden Funde. Gegenüber R38 sind genau
+`CVE-2026-111497` (libbrotli1) und `CVE-2026-85091` (zlib1g) verschwunden;
+neue Befunde kamen nicht hinzu. Die Einordnung der verbleibenden Befunde in
+[container-findings.md](container-findings.md) gilt weiter. Für
+`mariadb:12.3.3` gibt es seit dem 27. Oktober ebenfalls einen neuen Digest;
+seine Übernahme ist offen, weil der aktuelle Datenbankscan keine Korrektur
+verlangt.
+
 ## Datenbankbewertung und entbehrliche Pakete (R20)
 
 Die [gesonderte Datenbankbewertung](database-findings.md) untersucht die

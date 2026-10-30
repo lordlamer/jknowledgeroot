@@ -965,6 +965,25 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
   müssten von Hand entfernt werden. Ein gehosteter Nachweis des Tag-Laufs ohne
   Umgebung steht mit dem nächsten Tag an.
 
+### R45 – App-Basisimage mit libbrotli1-Korrektur
+
+- [x] Lokal umgesetzt und geprüft am 30. Oktober 2026.
+- **Anlass:** Der gehostete Scan für PR #272 blockierte mit
+  `CVE-2026-111497` (HIGH, `libbrotli1`), Ubuntu-Fix `1.1.0-2ubuntu0.1`
+  verfügbar. Nach der Regel aus R38 löst ein HIGH-Befund sofort einen Rebuild
+  aus.
+- **Umgesetzt:** Das Dockerfile pinnt den Temurin-Build vom 27. Oktober 2026
+  (`sha256:ce8543dd…`) mit korrigierter `libbrotli1` und neuerem `zlib1g`;
+  JRE, glibc und OpenSSL sind unverändert. Datenbankimage und Testfixture
+  bleiben auf R38. Details in [image-security.md](image-security.md).
+- **Geprüft:** JAR mit Revision gebaut, Container gebaut, lokaler OS-Scan
+  **105 Pakete, 23 MEDIUM und vier LOW, keine blockierenden Funde**; genau die
+  Befunde zu `libbrotli1` und `zlib1g` sind gegenüber R38 verschwunden.
+  Gehosteter Nachweis mit dem PR-Lauf.
+- **Grenzen:** Für `mariadb:12.3.3` liegt ebenfalls ein neuer Digest vor; er
+  wird erst übernommen, wenn der Datenbankscan eine Korrektur verlangt oder
+  die nächste Aktualisierungsrunde ansteht.
+
 ## Nachweise der Bestandsaufnahme
 
 - `mvn -B test` bei der ursprünglichen Bestandsaufnahme: Anwendung kompiliert unter Java 25; Testkompilierung scheitert am Konstruktoraufruf in `PageControllerTest`. Dieser Befund ist durch R01 behoben; das aktuelle Prüfergebnis steht dort.
