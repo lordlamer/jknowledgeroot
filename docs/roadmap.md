@@ -965,6 +965,64 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
   müssten von Hand entfernt werden. Ein gehosteter Nachweis des Tag-Laufs ohne
   Umgebung steht mit dem nächsten Tag an.
 
+### R45 – App-Basisimage mit libbrotli1-Korrektur
+
+- [x] Lokal umgesetzt und geprüft am 30. Oktober 2026.
+- **Anlass:** Der gehostete Scan für PR #272 blockierte mit
+  `CVE-2026-111497` (HIGH, `libbrotli1`), Ubuntu-Fix `1.1.0-2ubuntu0.1`
+  verfügbar. Nach der Regel aus R38 löst ein HIGH-Befund sofort einen Rebuild
+  aus.
+- **Umgesetzt:** Das Dockerfile pinnt den Temurin-Build vom 27. Oktober 2026
+  (`sha256:ce8543dd…`) mit korrigierter `libbrotli1` und neuerem `zlib1g`;
+  JRE, glibc und OpenSSL sind unverändert. Datenbankimage und Testfixture
+  bleiben auf R38. Details in [image-security.md](image-security.md).
+- **Geprüft:** JAR mit Revision gebaut, Container gebaut, lokaler OS-Scan
+  **105 Pakete, 23 MEDIUM und vier LOW, keine blockierenden Funde**; genau die
+  Befunde zu `libbrotli1` und `zlib1g` sind gegenüber R38 verschwunden.
+  Gehosteter Nachweis mit dem PR-Lauf.
+- **Grenzen:** Für `mariadb:12.3.3` liegt ebenfalls ein neuer Digest vor; er
+  wird erst übernommen, wenn der Datenbankscan eine Korrektur verlangt oder
+  die nächste Aktualisierungsrunde ansteht.
+
+### R46 – Guava- und snappy-java-Advisories über MinIO beheben
+
+- [x] Lokal umgesetzt und geprüft am 30. Oktober 2026.
+- **Anlass:** Der gehostete Abhängigkeitsscan blockierte mit vier am
+  27. Oktober 2026 veröffentlichten Advisories (drei HIGH, eine MODERATE) für
+  Guava 33.6.0 und snappy-java 1.1.10.8, beide nur transitiv über
+  `io.minio:minio 9.0.3`.
+- **Umgesetzt:** `dependencyManagement` setzt Guava 33.7.2-jre und snappy-java
+  1.1.10.12; Begründung und Advisories in
+  [dependencies.md](dependencies.md#erneute-prüfung-am-30-oktober-2026-r46).
+- **Geprüft:** Abhängigkeitsscan **280 Paketversionen, null Zuordnungen**;
+  Dependency-Baum zeigt die neuen Versionen unter MinIO; MinIO- und
+  Dateispeichertests bestehen. Gehosteter Nachweis mit dem PR-Lauf.
+- **Grenzen:** Erzwungene Versionen unterhalb von MinIO; bei einem
+  MinIO-Update die Überschreibungen prüfen und entfernen, sobald sie
+  überflüssig sind.
+
+### R47 – Wartungsbranch `release/1.0` mit CI und Tag-Freigabe
+
+- [x] Umgesetzt am 30. Oktober 2026.
+- **Ziel:** 1.0.0 auf einem eigenen Branch stabilisieren und spätere
+  1.0.x-Korrekturen per Backport veröffentlichen, während `master` die
+  nächste Entwicklung (etwa die Client-API aus R44) aufnimmt.
+- **Umgesetzt:** Branch `release/1.0` von `master` (`34fc81a`) angelegt. Der
+  Workflow läuft jetzt auch für Pushes und Pull Requests auf `release/**`;
+  die Tag-Prüfung akzeptiert Commits, die zu `origin/master` oder einem
+  `origin/release/*`-Branch gehören. `latest` und die Graph-Übermittlung
+  bleiben an `master` gebunden. Doku in [release.md](release.md),
+  [production.md](production.md) und
+  [repository-protection.md](repository-protection.md).
+- **Geprüft:** Workflow mit actionlint 1.7.7; die Ancestry-Schleife lokal
+  gegen `origin/master` und `origin/release/1.0` sowie gegen einen
+  Fremd-Commit geprüft.
+- **Grenzen:** `release/*` ist noch nicht durch Rulesets geschützt (keine
+  PR-Pflicht, kein Force-Push-Schutz); die Erweiterung der bestehenden
+  Rulesets ist in [repository-protection.md](repository-protection.md)
+  beschrieben. Ein gehosteter Nachweis eines Tags vom Release-Branch steht mit
+  dem ersten 1.0.x-Tag an.
+
 ## Nachweise der Bestandsaufnahme
 
 - `mvn -B test` bei der ursprünglichen Bestandsaufnahme: Anwendung kompiliert unter Java 25; Testkompilierung scheitert am Konstruktoraufruf in `PageControllerTest`. Dieser Befund ist durch R01 behoben; das aktuelle Prüfergebnis steht dort.

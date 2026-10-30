@@ -186,8 +186,10 @@ Spitze von `master` ist, überspringt das, damit `latest` nie zurückspringt.
 Version. Nur Pushes eines Tags wie `v1.0.0` oder `v1.0.0-rc.3` starten den
 separaten Publish-Job; seit R43 läuft er ohne manuelle Freigabe, der Tag-Push
 ist die Entscheidung. Davor wird geprüft, dass der Tag der Maven-Version
-entspricht, der Commit zu `origin/master` gehört und der gesamte Verify-Job
-erfolgreich war. Beide Publish-Jobs laden exakt die im Verify-Job erzeugten
+entspricht, der Commit zu `origin/master` oder einem Wartungsbranch
+`release/*` gehört und der gesamte Verify-Job erfolgreich war. Pushes und
+Pull Requests auf `release/*` durchlaufen denselben Verify-Job wie `master`,
+veröffentlichen aber kein `latest`. Beide Publish-Jobs laden exakt die im Verify-Job erzeugten
 App-/Datenbankimages und bauen nicht erneut; der Tag-Job veröffentlicht
 Versions- und Commit-Tags gemäß [release.md](release.md) und legt anschließend
 ein GitHub-Release mit der geprüften JAR, dem Manifest, den Auditberichten und
