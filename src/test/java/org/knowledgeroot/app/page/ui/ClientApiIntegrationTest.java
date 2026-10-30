@@ -197,7 +197,13 @@ class ClientApiIntegrationTest extends IsolatedApplicationTest {
 
     @Test void movingKeepsRevisionChecks() throws Exception {
         var admin = signIn("integration.admin");
+        // The destination browser pages 50 entries at a time; other test classes leave hundreds of
+        // top-level pages behind, so look the destination up by name instead of relying on the first page.
+        String otherName = jdbc.queryForObject("SELECT name FROM page WHERE id=?", String.class, otherPageId);
         admin.perform(get("/api/v1/pages/" + pageId + "/move-options").param("parent", "0"))
+                .andExpect(jsonPath("$.items", hasSize(greaterThan(0))))
+                .andExpect(jsonPath("$.items[*].id", not(hasItem(pageId))));
+        admin.perform(get("/api/v1/pages/" + pageId + "/move-options").param("query", otherName))
                 .andExpect(jsonPath("$.items[*].id", hasItem(otherPageId)))
                 .andExpect(jsonPath("$.items[*].id", not(hasItem(pageId))));
         admin.json(post("/api/v1/pages/" + pageId + "/move"), "{\"parent\":" + otherPageId + ",\"revision\":5}")
