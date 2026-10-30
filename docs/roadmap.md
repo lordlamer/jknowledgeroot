@@ -1061,6 +1061,21 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
   beschrieben. Ein gehosteter Nachweis eines Tags vom Release-Branch steht mit
   dem ersten 1.0.x-Tag an.
 
+### R48 – master auf 1.1.0-SNAPSHOT heben
+
+- [x] Umgesetzt am 30. Oktober 2026.
+- **Ziel:** `master` und die 1.0-Linie tragen unterschiedliche Versionen,
+  damit `latest` und die Release-Tags nicht dieselbe Version teilen.
+- **Umgesetzt:** POM und beide Dockerfiles auf `1.1.0-SNAPSHOT`; README und
+  [release.md](release.md) beschreiben die Aufteilung. `release/1.0` bleibt
+  bei `1.0.0-rc.3`, bis `v1.0.0` getaggt wird.
+- **Geprüft:** `release-metadata.mjs --version` liest die neue Version;
+  `release-assets.test.mjs` unverändert erfolgreich. Gehosteter Nachweis mit
+  dem PR-Lauf; die Artefaktprüfung lehnt Tags auf SNAPSHOT-Versionen weiterhin
+  ab.
+- **Grenzen:** Ob die nächste Linie 1.1.0 oder etwas anderes wird, ist eine
+  spätere Entscheidung; die Nummer ist ein Platzhalter.
+
 ## Nachweise der Bestandsaufnahme
 
 - `mvn -B test` bei der ursprünglichen Bestandsaufnahme: Anwendung kompiliert unter Java 25; Testkompilierung scheitert am Konstruktoraufruf in `PageControllerTest`. Dieser Befund ist durch R01 behoben; das aktuelle Prüfergebnis steht dort.
