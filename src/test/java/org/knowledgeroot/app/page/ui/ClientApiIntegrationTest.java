@@ -78,7 +78,8 @@ class ClientApiIntegrationTest extends IsolatedApplicationTest {
         String guestSession = api.cookies.containsKey("SESSION") ? api.cookies.get("SESSION").getValue() : null;
         var signedIn = signIn(editor);
         assertNotEquals(guestSession, signedIn.cookies.get("SESSION").getValue());
-        signedIn.perform(get("/api/v1/session")).andExpect(jsonPath("$.authenticated").value(true));
+        signedIn.perform(get("/api/v1/session")).andExpect(jsonPath("$.authenticated").value(true))
+                .andExpect(jsonPath("$.serverVersion").value(matchesRegex("[0-9]+[.][0-9]+[.][0-9]+.*")));
         signedIn.perform(post("/api/v1/auth/logout")).andExpect(status().isOk());
         signedIn.refresh();
         signedIn.perform(get("/api/v1/session")).andExpect(jsonPath("$.authenticated").value(false));
@@ -222,6 +223,10 @@ class ClientApiIntegrationTest extends IsolatedApplicationTest {
         signIn(login).perform(get("/api/v1/session")).andExpect(jsonPath("$.user.id").value(id));
         admin.json(put("/api/v1/admin/users/" + id), "{\"login\":\"" + login + "\",\"firstName\":\"Changed\",\"password\":\"\",\"active\":false}")
                 .andExpect(status().isOk()).andExpect(jsonPath("$.firstName").value("Changed")).andExpect(jsonPath("$.active").value(false));
+        admin.json(put("/api/v1/admin/users/" + id), "{\"login\":\"" + login + "\",\"admin\":true}")
+                .andExpect(jsonPath("$.admin").value(true));
+        admin.json(put("/api/v1/admin/users/" + id), "{\"login\":\"" + login + "\",\"firstName\":\"Kept\"}")
+                .andExpect(jsonPath("$.admin").value(true)).andExpect(jsonPath("$.active").value(false));
         admin.json(put("/api/v1/admin/users/" + adminId), "{\"login\":\"integration.admin\",\"admin\":false}")
                 .andExpect(status().isConflict());
         admin.perform(delete("/api/v1/admin/users/" + id)).andExpect(status().isNoContent());

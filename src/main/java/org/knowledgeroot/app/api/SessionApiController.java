@@ -8,7 +8,9 @@ import org.knowledgeroot.app.security.auth.DatabaseAuthentificationProvider;
 import org.knowledgeroot.app.security.config.WebSecurityConfig;
 import org.knowledgeroot.app.security.recovery.AccountRecoveryService;
 import org.knowledgeroot.app.security.recovery.RecoverySettings;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.info.BuildProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -35,12 +37,12 @@ class SessionApiController {
     private final UploadPolicy uploadPolicy;
     private final RecoverySettings recoverySettings;
     private final AccountRecoveryService recovery;
+    /** Maven artifact version from the generated build-info; absent only in IDE runs without the build step. */
+    private final ObjectProvider<BuildProperties> build;
     private final SecurityContextRepository contextRepository = WebSecurityConfig.securityContextRepository();
     private final WebAuthenticationDetailsSource details = new WebAuthenticationDetailsSource();
     @Value("${knowledgeroot.pages.allow-guest-root-creation:false}")
     private boolean allowGuestRootCreation;
-    @Value("${knowledgeroot.version:1.0.0-rc.2}")
-    private String version;
 
     /** Current identity plus a CSRF token for the following state-changing requests. */
     @GetMapping("/session")
@@ -80,7 +82,7 @@ class SessionApiController {
         Authentication current = SecurityContextHolder.getContext().getAuthentication();
         new CsrfLogoutHandler(WebSecurityConfig.csrfTokenRepository()).logout(request, response, current);
         new SecurityContextLogoutHandler().logout(request, response, current);
-        return new ApiModels.SessionInfo(false, null, capabilities(false), null, version);
+        return new ApiModels.SessionInfo(false, null, capabilities(false), null, version());
     }
 
     /** Always answers 204 so the response does not reveal whether an address is known. */
@@ -97,7 +99,12 @@ class SessionApiController {
                 user.getLogin(), user.getFirstName(), user.getSurName(), user.getEmail(), user.isAdmin());
         CsrfToken csrf = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
         return new ApiModels.SessionInfo(!guest, current, capabilities(guest),
-                csrf == null ? null : new ApiModels.Csrf(csrf.getHeaderName(), csrf.getToken()), version);
+                csrf == null ? null : new ApiModels.Csrf(csrf.getHeaderName(), csrf.getToken()), version());
+    }
+
+    private String version() {
+        BuildProperties properties = build.getIfAvailable();
+        return properties == null ? "unknown" : properties.getVersion();
     }
 
     private ApiModels.Capabilities capabilities(boolean guest) {

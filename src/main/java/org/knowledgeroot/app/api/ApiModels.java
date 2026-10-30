@@ -41,10 +41,10 @@ public final class ApiModels {
     public record TreeResponse(PageRef parent, List<TreeNode> items, Integer nextAfter) {}
 
     public record FileInfo(int id, int pageId, String name, Integer size, String type, Integer downloads,
-                           String createdByLogin, @JsonSerialize(using = ServerTime.class) LocalDateTime createDate) {
+                           Integer createdBy, @JsonSerialize(using = ServerTime.class) LocalDateTime createDate) {
         static FileInfo of(File file) {
             return new FileInfo(file.getId(), file.getPageId(), file.getName(), file.getSize(), file.getType(),
-                    file.getDownloads(), null, file.getCreateDate());
+                    file.getDownloads(), file.getCreatedBy(), file.getCreateDate());
         }
     }
 

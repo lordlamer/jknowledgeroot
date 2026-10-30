@@ -18,6 +18,10 @@ der Web-UI. Es gibt keine zusätzlichen Tokens und keine Datenbankänderung daf�
    Formular-Login gelten die Loginquoten, die Sitzungs-ID wird erneuert und das
    CSRF-Token rotiert; die Antwort enthält das neue Token.
 4. `POST /api/v1/auth/logout` beendet die Sitzung.
+5. `POST /api/v1/auth/forgot-password` mit `{"email"}` fordert wie die Web-UI eine
+   Passwort-Wiederherstellung an und antwortet immer mit `204`.
+
+`GET /api/v1/session` nennt in `serverVersion` die Maven-Version aus den Build-Informationen.
 
 Ohne Anmeldung antworten geschützte API-Routen mit `401` statt mit dem
 Login-Redirect der Web-UI. Gäste dürfen wie in der Web-UI öffentliche Seiten lesen.
@@ -51,10 +55,11 @@ wie in der Web-UI bereinigt.
 ## Begleitende Korrekturen
 
 - Migration `1.0.14-utf8mb4` stellt die Basistabellen von `utf8` (3 Byte) auf
-  `utf8mb4` um. Vorher führten Emoji – auf Handytastaturen alltäglich – in Seiten,
-  Kommentaren, Labels oder Namen zu einem Serverfehler. Die Umstellung baut die
-  betroffenen Tabellen einmalig neu auf; bei großen Beständen ein Wartungsfenster
-  einplanen.
+  `utf8mb4` mit der Kollation `utf8mb4_uca1400_ai_ci` um. Vorher führten Emoji –
+  auf Handytastaturen alltäglich – in Seiten, Kommentaren, Labels oder Namen zu
+  einem Serverfehler. Die Umstellung baut die betroffenen Tabellen einmalig neu
+  auf; bei großen Beständen ein Wartungsfenster einplanen. Hinweise für
+  Bestände mit `utf8_general_ci` stehen in [installation.md](installation.md#upgrade-einer-bestehenden-installation).
 - `GroupImpl.isGroupExist` nutzte einen ungültigen JPQL-Alias; das Anlegen von
   Gruppen über die REST-API schlug dadurch fehl.
 - Der HTML-Sanitizer behält jetzt `pre` (Codeblock) und `hr` (Trennlinie). Beide bietet der

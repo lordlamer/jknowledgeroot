@@ -133,7 +133,7 @@ class AccountApiController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "The user could not be created."));
     }
 
-    /** Updates a user; an empty password keeps the current one. */
+    /** Updates a user; an empty password keeps the current one, omitted flags keep their current value. */
     @PutMapping("/admin/users/{id}")
     ApiModels.AdminUser updateUser(@PathVariable int id, @RequestBody ApiModels.AdminUserInput input) {
         int actor = api.requireUser();
@@ -142,7 +142,7 @@ class AccountApiController {
         String login = required(input.login(), "Enter a login name.");
         if (!login.equals(user.getLogin()) && users.isUserExist(User.builder().login(login).build()))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "This login name is already taken.");
-        boolean admin = Boolean.TRUE.equals(input.admin());
+        boolean admin = input.admin() == null ? Boolean.TRUE.equals(user.getAdmin()) : input.admin();
         boolean active = input.active() == null ? Boolean.TRUE.equals(user.getActive()) : input.active();
         if (id == actor && (!admin || !active))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "You cannot remove your own administrator access.");
