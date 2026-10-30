@@ -984,6 +984,23 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
   wird erst übernommen, wenn der Datenbankscan eine Korrektur verlangt oder
   die nächste Aktualisierungsrunde ansteht.
 
+### R46 – Guava- und snappy-java-Advisories über MinIO beheben
+
+- [x] Lokal umgesetzt und geprüft am 30. Oktober 2026.
+- **Anlass:** Der gehostete Abhängigkeitsscan blockierte mit vier am
+  27. Oktober 2026 veröffentlichten Advisories (drei HIGH, eine MODERATE) für
+  Guava 33.6.0 und snappy-java 1.1.10.8, beide nur transitiv über
+  `io.minio:minio 9.0.3`.
+- **Umgesetzt:** `dependencyManagement` setzt Guava 33.7.2-jre und snappy-java
+  1.1.10.12; Begründung und Advisories in
+  [dependencies.md](dependencies.md#erneute-prüfung-am-30-oktober-2026-r46).
+- **Geprüft:** Abhängigkeitsscan **280 Paketversionen, null Zuordnungen**;
+  Dependency-Baum zeigt die neuen Versionen unter MinIO; MinIO- und
+  Dateispeichertests bestehen. Gehosteter Nachweis mit dem PR-Lauf.
+- **Grenzen:** Erzwungene Versionen unterhalb von MinIO; bei einem
+  MinIO-Update die Überschreibungen prüfen und entfernen, sobald sie
+  überflüssig sind.
+
 ## Nachweise der Bestandsaufnahme
 
 - `mvn -B test` bei der ursprünglichen Bestandsaufnahme: Anwendung kompiliert unter Java 25; Testkompilierung scheitert am Konstruktoraufruf in `PageControllerTest`. Dieser Befund ist durch R01 behoben; das aktuelle Prüfergebnis steht dort.
