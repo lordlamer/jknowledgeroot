@@ -26,7 +26,9 @@ und Datenbankkonten werden nicht exportiert; sie entstehen im neuen Ziel durch
 das Initialisierungsskript und dessen eigene Zugangsdaten.
 
 Zusätzlich gesondert und geschützt aufbewahren: passende Compose-/Skriptversion,
-Konfiguration und Secrets, TLS-/Proxy-Konfiguration sowie das alte Anwendungsimage
+Konfiguration und Secrets einschließlich `KR_MASTER_KEY` (ohne ihn sind die im
+Dump enthaltenen, verschlüsselten TOTP-Secrets des zweiten Faktors wertlos),
+TLS-/Proxy-Konfiguration sowie das alte Anwendungsimage
 und seine Release-Metadaten. Ein Image-Name allein garantiert nicht, dass das Image
 später noch verfügbar ist. Beispielsweise mit `docker save` archivieren oder einen
 unveränderlichen Registry-Digest mit abgesicherter Aufbewahrung verwenden.

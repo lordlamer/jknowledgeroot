@@ -9,7 +9,7 @@ operation=$1 project=$2 envfile=$3 directory=$4
 [[ -f "$envfile" ]] || { echo 'Environment file missing' >&2; exit 2; }
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 # Explicit files take precedence over unrelated operator shell variables.
-unset KR_APP_IMAGE KR_DB_IMAGE KR_DB_ROOT_PASSWORD KR_DB_PASSWORD KR_MIGRATION_PASSWORD KR_BOOTSTRAP_LOGIN KR_BOOTSTRAP_PASSWORD KR_APP_PORT KR_FORWARD_HEADERS_STRATEGY KR_TRUSTED_PROXY_PATTERN
+unset KR_APP_IMAGE KR_DB_IMAGE KR_DB_ROOT_PASSWORD KR_DB_PASSWORD KR_MIGRATION_PASSWORD KR_MASTER_KEY KR_BOOTSTRAP_LOGIN KR_BOOTSTRAP_PASSWORD KR_APP_PORT KR_FORWARD_HEADERS_STRATEGY KR_TRUSTED_PROXY_PATTERN
 compose() { docker compose --project-name "$project" --env-file "$envfile" -f "$root/deploy/compose.production.yaml" "$@"; }
 fail() { printf '%s\n' "$1" >&2; exit 1; }
 compose config --quiet

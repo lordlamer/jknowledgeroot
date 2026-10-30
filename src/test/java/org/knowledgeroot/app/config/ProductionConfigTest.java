@@ -15,7 +15,8 @@ class ProductionConfigTest {
         env.getPropertySources().addLast(new ResourcePropertySource("classpath:application-production.properties"));
         return env.withProperty("spring.datasource.url", "jdbc:mariadb://database:3306/knowledgeroot")
                 .withProperty("spring.datasource.username", "runtime").withProperty("spring.datasource.password", "runtime-secret")
-                .withProperty("knowledgeroot.migration.username", "migration").withProperty("knowledgeroot.migration.password", "migration-secret");
+                .withProperty("knowledgeroot.migration.username", "migration").withProperty("knowledgeroot.migration.password", "migration-secret")
+                .withProperty("knowledgeroot.security.master-key", "master-key-for-tests-0123456789abcdef");
     }
 
     @Test void validProductionSettingsDoNotNeedAConnectionForValidation() throws Exception {
@@ -26,7 +27,7 @@ class ProductionConfigTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"spring.datasource.url", "spring.datasource.username", "spring.datasource.password",
-            "knowledgeroot.migration.username", "knowledgeroot.migration.password"})
+            "knowledgeroot.migration.username", "knowledgeroot.migration.password", "knowledgeroot.security.master-key"})
     void missingSettingsFailWithoutPrintingCredentials(String property) throws Exception {
         var env = configured().withProperty(property, "");
         var failure = assertThrows(IllegalStateException.class, () -> ProductionConfig.validate(env));
@@ -57,6 +58,13 @@ class ProductionConfigTest {
         assertThrows(IllegalStateException.class, () -> ProductionConfig.validate(env));
         env.setProperty("server.tomcat.remoteip.internal-proxies", "192[.]0[.]2[.]10");
         assertDoesNotThrow(() -> ProductionConfig.validate(env));
+    }
+
+    @Test void shortMasterKeysAreRejected() throws Exception {
+        var env = configured().withProperty("knowledgeroot.security.master-key", "short");
+        var failure = assertThrows(IllegalStateException.class, () -> ProductionConfig.validate(env));
+        assertTrue(failure.getMessage().contains("KR_MASTER_KEY"));
+        assertFalse(failure.getMessage().contains("short"));
     }
 
     @Test void developmentCannotBeCombinedWithProduction() throws Exception {

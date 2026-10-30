@@ -32,6 +32,8 @@ public class ProductionConfig {
             if (!env.getProperty(property, Boolean.class, false)) fail("Production requires " + property + "=true");
         }
         if (env.getProperty("knowledgeroot.demo-data.enabled", Boolean.class, false)) fail("Production cannot use demo data");
+        if (required(env, "knowledgeroot.security.master-key").length() < 32)
+            fail("knowledgeroot.security.master-key (KR_MASTER_KEY) needs at least 32 characters");
         String sameSite = required(env, "server.servlet.session.cookie.same-site");
         if (!sameSite.equalsIgnoreCase("lax") && !sameSite.equalsIgnoreCase("strict")) fail("Production requires Lax or Strict session cookies");
         String strategy = env.getProperty("server.forward-headers-strategy", "none");

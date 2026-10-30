@@ -9,7 +9,7 @@ root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 node=${NODE_BINARY:-node}
 test_id="knowledgeroot-recovery-$(date +%s)-$$"
 work=$(mktemp -d)
-unset KR_APP_IMAGE KR_DB_IMAGE KR_DB_ROOT_PASSWORD KR_DB_PASSWORD KR_MIGRATION_PASSWORD KR_BOOTSTRAP_LOGIN KR_BOOTSTRAP_PASSWORD KR_APP_PORT KR_FORWARD_HEADERS_STRATEGY KR_TRUSTED_PROXY_PATTERN
+unset KR_APP_IMAGE KR_DB_IMAGE KR_DB_ROOT_PASSWORD KR_DB_PASSWORD KR_MIGRATION_PASSWORD KR_MASTER_KEY KR_BOOTSTRAP_LOGIN KR_BOOTSTRAP_PASSWORD KR_APP_PORT KR_FORWARD_HEADERS_STRATEGY KR_TRUSTED_PROXY_PATTERN
 compose() { docker compose --project-name "$test_id-$stage" --env-file "$work/$stage.env" -f "$root/deploy/compose.production.yaml" "$@"; }
 cleanup() {
   for stage in source upgraded rollback; do
@@ -21,6 +21,8 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 1' INT TERM
 export RECOVERY_TEST_PASSWORD="$(openssl rand -hex 24)"
+# One master key across the chain: a restore must decrypt second-factor secrets written before it.
+RECOVERY_TEST_MASTER_KEY="$(openssl rand -hex 32)"
 for stage in source upgraded rollback; do
   image=$old_image
   [[ "$stage" != upgraded ]] || image=$new_image
@@ -32,6 +34,7 @@ for stage in source upgraded rollback; do
       printf 'KR_DB_IMAGE=%s\n' "$old_database"
     fi
     printf 'KR_DB_ROOT_PASSWORD=%s\nKR_DB_PASSWORD=%s\nKR_MIGRATION_PASSWORD=%s\n' "$(openssl rand -hex 32)" "$(openssl rand -hex 32)" "$(openssl rand -hex 32)"
+    printf 'KR_MASTER_KEY=%s\n' "$RECOVERY_TEST_MASTER_KEY"
     printf 'KR_BOOTSTRAP_LOGIN=recovery.admin\nKR_BOOTSTRAP_PASSWORD=%s\nKR_APP_PORT=0\n' "$RECOVERY_TEST_PASSWORD"
   } > "$work/$stage.env"
 done

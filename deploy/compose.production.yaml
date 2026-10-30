@@ -29,6 +29,7 @@ services:
       KR_MIGRATION_PASSWORD: ${KR_MIGRATION_PASSWORD:?Set the migration database password}
       KR_STORAGE_DRIVER: file
       KR_FILE_STORAGE_DIR: /var/lib/knowledgeroot/files
+      KR_MASTER_KEY: ${KR_MASTER_KEY:?Set the master key that encrypts second-factor secrets}
       KR_BOOTSTRAP_LOGIN: ${KR_BOOTSTRAP_LOGIN:-}
       KR_BOOTSTRAP_PASSWORD: ${KR_BOOTSTRAP_PASSWORD:-}
       KR_FORWARD_HEADERS_STRATEGY: ${KR_FORWARD_HEADERS_STRATEGY:-none}

@@ -1090,6 +1090,40 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 - **Grenzen:** Erzwungene Treiberversion neben dem Boot-BOM; bei einem
   Boot-Update die Property prüfen und entfernen, sobald sie überflüssig ist.
 
+## 9. Version 1.1
+
+Geplant sind die Anmeldung mit zweitem Faktor (TOTP, Policy durch
+Administratoren), Spaces mit je eigener Seitenstruktur und ein MCP-Server mit
+OAuth-Anmeldung; die Client-API für die mobile App (R44) ist bereits enthalten.
+
+### R49 – Zweiter Faktor: Grundlage (TOTP, Speicherung, Policy)
+
+- [x] Lokal umgesetzt und geprüft am 31. Oktober 2026.
+- **Ziel:** Benutzer sollen sich wie in Atlas einen Authenticator-Token
+  einrichten können; Administratoren legen fest, ob der zweite Faktor aus,
+  optional, nur für Administratoren oder für alle erforderlich ist.
+- **Umgesetzt (Teil 1 von 3):** TOTP nach RFC 6238, Base32, QR-Code als
+  Inline-SVG (`zxing-core`), Wiederherstellungscodes, AES-GCM-Verschlüsselung
+  der Secrets mit `KR_MASTER_KEY`, Changeset `1.0.15-second-factor`
+  (`app_setting`, `user_second_factor`, `user_recovery_code`),
+  `SecondFactorService` (Einrichtung, Bestätigung, Prüfung mit
+  Einmalgültigkeit je Zeitschritt und Code, Entfernen) und `MfaSettings`
+  (Policy `off`/`optional`/`required-for-admins`/`required`). Das
+  Produktionsprofil verlangt den Schlüssel; Compose, Beispiel-Env, Smoke-Tests
+  und Wiederherstellungsskripte setzen ihn. Beschreibung in
+  [authentication.md](authentication.md#zweiter-faktor-totp).
+- **Geprüft:** `TotpTest` mit den RFC-6238-Vektoren, Drift-Fenster,
+  Base32, otpauth-URI, Wiederherstellungscodes und SVG; `SecretCipherTest`
+  (Roundtrip, fremder Schlüssel, manipulierte Daten, Produktionspflicht);
+  `ProductionConfigTest` um den Schlüssel erweitert;
+  `SecondFactorIntegrationTest` gegen MariaDB (Einrichtung mit erstem Code,
+  verschlüsselte Ablage, Einmalgültigkeit von Codes und
+  Wiederherstellungscodes, Entfernen, Policy-Speicherung und -Auswertung).
+- **Grenzen:** Am Anmelden ändert sich in diesem Stand nichts; Login in zwei
+  Schritten, Profil-Einrichtung, Admin-Seite und Admin-Reset (Teil 2) sowie die
+  Client-API (Teil 3) folgen. Bestehende Produktionsumgebungen müssen vor dem
+  Upgrade `KR_MASTER_KEY` setzen.
+
 ## Nachweise der Bestandsaufnahme
 
 - `mvn -B test` bei der ursprünglichen Bestandsaufnahme: Anwendung kompiliert unter Java 25; Testkompilierung scheitert am Konstruktoraufruf in `PageControllerTest`. Dieser Befund ist durch R01 behoben; das aktuelle Prüfergebnis steht dort.

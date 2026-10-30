@@ -3,7 +3,7 @@
 set -eu
 umask 077
 [ "$#" = 2 ] || { echo 'Usage: smoke-test.sh APP_IMAGE DATABASE_IMAGE' >&2; exit 2; }
-unset KR_APP_IMAGE KR_DB_IMAGE KR_DB_ROOT_PASSWORD KR_DB_PASSWORD KR_MIGRATION_PASSWORD KR_BOOTSTRAP_LOGIN KR_BOOTSTRAP_PASSWORD KR_APP_PORT KR_FORWARD_HEADERS_STRATEGY KR_TRUSTED_PROXY_PATTERN
+unset KR_APP_IMAGE KR_DB_IMAGE KR_DB_ROOT_PASSWORD KR_DB_PASSWORD KR_MIGRATION_PASSWORD KR_MASTER_KEY KR_BOOTSTRAP_LOGIN KR_BOOTSTRAP_PASSWORD KR_APP_PORT KR_FORWARD_HEADERS_STRATEGY KR_TRUSTED_PROXY_PATTERN
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 project="knowledgeroot-smoke-$(date +%s)-$$"
 envfile=$(mktemp)
@@ -20,6 +20,7 @@ trap 'exit 1' INT TERM
   printf 'KR_DB_ROOT_PASSWORD=%s\n' "$(openssl rand -hex 32)"
   printf 'KR_DB_PASSWORD=%s\n' "$(openssl rand -hex 32)"
   printf 'KR_MIGRATION_PASSWORD=%s\n' "$(openssl rand -hex 32)"
+  printf 'KR_MASTER_KEY=%s\n' "$(openssl rand -hex 32)"
   printf 'KR_BOOTSTRAP_LOGIN=deployment.admin\n'
   printf 'KR_BOOTSTRAP_PASSWORD=%s\n' "$(openssl rand -hex 32)"
   printf 'KR_APP_PORT=0\n'

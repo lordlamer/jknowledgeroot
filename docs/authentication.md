@@ -105,6 +105,41 @@ prüfen. Den Rückweg deshalb mit kompatibler Anwendungsversion beziehungsweise
 dem vorbereiteten Datenbankbackup planen. Die Anwendung ist weiterhin erst nach
 den übrigen Roadmap-Punkten zur Produktion freizugeben.
 
+## Zweiter Faktor (TOTP)
+
+Changeset `1.0.15-second-factor` legt die Grundlage für die Anmeldung mit
+zweitem Faktor (R49). Das Verfahren ist TOTP nach RFC 6238 mit HMAC-SHA1, sechs
+Stellen und 30-Sekunden-Schritten, wie es gängige Authenticator-Apps erwarten;
+bei der Prüfung ist ein Schritt Abweichung in beide Richtungen erlaubt. Die
+Implementierung liegt in `org.knowledgeroot.app.security.mfa` und kommt ohne
+Fremdbibliothek aus; nur der QR-Code für die Einrichtung nutzt `zxing-core`
+und wird als Inline-SVG gerendert.
+
+- **Speicherung:** `user_second_factor` hält je Benutzer ein Secret, das mit
+  AES-256-GCM verschlüsselt ist, und den zuletzt akzeptierten Zeitschritt, damit
+  ein Code nicht zweimal gilt. Der Schlüssel wird per SHA-256 aus
+  `KR_MASTER_KEY` (`knowledgeroot.security.master-key`) abgeleitet. Ohne
+  gesetzten Schlüssel bricht das Produktionsprofil beim Start ab; außerhalb der
+  Produktion gilt ein fester Entwicklungsschlüssel mit Warnung im Log.
+- **Wiederherstellungscodes:** Zehn Codes im Format `xxxx-xxxx` ohne
+  verwechselbare Zeichen entstehen bei der Einrichtung und werden genau einmal
+  angezeigt. Gespeichert wird nur ein mit dem Master-Key verschlüsselter
+  HMAC-SHA256 (`user_recovery_code`); jeder Code gilt einmal.
+- **Policy:** Die Tabelle `app_setting` nimmt Einstellungen auf, die
+  Administratoren zur Laufzeit ändern. `mfa.policy` kennt `off` (Standard),
+  `optional` (wer einen Token eingerichtet hat, wird danach gefragt),
+  `required-for-admins` und `required`. Ein unbekannter gespeicherter Wert
+  wirkt wie `optional`, damit weder jemand ausgesperrt noch ein Token
+  stillschweigend ignoriert wird.
+- **Dienst:** `SecondFactorService` erzeugt eine Einrichtung (Secret,
+  otpauth-URI, QR-SVG), bestätigt sie mit dem ersten Code, prüft Codes und
+  Wiederherstellungscodes und entfernt den Faktor; `MfaSettings` liest und
+  setzt die Policy und beantwortet, wer einrichten muss.
+
+Login-Ablauf in zwei Schritten, Einrichtung im Profil, Admin-Seite für die
+Policy, Zurücksetzen durch Administratoren und die Client-API folgen in den
+nächsten Schritten; in diesem Stand ändert sich am Anmelden noch nichts.
+
 ## Prüfungen und verbleibende Arbeit
 
 Tests prüfen moderne und alte Hashes, Salt, Leerzeichen/Unicode, Eingabegrenzen,
