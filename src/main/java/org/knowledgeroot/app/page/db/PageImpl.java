@@ -38,6 +38,17 @@ public class PageImpl implements PageDao {
         return navigationPages("id = :id LIMIT 1", Map.of("id", id.value()), viewer).stream().findFirst();
     }
 
+    @Override
+    public java.util.Set<Integer> parentsWithVisibleChildren(java.util.Collection<Integer> parents, Integer viewer) {
+        if (parents.isEmpty()) return java.util.Set.of();
+        Map<String, Object> params = new HashMap<>();
+        params.put("viewer", viewer);
+        params.put("parents", parents);
+        return new java.util.HashSet<>(jdbcClient.sql(ReadablePagesSql.CTE + """
+                SELECT DISTINCT parent FROM page WHERE parent IN (:parents) AND id IN (SELECT id FROM readable_pages)
+                """).params(params).query(Integer.class).list());
+    }
+
     private List<Page> navigationPages(String condition, Map<String, Object> arguments, Integer viewer) {
         Map<String, Object> params = new HashMap<>(arguments);
         params.put("viewer", viewer);

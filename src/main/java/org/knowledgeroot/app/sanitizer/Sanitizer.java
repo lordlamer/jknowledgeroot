@@ -1,5 +1,6 @@
 package org.knowledgeroot.app.sanitizer;
 
+import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
 import org.owasp.html.Sanitizers;
 
@@ -30,6 +31,8 @@ public class Sanitizer {
                 .and(Sanitizers.LINKS)
                 .and(Sanitizers.STYLES)
                 .and(Sanitizers.TABLES)
+                // Code blocks and dividers offered by the rich-text editor.
+                .and(new HtmlPolicyBuilder().allowElements("pre", "hr").toFactory())
                 ;
 
         // sanitize input

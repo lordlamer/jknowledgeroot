@@ -39,6 +39,14 @@ class SanitizerTest {
     }
 
     @Test
+    void preservesEditorCodeBlocksAndDividers() {
+        String output = Sanitizer.sanitize("<pre><code>ssh dev@host</code></pre><hr /><pre onclick='x()'>a</pre>");
+        assertTrue(output.contains("<pre><code>ssh dev&#64;host</code></pre>"), output);
+        assertTrue(output.contains("<hr />"), output);
+        assertTrue(!output.contains("onclick"), output);
+    }
+
+    @Test
     void sanitize() {
         String input = "<script>alert('hello')</script>test";
         String expected = "test";

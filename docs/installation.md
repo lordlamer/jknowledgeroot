@@ -98,6 +98,15 @@ vorhandene Konten nicht zurück.
 4. Die neue Version starten. Liquibase führt nur noch ausstehende Changesets aus.
    Bestehende Konten, Seiten und Berechtigungen werden nicht durch den Bootstrap
    ersetzt. Die bisherige Demo-Historie bleibt in `DATABASECHANGELOG` erhalten.
+   Changeset `1.0.14-utf8mb4` baut die Basistabellen einmalig auf `utf8mb4` mit
+   der Kollation `utf8mb4_uca1400_ai_ci` um; bei großen Beständen dauert der
+   Start entsprechend länger. Wurde die Datenbank mit MariaDB vor 11.4.5 angelegt,
+   galt bisher `utf8_general_ci`. Die neue Kollation vergleicht nach
+   Unicode-Regeln (etwa `ss` = `ß`); eindeutige Werte, die nur unter der alten
+   Regel verschieden waren, lassen die Umstellung mit `Duplicate entry`
+   abbrechen. Vorab prüfen, zum Beispiel
+   `SELECT login COLLATE utf8mb4_uca1400_ai_ci AS l, COUNT(*) FROM user GROUP BY l HAVING COUNT(*) > 1`
+   (ebenso `group.name` und `tag.name`), und Dubletten vor dem Upgrade bereinigen.
 5. Anmeldung, Rollen, Seiten und Anhänge prüfen. Demo-Inhalte und Freigaben vor
    einer Veröffentlichung fachlich kontrollieren; die Migration löscht sie nicht.
 

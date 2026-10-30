@@ -141,9 +141,8 @@ public class GroupImpl implements GroupDao {
      */
     @Override
     public Group findById(GroupId groupId) {
-        return groupEntityConverter.convertBtoA(
-            findEntityById(groupId.value())
-        );
+        GroupEntity entity = findEntityById(groupId.value());
+        return entity == null ? null : groupEntityConverter.convertBtoA(entity);
     }
 
     /**
@@ -164,7 +163,7 @@ public class GroupImpl implements GroupDao {
         boolean found = false;
 
         List<GroupEntity> groupEntities = entityManager.createQuery(
-                "SELECT u FROM GroupEntity g WHERE g.name = :name",
+                "SELECT g FROM GroupEntity g WHERE g.name = :name",
                 GroupEntity.class)
                 .setParameter("name", group.getName())
                 .getResultList();

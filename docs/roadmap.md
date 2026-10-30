@@ -965,6 +965,44 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
   müssten von Hand entfernt werden. Ein gehosteter Nachweis des Tag-Laufs ohne
   Umgebung steht mit dem nächsten Tag an.
 
+### R44 – JSON-Client-API für die mobile App
+
+- [x] Umgesetzt und lokal geprüft am 30. Oktober 2026; gehosteter Nachweis mit
+  dem Merge-Lauf.
+- **Ziel:** Die Flutter-App bekommt eine JSON-Schnittstelle unter `/api/v1`,
+  die dieselben Domänendienste, Berechtigungsprüfungen, Revisionskontrollen und
+  Eingabegrenzen wie die Web-UI verwendet. Die bisherige REST-API bleibt
+  unverändert.
+- **Umgesetzt:** Sitzung und CSRF wie in der Web-UI (`GET /session`,
+  `POST /auth/login` mit Loginquoten, Sitzungs- und Token-Rotation,
+  `POST /auth/logout`, `POST /auth/forgot-password`); Seitenbaum mit
+  Nachladen, Favoriten, Suche mit Ausschnitten, Seiten lesen/anlegen/ändern/
+  löschen/verschieben mit Revisionsprüfung, Kommentare, Anhänge, Verlauf mit
+  Vergleich und Wiederherstellung, Freigaben, Profil und Passwortwechsel sowie
+  Benutzer-/Gruppenverwaltung für Administratoren. Geschützte Routen antworten
+  ohne Anmeldung mit `401` statt Login-Redirect; Fehler sind
+  `application/problem+json`. Beschreibung in [client-api.md](client-api.md).
+- **Begleitende Korrekturen:** Migration `1.0.14-utf8mb4` stellt die
+  Basistabellen auf `utf8mb4` um (Emoji); ungültiger JPQL-Alias in
+  `GroupImpl.isGroupExist`; `findById` von Benutzern und Gruppen liefert
+  `null` statt NPE; der Sanitizer behält `pre` und `hr`.
+- **Review vor dem Merge:** Versionsangabe der Sitzung kommt aus den
+  Build-Informationen statt aus einem veralteten Vorgabewert; die Migration
+  nennt die Kollation ausdrücklich, damit das Ergebnis nicht von der
+  Serverkonfiguration abhängt, und das Upgrade-Kapitel beschreibt die
+  Dublettenprüfung für Bestände mit `utf8_general_ci`; beim Aktualisieren von
+  Benutzern behält ein ausgelassenes `admin`-Feld den bisherigen Wert wie
+  `active`; `FileInfo` liefert die ID des Hochladenden statt eines immer
+  leeren Feldes.
+- **Geprüft:** `ClientApiIntegrationTest` (13 Tests gegen MariaDB 12.3:
+  Anmeldung, CSRF, Berechtigungen, Revisionen, Anhänge, Freigaben, Verwaltung,
+  Emoji, Suche) und `SanitizerTest`; gesamte Maven-Testsuite lokal
+  erfolgreich.
+- **Grenzen:** Die API hat keine eigenen Tokens; sie nutzt Sitzungscookie und
+  CSRF-Header. Zeitstempel tragen den Zeitzonen-Offset des Servers. Die
+  utf8mb4-Umstellung baut die Tabellen neu auf und kann bei Dubletten unter der
+  neuen Kollation abbrechen.
+
 ### R45 – App-Basisimage mit libbrotli1-Korrektur
 
 - [x] Lokal umgesetzt und geprüft am 30. Oktober 2026.
