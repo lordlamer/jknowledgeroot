@@ -64,9 +64,18 @@ Repository-Ebene, sodass die Umgebung sie nicht zusätzlich schützte.
 Was die Veröffentlichung weiterhin absichert:
 
 - `publish` läuft nur für Pushes von Tags `v*`, deren Commit zu `origin/master`
-  gehört, und erst nach dem vollständigen Verify-Job mit Tests, Containerstart,
-  Proxy-/Lasttest und OS-Audits. Pull Requests und Branches erhalten keine
-  Registry-Zugangsdaten.
+  oder einem Wartungsbranch `release/*` gehört, und erst nach dem
+  vollständigen Verify-Job mit Tests, Containerstart, Proxy-/Lasttest und
+  OS-Audits. Pull Requests und Branches erhalten keine Registry-Zugangsdaten.
+
+Seit dem 30. Oktober 2026 gibt es den Wartungsbranch `release/1.0` (abgezweigt
+von `master` bei `34fc81a`) für die Stabilisierung von 1.0.0 und spätere
+1.0.x-Korrekturen, während `master` die nächste Entwicklung aufnimmt. Pushes
+und Pull Requests auf `release/*` laufen durch `verify`. Die Rulesets gelten
+bisher nur für `master` und bestehende `v*`-Tags; für `release/*` sind weder
+PR-Pflicht noch Schutz gegen Force-Push eingerichtet. Soll der Branch wie
+`master` geschützt werden, sind die Rulesets `master-integrity` und
+`master-verification` um `refs/heads/release/**` zu erweitern.
 - Der Tag muss der Maven-Version entsprechen, die Arbeitskopie sauber und die
   Audits bestanden sein; sonst bricht die Zusammenstellung der Release-Assets
   im Verify-Job ab ([release.md](release.md#github-release-und-jar-download)).
