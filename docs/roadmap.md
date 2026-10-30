@@ -1039,6 +1039,28 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
   MinIO-Update die Überschreibungen prüfen und entfernen, sobald sie
   überflüssig sind.
 
+### R47 – Wartungsbranch `release/1.0` mit CI und Tag-Freigabe
+
+- [x] Umgesetzt am 30. Oktober 2026.
+- **Ziel:** 1.0.0 auf einem eigenen Branch stabilisieren und spätere
+  1.0.x-Korrekturen per Backport veröffentlichen, während `master` die
+  nächste Entwicklung (etwa die Client-API aus R44) aufnimmt.
+- **Umgesetzt:** Branch `release/1.0` von `master` (`34fc81a`) angelegt. Der
+  Workflow läuft jetzt auch für Pushes und Pull Requests auf `release/**`;
+  die Tag-Prüfung akzeptiert Commits, die zu `origin/master` oder einem
+  `origin/release/*`-Branch gehören. `latest` und die Graph-Übermittlung
+  bleiben an `master` gebunden. Doku in [release.md](release.md),
+  [production.md](production.md) und
+  [repository-protection.md](repository-protection.md).
+- **Geprüft:** Workflow mit actionlint 1.7.7; die Ancestry-Schleife lokal
+  gegen `origin/master` und `origin/release/1.0` sowie gegen einen
+  Fremd-Commit geprüft.
+- **Grenzen:** `release/*` ist noch nicht durch Rulesets geschützt (keine
+  PR-Pflicht, kein Force-Push-Schutz); die Erweiterung der bestehenden
+  Rulesets ist in [repository-protection.md](repository-protection.md)
+  beschrieben. Ein gehosteter Nachweis eines Tags vom Release-Branch steht mit
+  dem ersten 1.0.x-Tag an.
+
 ## Nachweise der Bestandsaufnahme
 
 - `mvn -B test` bei der ursprünglichen Bestandsaufnahme: Anwendung kompiliert unter Java 25; Testkompilierung scheitert am Konstruktoraufruf in `PageControllerTest`. Dieser Befund ist durch R01 behoben; das aktuelle Prüfergebnis steht dort.

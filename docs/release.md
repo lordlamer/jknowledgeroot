@@ -126,7 +126,10 @@ und [production.md](production.md); das Container-Image bleibt der empfohlene We
 
 ## Freigabeschritte
 
-1. Sauberen Release-Commit auf `master` vorbereiten. Kandidatenversion in der POM
+1. Sauberen Release-Commit auf `master` oder dem Wartungsbranch `release/1.0`
+   vorbereiten; Korrekturen für eine veröffentlichte 1.0.x-Linie werden auf
+   `master` entwickelt und per Backport auf `release/1.0` übernommen, der Tag
+   entsteht dort. Kandidatenversion in der POM
    und die Standardlabels beider Dockerfiles gemeinsam pflegen. Bei einem Versionswechsel alte
    JARs durch `clean` entfernen, damit das Docker-COPY eindeutig bleibt.
 2. Gesamten Maven-Testlauf, Containerstart und Backup-/Upgrade-/Rollbackprüfung
