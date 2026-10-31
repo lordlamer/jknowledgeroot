@@ -25,8 +25,13 @@ public final class ApiModels {
     public record Capabilities(boolean canCreateRootPage, boolean recoveryEnabled, long uploadMaxFileBytes,
                                int uploadMaxFiles) {}
 
+    /** pending: the password was accepted and a code (requirement verify) or an enrolment (enrol) is owed. */
+    public record SecondFactor(boolean pending, String requirement, boolean enrolled, String policy) {}
+
     public record SessionInfo(boolean authenticated, CurrentUser user, Capabilities capabilities, Csrf csrf,
-                              String serverVersion) {}
+                              String serverVersion, SecondFactor mfa) {}
+
+    public record CodeRequest(String code) {}
 
     public record LoginRequest(String username, String password) {}
 

@@ -136,9 +136,36 @@ und wird als Inline-SVG gerendert.
   Wiederherstellungscodes und entfernt den Faktor; `MfaSettings` liest und
   setzt die Policy und beantwortet, wer einrichten muss.
 
-Login-Ablauf in zwei Schritten, Einrichtung im Profil, Admin-Seite für die
-Policy, Zurücksetzen durch Administratoren und die Client-API folgen in den
-nächsten Schritten; in diesem Stand ändert sich am Anmelden noch nichts.
+### Anmeldung in zwei Schritten
+
+Nach dem richtigen Passwort entscheidet `SecondFactorGate` anhand der Policy
+und des Kontos: Ist die Policy `off`, ist die Anmeldung fertig. Sonst wird ein
+eingerichteter Token abgefragt (`verify`), oder, wenn die Policy einen Token
+verlangt, den das Konto nicht hat, zuerst die Einrichtung durchlaufen (`enrol`).
+Bis dahin hält die Sitzung nur ein `SecondFactorPendingToken` ohne Rolle: Die
+Domäne behandelt solche Requests wie einen Gast, und `SecondFactorGateFilter`
+leitet jeden Aufruf außer `/mfa`, Abmelden und statischen Ressourcen auf
+`/mfa` um; API-Aufrufe erhalten `401` mit `application/problem+json`.
+
+- `/mfa` zeigt je nach Zustand die Codeabfrage oder die Einrichtung mit
+  QR-Code, manuellem Schlüssel und erstem Code; nach der Einrichtung erscheinen
+  die zehn Wiederherstellungscodes genau einmal. Ein Wiederherstellungscode
+  gilt auch bei der Anmeldung (`xxxx-xxxx`).
+- Fünf falsche Codes beenden die Sitzung (`/login?mfaLocked`). Nach dem
+  richtigen Code wird das Konto erneut geladen, die Sitzungs-ID rotiert und der
+  volle `KnowledgerootUserToken` gespeichert.
+- Im Profil (`/profile/mfa`) richten Benutzer den Token selbst ein oder
+  entfernen ihn mit Passwort und aktuellem Code; solange die Policy einen Token
+  für das Konto verlangt, ist das Entfernen gesperrt. Administratoren setzen
+  den Token eines Benutzers in der Benutzerverwaltung zurück (etwa bei
+  verlorenem Telefon) und wählen die Policy unter `/admin/settings`.
+- Die Client-API antwortet auf `POST /api/v1/auth/login` mit
+  `authenticated: false` und `mfa.pending: true`, solange der Code aussteht;
+  `POST /api/v1/auth/mfa` mit `{"code"}` schließt die Anmeldung ab. Die
+  Einrichtung über die API folgt noch; bis dahin verweist sie auf die Web-UI.
+
+Die Passwortwiederherstellung per E-Mail umgeht den zweiten Faktor nicht: Nach
+dem Zurücksetzen gilt beim nächsten Login dieselbe Prüfung.
 
 ## Prüfungen und verbleibende Arbeit
 

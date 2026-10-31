@@ -31,6 +31,8 @@ import org.springframework.security.web.context.SecurityContextRepository;
 public class WebSecurityConfig {
     private final DatabaseAuthentificationProvider authProvider;
     private final UserContext userContext;
+    /** Absent in slice tests without the MFA beans; then the password alone signs in. */
+    private final org.springframework.beans.factory.ObjectProvider<org.knowledgeroot.app.security.mfa.SecondFactorGate> secondFactorGate;
 
     @Bean
     @org.springframework.core.annotation.Order(0)
@@ -56,6 +58,9 @@ public class WebSecurityConfig {
                 .securityContext(context -> context.securityContextRepository(contextRepository))
                 .addFilterBefore(new SessionUserValidationFilter(userContext, contextRepository),
                         AnonymousAuthenticationFilter.class)
+                // A session that still owes the second factor stays on /mfa (or gets 401 on the API).
+                .addFilterBefore(new org.knowledgeroot.app.security.mfa.SecondFactorGateFilter(),
+                        org.springframework.security.web.access.intercept.AuthorizationFilter.class)
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers("/actuator/**").hasRole("ADMIN");
                     // Client API: guests may read public pages like in the web UI; the controllers
@@ -109,6 +114,8 @@ public class WebSecurityConfig {
 
                     auth.requestMatchers("/api/**").hasAnyRole("USER", "ADMIN");
                     auth.requestMatchers("/profile/**").authenticated();
+                    // Second step of the sign-in: reachable with the pending token, which has no role.
+                    auth.requestMatchers("/mfa", "/mfa/**").authenticated();
 
                     auth.anyRequest().authenticated();
                 })
@@ -116,7 +123,8 @@ public class WebSecurityConfig {
                         .loginPage("/login")
                         .failureUrl("/login?error")
                         .loginProcessingUrl("/logmein")
-                        .defaultSuccessUrl("/login/success", true)
+                        .successHandler(new org.knowledgeroot.app.security.mfa.SecondFactorLoginSuccessHandler(
+                                secondFactorGate.getIfAvailable()))
                         .usernameParameter("username")
                         .passwordParameter("password")
                         .permitAll()

@@ -1096,7 +1096,7 @@ Geplant sind die Anmeldung mit zweitem Faktor (TOTP, Policy durch
 Administratoren), Spaces mit je eigener Seitenstruktur und ein MCP-Server mit
 OAuth-Anmeldung; die Client-API für die mobile App (R44) ist bereits enthalten.
 
-### R49 – Zweiter Faktor: Grundlage (TOTP, Speicherung, Policy)
+### R49 – Zweiter Faktor (TOTP) mit Policy, Anmeldung in zwei Schritten und Profil
 
 - [x] Lokal umgesetzt und geprüft am 31. Oktober 2026.
 - **Ziel:** Benutzer sollen sich wie in Atlas einen Authenticator-Token
@@ -1112,17 +1112,33 @@ OAuth-Anmeldung; die Client-API für die mobile App (R44) ist bereits enthalten.
   Produktionsprofil verlangt den Schlüssel; Compose, Beispiel-Env, Smoke-Tests
   und Wiederherstellungsskripte setzen ihn. Beschreibung in
   [authentication.md](authentication.md#zweiter-faktor-totp).
+- **Umgesetzt (Teil 2 von 3):** Anmeldung in zwei Schritten mit
+  `SecondFactorPendingToken`, `SecondFactorGate`, Erfolgs-Handler und
+  Gate-Filter (Umleitung auf `/mfa`, `401` für die API); `/mfa` mit
+  Codeabfrage, Einrichtung mit QR-Code und einmaliger Anzeige der
+  Wiederherstellungscodes, fünf Fehlversuche beenden die Sitzung;
+  Profilseite `/profile/mfa` mit Einrichtung und Entfernen (Passwort und
+  Code, gesperrt bei verpflichtender Policy); Admin-Seite `/admin/settings`
+  für die Policy und Zurücksetzen eines Tokens in der Benutzerbearbeitung;
+  Client-API mit `mfa.pending` im Login und `POST /api/v1/auth/mfa`.
+  Beschreibung in [product-functions.md](product-functions.md#zweiter-faktor-authenticator-app)
+  und [client-api.md](client-api.md).
 - **Geprüft:** `TotpTest` mit den RFC-6238-Vektoren, Drift-Fenster,
   Base32, otpauth-URI, Wiederherstellungscodes und SVG; `SecretCipherTest`
   (Roundtrip, fremder Schlüssel, manipulierte Daten, Produktionspflicht);
   `ProductionConfigTest` um den Schlüssel erweitert;
   `SecondFactorIntegrationTest` gegen MariaDB (Einrichtung mit erstem Code,
   verschlüsselte Ablage, Einmalgültigkeit von Codes und
-  Wiederherstellungscodes, Entfernen, Policy-Speicherung und -Auswertung).
-- **Grenzen:** Am Anmelden ändert sich in diesem Stand nichts; Login in zwei
-  Schritten, Profil-Einrichtung, Admin-Seite und Admin-Reset (Teil 2) sowie die
-  Client-API (Teil 3) folgen. Bestehende Produktionsumgebungen müssen vor dem
-  Upgrade `KR_MASTER_KEY` setzen.
+  Wiederherstellungscodes, Entfernen, Policy-Speicherung und -Auswertung);
+  `SecondFactorWebIntegrationTest` mit echten Sitzungen und CSRF-Cookies
+  (Policy aus, Codeabfrage und Sperre der übrigen Routen, fünf Fehlversuche,
+  Wiederherstellungscode, erzwungene Einrichtung, nur Administratoren,
+  Profil-Einrichtung und -Entfernen, gesperrtes Entfernen, Admin-Policy und
+  -Reset, API-Login mit zweitem Schritt).
+- **Grenzen:** Die Einrichtung über die Client-API fehlt noch (Teil 3); bei
+  `requirement: "enrol"` verweist die API auf die Web-UI. Die mobile App muss
+  den zweiten Login-Schritt noch umsetzen. Bestehende Produktionsumgebungen
+  müssen vor dem Upgrade `KR_MASTER_KEY` setzen.
 
 ## Nachweise der Bestandsaufnahme
 

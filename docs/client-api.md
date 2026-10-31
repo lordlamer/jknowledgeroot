@@ -16,12 +16,24 @@ der Web-UI. Es gibt keine zusätzlichen Tokens und keine Datenbankänderung daf�
 2. Alle ändernden Requests senden das Token im Header `X-XSRF-TOKEN`.
 3. `POST /api/v1/auth/login` mit `{"username", "password"}` meldet an. Wie beim
    Formular-Login gelten die Loginquoten, die Sitzungs-ID wird erneuert und das
-   CSRF-Token rotiert; die Antwort enthält das neue Token.
-4. `POST /api/v1/auth/logout` beendet die Sitzung.
-5. `POST /api/v1/auth/forgot-password` mit `{"email"}` fordert wie die Web-UI eine
+   CSRF-Token rotiert; die Antwort enthält das neue Token. Verlangt das Konto
+   einen zweiten Faktor, antwortet der Login mit `authenticated: false` und
+   `mfa: {pending: true, requirement: "verify"}`; bis zum Code liefern alle
+   anderen API-Routen `401` mit `detail: "Second factor required."`.
+4. `POST /api/v1/auth/mfa` mit `{"code"}` (Authenticator- oder
+   Wiederherstellungscode) schließt die Anmeldung ab und liefert die volle
+   Sitzung mit neuem CSRF-Token; ein falscher Code gibt `401`, nach fünf
+   Fehlversuchen endet die Sitzung. `requirement: "enrol"` (Policy verlangt
+   einen Token, der noch nicht eingerichtet ist) muss derzeit in der Web-UI
+   erledigt werden; die API antwortet dann mit `409`.
+5. `POST /api/v1/auth/logout` beendet die Sitzung.
+6. `POST /api/v1/auth/forgot-password` mit `{"email"}` fordert wie die Web-UI eine
    Passwort-Wiederherstellung an und antwortet immer mit `204`.
 
-`GET /api/v1/session` nennt in `serverVersion` die Maven-Version aus den Build-Informationen.
+`GET /api/v1/session` nennt in `serverVersion` die Maven-Version aus den
+Build-Informationen und in `mfa` den Stand des zweiten Faktors: `pending`,
+`requirement` (`verify`/`enrol`/null), `enrolled` und die `policy`
+(`off`, `optional`, `required-for-admins`, `required`).
 
 Ohne Anmeldung antworten geschützte API-Routen mit `401` statt mit dem
 Login-Redirect der Web-UI. Gäste dürfen wie in der Web-UI öffentliche Seiten lesen.

@@ -50,6 +50,12 @@
         </div>
     </div>
 </form>
+<section class="kr-editor-pane mt-4" aria-labelledby="mfa-heading">
+    <h2 id="mfa-heading">Two-factor authentication</h2>
+    <p th:if="${mfa != null and mfa.enrolled()}">Active. Unused recovery codes: <span th:text="${mfa.recoveryCodesLeft()}">10</span>.</p>
+    <p th:if="${mfa == null or !mfa.enrolled()}">Not set up. A code from an authenticator app protects your account in addition to the password.</p>
+    <a class="kr-btn" href="/profile/mfa" hx-get="/profile/mfa" hx-target="#content" hx-push-url="true">Manage</a>
+</section>
 <section class="kr-editor-pane mt-4" aria-labelledby="password-heading">
     <p th:if="${@environment.getProperty('knowledgeroot.recovery.enabled', 'false') == 'true'}">
         <a th:href="@{/profile/recovery}">Confirm email for password recovery</a>

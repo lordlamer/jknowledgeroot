@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: appHead(~{::title})}">
+    <title>Knowledgeroot Recovery codes</title>
+</head>
+<body class="kr-login-page">
+<div class="kr-login-shell">
+    <div class="kr-login-left">
+        <a class="kr-login-brand" href="/ui/welcome">
+            <span class="kr-brand-mark">K</span>
+            <span class="kr-brand-name">Knowledgeroot<span class="kr-dot">.</span></span>
+        </a>
+        <div class="kr-login-hero">
+            <h1>Keep these safe.</h1>
+            <p>Each recovery code signs you in once if you lose access to the authenticator app. They are shown only now.</p>
+        </div>
+        <div style="color:var(--kr-text-3); font-size:12px">© Knowledgeroot</div>
+    </div>
+    <div class="kr-login-right">
+        <div class="kr-login-card">
+            <h2>Your recovery codes</h2>
+            <p class="kr-sub">Store them somewhere safe, for example in a password manager.</p>
+            <ul class="kr-recovery-codes" style="columns:2; font-family:monospace; list-style:none; padding:0">
+                <li th:each="code : ${recoveryCodes}" th:text="${code}">abcd-efgh</li>
+            </ul>
+            <a class="kr-btn primary" href="/login/success">Continue</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

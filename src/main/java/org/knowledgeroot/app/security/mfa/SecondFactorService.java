@@ -49,7 +49,19 @@ public class SecondFactorService {
     }
 
     public Enrolment begin(String login) {
-        TotpSecret secret = TotpSecret.generate();
+        return enrolment(login, TotpSecret.generate());
+    }
+
+    /** The same QR code and URI for a pending secret the caller kept, e.g. after a wrong first code. */
+    public Enrolment enrolment(String login, String pendingSecret) {
+        try {
+            return enrolment(login, TotpSecret.of(pendingSecret));
+        } catch (IllegalArgumentException e) {
+            return begin(login);
+        }
+    }
+
+    private static Enrolment enrolment(String login, TotpSecret secret) {
         String uri = Totp.otpauthUri(login, secret);
         return new Enrolment(secret.base32(), uri, QrCode.svg(uri));
     }
