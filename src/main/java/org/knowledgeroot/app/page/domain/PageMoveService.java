@@ -79,6 +79,8 @@ public class PageMoveService {
         page.setChangedBy(Integer.valueOf(users.getUserContext().getUserId()));
         page.setChangeDate(LocalDateTime.now());
         pages.updatePage(page);
+        // A page moved to the top level keeps the grants it had instead of silently taking the space grants.
+        if (parent == 0 && permissions.isInheriting(id)) permissions.setInheriting(id, false, page.getChangedBy());
         jdbc.sql("UPDATE page SET parent=?, space_id=? WHERE id=?").params(parent, targetSpace, id.value()).update();
         if (!subtree.isEmpty()) jdbc.sql("UPDATE page SET revision=revision+1, space_id=:space WHERE id IN (:ids)")
                 .param("space", targetSpace).param("ids", subtree).update();
