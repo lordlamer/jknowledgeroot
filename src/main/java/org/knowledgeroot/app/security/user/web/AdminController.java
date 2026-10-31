@@ -13,6 +13,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import java.time.LocalDateTime;
@@ -25,6 +26,7 @@ public class AdminController {
     private final GroupDao groupImpl;
     private final PasswordService passwords;
     private final org.knowledgeroot.app.security.mfa.SecondFactorService secondFactors;
+    private final org.knowledgeroot.app.space.SpaceService spaces;
 
     /**
      * get all users
@@ -274,11 +276,46 @@ public class AdminController {
      * show permissions
      */
     @GetMapping("/admin/permissions")
-    public String showPermissions(HtmxRequest htmxRequest) {
+    public String showPermissions(@RequestParam(required = false) String saved, Model model, HtmxRequest htmxRequest) {
+        permissionsModel(model);
+        model.addAttribute("saved", saved != null);
         if (htmxRequest.isHtmxRequest()) {
             return "admin/permissions :: body";
         }
 
         return "admin/permissions";
+    }
+
+    /** Grants the global right to create spaces to a user, a group or every signed-in user. */
+    @PostMapping("/admin/permissions/create-space")
+    public String allowSpaceCreation(@RequestParam String roleType, @RequestParam(required = false) Integer roleId,
+                                     Model model, HtmxRequest htmxRequest) {
+        try {
+            spaces.allowSpaceCreation(roleType, roleId);
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            if (e.getStatusCode().value() != 400 && e.getStatusCode().value() != 409) throw e;
+            permissionsModel(model);
+            model.addAttribute("error", e.getReason());
+            return htmxRequest.isHtmxRequest() ? "admin/permissions :: body" : "admin/permissions";
+        }
+        return "redirect:/admin/permissions?saved";
+    }
+
+    @PostMapping("/admin/permissions/create-space/{grantId}/delete")
+    public String revokeSpaceCreation(@PathVariable int grantId) {
+        spaces.revokeSpaceCreation(grantId);
+        return "redirect:/admin/permissions?saved";
+    }
+
+    private void permissionsModel(Model model) {
+        model.addAttribute("spaceCreators", spaces.spaceCreators());
+        var activeUsers = new UserFilter();
+        activeUsers.setActive(true);
+        activeUsers.setDeleted(false);
+        model.addAttribute("users", userImpl.listUsers(activeUsers));
+        var activeGroups = new org.knowledgeroot.app.security.user.api.filter.GroupFilter();
+        activeGroups.setActive(true);
+        activeGroups.setDeleted(false);
+        model.addAttribute("groups", groupImpl.listGroups(activeGroups));
     }
 }

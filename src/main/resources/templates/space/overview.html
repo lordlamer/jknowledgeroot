@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
+<head>
+    <title>Knowledgeroot Space</title>
+</head>
+<body>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
+        <li class="breadcrumb-item"><a href="/spaces" hx-get="/spaces" hx-target="#content" hx-push-url="true">Spaces</a></li>
+        <li class="breadcrumb-item active" aria-current="page" th:text="${space.name}">Space</li>
+    </ol>
+</nav>
+
+<header class="kr-page-header">
+    <div class="kr-page-title-wrap">
+        <h1 class="kr-page-title" th:text="${space.name}">Space</h1>
+        <p class="kr-page-subtitle" style="margin:0">
+            <code th:text="${space.key}">KR</code>
+            <span th:if="${space.archived}"> · archived, read-only</span>
+            <span th:if="${!#strings.isEmpty(space.description)}" th:text="' · ' + ${space.description}"></span>
+        </p>
+    </div>
+    <div class="kr-page-actions">
+        <a th:if="${canCreate}" class="kr-btn accent" th:href="@{/ui/page/new(space=${space.id})}"
+           th:attr="hx-get='/ui/page/new?space=' + ${space.id}" hx-target="#content" hx-push-url="true">New top-level page</a>
+        <a th:if="${canManage}" class="kr-btn" th:href="@{'/spaces/' + ${space.id} + '/settings'}"
+           th:attr="hx-get='/spaces/' + ${space.id} + '/settings'" hx-target="#content" hx-push-url="true">Settings</a>
+    </div>
+</header>
+
+<div class="kr-editor-pane">
+    <h2>Top-level pages</h2>
+    <p th:if="${#lists.isEmpty(rootPages)}">No pages yet.</p>
+    <ul th:unless="${#lists.isEmpty(rootPages)}">
+        <li th:each="page : ${rootPages}">
+            <a th:href="@{'/ui/page/' + ${page.pageId}}" th:attr="hx-get='/ui/page/' + ${page.pageId}" hx-target="#content" hx-push-url="true"
+               th:text="${page.name}">Page</a>
+            <span th:if="${space.homePageId != null and space.homePageId == page.pageId.value()}" class="kr-pill">home</span>
+        </li>
+    </ul>
+</div>
+<th:block th:replace="~{fragments/space-context :: oob}"></th:block>
+</body>
+</html>

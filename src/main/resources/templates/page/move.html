@@ -50,10 +50,18 @@
             </form>
         </div>
 
+        <form th:if="${#strings.isEmpty(query) and #lists.size(spaces) > 1}" method="get" th:action="@{'/ui/page/' + ${page.pageId} + '/move'}"
+              th:hx-get="@{'/ui/page/' + ${page.pageId} + '/move'}" hx-target="#content" hx-push-url="true" hx-trigger="change" class="kr-move-search">
+            <input type="hidden" name="parent" value="0">
+            <label for="destination-space">Space</label>
+            <select id="destination-space" name="space">
+                <option th:each="s : ${spaces}" th:value="${s.id}" th:text="${s.name}" th:selected="${s.id == destinationSpace.id}">Space</option>
+            </select>
+        </form>
         <nav class="kr-move-location" th:if="${#strings.isEmpty(query)}" aria-label="Destination path">
-            <a th:unless="${destination == null}" th:href="@{'/ui/page/' + ${page.pageId} + '/move'(parent=0)}"
-               th:hx-get="@{'/ui/page/' + ${page.pageId} + '/move'(parent=0)}" hx-target="#content" hx-push-url="true"><i class="bi bi-house" aria-hidden="true"></i> Top level</a>
-            <strong th:if="${destination == null}"><i class="bi bi-house" aria-hidden="true"></i> Top level</strong>
+            <a th:unless="${destination == null}" th:href="@{'/ui/page/' + ${page.pageId} + '/move'(parent=0,space=${destinationSpace.id})}"
+               th:hx-get="@{'/ui/page/' + ${page.pageId} + '/move'(parent=0,space=${destinationSpace.id})}" hx-target="#content" hx-push-url="true"><i class="bi bi-house" aria-hidden="true"></i> <span th:text="${destinationSpace.name}">Top level</span></a>
+            <strong th:if="${destination == null}"><i class="bi bi-house" aria-hidden="true"></i> <span th:text="${destinationSpace.name}">Top level</span></strong>
             <th:block th:each="ancestor, stat : ${destinationPath}">
                 <span class="kr-move-sep">/</span>
                 <a th:unless="${stat.last}" th:href="@{'/ui/page/' + ${page.pageId} + '/move'(parent=${ancestor.pageId.value()})}"
@@ -91,9 +99,10 @@
 
         <form method="post" th:action="@{'/ui/page/' + ${page.pageId} + '/move'}" class="kr-move-footer" th:if="${#strings.isEmpty(query)}">
             <input type="hidden" name="revision" th:value="${page.revision}"><input type="hidden" name="parent" th:value="${parent}">
+            <input type="hidden" name="space" th:if="${parent == 0}" th:value="${destinationSpace.id}">
             <div class="kr-move-target">
                 <span class="kr-move-label">Destination</span>
-                <strong th:text="${destination == null ? 'Top level' : destination.name}"></strong>
+                <strong th:text="${destination == null ? 'Top level of ' + destinationSpace.name : destination.name}"></strong>
                 <span th:if="${alreadyHere}" class="kr-move-hint">The page is already here.</span>
                 <span th:if="${insideSubtree}" class="kr-move-hint warn">A page cannot be moved into itself or its sub-pages.</span>
                 <span th:if="${!validDestination and !insideSubtree}" class="kr-move-hint warn">Choose a destination you can edit, outside this page's subtree.</span>

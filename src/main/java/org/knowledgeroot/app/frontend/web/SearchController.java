@@ -30,32 +30,41 @@ public class SearchController {
     private static final int MAX_PATH_DEPTH = 12;
     private final PageDao pages;
     private final UserContext users;
+    private final org.knowledgeroot.app.space.SpaceService spaces;
 
     /** Text fragment of a title or snippet; matches are rendered as highlighted, escaped text. */
     record Part(String text, boolean match) {}
 
     record SearchHit(int id, String name, String snippet, List<Part> title, List<Part> excerpt,
-                     List<String> path, LocalDateTime changed) {}
+                     List<String> path, LocalDateTime changed, String space) {}
 
+    /** Searches all spaces the viewer may enter, or only {@code space} when given. */
     @GetMapping("/search")
     public String showSearch(@RequestParam("q") String query,
                              @RequestParam(name = "start", defaultValue = "0") Integer start,
+                             @RequestParam(name = "space", required = false) Integer space,
                              Model model, HtmxRequest request) {
         RequestValidation.text(query, 200);
         int offset = RequestValidation.start(start);
+        RequestValidation.require(space == null || space > 0);
         String term = query.trim();
         var user = users.getUserContext();
         Integer viewer = user.isGuest() ? null : Integer.valueOf(user.getUserId());
         List<Page> results = term.isEmpty() ? List.of() : pages.listVisiblePages(
-                PageFilter.builder().query(term).start(offset).limit(PAGE_SIZE + 1).build(), viewer);
+                PageFilter.builder().query(term).spaceId(space).start(offset).limit(PAGE_SIZE + 1).build(), viewer);
+        var visibleSpaces = spaces.visibleSpaces();
+        Map<Integer, String> keys = new HashMap<>();
+        visibleSpaces.forEach(s -> keys.put(s.getId(), s.getKey()));
         // Ancestors are shared between hits, so resolve each visible parent only once per request.
         Map<Integer, Optional<Page>> parents = new HashMap<>();
         var hits = results.stream().limit(PAGE_SIZE).map(page -> {
             String snippet = snippet(page.getContent(), term);
             return new SearchHit(page.getPageId().value(), page.getName(), snippet,
                     highlight(page.getName(), term), highlight(snippet, term),
-                    path(page.getParent(), viewer, parents), page.getChangeDate());
+                    path(page.getParent(), viewer, parents), page.getChangeDate(), keys.get(page.getSpaceId()));
         }).toList();
+        model.addAttribute("spaces", visibleSpaces);
+        model.addAttribute("space", space);
         model.addAttribute("searchQuery", term);
         model.addAttribute("pages", hits);
         model.addAttribute("start", offset);

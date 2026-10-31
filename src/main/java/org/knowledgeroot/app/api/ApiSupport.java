@@ -8,6 +8,7 @@ import org.knowledgeroot.app.page.domain.PagePermission;
 import org.knowledgeroot.app.page.domain.PagePermissionDao;
 import org.knowledgeroot.app.security.context.domain.UserContext;
 import org.knowledgeroot.app.security.context.domain.UserDetails;
+import org.knowledgeroot.app.space.SpaceService;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,7 @@ class ApiSupport {
     private final UserContext userContext;
     private final PagePermissionDao permissions;
     private final PageDao pages;
+    private final SpaceService spaces;
 
     UserDetails user() {
         return userContext.getUserContext();
@@ -69,6 +71,15 @@ class ApiSupport {
         } catch (EmptyResultDataAccessException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Page not found.");
         }
+    }
+
+    SpaceService spaces() {
+        return spaces;
+    }
+
+    ApiModels.SpaceRef spaceRef(Integer spaceId) {
+        if (spaceId == null) return null;
+        return spaces.spaces().find(spaceId).map(space -> new ApiModels.SpaceRef(space.getId(), space.getKey(), space.getName())).orElse(null);
     }
 
     /** Root-to-page path limited to pages the viewer may see. */

@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.knowledgeroot.app.page.api.PageDto;
 import org.knowledgeroot.app.page.api.PageDtoConverter;
 import org.knowledgeroot.app.security.context.domain.UserContext;
-import org.springframework.beans.factory.annotation.Value;
+import org.knowledgeroot.app.space.SpaceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,10 +20,14 @@ public class PageCreationService {
     private final PagePermissionDao permissions;
     private final PageLabelDao labels;
     private final UserContext users;
-    @Value("${knowledgeroot.pages.allow-guest-root-creation:false}")
-    private boolean allowGuestRootCreation;
+    private final SpaceService spaces;
 
+    /** Children need edit access to the parent; root pages the edit level on the space (default space when unnamed). */
     public void requireCanCreate(Integer parent) {
+        requireCanCreate(parent, null);
+    }
+
+    public void requireCanCreate(Integer parent, Integer spaceId) {
         if (parent != null && parent < 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         var user = users.getUserContext();
         Integer userId = user.isGuest() ? null : Integer.valueOf(user.getUserId());
@@ -31,14 +35,15 @@ public class PageCreationService {
             if (!permissions.hasUserPermission(new PageId(parent), userId, PagePermission.PermissionLevel.EDIT)) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN);
             }
-        } else if (user.isGuest() && !allowGuestRootCreation) {
+        } else if (!spaces.canCreateRootPage(spaceId == null ? spaces.defaultSpace().getId() : spaceId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
     }
 
     @Transactional
     public int create(PageDto dto, List<String> pageLabels) {
-        requireCanCreate(dto.getParent());
+        if (dto.getSpaceId() != null) spaces.space(dto.getSpaceId());
+        requireCanCreate(dto.getParent(), dto.getSpaceId());
         PageInput.validate(dto);
         PageInput.labels(pageLabels);
         var user = users.getUserContext();

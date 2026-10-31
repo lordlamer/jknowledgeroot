@@ -32,11 +32,17 @@ class NavigationApiController {
     private final ApiSupport api;
     private final PageDao pages;
     private final PageStarDao stars;
+    private final org.knowledgeroot.app.space.CurrentSpace currentSpace;
 
-    /** Visible children of a parent (0 = top level), 50 per request; continue with {@code after=nextAfter}. */
+    /**
+     * Visible children of a parent (0 = top level of {@code space}, default: the session's space),
+     * 50 per request; continue with {@code after=nextAfter}.
+     */
     @GetMapping("/tree")
-    ApiModels.TreeResponse tree(@RequestParam(defaultValue = "0") int parent, @RequestParam(defaultValue = "0") int after) {
-        RequestValidation.require(parent >= 0 && after >= 0);
+    ApiModels.TreeResponse tree(@RequestParam(defaultValue = "0") int parent, @RequestParam(defaultValue = "0") int after,
+                                @RequestParam(required = false) Integer space) {
+        RequestValidation.require(parent >= 0 && after >= 0 && (space == null || space > 0));
+        int spaceId = space != null ? space : currentSpace.currentId();
         Integer viewer = api.viewer();
         ApiModels.PageRef parentRef = null;
         if (parent > 0) {
@@ -44,7 +50,7 @@ class NavigationApiController {
             if (parentPage.isEmpty()) return new ApiModels.TreeResponse(null, List.of(), null);
             parentRef = ApiModels.PageRef.of(parentPage.get());
         }
-        List<Page> visible = pages.listNavigationPages(parent, after, viewer);
+        List<Page> visible = pages.listNavigationPages(spaceId, parent, after, viewer);
         List<Page> items = visible.stream().limit(TREE_PAGE_SIZE).toList();
         Set<Integer> withChildren = pages.parentsWithVisibleChildren(
                 items.stream().map(page -> page.getPageId().value()).toList(), viewer);
@@ -57,29 +63,33 @@ class NavigationApiController {
         }).toList(), nextAfter);
     }
 
-    /** Favourites of the signed-in user, most recently starred first; empty for guests. */
+    /** Favourites of the signed-in user, most recently starred first, optionally only those in {@code space}; empty for guests. */
     @GetMapping("/starred")
-    List<ApiModels.PageRef> starred() {
+    List<ApiModels.PageRef> starred(@RequestParam(required = false) Integer space) {
         Integer viewer = api.viewer();
         if (viewer == null) return List.of();
         return stars.listStarredPages(viewer).stream()
+                .filter(page -> space == null || (page.getSpaceId() != null && page.getSpaceId().equals(space)))
                 .filter(page -> api.can(page.getPageId().value(), PagePermission.PermissionLevel.VIEW))
                 .map(ApiModels.PageRef::of).toList();
     }
 
+    /** Searches the spaces the viewer may enter, or only {@code space} when given. */
     @GetMapping("/search")
-    ApiModels.SearchResponse search(@RequestParam("q") String query, @RequestParam(defaultValue = "0") int start) {
+    ApiModels.SearchResponse search(@RequestParam("q") String query, @RequestParam(defaultValue = "0") int start,
+                                    @RequestParam(required = false) Integer space) {
         RequestValidation.text(query, 200);
         int offset = RequestValidation.start(start);
+        RequestValidation.require(space == null || space > 0);
         String term = query.trim();
         Integer viewer = api.viewer();
         List<Page> results = term.isEmpty() ? List.of() : pages.listVisiblePages(
-                PageFilter.builder().query(term).start(offset).limit(SEARCH_PAGE_SIZE + 1).build(), viewer);
+                PageFilter.builder().query(term).spaceId(space).start(offset).limit(SEARCH_PAGE_SIZE + 1).build(), viewer);
         // Ancestors are shared between hits, so resolve each visible parent only once per request.
         Map<Integer, Optional<Page>> parents = new HashMap<>();
         var hits = results.stream().limit(SEARCH_PAGE_SIZE).map(page -> new ApiModels.SearchHit(
                 page.getPageId().value(), page.getName(), SearchController.snippet(page.getContent(), term),
-                path(page.getParent(), viewer, parents), page.getChangeDate())).toList();
+                path(page.getParent(), viewer, parents), page.getChangeDate(), api.spaceRef(page.getSpaceId()))).toList();
         return new ApiModels.SearchResponse(term, hits, offset,
                 results.size() > SEARCH_PAGE_SIZE && offset + SEARCH_PAGE_SIZE <= 100_000);
     }

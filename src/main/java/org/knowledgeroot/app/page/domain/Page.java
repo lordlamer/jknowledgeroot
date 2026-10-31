@@ -15,6 +15,8 @@ public class Page {
     private PageId pageId;
     @Builder.Default
     private Long revision = 0L;
+    /** The space this page belongs to; children always share their parent's space. */
+    private Integer spaceId;
     private Integer parent;
     private String name;
     private String content;

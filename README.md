@@ -108,11 +108,15 @@ endpoints, authentication and the accompanying utf8mb4 migration.
 
 ## Page permissions
 
-New child pages dynamically inherit their parent's permissions. New root pages
-created by signed-in users are private to their creator and administrators.
-Set `KR_ALLOW_GUEST_ROOT_CREATION=true` to allow guests to create publicly readable
-root pages; the default is `false`. Guests may create children wherever they have
-parent-page edit permission. Public read access alone never grants editing.
+Every page lives in a space, a container with its own permissions (view, edit,
+admin) for users, groups, guests or all signed-in users. Without a grant on the
+space none of its pages is reachable; inside the space the page permissions
+decide. New child pages dynamically inherit their parent's permissions, new root
+pages inherit the space's grants. Guests may create root pages in spaces that
+give them the edit level and children wherever they have parent-page edit
+permission. Public read access alone never grants editing. Spaces are created by
+administrators and by everyone granted the global right under *Admin → Permissions*;
+the creator administers the space and gets a home page with it.
 
 Only administrators manage sharing and explicitly switch between inherited and
 local permissions. Existing pages retain their local grants during upgrade.

@@ -125,3 +125,54 @@ nicht selbst entfernen. Bei verlorenem Telefon setzt ein Administrator den
 Token in der Benutzerverwaltung zurück; der Benutzer richtet danach einen
 neuen ein. Fünf falsche Codes beenden die Sitzung, die Anmeldung beginnt von
 vorn. Technische Details in [authentication.md](authentication.md#zweiter-faktor-totp).
+
+## Spaces
+
+Ein Space ist ein Container um einen eigenen Seitenbaum, vergleichbar mit
+Confluence. Unter **Spaces** im Menü sehen Benutzer alle Spaces, die sie
+betreten dürfen; Gäste sehen öffentliche Spaces. Jeder Space hat einen festen
+Schlüssel (2–16 Großbuchstaben oder Ziffern), einen Namen, eine Beschreibung
+und eine Homepage, die beim Wechsel in den Space geöffnet wird.
+
+Die Seitenleiste zeigt immer genau einen Space: Der Umschalter in der
+Kopfzeile neben dem Logo zeigt Schlüssel und Namen des aktuellen Space und
+öffnet ein Menü mit allen betretbaren Spaces (Schlüssel, Name, Beschreibung,
+Häkchen am aktuellen, Kennzeichen „archived") sowie den Einträgen „All
+spaces" und „New space". Der Wechsel öffnet die Homepage des Space, ohne
+Homepage die Space-Übersicht mit den Hauptseiten. Der Space-Name über dem
+Baum führt zur Übersicht. Das Öffnen einer Seite, etwa aus der Suche oder
+über einen Link, wechselt Seitenleiste und Umschalter in den Space der
+Seite; der zuletzt gewählte Space bleibt in der Sitzung.
+Auch die Favoriten in der Seitenleiste folgen dem gezeigten Space: Sterne an
+Seiten anderer Spaces bleiben erhalten und erscheinen nach dem Wechsel
+dorthin. Der Breadcrumb einer Seite beginnt mit ihrem Space. „Neue Seite" im
+Baum legt eine Hauptseite im gezeigten Space an. Die Suche durchsucht alle
+Spaces, die man betreten darf, und lässt sich auf einen Space einschränken;
+die Treffer nennen den Space-Schlüssel.
+
+- **Rechte am Space:** Lesen (betreten und lesen, was die Seitenrechte
+  erlauben), Bearbeiten (zusätzlich Hauptseiten anlegen), Verwalten
+  (zusätzlich Einstellungen, Freigaben, Archivierung). Freigaben gibt es für
+  Benutzer, Gruppen, Gäste und alle angemeldeten Benutzer. Ohne Recht am Space
+  ist keine seiner Seiten erreichbar; die Seitenrechte gelten innerhalb wie
+  gewohnt.
+- **Hauptseiten** übernehmen die Rechte ihres Space, solange ein Administrator
+  sie nicht auf eigene Freigaben umstellt.
+- **Anlegen:** Administratoren immer; andere Benutzer, wenn sie unter
+  Admin → Permissions das Recht „Create spaces" erhalten haben. Wer einen Space
+  anlegt, verwaltet ihn und bekommt automatisch eine Homepage.
+- **Einstellungen:** Space-Verwalter ändern unter Spaces → Settings Name,
+  Beschreibung, Homepage und Freigaben und archivieren den Space. Archivierte
+  Spaces sind schreibgeschützt und nur für Verwalter und Administratoren
+  sichtbar; der letzte aktive Space kann nicht archiviert werden.
+- **Verschieben** einer Seite unter eine Seite eines anderen Space nimmt ihren
+  Teilbaum mit in diesen Space. Im Verschieben-Dialog lässt sich auch die
+  oberste Ebene eines anderen Space als Ziel wählen; dafür braucht man dort
+  das Recht, Hauptseiten anzulegen.
+
+Die Migration legt den Space „Knowledgeroot" (`KR`) an, der alle bisherigen
+Seiten enthält; Gäste dürfen ihn lesen, angemeldete Benutzer dort Hauptseiten
+anlegen. Die Client-API bietet Spaces unter `/api/v1/spaces` und nimmt
+`space` bei Baum, Suche, Seitenanlage und Verschieben an
+([client-api.md](client-api.md)). Regeln im Detail in
+[access-control.md](access-control.md#spaces).

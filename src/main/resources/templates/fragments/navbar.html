@@ -13,6 +13,9 @@
                 <span class="kr-brand-mark">K</span>
                 <span class="kr-brand-name">Knowledgeroot<span class="kr-dot">.</span></span>
             </a>
+            <!-- Space switcher: a full navigation so that navbar and sidebar render for the new space. -->
+            <span class="kr-space-sep" aria-hidden="true" th:if="${currentSpace != null}"></span>
+            <div th:replace="~{fragments/space-context :: switcher(false)}"></div>
         </div>
 
         <form class="kr-search-wrap" hx-get="/search" hx-target="#content" hx-push-url="true" method="get" role="search">
@@ -48,6 +51,7 @@
                     <li><a class="dropdown-item" href="#" hx-get="/admin/users" hx-target="#content" hx-push-url="true">Users</a></li>
                     <li><a class="dropdown-item" href="#" hx-get="/admin/groups" hx-target="#content" hx-push-url="true">Groups</a></li>
                     <li><a class="dropdown-item" href="#" hx-get="/admin/permissions" hx-target="#content" hx-push-url="true">Permissions</a></li>
+                    <li><a class="dropdown-item" href="/spaces" hx-get="/spaces" hx-target="#content" hx-push-url="true">Spaces</a></li>
                     <li><a class="dropdown-item" href="#" hx-get="/admin/settings" hx-target="#content" hx-push-url="true">Settings</a></li>
                 </ul>
             </div>

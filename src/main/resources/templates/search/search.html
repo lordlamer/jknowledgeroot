@@ -19,6 +19,10 @@
             <i class="bi bi-search" aria-hidden="true"></i>
             <input type="search" name="q" th:value="${searchQuery}" maxlength="200" placeholder="Search pages…"
                    aria-label="Search pages" autocomplete="off">
+            <select name="space" aria-label="Space" th:if="${spaces != null and #lists.size(spaces) > 1}">
+                <option value="" th:selected="${space == null}">All spaces</option>
+                <option th:each="s : ${spaces}" th:value="${s.id}" th:text="${s.name}" th:selected="${space != null and space == s.id}">Space</option>
+            </select>
             <button type="submit" class="kr-btn accent">Search</button>
         </form>
     </div>
@@ -48,6 +52,7 @@
            hx-target="#content" hx-push-url="true">
             <div class="kr-r-crumb">
                 <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
+                <span th:if="${page.space != null}" class="kr-pill" th:text="${page.space}">KR</span>
                 <span th:if="${#lists.isEmpty(page.path)}">Top level</span>
                 <th:block th:each="name, stat : ${page.path}"><span th:text="${name}">Parent</span><span th:unless="${stat.last}" class="kr-r-sep">/</span></th:block>
             </div>

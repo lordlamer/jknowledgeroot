@@ -17,20 +17,26 @@ public class PageMoveController {
     private final PageMoveService moves;
     private final PageDao pages;
     private final PagePermissionDao permissions;
+    private final org.knowledgeroot.app.space.SpaceService spaces;
 
     @GetMapping("/ui/page/{id}/move")
     public String form(@PathVariable int id, @RequestParam(required=false) Integer parent,
                        @RequestParam(defaultValue="0") int start, @RequestParam(defaultValue="") String query,
-                       Model model, HtmxRequest request) {
+                       @RequestParam(required=false) Integer space, Model model, HtmxRequest request) {
         var page = moves.movablePage(new PageId(id));
         int currentParent = page.getParent() == null ? 0 : page.getParent();
         // Start browsing at the page's current location when the user may see it.
         if (parent == null) parent = currentParent > 0 && canView(currentParent) ? currentParent : 0;
-        RequestValidation.require(parent >= 0);
+        RequestValidation.require(parent >= 0 && (space == null || space > 0));
         if (parent > 0 && !canView(parent)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        // The top level is browsed per space: the page's own space unless another one was chosen.
+        int destinationSpace = parent > 0 ? spaces.space(pages.findById(new PageId(parent)).getSpaceId()).getId()
+                : space != null ? space : page.getSpaceId();
+        if (!spaces.canView(destinationSpace)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         RequestValidation.text(query, 255);
         start = RequestValidation.start(start);
         var filter = PageFilter.builder().parent(query.isBlank() ? parent : null).query(query.isBlank() ? null : query)
+                .spaceId(query.isBlank() && parent == 0 ? destinationSpace : null)
                 .deleted(false).start(start).limit(51).build();
         // Readable ancestors may be browsed to reach editable children; only editable destinations may be selected.
         var items = pages.listVisiblePages(filter, moves.actor());
@@ -44,16 +50,21 @@ public class PageMoveController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
         model.addAttribute("destinationPath", destinationPath);
         model.addAttribute("currentPath", path(currentParent));
-        model.addAttribute("alreadyHere", parent == currentParent);
+        model.addAttribute("alreadyHere", parent == currentParent && (parent > 0 || destinationSpace == page.getSpaceId()));
         model.addAttribute("insideSubtree", insideSubtree);
-        model.addAttribute("validDestination", moves.canUseDestination(parent) && (parent == 0 || pages.getPageHierarchy(new PageId(parent)).stream()
+        model.addAttribute("spaces", spaces.visibleSpaces());
+        model.addAttribute("destinationSpace", spaces.space(destinationSpace));
+        model.addAttribute("currentSpace", spaces.space(page.getSpaceId()));
+        model.addAttribute("validDestination", (parent == 0 ? destinationSpace == page.getSpaceId() || moves.canUseTopLevel(destinationSpace)
+                : moves.canUseDestination(parent) && pages.getPageHierarchy(new PageId(parent)).stream()
                 .noneMatch(ancestor -> ancestor.getPageId().equals(page.getPageId()))));
         return request.isHtmxRequest() ? "page/move :: body" : "page/move";
     }
 
     @PostMapping("/ui/page/{id}/move")
-    public String move(@PathVariable int id, @RequestParam int parent, @RequestParam(required=false) Long revision) {
-        moves.move(new PageId(id), parent, revision);
+    public String move(@PathVariable int id, @RequestParam int parent, @RequestParam(required=false) Long revision,
+                       @RequestParam(required=false) Integer space) {
+        moves.move(new PageId(id), parent, revision, space);
         return "redirect:/ui/page/" + id + "?trigger=reload-sidebar";
     }
 

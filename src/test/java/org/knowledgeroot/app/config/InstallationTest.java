@@ -218,6 +218,8 @@ class InstallationTest {
         var grants = jdbc.queryForList("SELECT * FROM page_permission ORDER BY id");
         // The new column preserves the original explicit mode for every existing page.
         pages.forEach(page -> page.put("inherit_permissions", false));
+        // Spaces put every existing page into the default space.
+        pages.forEach(page -> page.put("space_id", 1));
         var users = jdbc.queryForList("SELECT * FROM user ORDER BY id");
         new ResourceDatabasePopulator(new ClassPathResource("org/springframework/session/jdbc/schema-mysql.sql"))
                 .execute(dataSource);

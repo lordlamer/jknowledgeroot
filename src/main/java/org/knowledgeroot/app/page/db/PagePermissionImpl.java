@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.knowledgeroot.app.page.domain.PageId;
 import org.knowledgeroot.app.page.domain.PagePermission;
 import org.knowledgeroot.app.page.domain.PagePermissionDao;
+import org.knowledgeroot.app.space.SpacePermission;
+import org.knowledgeroot.app.space.SpaceRepository;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -18,6 +20,7 @@ import java.util.HashSet;
 @RequiredArgsConstructor
 public class PagePermissionImpl implements PagePermissionDao {
     private final JdbcClient jdbcClient;
+    private final SpaceRepository spaces;
 
     @Override
     public List<PagePermission> listPermissionsByPageId(PageId pageId) {
@@ -68,7 +71,13 @@ public class PagePermissionImpl implements PagePermissionDao {
 
     @Override
     public boolean hasUserPermission(PageId pageId, Integer userId, PagePermission.PermissionLevel minPermissionLevel) {
-        if (node(pageId) == null) {
+        PermissionNode page = node(pageId);
+        if (page == null) {
+            return false;
+        }
+        // Archived spaces are read-only for everyone, administrators included.
+        boolean archived = spaces.isArchived(page.spaceId());
+        if (archived && minPermissionLevel == PagePermission.PermissionLevel.EDIT) {
             return false;
         }
         if (userId != null) {
@@ -81,10 +90,18 @@ public class PagePermissionImpl implements PagePermissionDao {
                 return true;
             }
         }
-        pageId = permissionSource(pageId);
-        if (pageId == null) {
+        // The space is the outer gate: without a grant on it no page inside is reachable.
+        var spaceLevel = spaces.level(page.spaceId(), userId).orElse(null);
+        if (spaceLevel == null || (archived && spaceLevel != SpacePermission.Level.ADMIN)) {
             return false;
         }
+        PageId source = permissionSource(pageId);
+        if (source == null) {
+            // Root pages (and their inheriting children) may take their grants from the space.
+            if (!inheritsFromSpace(pageId)) return false;
+            return minPermissionLevel == PagePermission.PermissionLevel.VIEW || spaceLevel.covers(SpacePermission.Level.EDIT);
+        }
+        pageId = source;
         if (userId == null) {
             return hasGuestPermission(pageId, minPermissionLevel);
         }
@@ -268,80 +285,34 @@ public class PagePermissionImpl implements PagePermissionDao {
         PermissionNode page = node(pageId);
         Assert.state(page != null, "Page does not exist");
         if (page.parent() > 0) {
-            Assert.state(permissionSource(new PageId(page.parent())) != null, "Invalid parent hierarchy");
-            jdbcClient.sql("UPDATE page SET inherit_permissions = TRUE WHERE id = :id")
-                    .param("id", pageId.value()).update();
-            return;
+            PageId parent = new PageId(page.parent());
+            Assert.state(permissionSource(parent) != null || inheritsFromSpace(parent), "Invalid parent hierarchy");
         }
-        LocalDateTime now = LocalDateTime.now();
-
-        // 1. Creator gets EDIT permissions (only if creatorId is not null)
-        if (creatorId != null) {
-            jdbcClient.sql("""
-                    INSERT INTO page_permission (
-                        page_id,
-                        role_type,
-                        role_id,
-                        permission_level,
-                        created_by,
-                        create_date,
-                        changed_by,
-                        change_date
-                    ) VALUES (
-                        ?,?,?,?,?,?,?,?
-                    )
-                    """)
-                    .params(
-                            pageId.value(),
-                            PagePermission.RoleType.USER.getValue(),
-                            creatorId,
-                            PagePermission.PermissionLevel.EDIT.getValue(),
-                            creatorId,
-                            now,
-                            creatorId,
-                            now
-                    )
-                    .update();
-        }
-
-        // A guest-created root is public to read; authenticated roots stay private.
-        if (creatorId != null) {
-            return;
-        }
-        jdbcClient.sql("""
-                INSERT INTO page_permission (
-                    page_id,
-                    role_type,
-                    role_id,
-                    permission_level,
-                    created_by,
-                    create_date,
-                    changed_by,
-                    change_date
-                ) VALUES (
-                    ?,?,?,?,?,?,?,?
-                )
-                """)
-                .params(
-                        pageId.value(),
-                        PagePermission.RoleType.GUEST.getValue(),
-                        null,
-                        PagePermission.PermissionLevel.VIEW.getValue(),
-                        creatorId,
-                        now,
-                        creatorId,
-                        now
-                )
-                .update();
+        // New pages inherit: children from their parent, root pages from their space.
+        jdbcClient.sql("UPDATE page SET inherit_permissions = TRUE WHERE id = :id")
+                .param("id", pageId.value()).update();
     }
 
-    private record PermissionNode(int parent, boolean inherits) {}
+    private record PermissionNode(int parent, boolean inherits, int spaceId) {}
 
     private PermissionNode node(PageId pageId) {
-        return jdbcClient.sql("SELECT parent, inherit_permissions FROM page WHERE id = :id AND deleted = 0")
+        return jdbcClient.sql("SELECT parent, inherit_permissions, space_id FROM page WHERE id = :id AND deleted = 0")
                 .param("id", pageId.value())
-                .query((rs, row) -> new PermissionNode(rs.getInt("parent"), rs.getBoolean("inherit_permissions")))
+                .query((rs, row) -> new PermissionNode(rs.getInt("parent"), rs.getBoolean("inherit_permissions"), rs.getInt("space_id")))
                 .optional().orElse(null);
+    }
+
+    /** True when the chain of inheriting pages ends at a root page that inherits from its space. */
+    @Override
+    public boolean inheritsFromSpace(PageId pageId) {
+        var visited = new HashSet<Integer>();
+        while (pageId != null && visited.add(pageId.value())) {
+            PermissionNode page = node(pageId);
+            if (page == null || !page.inherits()) return false;
+            if (page.parent() <= 0) return true;
+            pageId = new PageId(page.parent());
+        }
+        return false;
     }
 
     @Override
@@ -378,12 +349,16 @@ public class PagePermissionImpl implements PagePermissionDao {
         PermissionNode page = node(pageId);
         Assert.state(page != null, "Page does not exist");
         if (page.inherits() == inherit) return;
-        PageId source = inherit && page.parent() > 0
-                ? permissionSource(new PageId(page.parent())) : permissionSource(pageId);
-        Assert.state(source != null && (!inherit || (page.parent() > 0 && !source.equals(pageId))),
-                "Cannot inherit from an invalid parent hierarchy");
+        if (inherit) {
+            // A child needs a valid parent chain; a root page simply inherits from its space.
+            Assert.state(page.parent() <= 0 || permissionSource(new PageId(page.parent())) != null
+                    || inheritsFromSpace(new PageId(page.parent())), "Cannot inherit from an invalid parent hierarchy");
+        }
+        PageId source = inherit ? null : permissionSource(pageId);
+        boolean fromSpace = !inherit && source == null && inheritsFromSpace(pageId);
+        Assert.state(inherit || source != null || fromSpace, "Cannot inherit from an invalid parent hierarchy");
         jdbcClient.sql("DELETE FROM page_permission WHERE page_id = :id").param("id", pageId.value()).update();
-        if (!inherit) {
+        if (!inherit && source != null) {
             jdbcClient.sql("""
                     INSERT INTO page_permission (page_id, role_type, role_id, permission_level,
                                                  created_by, create_date, changed_by, change_date)
@@ -392,6 +367,26 @@ public class PagePermissionImpl implements PagePermissionDao {
                     """)
                     .param("id", pageId.value()).param("actor", actorId)
                     .param("now", LocalDateTime.now()).param("source", source.value()).update();
+        } else if (fromSpace) {
+            // Materialize the space grants users, groups and guests have; "all signed-in users" has no
+            // page equivalent, so the actor keeps edit access explicitly.
+            jdbcClient.sql("""
+                    INSERT INTO page_permission (page_id, role_type, role_id, permission_level,
+                                                 created_by, create_date, changed_by, change_date)
+                    SELECT :id, sp.role_type, sp.role_id,
+                           CASE WHEN sp.permission_level = 'view' THEN 'view' ELSE 'edit' END, :actor, :now, :actor, :now
+                    FROM space_permission sp WHERE sp.space_id = :space AND sp.role_type IN ('user', 'group', 'guest')
+                      AND NOT (sp.role_type = 'user' AND sp.role_id = :actor)
+                    """)
+                    .param("id", pageId.value()).param("actor", actorId)
+                    .param("now", LocalDateTime.now()).param("space", page.spaceId()).update();
+            if (actorId != null) {
+                jdbcClient.sql("""
+                        INSERT INTO page_permission (page_id, role_type, role_id, permission_level,
+                                                     created_by, create_date, changed_by, change_date)
+                        VALUES (:id, 'user', :actor, 'edit', :actor, :now, :actor, :now)
+                        """).param("id", pageId.value()).param("actor", actorId).param("now", LocalDateTime.now()).update();
+            }
         }
         jdbcClient.sql("UPDATE page SET inherit_permissions = :inherit, changed_by = :actor, change_date = :now, revision = revision + 1 WHERE id = :id")
                 .param("inherit", inherit).param("actor", actorId).param("now", LocalDateTime.now())

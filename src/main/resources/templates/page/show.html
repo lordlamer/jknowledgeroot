@@ -9,6 +9,8 @@
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
+        <li class="breadcrumb-item" th:if="${space != null}"><a th:href="@{'/spaces/' + ${space.id}}" th:attr="hx-get='/spaces/' + ${space.id}"
+                                                                  hx-target="#content" hx-push-url="true" th:text="${space.name}">Space</a></li>
         <li class="breadcrumb-item" th:each="parent, iterStat : ${breadcrumb}" th:unless="${iterStat.last}">
             <a th:href="@{'/ui/page/' + ${parent.pageId}}"
                th:attr="hx-get='/ui/page/' + ${parent.pageId}"
@@ -137,5 +139,6 @@
         <span th:text="${#temporals.format(page.changeDate, 'dd.MM.yyyy HH:mm')}">01.01.2023</span>
     </span>
 </footer>
+<th:block th:replace="~{fragments/space-context :: oob}"></th:block>
 </body>
 </html>

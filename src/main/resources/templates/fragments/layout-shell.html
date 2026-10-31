@@ -21,18 +21,12 @@
                      hx-trigger="load, reload-stars from:body"
                      hx-target="this"
                      hx-swap="innerHTML"></div>
-                <div class="kr-tree-section-title kr-section-workspace">
-                    Workspace
-                    <button th:if="${canCreateRootPage}" type="button" class="add" title="Add root page" aria-label="Add root page"
-                            hx-get="/ui/page/new" hx-target="#content" hx-push-url="true">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-                    </button>
-                </div>
+                <div th:replace="~{fragments/space-context :: sidebarHead(false)}"></div>
                 <div id="sidebar-tree"
                      hx-get="/ui/sidebar"
                      hx-trigger="load, reload-sidebar from:body"
                      hx-target="#sidebar-tree"></div>
-                <div class="kr-sidebar-empty" id="sidebar-starred-empty">No starred pages yet — open any page and click <b>Star</b>.</div>
+                <div class="kr-sidebar-empty" id="sidebar-starred-empty">No starred pages in this space yet — open any page and click <b>Star</b>.</div>
             </div>
             <div class="kr-sidebar-footer">
                 <span class="kr-online-dot" aria-hidden="true"></span>

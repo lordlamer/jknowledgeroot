@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
+<head>
+    <title>Knowledgeroot Spaces</title>
+</head>
+<body>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Spaces</li>
+    </ol>
+</nav>
+
+<header class="kr-page-header">
+    <div class="kr-page-title-wrap">
+        <h1 class="kr-page-title">Spaces</h1>
+        <p class="kr-page-subtitle" style="margin:0">Each space holds its own page tree with its own permissions.</p>
+    </div>
+    <div class="kr-page-actions" th:if="${canCreate}">
+        <a class="kr-btn accent" href="/spaces/new" hx-get="/spaces/new" hx-target="#content" hx-push-url="true">New space</a>
+    </div>
+</header>
+
+<div class="kr-editor-pane">
+    <p th:if="${#lists.isEmpty(spaces)}">No space is visible to you.</p>
+    <table class="table" th:unless="${#lists.isEmpty(spaces)}">
+        <thead><tr><th>Key</th><th>Name</th><th>Description</th><th></th></tr></thead>
+        <tbody>
+        <tr th:each="space : ${spaces}">
+            <td><code th:text="${space.key}">KR</code></td>
+            <td>
+                <a th:if="${space.homePageId != null}" th:href="@{'/ui/page/' + ${space.homePageId}}"
+                   th:attr="hx-get='/ui/page/' + ${space.homePageId}" hx-target="#content" hx-push-url="true" th:text="${space.name}">Name</a>
+                <span th:if="${space.homePageId == null}" th:text="${space.name}">Name</span>
+                <span th:if="${space.archived}" class="kr-pill">archived</span>
+            </td>
+            <td th:text="${space.description}">Description</td>
+            <td>
+                <a class="kr-btn" th:href="@{'/spaces/' + ${space.id} + '/settings'}"
+                   th:attr="hx-get='/spaces/' + ${space.id} + '/settings'" hx-target="#content" hx-push-url="true"
+                   th:if="${@spaceService.canManage(space.id)}">Settings</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

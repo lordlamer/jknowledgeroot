@@ -111,7 +111,11 @@ vorhandene Konten nicht zurück.
    (mindestens 32 zufällige Zeichen); Changeset `1.0.15-second-factor` legt die
    Tabellen für Einstellungen und zweiten Faktor an. Der Schlüssel gehört zu den
    gesicherten Secrets: Ohne ihn sind eingerichtete Authenticator-Tokens nach
-   einer Wiederherstellung unbrauchbar.
+   einer Wiederherstellung unbrauchbar. Changeset `1.0.16-spaces` legt den
+   Space „Knowledgeroot" (`KR`) an und ordnet ihm alle Seiten zu; die
+   Einstellung `KR_ALLOW_GUEST_ROOT_CREATION` entfällt, stattdessen erhält
+   der Space eine Gastfreigabe (`view` bei der Migration; `edit`, wenn Gäste
+   weiterhin Hauptseiten anlegen sollen).
 5. Anmeldung, Rollen, Seiten und Anhänge prüfen. Demo-Inhalte und Freigaben vor
    einer Veröffentlichung fachlich kontrollieren; die Migration löscht sie nicht.
 

@@ -47,13 +47,18 @@ class PageAccessWebTest {
     @MockitoBean DatabaseAuthentificationProvider provider;
     @MockitoBean org.knowledgeroot.app.file.domain.FileDao files;
     @MockitoBean org.knowledgeroot.app.file.domain.UploadPolicy uploadPolicy;
+    @MockitoBean org.knowledgeroot.app.space.SpaceService spaces;
+    @MockitoBean org.knowledgeroot.app.space.CurrentSpace currentSpace;
     private RequestPostProcessor caller;
     private final PageId pageId = new PageId(100);
 
     @BeforeEach
     void setUp() {
         as(UserDetails.Role.USER);
-        ReflectionTestUtils.setField(creation, "allowGuestRootCreation", false);
+        when(spaces.defaultSpace()).thenReturn(org.knowledgeroot.app.space.Space.builder().id(1).key("KR").name("Knowledgeroot").build());
+        when(spaces.canCreateRootPage(1)).thenReturn(true);
+        when(spaces.space(1)).thenReturn(org.knowledgeroot.app.space.Space.builder().id(1).key("KR").name("Knowledgeroot").build());
+        when(currentSpace.currentId()).thenReturn(1);
         when(pages.findById(pageId)).thenReturn(Page.builder().pageId(pageId).parent(10)
                 .name("page").content("text").active(true).deleted(false).build());
         when(permissions.permissionSource(pageId)).thenReturn(pageId);
@@ -63,6 +68,7 @@ class PageAccessWebTest {
     @Test
     void guestCannotOpenOrSubmitRootCreationByDefault() throws Exception {
         as(UserDetails.Role.GUEST);
+        when(spaces.canCreateRootPage(1)).thenReturn(false);
         mvc.perform(get("/ui/page/new").with(caller)).andExpect(status().isForbidden());
         mvc.perform(post("/ui/page/new").with(caller).with(csrf()).param("revision", "0").param("name", "blocked"))
                 .andExpect(status().isForbidden());
@@ -72,7 +78,7 @@ class PageAccessWebTest {
     @Test
     void optedInGuestCreationUsesAnonymousAuditAndDefaultPolicy() throws Exception {
         as(UserDetails.Role.GUEST);
-        ReflectionTestUtils.setField(creation, "allowGuestRootCreation", true);
+        when(spaces.canCreateRootPage(1)).thenReturn(true);
         mvc.perform(post("/ui/page/new").with(caller).with(csrf())
                         .param("revision", "0").param("name", "public").param("createdBy", "999"))
                 .andExpect(redirectedUrl("/ui/page/123?trigger=reload-sidebar"));

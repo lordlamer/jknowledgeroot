@@ -27,8 +27,10 @@ public class PageImpl implements PageDao {
     private final JdbcClient jdbcClient;
 
     @Override
-    public List<Page> listNavigationPages(int parent, int after, Integer viewer) {
+    public List<Page> listNavigationPages(int spaceId, int parent, int after, Integer viewer) {
         org.knowledgeroot.app.util.RequestValidation.require(parent >= 0 && after >= 0);
+        if (parent == 0) return navigationPages("space_id = :space AND parent = 0 AND id > :after ORDER BY id LIMIT 51",
+                Map.of("space", spaceId, "after", after), viewer);
         return navigationPages("parent = :parent AND id > :after ORDER BY id LIMIT 51",
                 Map.of("parent", parent, "after", after), viewer);
     }
@@ -53,11 +55,11 @@ public class PageImpl implements PageDao {
         Map<String, Object> params = new HashMap<>(arguments);
         params.put("viewer", viewer);
         return jdbcClient.sql(ReadablePagesSql.CTE + """
-                SELECT id, name, revision,
+                SELECT id, name, revision, space_id,
                     CASE WHEN parent = 0 OR parent IN (SELECT id FROM readable_pages) THEN parent ELSE NULL END AS parent
                 FROM page WHERE id IN (SELECT id FROM readable_pages) AND
                 """ + condition).params(params).query((rs, row) -> Page.builder()
-                .pageId(new PageId(rs.getInt("id"))).name(rs.getString("name"))
+                .pageId(new PageId(rs.getInt("id"))).name(rs.getString("name")).spaceId(rs.getInt("space_id"))
                 .revision(rs.getLong("revision")).parent(rs.getObject("parent", Integer.class)).build()).list();
     }
 
@@ -86,6 +88,7 @@ public class PageImpl implements PageDao {
                 SELECT 
                     id as pageId,
                     revision,
+                    space_id,
                     %s,
                     name,
                     content,
@@ -118,6 +121,11 @@ public class PageImpl implements PageDao {
         if (pageFilter.getId() != null) {
             sqlParams.put("id", "id = :id");
             params.put("id", pageFilter.getId());
+        }
+
+        if (pageFilter.getSpaceId() != null) {
+            sqlParams.put("space", "space_id = :space");
+            params.put("space", pageFilter.getSpaceId());
         }
 
         if (pageFilter.getParent() != null) {
@@ -243,6 +251,7 @@ public class PageImpl implements PageDao {
                             return Page.builder()
                                     .pageId(new PageId(rs.getInt("pageId")))
                                     .revision(rs.getLong("revision"))
+                                    .spaceId(rs.getInt("space_id"))
                                     .parent(rs.getObject("parent", Integer.class))
                                     .name(rs.getString("name"))
                                     .content(rs.getString("content"))
@@ -278,6 +287,7 @@ public class PageImpl implements PageDao {
                 SELECT 
                     p.id as pageId,
                     p.revision,
+                    p.space_id,
                     p.parent,
                     p.name,
                     p.content,
@@ -331,6 +341,7 @@ public class PageImpl implements PageDao {
                             return Page.builder()
                                     .pageId(new PageId(rs.getInt("pageId")))
                                     .revision(rs.getLong("revision"))
+                                    .spaceId(rs.getInt("space_id"))
                                     .parent(rs.getInt("parent"))
                                     .name(rs.getString("name"))
                                     .content(rs.getString("content"))
@@ -360,9 +371,16 @@ public class PageImpl implements PageDao {
     public int createPage(Page page) {
         requireLiveParent(page);
         KeyHolder keyHolder = new GeneratedKeyHolder();
+        // Children live in their parent's space; roots in the named space or the default space.
+        Integer spaceId = page.getParent() != null && page.getParent() > 0
+                ? jdbcClient.sql("SELECT space_id FROM page WHERE id = ?").param(page.getParent()).query(Integer.class).single()
+                : page.getSpaceId() != null ? page.getSpaceId()
+                : jdbcClient.sql("SELECT MIN(id) FROM space").query(Integer.class).single();
+        page.setSpaceId(spaceId);
 
         int update = jdbcClient.sql("""
                 INSERT INTO page (
+                    space_id,
                     parent,
                     name,
                     content,
@@ -375,10 +393,11 @@ public class PageImpl implements PageDao {
                     change_date,
                     deleted
                 ) VALUES (
-                    ?,?,?,?,?,?,?,?,?,?,?
+                    ?,?,?,?,?,?,?,?,?,?,?,?
                 )
                 """)
                 .params(
+                        spaceId,
                         page.getParent(),
                         page.getName(),
                         page.getContent(),

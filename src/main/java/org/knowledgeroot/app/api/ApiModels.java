@@ -48,6 +48,14 @@ public final class ApiModels {
 
     public record EmailRequest(String email) {}
 
+    public record SpaceInfo(int id, String key, String name, String description, Integer homePageId, boolean archived,
+                            boolean canCreateRootPage, boolean canManage, boolean current) {}
+
+    public record SpaceDetail(SpaceInfo space, List<PageRef> rootPages) {}
+
+    /** Space of a page as seen in page details and search hits. */
+    public record SpaceRef(int id, String key, String name) {}
+
     public record PageRef(int id, String name) {
         static PageRef of(Page page) { return new PageRef(page.getPageId().value(), page.getName()); }
     }
@@ -64,14 +72,15 @@ public final class ApiModels {
         }
     }
 
-    public record PageDetail(int id, long revision, Integer parent, String name, String content, List<String> labels,
+    public record PageDetail(int id, long revision, SpaceRef space, Integer parent, String name, String content, List<String> labels,
                              List<PageRef> breadcrumb, boolean deleted,
                              Integer createdBy, String createdByLogin, @JsonSerialize(using = ServerTime.class) LocalDateTime createDate,
                              Integer changedBy, String changedByLogin, @JsonSerialize(using = ServerTime.class) LocalDateTime changeDate,
                              boolean canEdit, boolean canStar, boolean starred, boolean canComment,
                              boolean canManagePermissions, List<FileInfo> files, int commentCount) {}
 
-    public record PageInput(Integer parent, String name, String content, List<String> labels, Long revision) {}
+    /** {@code space} names the space of a new root page; children take the parent's space. */
+    public record PageInput(Integer parent, Integer space, String name, String content, List<String> labels, Long revision) {}
 
     public record Created(int id) {}
 
@@ -137,15 +146,16 @@ public final class ApiModels {
 
     public record RevisionInput(Long revision) {}
 
-    public record MoveInput(int parent, Long revision) {}
+    /** {@code space}: the space whose top level receives the page when {@code parent} is 0. */
+    public record MoveInput(int parent, Integer space, Long revision) {}
 
-    public record MoveOptions(PageRef page, int currentParent, List<PageRef> currentPath, int parent,
+    public record MoveOptions(PageRef page, int currentParent, List<PageRef> currentPath, int parent, SpaceRef space,
                               List<PageRef> destinationPath, List<MoveCandidate> items, int start, boolean hasNext,
                               boolean alreadyHere, boolean validDestination, boolean inherits) {}
 
     public record MoveCandidate(int id, String name) {}
 
-    public record SearchHit(int id, String name, String snippet, List<String> path, @JsonSerialize(using = ServerTime.class) LocalDateTime changeDate) {}
+    public record SearchHit(int id, String name, String snippet, List<String> path, @JsonSerialize(using = ServerTime.class) LocalDateTime changeDate, SpaceRef space) {}
 
     public record SearchResponse(String query, List<SearchHit> items, int start, boolean hasNext) {}
 

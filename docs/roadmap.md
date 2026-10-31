@@ -1147,6 +1147,70 @@ OAuth-Anmeldung; die Client-API für die mobile App (R44) ist bereits enthalten.
   Upgrade `KR_MASTER_KEY` setzen. Kein Audit-Log; Einrichtung, Erfolg,
   Fehlschlag und Reset stehen im Anwendungslog.
 
+### R51 – Spaces: Container mit eigenen Rechten (Teil 1 von 3)
+
+- [x] Lokal umgesetzt und geprüft am 31. Oktober 2026.
+- **Ziel:** Spaces wie in Confluence: je ein eigener Seitenbaum, eigene
+  Freigaben als äußere Schranke vor den unveränderten Seitenrechten,
+  Anlegen durch Berechtigte unabhängig von der Administratorrolle, eigene
+  Homepage je Space.
+- **Umgesetzt (Teil 1):** Changeset `1.0.16-spaces` (`space`,
+  `space_permission` mit `view`/`edit`/`admin` für Benutzer, Gruppen,
+  Gäste und alle Angemeldeten, `global_permission` für `create-space`,
+  `page.space_id` mit Standard-Space `KR` für alle bestehenden Seiten);
+  `SpaceRepository`/`SpaceService`; die Lesbarkeitsabfrage und
+  `PagePermissionImpl` prüfen zuerst den Space, Hauptseiten erben vom Space
+  und lassen sich auf lokale Freigaben umstellen; archivierte Spaces sind
+  schreibgeschützt und nur für Verwalter sichtbar; Verschieben unter eine
+  Seite eines anderen Space nimmt den Teilbaum mit; Seiten `/spaces`,
+  `/spaces/new` und `/spaces/{id}/settings` (Name, Beschreibung, Homepage,
+  Freigaben, Archivieren); globales Recht „Create spaces" unter
+  Admin → Permissions; `KR_ALLOW_GUEST_ROOT_CREATION` entfällt zugunsten
+  der Gastfreigabe am Space. Beschreibung in
+  [access-control.md](access-control.md#spaces) und
+  [product-functions.md](product-functions.md#spaces).
+- **Geprüft:** `SpaceIntegrationTest` (Standard-Space, Space-Schranke vor
+  Seitenrechten, Hauptseiten erben vom Space und Umstellung auf lokale
+  Freigaben, archivierte Spaces, Anlegen per globalem Recht mit Homepage und
+  Verwaltung, Verschieben über Space-Grenzen); `PagePermissionDatabaseTest`
+  und `PageAccessWebTest` an das Space-Modell angepasst; `InstallationTest`
+  prüft die Migration bestehender Daten.
+- **Umgesetzt (Teil 2):** `CurrentSpace` merkt den gezeigten Space in der
+  Sitzung; Umschalter in der Seitenleiste (`/spaces/open`) öffnet die
+  Homepage oder die Space-Übersicht `/spaces/{id}`; die Seitenleiste listet
+  die Hauptseiten des gezeigten Space (`listNavigationPages` mit Space),
+  das Öffnen einer Seite wechselt den Space, der Breadcrumb beginnt mit dem
+  Space; „Neue Seite" legt im gezeigten Space an (`/ui/page/new?space=`);
+  Suche mit Space-Filter und Space-Schlüssel in den Treffern; Verschieben
+  auf die oberste Ebene eines anderen Space (`space` im Dialog, Recht zum
+  Anlegen von Hauptseiten nötig); `GET /api/v1/tree` nimmt `space`. Die
+  Layout-Attribute sind auf die HTML-Controller beschränkt und tolerieren
+  Datenbankausfälle, damit Health-Probes und APIs unberührt bleiben.
+- **Umgesetzt (Teil 3):** Client-API: `GET /api/v1/spaces`,
+  `GET /api/v1/spaces/{id}` mit Hauptseiten, `POST /api/v1/spaces/{id}/open`;
+  `space` in Seitendetails, Suchtreffern und Verschiebe-Optionen; `space` beim
+  Anlegen von Hauptseiten, bei der Suche und beim Verschieben auf die oberste
+  Ebene eines anderen Space.
+- **Geprüft (Teil 2 und 3):** `SpaceIntegrationTest` zusätzlich mit
+  Umschalter, Homepage und Übersicht, Seitenleiste je Space, Anlegen im
+  gewählten Space, Suche je Space, Verschieben auf die oberste Ebene eines
+  anderen Space und dem Client-API-Ablauf (Liste, Öffnen, Baum, Anlegen,
+  Suche, Verschieben, Ausschluss ohne Freigabe); `verify` mit JAR-Smoke-Test
+  lokal erfolgreich.
+- **Umgesetzt (Teil 4, Feinschliff):** Der Umschalter in der Kopfzeile ist
+  ein Chip mit Space-Schlüssel und Namen neben dem Logo; das Menü zeigt je
+  Space Schlüssel, Namen, Beschreibung, Häkchen am aktuellen Space und
+  Kennzeichen für archivierte Spaces, darunter „All spaces" und „New space",
+  alles im Stil der Oberfläche statt der Bootstrap-Vorgaben. Die Favoriten in
+  der Seitenleiste und `GET /api/v1/starred?space=` sind je Space gefiltert;
+  Favoriten tragen ihren Space. Öffnet eine Seite oder Space-Übersicht per
+  htmx einen anderen Space, tauscht die Antwort Umschalter und Kopf der
+  Seitenleiste out-of-band und lädt Baum und Favoriten neu; ein vollständiger
+  Seitenaufruf zeigt den Space direkt im Layout.
+- **Grenzen:** Die mobile App muss den Space-Umschalter noch umsetzen. Die
+  Space-Übersicht zeigt bis zu 100 Hauptseiten ohne Blättern. Spaces lassen
+  sich archivieren, aber nicht löschen.
+
 ## Nachweise der Bestandsaufnahme
 
 - `mvn -B test` bei der ursprünglichen Bestandsaufnahme: Anwendung kompiliert unter Java 25; Testkompilierung scheitert am Konstruktoraufruf in `PageControllerTest`. Dieser Befund ist durch R01 behoben; das aktuelle Prüfergebnis steht dort.
