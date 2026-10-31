@@ -161,6 +161,26 @@ Exitcode 0**; die MinIO- und Dateispeichertests (`StorageDriversTest`,
 Versionen. Die Überschreibungen entfallen, sobald eine MinIO-Version die
 korrigierten Stände selbst verwaltet.
 
+## Erneute Prüfung am 31. Oktober 2026 (R50)
+
+Der gehostete Scan meldet vier am 30. Oktober 2026 veröffentlichte Advisories
+für den von Boot verwalteten `org.mariadb.jdbc:mariadb-java-client 3.5.10`:
+[GHSA-fhx5-2xqw-2cgm](https://github.com/advisories/GHSA-fhx5-2xqw-2cgm)
+(MODERATE, `LOAD DATA LOCAL INFILE`-Prüfung durch Text in quotierten
+Bezeichnern umgehbar, ein bösartiger Server kann Client-Dateien lesen),
+[GHSA-grfq-r75j-rw9x](https://github.com/advisories/GHSA-grfq-r75j-rw9x)
+(MODERATE, Server kann `character_set_results` unbemerkt umstellen),
+[GHSA-h599-m3w5-9m7x](https://github.com/advisories/GHSA-h599-m3w5-9m7x)
+(MODERATE, große Heap-Belegung aus serverseitig angegebenen Längen) und
+[GHSA-4jq2-8v3c-97w8](https://github.com/advisories/GHSA-4jq2-8v3c-97w8)
+(LOW, XA `recover()` vertraut Server-Längen). Alle setzen einen bösartigen
+oder kompromittierten Datenbankserver voraus; die Anwendung spricht nur mit dem
+eigenen gepinnten MariaDB-Image. Korrektur in 3.5.11, OSV ohne Treffer. Das POM
+setzt die Boot-Property `mariadb.version` auf 3.5.11, wie zuvor für Tomcat und
+Jackson. Ergebnis: **280 Paketversionen, null Zuordnungen, Exitcode 0**; die
+Datenbanktests bestehen mit dem neuen Treiber. Die Überschreibung entfällt,
+sobald Spring Boot den Stand selbst verwaltet.
+
 ## Testgrenzen bei R08
 
 Der vorhandene Testsatz prüft nach der Migration weiterhin Login, Rechte,
