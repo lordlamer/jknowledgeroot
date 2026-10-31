@@ -30,6 +30,7 @@ class ProfileController {
     private final MyProfileDao myProfileDao;
     private final UserContext userContext;
     private final ProfilePasswordService passwords;
+    private final org.knowledgeroot.app.security.mfa.SecondFactorService secondFactors;
 
     @PostMapping("/profile/password")
     public String changePassword(@RequestParam String currentPassword, @RequestParam String newPassword,
@@ -68,6 +69,7 @@ class ProfileController {
 
         model.addAttribute("userDetails", myProfileDao.findMyProfile());
         model.addAttribute("updated", updated);
+        model.addAttribute("mfa", secondFactors.status(Integer.parseInt(userDetails.getUserId())));
 
         if (htmxRequest.isHtmxRequest()) {
             return "profile/show :: body";

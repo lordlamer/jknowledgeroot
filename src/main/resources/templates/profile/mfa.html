@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
+<head>
+    <title>Knowledgeroot Two-factor authentication</title>
+</head>
+<body>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
+        <li class="breadcrumb-item"><a href="/profile" hx-get="/profile" hx-target="#content" hx-push-url="true">Profile</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Two-factor authentication</li>
+    </ol>
+</nav>
+
+<header class="kr-page-header">
+    <div class="kr-page-title-wrap">
+        <h1 class="kr-page-title">Two-factor authentication</h1>
+        <p class="kr-page-subtitle" style="margin:0">A code from an authenticator app in addition to your password.</p>
+    </div>
+</header>
+
+<section class="kr-editor-pane" aria-labelledby="mfa-heading">
+    <div th:if="${removed}" class="alert kr-alert-info" role="alert" style="margin-bottom:16px">Two-factor authentication removed.</div>
+    <p th:if="${policy.name() == 'OFF'}" class="alert kr-alert-info" role="status">
+        Two-factor authentication is switched off for this installation. A token you set up now is kept and used once an administrator enables it.
+    </p>
+    <p th:if="${required}" class="alert kr-alert-info" role="status">Your account must use a second factor.</p>
+
+    <div th:if="${!mfa.enrolled()}">
+        <h2 id="mfa-heading">Not set up</h2>
+        <p>Set up an authenticator app such as Microsoft Authenticator, Google Authenticator or 1Password. You will get ten recovery codes for the case that you lose the app.</p>
+        <form method="post" th:action="@{/profile/mfa/setup}">
+            <button type="submit" class="kr-btn accent">Set up</button>
+        </form>
+    </div>
+
+    <div th:if="${mfa.enrolled()}">
+        <h2 id="mfa-heading">Active</h2>
+        <p>
+            Set up on <span th:text="${#temporals.format(mfa.enrolledAt(), 'yyyy-MM-dd HH:mm')}">date</span>.
+            Unused recovery codes: <strong th:text="${mfa.recoveryCodesLeft()}">10</strong>.
+        </p>
+        <p th:if="${mfa.recoveryCodesLeft() == 0}" class="alert alert-warning" role="alert">
+            No recovery codes left. Remove and set up the second factor again to get new ones.
+        </p>
+        <h3>Remove</h3>
+        <p>Removing needs your password and a current code. Afterwards you sign in with the password only, unless the policy requires a token.</p>
+        <p th:if="${removeError}" class="alert alert-danger" role="alert" th:text="${removeError}"></p>
+        <form method="post" th:action="@{/profile/mfa/remove}">
+            <div class="kr-field">
+                <label for="mfa-password">Current password</label>
+                <input id="mfa-password" name="currentPassword" type="password" autocomplete="current-password" maxlength="1024" required>
+            </div>
+            <div class="kr-field">
+                <label for="mfa-code">Code from the app or a recovery code</label>
+                <input id="mfa-code" name="code" type="text" autocomplete="one-time-code" maxlength="32" required>
+            </div>
+            <button type="submit" class="kr-btn mt-3" th:disabled="${required}">Remove two-factor authentication</button>
+        </form>
+    </div>
+</section>
+</body>
+</html>

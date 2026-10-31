@@ -181,6 +181,12 @@
             <artifactId>owasp-java-html-sanitizer</artifactId>
             <version>20260313.1</version>
         </dependency>
+        <!-- QR code for the authenticator enrolment (core only, rendered as inline SVG). -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.3</version>
+        </dependency>
         <dependency>
             <groupId>com.microsoft.playwright</groupId>
             <artifactId>playwright</artifactId>

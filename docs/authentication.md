@@ -105,6 +105,71 @@ prüfen. Den Rückweg deshalb mit kompatibler Anwendungsversion beziehungsweise
 dem vorbereiteten Datenbankbackup planen. Die Anwendung ist weiterhin erst nach
 den übrigen Roadmap-Punkten zur Produktion freizugeben.
 
+## Zweiter Faktor (TOTP)
+
+Changeset `1.0.15-second-factor` legt die Grundlage für die Anmeldung mit
+zweitem Faktor (R49). Das Verfahren ist TOTP nach RFC 6238 mit HMAC-SHA1, sechs
+Stellen und 30-Sekunden-Schritten, wie es gängige Authenticator-Apps erwarten;
+bei der Prüfung ist ein Schritt Abweichung in beide Richtungen erlaubt. Die
+Implementierung liegt in `org.knowledgeroot.app.security.mfa` und kommt ohne
+Fremdbibliothek aus; nur der QR-Code für die Einrichtung nutzt `zxing-core`
+und wird als Inline-SVG gerendert.
+
+- **Speicherung:** `user_second_factor` hält je Benutzer ein Secret, das mit
+  AES-256-GCM verschlüsselt ist, und den zuletzt akzeptierten Zeitschritt, damit
+  ein Code nicht zweimal gilt. Der Schlüssel wird per SHA-256 aus
+  `KR_MASTER_KEY` (`knowledgeroot.security.master-key`) abgeleitet. Ohne
+  gesetzten Schlüssel bricht das Produktionsprofil beim Start ab; außerhalb der
+  Produktion gilt ein fester Entwicklungsschlüssel mit Warnung im Log.
+- **Wiederherstellungscodes:** Zehn Codes im Format `xxxx-xxxx` ohne
+  verwechselbare Zeichen entstehen bei der Einrichtung und werden genau einmal
+  angezeigt. Gespeichert wird nur ein mit dem Master-Key verschlüsselter
+  HMAC-SHA256 (`user_recovery_code`); jeder Code gilt einmal.
+- **Policy:** Die Tabelle `app_setting` nimmt Einstellungen auf, die
+  Administratoren zur Laufzeit ändern. `mfa.policy` kennt `off` (Standard),
+  `optional` (wer einen Token eingerichtet hat, wird danach gefragt),
+  `required-for-admins` und `required`. Ein unbekannter gespeicherter Wert
+  wirkt wie `optional`, damit weder jemand ausgesperrt noch ein Token
+  stillschweigend ignoriert wird.
+- **Dienst:** `SecondFactorService` erzeugt eine Einrichtung (Secret,
+  otpauth-URI, QR-SVG), bestätigt sie mit dem ersten Code, prüft Codes und
+  Wiederherstellungscodes und entfernt den Faktor; `MfaSettings` liest und
+  setzt die Policy und beantwortet, wer einrichten muss.
+
+### Anmeldung in zwei Schritten
+
+Nach dem richtigen Passwort entscheidet `SecondFactorGate` anhand der Policy
+und des Kontos: Ist die Policy `off`, ist die Anmeldung fertig. Sonst wird ein
+eingerichteter Token abgefragt (`verify`), oder, wenn die Policy einen Token
+verlangt, den das Konto nicht hat, zuerst die Einrichtung durchlaufen (`enrol`).
+Bis dahin hält die Sitzung nur ein `SecondFactorPendingToken` ohne Rolle: Die
+Domäne behandelt solche Requests wie einen Gast, und `SecondFactorGateFilter`
+leitet jeden Aufruf außer `/mfa`, Abmelden und statischen Ressourcen auf
+`/mfa` um; API-Aufrufe erhalten `401` mit `application/problem+json`.
+
+- `/mfa` zeigt je nach Zustand die Codeabfrage oder die Einrichtung mit
+  QR-Code, manuellem Schlüssel und erstem Code; nach der Einrichtung erscheinen
+  die zehn Wiederherstellungscodes genau einmal. Ein Wiederherstellungscode
+  gilt auch bei der Anmeldung (`xxxx-xxxx`).
+- Fünf falsche Codes beenden die Sitzung (`/login?mfaLocked`). Nach dem
+  richtigen Code wird das Konto erneut geladen, die Sitzungs-ID rotiert und der
+  volle `KnowledgerootUserToken` gespeichert.
+- Im Profil (`/profile/mfa`) richten Benutzer den Token selbst ein oder
+  entfernen ihn mit Passwort und aktuellem Code; solange die Policy einen Token
+  für das Konto verlangt, ist das Entfernen gesperrt. Administratoren setzen
+  den Token eines Benutzers in der Benutzerverwaltung zurück (etwa bei
+  verlorenem Telefon) und wählen die Policy unter `/admin/settings`.
+- Die Client-API antwortet auf `POST /api/v1/auth/login` mit
+  `authenticated: false` und `mfa.pending: true`, solange der Code aussteht;
+  `POST /api/v1/auth/mfa` mit `{"code"}` schließt die Anmeldung ab. Die
+  Einrichtung läuft über `POST /api/v1/auth/mfa/setup` und
+  `/confirm`, sowohl beim erzwungenen ersten Login als auch aus dem Profil;
+  `GET`/`DELETE /api/v1/profile/mfa` liefern Status und Entfernen mit denselben
+  Regeln wie die Web-UI ([client-api.md](client-api.md)).
+
+Die Passwortwiederherstellung per E-Mail umgeht den zweiten Faktor nicht: Nach
+dem Zurücksetzen gilt beim nächsten Login dieselbe Prüfung.
+
 ## Prüfungen und verbleibende Arbeit
 
 Tests prüfen moderne und alte Hashes, Salt, Leerzeichen/Unicode, Eingabegrenzen,

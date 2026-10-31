@@ -107,6 +107,11 @@ vorhandene Konten nicht zurück.
    abbrechen. Vorab prüfen, zum Beispiel
    `SELECT login COLLATE utf8mb4_uca1400_ai_ci AS l, COUNT(*) FROM user GROUP BY l HAVING COUNT(*) > 1`
    (ebenso `group.name` und `tag.name`), und Dubletten vor dem Upgrade bereinigen.
+   Ab 1.1 verlangt der Start im Produktionsprofil außerdem `KR_MASTER_KEY`
+   (mindestens 32 zufällige Zeichen); Changeset `1.0.15-second-factor` legt die
+   Tabellen für Einstellungen und zweiten Faktor an. Der Schlüssel gehört zu den
+   gesicherten Secrets: Ohne ihn sind eingerichtete Authenticator-Tokens nach
+   einer Wiederherstellung unbrauchbar.
 5. Anmeldung, Rollen, Seiten und Anhänge prüfen. Demo-Inhalte und Freigaben vor
    einer Veröffentlichung fachlich kontrollieren; die Migration löscht sie nicht.
 

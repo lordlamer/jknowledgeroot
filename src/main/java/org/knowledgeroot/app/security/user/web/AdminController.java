@@ -24,6 +24,7 @@ public class AdminController {
     private final UserDao userImpl;
     private final GroupDao groupImpl;
     private final PasswordService passwords;
+    private final org.knowledgeroot.app.security.mfa.SecondFactorService secondFactors;
 
     /**
      * get all users
@@ -101,12 +102,21 @@ public class AdminController {
                 "user",
                 userImpl.findById(new UserId(id))
         );
+        model.addAttribute("mfa", secondFactors.status(id));
 
         if(htmxRequest.isHtmxRequest()) {
             return "admin/user/edit :: body";
         }
 
         return "admin/user/edit";
+    }
+
+    /** Removes a user's second factor, for example after a lost phone; the user may set up a new one. */
+    @PostMapping("/admin/users/{id}/mfa/reset")
+    public String resetSecondFactor(@PathVariable Integer id) {
+        secondFactors.remove(id);
+        log.info("Second factor reset for user id={}", id);
+        return "redirect:/admin/users/" + id;
     }
 
     @PostMapping("/admin/users/{id}")

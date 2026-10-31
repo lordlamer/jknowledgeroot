@@ -81,7 +81,7 @@ const redirect = (response, path) => {
 try {
   writeFileSync(envfile, Object.entries({KR_APP_IMAGE:appImage, KR_DB_IMAGE:databaseImage,
     KR_DB_ROOT_PASSWORD:randomBytes(32).toString('hex'), KR_DB_PASSWORD:randomBytes(32).toString('hex'),
-    KR_MIGRATION_PASSWORD:randomBytes(32).toString('hex'), KR_BOOTSTRAP_LOGIN:'proxy.admin',
+    KR_MIGRATION_PASSWORD:randomBytes(32).toString('hex'), KR_MASTER_KEY:randomBytes(32).toString('hex'), KR_BOOTSTRAP_LOGIN:'proxy.admin',
     KR_BOOTSTRAP_PASSWORD:password, KR_APP_PORT:'0'}).map(([k,v]) => `${k}=${v}\n`).join(''), {mode:0o600});
   const certificates = join(work, 'tls');
   mkdirSync(certificates, {mode:0o700});

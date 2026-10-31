@@ -134,6 +134,13 @@ or deleting an account, or changing its USER/ADMIN role, invalidates each existi
 session on its next request. A role change requires a new login. Renaming an
 account keeps its identity and refreshes the login name in the session.
 
+Two-factor authentication (TOTP for authenticator apps, ten single-use recovery
+codes) is set up by each user in the profile; administrators choose under
+*Admin → Settings* whether it is off, optional, required for administrators or
+required for everyone. Stored secrets are encrypted with `KR_MASTER_KEY`, which
+production requires. See the [authentication guide](docs/authentication.md#zweiter-faktor-totp)
+and the [product functions](docs/product-functions.md#zweiter-faktor-authenticator-app).
+
 Logout invalidates the current session. Login and logout require a CSRF token;
 a successful login rotates an existing session ID. If account validation cannot
 reach the database, the request fails before reaching the application endpoint.

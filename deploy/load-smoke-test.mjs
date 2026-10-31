@@ -62,7 +62,7 @@ function client() {
 try {
   writeFileSync(envfile, Object.entries({KR_APP_IMAGE:app.Id, KR_DB_IMAGE:database.Id,
     KR_DB_ROOT_PASSWORD:randomBytes(32).toString('hex'), KR_DB_PASSWORD:randomBytes(32).toString('hex'),
-    KR_MIGRATION_PASSWORD:randomBytes(32).toString('hex'), KR_BOOTSTRAP_LOGIN:'load.admin',
+    KR_MIGRATION_PASSWORD:randomBytes(32).toString('hex'), KR_MASTER_KEY:randomBytes(32).toString('hex'), KR_BOOTSTRAP_LOGIN:'load.admin',
     KR_BOOTSTRAP_PASSWORD:password, KR_APP_PORT:'0'}).map(([key,value]) => `${key}=${value}\n`).join(''), {mode:0o600});
   created = true;
   compose(['up', '--detach', '--wait', '--wait-timeout', '120']);

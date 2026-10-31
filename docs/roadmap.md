@@ -1090,6 +1090,63 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 - **Grenzen:** Erzwungene Treiberversion neben dem Boot-BOM; bei einem
   Boot-Update die Property prüfen und entfernen, sobald sie überflüssig ist.
 
+## 9. Version 1.1
+
+Geplant sind die Anmeldung mit zweitem Faktor (TOTP, Policy durch
+Administratoren), Spaces mit je eigener Seitenstruktur und ein MCP-Server mit
+OAuth-Anmeldung; die Client-API für die mobile App (R44) ist bereits enthalten.
+
+### R49 – Zweiter Faktor (TOTP) mit Policy, Anmeldung in zwei Schritten und Profil
+
+- [x] Lokal umgesetzt und geprüft am 31. Oktober 2026.
+- **Ziel:** Benutzer sollen sich wie in Atlas einen Authenticator-Token
+  einrichten können; Administratoren legen fest, ob der zweite Faktor aus,
+  optional, nur für Administratoren oder für alle erforderlich ist.
+- **Umgesetzt (Teil 1 von 3):** TOTP nach RFC 6238, Base32, QR-Code als
+  Inline-SVG (`zxing-core`), Wiederherstellungscodes, AES-GCM-Verschlüsselung
+  der Secrets mit `KR_MASTER_KEY`, Changeset `1.0.15-second-factor`
+  (`app_setting`, `user_second_factor`, `user_recovery_code`),
+  `SecondFactorService` (Einrichtung, Bestätigung, Prüfung mit
+  Einmalgültigkeit je Zeitschritt und Code, Entfernen) und `MfaSettings`
+  (Policy `off`/`optional`/`required-for-admins`/`required`). Das
+  Produktionsprofil verlangt den Schlüssel; Compose, Beispiel-Env, Smoke-Tests
+  und Wiederherstellungsskripte setzen ihn. Beschreibung in
+  [authentication.md](authentication.md#zweiter-faktor-totp).
+- **Umgesetzt (Teil 2 von 3):** Anmeldung in zwei Schritten mit
+  `SecondFactorPendingToken`, `SecondFactorGate`, Erfolgs-Handler und
+  Gate-Filter (Umleitung auf `/mfa`, `401` für die API); `/mfa` mit
+  Codeabfrage, Einrichtung mit QR-Code und einmaliger Anzeige der
+  Wiederherstellungscodes, fünf Fehlversuche beenden die Sitzung;
+  Profilseite `/profile/mfa` mit Einrichtung und Entfernen (Passwort und
+  Code, gesperrt bei verpflichtender Policy); Admin-Seite `/admin/settings`
+  für die Policy und Zurücksetzen eines Tokens in der Benutzerbearbeitung;
+  Client-API mit `mfa.pending` im Login und `POST /api/v1/auth/mfa`.
+  Beschreibung in [product-functions.md](product-functions.md#zweiter-faktor-authenticator-app)
+  und [client-api.md](client-api.md).
+- **Umgesetzt (Teil 3 von 3):** Einrichtung und Verwaltung über die Client-API:
+  `POST /api/v1/auth/mfa/setup` und `/confirm` (beim erzwungenen ersten Login
+  und aus dem Profil; die Bestätigung schließt eine ausstehende Anmeldung ab und
+  rotiert das CSRF-Token), `GET /api/v1/profile/mfa` (Status, Policy, Pflicht)
+  und `DELETE /api/v1/profile/mfa` (Passwort und Code, gesperrt bei
+  verpflichtender Policy).
+- **Geprüft:** `TotpTest` mit den RFC-6238-Vektoren, Drift-Fenster,
+  Base32, otpauth-URI, Wiederherstellungscodes und SVG; `SecretCipherTest`
+  (Roundtrip, fremder Schlüssel, manipulierte Daten, Produktionspflicht);
+  `ProductionConfigTest` um den Schlüssel erweitert;
+  `SecondFactorIntegrationTest` gegen MariaDB (Einrichtung mit erstem Code,
+  verschlüsselte Ablage, Einmalgültigkeit von Codes und
+  Wiederherstellungscodes, Entfernen, Policy-Speicherung und -Auswertung);
+  `SecondFactorWebIntegrationTest` mit echten Sitzungen und CSRF-Cookies
+  (Policy aus, Codeabfrage und Sperre der übrigen Routen, fünf Fehlversuche,
+  Wiederherstellungscode, erzwungene Einrichtung, nur Administratoren,
+  Profil-Einrichtung und -Entfernen, gesperrtes Entfernen, Admin-Policy und
+  -Reset, API-Login mit zweitem Schritt, API-Einrichtung beim erzwungenen
+  Login, API-Profilstatus und -Entfernen).
+- **Grenzen:** Die mobile App muss den zweiten Login-Schritt und die
+  Einrichtung noch umsetzen. Bestehende Produktionsumgebungen müssen vor dem
+  Upgrade `KR_MASTER_KEY` setzen. Kein Audit-Log; Einrichtung, Erfolg,
+  Fehlschlag und Reset stehen im Anwendungslog.
+
 ## Nachweise der Bestandsaufnahme
 
 - `mvn -B test` bei der ursprünglichen Bestandsaufnahme: Anwendung kompiliert unter Java 25; Testkompilierung scheitert am Konstruktoraufruf in `PageControllerTest`. Dieser Befund ist durch R01 behoben; das aktuelle Prüfergebnis steht dort.

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: appHead(~{::title})}">
+    <title>Knowledgeroot Enter your code</title>
+</head>
+<body class="kr-login-page">
+<div class="kr-login-shell">
+    <div class="kr-login-left">
+        <a class="kr-login-brand" href="/ui/welcome">
+            <span class="kr-brand-mark">K</span>
+            <span class="kr-brand-name">Knowledgeroot<span class="kr-dot">.</span></span>
+        </a>
+        <div class="kr-login-hero">
+            <h1>Almost there.</h1>
+            <p>Enter the six-digit code from your authenticator app. Lost the app? Use one of your recovery codes instead.</p>
+        </div>
+        <div style="color:var(--kr-text-3); font-size:12px">© Knowledgeroot</div>
+    </div>
+    <div class="kr-login-right">
+        <form class="kr-login-card" method="post" action="/mfa/verify">
+            <h2>Enter your code</h2>
+            <p class="kr-sub">Code from the authenticator app, or a recovery code (xxxx-xxxx).</p>
+            <div th:if="${error}" class="kr-login-alert" role="alert" th:text="${error}"></div>
+            <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <div class="kr-field">
+                <label for="code">Code</label>
+                <input type="text" id="code" name="code" autocomplete="one-time-code" maxlength="32" required autofocus>
+            </div>
+            <button class="kr-btn primary" type="submit">Sign in</button>
+        </form>
+        <form method="post" action="/logout" style="margin-top:12px; text-align:center">
+            <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <button class="kr-btn" type="submit">Cancel and sign out</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

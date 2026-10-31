@@ -59,5 +59,16 @@
         </div>
     </div>
 </form>
+<section class="kr-editor-pane mt-4" aria-labelledby="mfa-heading" th:if="${mfa != null}">
+    <h2 id="mfa-heading">Two-factor authentication</h2>
+    <p th:if="${!mfa.enrolled()}">Not set up.</p>
+    <div th:if="${mfa.enrolled()}">
+        <p>Active since <span th:text="${#temporals.format(mfa.enrolledAt(), 'yyyy-MM-dd HH:mm')}">date</span>, unused recovery codes: <span th:text="${mfa.recoveryCodesLeft()}">10</span>.</p>
+        <form th:hx-post="'/admin/users/' + ${user.getId()} + '/mfa/reset'" hx-target="#content"
+              hx-confirm="Remove this user's second factor? The user can set up a new one afterwards.">
+            <button type="submit" class="kr-btn">Reset two-factor authentication</button>
+        </form>
+    </div>
+</section>
 </body>
 </html>

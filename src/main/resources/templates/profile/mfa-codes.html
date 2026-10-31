@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
+<head>
+    <title>Knowledgeroot Recovery codes</title>
+</head>
+<body>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
+        <li class="breadcrumb-item"><a href="/profile" hx-get="/profile" hx-target="#content" hx-push-url="true">Profile</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Recovery codes</li>
+    </ol>
+</nav>
+
+<header class="kr-page-header">
+    <div class="kr-page-title-wrap">
+        <h1 class="kr-page-title">Two-factor authentication is active</h1>
+        <p class="kr-page-subtitle" style="margin:0">These recovery codes are shown only now. Store them somewhere safe.</p>
+    </div>
+</header>
+
+<section class="kr-editor-pane">
+    <p>Each code signs you in once if you lose access to the authenticator app.</p>
+    <ul class="kr-recovery-codes" style="columns:2; font-family:monospace; list-style:none; padding:0">
+        <li th:each="code : ${recoveryCodes}" th:text="${code}">abcd-efgh</li>
+    </ul>
+    <a class="kr-btn accent mt-3" href="/profile/mfa" hx-get="/profile/mfa" hx-target="#content" hx-push-url="true">Done</a>
+</section>
+</body>
+</html>

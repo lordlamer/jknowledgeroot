@@ -556,6 +556,7 @@ class ApplicationSmokeIT {
                 "--spring.datasource.username=" + database.getUsername(),
                 "--spring.datasource.password=" + database.getPassword(),
                 "--knowledgeroot.migration.username=smoke_migrator", "--knowledgeroot.migration.password=smoke-migration-password",
+                "--knowledgeroot.security.master-key=smoke-test-master-key-0123456789abcdef",
                 "--server.ssl.enabled=true", "--server.ssl.key-store=" + files.resolve("test-tls.p12").toUri(),
                 "--server.ssl.key-store-password=test-certificate-password", "--server.ssl.key-store-type=PKCS12",
                 "--knowledgeroot.bootstrap.login=" + (bootstrap ? "smoke.admin" : ""),

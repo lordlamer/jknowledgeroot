@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
+<head>
+    <title>Knowledgeroot :: settings</title>
+</head>
+<body>
+<form method="post" th:action="@{/admin/settings}">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
+            <li class="breadcrumb-item">Admin</li>
+            <li class="breadcrumb-item active" aria-current="page">Settings</li>
+        </ol>
+    </nav>
+
+    <header class="kr-page-header">
+        <div class="kr-page-title-wrap">
+            <h1 class="kr-page-title">Settings</h1>
+            <p class="kr-page-subtitle" style="margin:0">Application-wide settings that apply immediately.</p>
+        </div>
+        <div class="kr-page-actions">
+            <button type="submit" class="kr-btn accent">Save</button>
+        </div>
+    </header>
+
+    <div class="kr-editor-pane">
+        <div th:if="${saved}" class="alert kr-alert-info" role="alert" style="margin-bottom:16px">Settings saved.</div>
+        <h2>Two-factor authentication</h2>
+        <p>Users set up an authenticator app in their profile. The policy decides who is asked for a code and who must set one up at the next sign-in.</p>
+        <div class="kr-field" th:each="option : ${policies}" style="display:flex; align-items:flex-start; gap:8px">
+            <input class="form-check-input" type="radio" name="mfaPolicy" th:id="'mfa-' + ${option.value}" th:value="${option.value}" th:checked="${option == policy}">
+            <label th:for="'mfa-' + ${option.value}" style="margin:0">
+                <strong th:switch="${option.name()}">
+                    <span th:case="'OFF'">Off</span>
+                    <span th:case="'OPTIONAL'">Optional</span>
+                    <span th:case="'REQUIRED_FOR_ADMINS'">Required for administrators</span>
+                    <span th:case="'REQUIRED'">Required for everyone</span>
+                </strong>
+                <small th:switch="${option.name()}" style="display:block">
+                    <span th:case="'OFF'">Nobody is asked for a code; tokens users set up are kept.</span>
+                    <span th:case="'OPTIONAL'">Users who set up a token are asked for it; everyone else signs in with the password only.</span>
+                    <span th:case="'REQUIRED_FOR_ADMINS'">Administrators must set up a token at the next sign-in; other users as with Optional.</span>
+                    <span th:case="'REQUIRED'">Everyone must set up a token at the next sign-in.</span>
+                </small>
+            </label>
+        </div>
+    </div>
+</form>
+</body>
+</html>

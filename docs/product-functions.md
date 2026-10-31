@@ -102,3 +102,26 @@ Ein Request lädt nur Navigationsdaten (ID, Name, Revision und lesbaren
 Elternverweis), keine Seiteninhalte oder Dateilisten. Die Datenbank wendet
 die Sichtbarkeit vor der Begrenzung an. Die Einschränkungen und Messmethode
 für große Bestände stehen in [load-testing.md](load-testing.md).
+
+## Zweiter Faktor (Authenticator-App)
+
+Benutzer richten unter **Profil → Two-factor authentication** einen Token für
+eine Authenticator-App ein: QR-Code scannen oder Schlüssel manuell eingeben,
+ersten Code bestätigen, die zehn Wiederherstellungscodes sicher ablegen. Sie
+werden nur einmal angezeigt; jeder gilt einmal. Das Entfernen verlangt
+Passwort und einen aktuellen Code.
+
+Administratoren legen unter **Admin → Settings** die Policy fest:
+
+| Policy | Wirkung |
+| --- | --- |
+| Off | Niemand wird nach einem Code gefragt; eingerichtete Tokens bleiben erhalten. |
+| Optional | Wer einen Token hat, gibt nach dem Passwort einen Code ein; alle anderen melden sich nur mit Passwort an. |
+| Required for administrators | Administratoren müssen beim nächsten Login einen Token einrichten; übrige Benutzer wie bei Optional. |
+| Required for everyone | Alle müssen beim nächsten Login einen Token einrichten. |
+
+Solange die Policy einen Token für das Konto verlangt, kann der Benutzer ihn
+nicht selbst entfernen. Bei verlorenem Telefon setzt ein Administrator den
+Token in der Benutzerverwaltung zurück; der Benutzer richtet danach einen
+neuen ein. Fünf falsche Codes beenden die Sitzung, die Anmeldung beginnt von
+vorn. Technische Details in [authentication.md](authentication.md#zweiter-faktor-totp).

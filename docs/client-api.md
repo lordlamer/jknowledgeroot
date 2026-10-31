@@ -16,12 +16,25 @@ der Web-UI. Es gibt keine zusätzlichen Tokens und keine Datenbankänderung daf�
 2. Alle ändernden Requests senden das Token im Header `X-XSRF-TOKEN`.
 3. `POST /api/v1/auth/login` mit `{"username", "password"}` meldet an. Wie beim
    Formular-Login gelten die Loginquoten, die Sitzungs-ID wird erneuert und das
-   CSRF-Token rotiert; die Antwort enthält das neue Token.
-4. `POST /api/v1/auth/logout` beendet die Sitzung.
-5. `POST /api/v1/auth/forgot-password` mit `{"email"}` fordert wie die Web-UI eine
+   CSRF-Token rotiert; die Antwort enthält das neue Token. Verlangt das Konto
+   einen zweiten Faktor, antwortet der Login mit `authenticated: false` und
+   `mfa: {pending: true, requirement: "verify"}`; bis zum Code liefern alle
+   anderen API-Routen `401` mit `detail: "Second factor required."`.
+4. `POST /api/v1/auth/mfa` mit `{"code"}` (Authenticator- oder
+   Wiederherstellungscode) schließt die Anmeldung ab und liefert die volle
+   Sitzung mit neuem CSRF-Token; ein falscher Code gibt `401`, nach fünf
+   Fehlversuchen endet die Sitzung. Bei `requirement: "enrol"` (die Policy
+   verlangt einen Token, der noch nicht eingerichtet ist) richtet die App den
+   Token mit `POST /api/v1/auth/mfa/setup` und `POST /api/v1/auth/mfa/confirm`
+   ein; die Bestätigung schließt die Anmeldung zugleich ab.
+5. `POST /api/v1/auth/logout` beendet die Sitzung.
+6. `POST /api/v1/auth/forgot-password` mit `{"email"}` fordert wie die Web-UI eine
    Passwort-Wiederherstellung an und antwortet immer mit `204`.
 
-`GET /api/v1/session` nennt in `serverVersion` die Maven-Version aus den Build-Informationen.
+`GET /api/v1/session` nennt in `serverVersion` die Maven-Version aus den
+Build-Informationen und in `mfa` den Stand des zweiten Faktors: `pending`,
+`requirement` (`verify`/`enrol`/null), `enrolled` und die `policy`
+(`off`, `optional`, `required-for-admins`, `required`).
 
 Ohne Anmeldung antworten geschützte API-Routen mit `401` statt mit dem
 Login-Redirect der Web-UI. Gäste dürfen wie in der Web-UI öffentliche Seiten lesen.
@@ -46,6 +59,7 @@ Zeitstempel werden als ISO-8601 mit Zeitzonen-Offset geliefert
 | Verlauf | `GET /pages/{id}/history`, `GET /pages/{id}/history/{historyId}`, `GET /pages/{id}/history/compare?from=&to=`, `POST /pages/{id}/history/{historyId}/restore` |
 | Freigaben (Admin) | `GET/POST /pages/{id}/permissions`, `PUT/DELETE /pages/{id}/permissions/{permissionId}`, `PUT /pages/{id}/permissions/mode` |
 | Profil | `GET/PUT /profile`, `POST /profile/password`, `GET/POST /profile/recovery` |
+| Zweiter Faktor | `GET /profile/mfa` (Status, Policy, Pflicht), `POST /auth/mfa/setup` (Secret, otpauth-URI, QR-SVG), `POST /auth/mfa/confirm` (erster Code → Wiederherstellungscodes, einmalig), `DELETE /profile/mfa` (Passwort und Code; `409` bei verpflichtender Policy) |
 | Verwaltung (Admin) | `GET /pages/deleted`, `GET /admin/principals`, `GET/POST /admin/users`, `GET/PUT/DELETE /admin/users/{id}`, `GET/POST /admin/groups`, `PUT/DELETE /admin/groups/{id}` |
 
 Seitenänderungen, Löschen, Verschieben und Wiederherstellen verlangen die aktuelle
