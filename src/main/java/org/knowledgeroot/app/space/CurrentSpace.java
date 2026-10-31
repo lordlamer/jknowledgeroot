@@ -43,12 +43,15 @@ public class CurrentSpace {
         return current().map(Space::getId).orElseGet(() -> spaces.defaultSpace().getId());
     }
 
-    public void switchTo(int spaceId) {
+    /** @return whether the shown space changed, so that the layout has to follow */
+    public boolean switchTo(int spaceId) {
+        boolean changed = current().map(space -> !space.getId().equals(spaceId)).orElse(true);
         session(true).ifPresent(s -> s.setAttribute(ATTRIBUTE, spaceId));
+        return changed;
     }
 
-    /** Opening a page moves the sidebar to the page's space. */
-    public void follow(Integer spaceId) {
-        if (spaceId != null) switchTo(spaceId);
+    /** Opening a page moves the sidebar to the page's space. @return whether the shown space changed */
+    public boolean follow(Integer spaceId) {
+        return spaceId != null && switchTo(spaceId);
     }
 }

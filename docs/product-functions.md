@@ -140,8 +140,9 @@ Kopfzeile neben dem Logo zeigt Schlüssel und Namen des aktuellen Space und
 Häkchen am aktuellen, Kennzeichen „archived") sowie den Einträgen „All
 spaces" und „New space". Der Wechsel öffnet die Homepage des Space, ohne
 Homepage die Space-Übersicht mit den Hauptseiten. Der Space-Name über dem
-Baum führt zur Übersicht. Das Öffnen einer Seite wechselt die Seitenleiste
-in den Space der Seite; der zuletzt gewählte Space bleibt in der Sitzung.
+Baum führt zur Übersicht. Das Öffnen einer Seite, etwa aus der Suche oder
+über einen Link, wechselt Seitenleiste und Umschalter in den Space der
+Seite; der zuletzt gewählte Space bleibt in der Sitzung.
 Auch die Favoriten in der Seitenleiste folgen dem gezeigten Space: Sterne an
 Seiten anderer Spaces bleiben erhalten und erscheinen nach dem Wechsel
 dorthin. Der Breadcrumb einer Seite beginnt mit ihrem Space. „Neue Seite" im

@@ -280,10 +280,23 @@ class SpaceIntegrationTest extends IsolatedApplicationTest {
         assertFalse(member.page("/ui/sidebar").contains("sw-home-" + pageId), "the sidebar switched back to the default space");
         assertTrue(member.page("/ui/sidebar?space=" + team).contains("sw-home-" + pageId), "an explicit space wins over the session");
         assertTrue(member.page("/spaces/" + team).contains("sw-home-" + pageId), "the overview lists the root pages of the space");
-        // Opening a page moves the sidebar into its space.
-        member.perform(get("/ui/page/" + home)).andExpect(status().isOk())
-                .andExpect(content().string(containsString("/spaces/" + team)));
+        // Opening a page from another space moves the sidebar into its space: an htmx request reloads tree and
+        // favourites and swaps switcher and sidebar head out of band, a full page renders the new space directly.
+        String teamName = "SW" + pageId + " space";
+        member.perform(get("/spaces/open").param("space", String.valueOf(kr))).andExpect(status().is3xxRedirection());
+        String swapped = member.perform(get("/ui/page/" + home).header("HX-Request", "true")).andExpect(status().isOk())
+                .andExpect(header().string("HX-Trigger", "reload-sidebar, reload-stars")).andReturn().getResponse().getContentAsString();
+        assertTrue(swapped.contains("id=\"krSpaceSwitcher\"") && swapped.contains("id=\"krSidebarSpace\"") && swapped.contains("hx-swap-oob=\"true\""),
+                "the page carries switcher and sidebar head out of band");
+        assertTrue(swapped.contains("<span class=\"kr-space-name\">" + teamName + "</span>"), "the switcher names the page's space");
         assertTrue(member.page("/ui/sidebar").contains("sw-home-" + pageId));
+        member.perform(get("/ui/page/" + home).header("HX-Request", "true")).andExpect(status().isOk())
+                .andExpect(header().doesNotExist("HX-Trigger")).andExpect(content().string(org.hamcrest.Matchers.not(containsString("hx-swap-oob"))));
+        member.perform(get("/spaces/open").param("space", String.valueOf(kr))).andExpect(status().is3xxRedirection());
+        String full = member.page("/ui/page/" + home);
+        assertTrue(full.contains("/spaces/" + team) && full.contains("<span class=\"kr-space-name\">" + teamName + "</span>"),
+                "a full page load shows the page's space in the header");
+        assertFalse(full.contains("hx-swap-oob"), "a full page needs no out-of-band swap");
         // Guests enter public spaces only.
         new Browser().perform(get("/spaces/open").param("space", String.valueOf(team))).andExpect(status().isForbidden());
         new Browser().perform(get("/spaces/" + kr)).andExpect(status().isOk());

@@ -48,6 +48,7 @@ public class PageController {
     private final PageCreationService pageCreationService;
     private final org.knowledgeroot.app.space.CurrentSpace currentSpace;
     private final org.knowledgeroot.app.space.SpaceService spaceService;
+    private final org.knowledgeroot.app.frontend.web.LayoutDefines layout;
     private final PageEditingService pageEditingService;
     private final FileDao fileDao;
     private final UploadPolicy uploadPolicy;
@@ -129,8 +130,9 @@ public class PageController {
 
         model.addAttribute("page", page);
         model.addAttribute("breadcrumb", hierarchy);
-        // The sidebar follows the page into its space.
-        currentSpace.follow(page.getSpaceId());
+        // The sidebar follows the page into its space; a change also refreshes switcher, sidebar head, tree and favourites.
+        boolean spaceChanged = currentSpace.follow(page.getSpaceId());
+        if (spaceChanged) layout.spaceChanged(model, response, htmxRequest.isHtmxRequest());
         model.addAttribute("space", page.getSpaceId() == null ? null : spaceService.space(page.getSpaceId()));
 
         // Prüfen der Bearbeitungsberechtigungen
@@ -162,8 +164,8 @@ public class PageController {
                         ? "?"
                         : currentUser.getLogin().substring(0, 1).toUpperCase());
 
-        // trigger reload sidebar
-        if(trigger != null && trigger.equals("reload-sidebar"))
+        // trigger reload sidebar (a space change already did)
+        if(!spaceChanged && "reload-sidebar".equals(trigger))
             response.addHeader("HX-Trigger", "reload-sidebar");
 
         if(htmxRequest.isHtmxRequest()) {

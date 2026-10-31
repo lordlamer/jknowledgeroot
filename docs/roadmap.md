@@ -1203,7 +1203,10 @@ OAuth-Anmeldung; die Client-API für die mobile App (R44) ist bereits enthalten.
   Kennzeichen für archivierte Spaces, darunter „All spaces" und „New space",
   alles im Stil der Oberfläche statt der Bootstrap-Vorgaben. Die Favoriten in
   der Seitenleiste und `GET /api/v1/starred?space=` sind je Space gefiltert;
-  Favoriten tragen ihren Space.
+  Favoriten tragen ihren Space. Öffnet eine Seite oder Space-Übersicht per
+  htmx einen anderen Space, tauscht die Antwort Umschalter und Kopf der
+  Seitenleiste out-of-band und lädt Baum und Favoriten neu; ein vollständiger
+  Seitenaufruf zeigt den Space direkt im Layout.
 - **Grenzen:** Die mobile App muss den Space-Umschalter noch umsetzen. Die
   Space-Übersicht zeigt bis zu 100 Hauptseiten ohne Blättern. Spaces lassen
   sich archivieren, aber nicht löschen.

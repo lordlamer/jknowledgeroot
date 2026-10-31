@@ -21,16 +21,7 @@
                      hx-trigger="load, reload-stars from:body"
                      hx-target="this"
                      hx-swap="innerHTML"></div>
-                <div class="kr-tree-section-title kr-section-workspace">
-                    <a th:if="${currentSpace != null}" th:href="@{'/spaces/' + ${currentSpace.id}}" th:attr="hx-get='/spaces/' + ${currentSpace.id}"
-                       hx-target="#content" hx-push-url="true" th:text="${currentSpace.name}" title="Space overview"
-                       style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:inherit; text-decoration:none">Space</a>
-                    <span th:if="${currentSpace == null}" style="flex:1">Workspace</span>
-                    <button th:if="${canCreateRootPage}" type="button" class="add" title="Add root page" aria-label="Add root page"
-                            th:attr="hx-get='/ui/page/new?space=' + (${currentSpace != null} ? ${currentSpace.id} : '')" hx-target="#content" hx-push-url="true">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-                    </button>
-                </div>
+                <div th:replace="~{fragments/space-context :: sidebarHead(false)}"></div>
                 <div id="sidebar-tree"
                      hx-get="/ui/sidebar"
                      hx-trigger="load, reload-sidebar from:body"

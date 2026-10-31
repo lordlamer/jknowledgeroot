@@ -23,6 +23,7 @@ class SpaceController {
     private final GroupDao groups;
     private final CurrentSpace currentSpace;
     private final org.knowledgeroot.app.security.context.domain.UserContext userContext;
+    private final org.knowledgeroot.app.frontend.web.LayoutDefines layout;
 
     @GetMapping("/spaces")
     String list(Model model, HtmxRequest htmx) {
@@ -45,7 +46,8 @@ class SpaceController {
     String overview(@PathVariable int id, @RequestParam(required = false) String trigger, Model model, HtmxRequest htmx,
                     jakarta.servlet.http.HttpServletResponse response) {
         spaces.requireView(id);
-        currentSpace.switchTo(id);
+        boolean spaceChanged = currentSpace.switchTo(id);
+        if (spaceChanged) layout.spaceChanged(model, response, htmx.isHtmxRequest());
         Space space = spaces.space(id);
         var roots = new PageFilter();
         roots.setSpaceId(id);
@@ -57,7 +59,7 @@ class SpaceController {
         model.addAttribute("rootPages", pages.listVisiblePages(roots, viewer));
         model.addAttribute("canCreate", spaces.canCreateRootPage(id));
         model.addAttribute("canManage", spaces.canManage(id));
-        if ("reload-sidebar".equals(trigger)) response.addHeader("HX-Trigger", "reload-sidebar");
+        if (!spaceChanged && "reload-sidebar".equals(trigger)) response.addHeader("HX-Trigger", "reload-sidebar");
         return htmx.isHtmxRequest() ? "space/overview :: body" : "space/overview";
     }
 

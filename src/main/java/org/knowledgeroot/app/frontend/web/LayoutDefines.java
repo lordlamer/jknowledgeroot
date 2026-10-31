@@ -48,6 +48,20 @@ public class LayoutDefines {
         }
     }
 
+    /**
+     * Called when a handler moved the sidebar into another space after the layout attributes were
+     * computed: refreshes them and, for an htmx request, lets the page carry the switcher and the
+     * sidebar head out of band and reload the tree and the favourites.
+     */
+    public void spaceChanged(org.springframework.ui.Model model, jakarta.servlet.http.HttpServletResponse response, boolean htmx) {
+        model.addAttribute("currentSpace", currentSpace());
+        model.addAttribute("canCreateRootPage", canCreateRootPage());
+        if (htmx) {
+            model.addAttribute("spaceChanged", true);
+            response.addHeader("HX-Trigger", "reload-sidebar, reload-stars");
+        }
+    }
+
     @ModelAttribute("visibleSpaces")
     public java.util.List<org.knowledgeroot.app.space.Space> visibleSpaces() {
         var service = spaces.getIfAvailable();
