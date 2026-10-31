@@ -1076,6 +1076,20 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 - **Grenzen:** Ob die nächste Linie 1.1.0 oder etwas anderes wird, ist eine
   spätere Entscheidung; die Nummer ist ein Platzhalter.
 
+### R50 – MariaDB Connector/J 3.5.11 für die Advisories vom 30. Oktober
+
+- [x] Lokal umgesetzt und geprüft am 31. Oktober 2026.
+- **Anlass:** Der gehostete Abhängigkeitsscan blockierte mit vier Advisories
+  (drei MODERATE, eine LOW) für den Boot-verwalteten Treiber 3.5.10; alle
+  setzen einen bösartigen Datenbankserver voraus.
+- **Umgesetzt:** `mariadb.version` 3.5.11 im POM; Begründung in
+  [dependencies.md](dependencies.md#erneute-prüfung-am-31-oktober-2026-r50).
+- **Geprüft:** Abhängigkeitsscan **280 Paketversionen, null Zuordnungen**;
+  Datenbanktests mit dem neuen Treiber erfolgreich. Gehosteter Nachweis mit
+  dem PR-Lauf.
+- **Grenzen:** Erzwungene Treiberversion neben dem Boot-BOM; bei einem
+  Boot-Update die Property prüfen und entfernen, sobald sie überflüssig ist.
+
 ## Nachweise der Bestandsaufnahme
 
 - `mvn -B test` bei der ursprünglichen Bestandsaufnahme: Anwendung kompiliert unter Java 25; Testkompilierung scheitert am Konstruktoraufruf in `PageControllerTest`. Dieser Befund ist durch R01 behoben; das aktuelle Prüfergebnis steht dort.
