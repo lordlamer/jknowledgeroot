@@ -1186,10 +1186,20 @@ OAuth-Anmeldung; die Client-API für die mobile App (R44) ist bereits enthalten.
   Anlegen von Hauptseiten nötig); `GET /api/v1/tree` nimmt `space`. Die
   Layout-Attribute sind auf die HTML-Controller beschränkt und tolerieren
   Datenbankausfälle, damit Health-Probes und APIs unberührt bleiben.
-- **Grenzen:** Die Client-API kennt Spaces erst über `tree?space=`;
-  Space-Liste, Space in der Seitenansicht, Suche je Space und Anlegen von
-  Hauptseiten mit Space-Angabe über die API folgen (Teil 3). Die
-  Space-Übersicht zeigt bis zu 101 Hauptseiten ohne Blättern.
+- **Umgesetzt (Teil 3):** Client-API: `GET /api/v1/spaces`,
+  `GET /api/v1/spaces/{id}` mit Hauptseiten, `POST /api/v1/spaces/{id}/open`;
+  `space` in Seitendetails, Suchtreffern und Verschiebe-Optionen; `space` beim
+  Anlegen von Hauptseiten, bei der Suche und beim Verschieben auf die oberste
+  Ebene eines anderen Space.
+- **Geprüft (Teil 2 und 3):** `SpaceIntegrationTest` zusätzlich mit
+  Umschalter, Homepage und Übersicht, Seitenleiste je Space, Anlegen im
+  gewählten Space, Suche je Space, Verschieben auf die oberste Ebene eines
+  anderen Space und dem Client-API-Ablauf (Liste, Öffnen, Baum, Anlegen,
+  Suche, Verschieben, Ausschluss ohne Freigabe); `verify` mit JAR-Smoke-Test
+  lokal erfolgreich.
+- **Grenzen:** Die mobile App muss den Space-Umschalter noch umsetzen. Die
+  Space-Übersicht zeigt bis zu 100 Hauptseiten ohne Blättern. Spaces lassen
+  sich archivieren, aber nicht löschen.
 
 ## Nachweise der Bestandsaufnahme
 

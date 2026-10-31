@@ -39,7 +39,7 @@ class PageApiController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     ApiModels.Created create(@RequestBody ApiModels.PageInput input) {
-        var dto = PageDto.builder().parent(input.parent() == null ? 0 : input.parent())
+        var dto = PageDto.builder().parent(input.parent() == null ? 0 : input.parent()).spaceId(input.space())
                 .name(trim(input.name())).content(input.content()).build();
         return new ApiModels.Created(creation.create(dto, labels(input.labels())));
     }
@@ -81,31 +81,39 @@ class PageApiController {
     @GetMapping("/{id}/move-options")
     ApiModels.MoveOptions moveOptions(@PathVariable int id, @RequestParam(required = false) Integer parent,
                                       @RequestParam(defaultValue = "0") int start,
-                                      @RequestParam(defaultValue = "") String query) {
+                                      @RequestParam(defaultValue = "") String query,
+                                      @RequestParam(required = false) Integer space) {
         var page = moves.movablePage(new PageId(id));
         int currentParent = page.getParent() == null ? 0 : page.getParent();
         if (parent == null) parent = currentParent > 0 && api.can(currentParent, PagePermission.PermissionLevel.VIEW)
                 ? currentParent : 0;
-        RequestValidation.require(parent >= 0);
+        RequestValidation.require(parent >= 0 && (space == null || space > 0));
         if (parent > 0) api.require(parent, PagePermission.PermissionLevel.VIEW);
+        // The top level is browsed per space: the page's own unless another one was chosen.
+        int destinationSpace = parent > 0 ? pages.findById(new PageId(parent)).getSpaceId()
+                : space != null ? space : page.getSpaceId();
+        if (!api.spaces().canView(destinationSpace)) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this space.");
         RequestValidation.text(query, 255);
         start = RequestValidation.start(start);
         var filter = PageFilter.builder().parent(query.isBlank() ? parent : null).query(query.isBlank() ? null : query)
+                .spaceId(query.isBlank() && parent == 0 ? destinationSpace : null)
                 .deleted(false).start(start).limit(51).build();
         var items = pages.listVisiblePages(filter, moves.actor());
         var destinationPath = api.path(parent);
         boolean insideSubtree = destinationPath.stream().anyMatch(ancestor -> ancestor.id() == id);
-        boolean valid = moves.canUseDestination(parent) && !insideSubtree && !(parent > 0 && pages.getPageHierarchy(
-                new PageId(parent)).stream().anyMatch(ancestor -> ancestor.getPageId().value() == id));
+        boolean sameSpace = destinationSpace == page.getSpaceId();
+        boolean valid = parent == 0 ? (sameSpace || moves.canUseTopLevel(destinationSpace))
+                : moves.canUseDestination(parent) && !insideSubtree && pages.getPageHierarchy(
+                new PageId(parent)).stream().noneMatch(ancestor -> ancestor.getPageId().value() == id);
         return new ApiModels.MoveOptions(ApiModels.PageRef.of(page), currentParent, api.path(currentParent), parent,
-                destinationPath, items.stream().limit(50).filter(item -> item.getPageId().value() != id)
+                api.spaceRef(destinationSpace), destinationPath, items.stream().limit(50).filter(item -> item.getPageId().value() != id)
                 .map(item -> new ApiModels.MoveCandidate(item.getPageId().value(), item.getName())).toList(),
-                start, items.size() > 50, parent == currentParent, valid, permissions.isInheriting(page.getPageId()));
+                start, items.size() > 50, parent == currentParent && (parent > 0 || sameSpace), valid, permissions.isInheriting(page.getPageId()));
     }
 
     @PostMapping("/{id}/move")
     ApiModels.PageDetail move(@PathVariable int id, @RequestBody ApiModels.MoveInput input) {
-        moves.move(new PageId(id), input.parent(), input.revision());
+        moves.move(new PageId(id), input.parent(), input.revision(), input.space());
         return detail(id);
     }
 
@@ -121,7 +129,7 @@ class PageApiController {
                 && !api.can(page.getParent(), PagePermission.PermissionLevel.VIEW) ? null : page.getParent();
         var attachments = files.listFiles(FileFilter.builder().pageId(pid).build()).stream()
                 .map(ApiModels.FileInfo::of).toList();
-        return new ApiModels.PageDetail(id, page.getRevision(), parent, page.getName(), page.getContent(),
+        return new ApiModels.PageDetail(id, page.getRevision(), api.spaceRef(page.getSpaceId()), parent, page.getName(), page.getContent(),
                 labels.listForPage(pid), breadcrumb, Boolean.TRUE.equals(page.getDeleted()),
                 page.getCreatedBy(), page.getCreatedByLogin(), page.getCreateDate(),
                 page.getChangedBy(), page.getChangedByLogin(), page.getChangeDate(),

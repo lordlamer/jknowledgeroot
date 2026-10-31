@@ -55,6 +55,10 @@ public class SpaceService {
         return spaces.listVisible(id(user()));
     }
 
+    public SpaceRepository spaces() {
+        return spaces;
+    }
+
     public Space defaultSpace() {
         return spaces.defaultSpace();
     }

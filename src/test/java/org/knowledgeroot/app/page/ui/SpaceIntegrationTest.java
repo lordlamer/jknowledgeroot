@@ -336,4 +336,62 @@ class SpaceIntegrationTest extends IsolatedApplicationTest {
         assertEquals(0, jdbc.queryForObject("SELECT parent FROM page WHERE id = ?", Integer.class, otherPageId));
         assertTrue(member.page("/ui/sidebar?space=" + team).contains(name(otherPageId)));
     }
+
+    private ResultActions json(Browser client, String path, String body) throws Exception {
+        if (client.stale) client.refreshCsrf();
+        return client.perform(MockMvcRequestBuilders.post(path).contentType(org.springframework.http.MediaType.APPLICATION_JSON).content(body));
+    }
+
+    @Test void clientApiListsOpensAndUsesSpaces() throws Exception {
+        int team = space("AP" + pageId);
+        spaceGrant(team, "user", editorId, "edit");
+        int teamRoot = rootIn(team, "ap-root-" + pageId, true);
+        jdbc.update("UPDATE space SET home_page_id = ? WHERE id = ?", teamRoot, team);
+        jdbc.update("INSERT INTO page_permission (page_id, role_type, role_id, permission_level, created_by, create_date, changed_by, change_date) VALUES (?, 'user', ?, 'edit', ?, NOW(), ?, NOW())", otherPageId, editorId, adminId, adminId);
+        var api = new Browser();
+        json(api, "/api/v1/auth/login", "{\"username\":\"" + editor + "\",\"password\":\"" + PASSWORD + "\"}").andExpect(status().isOk());
+        String list = api.perform(get("/api/v1/spaces")).andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.key=='KR')].current").value(true))
+                .andExpect(jsonPath("$[?(@.key=='AP" + pageId + "')].canCreateRootPage").value(true))
+                .andExpect(jsonPath("$[?(@.key=='AP" + pageId + "')].canManage").value(false))
+                .andReturn().getResponse().getContentAsString();
+        assertTrue(list.contains("\"homePageId\":" + teamRoot));
+        json(api, "/api/v1/spaces/" + team + "/open", "").andExpect(status().isOk()).andExpect(jsonPath("$.current").value(true));
+        api.perform(get("/api/v1/spaces")).andExpect(jsonPath("$[?(@.key=='KR')].current").value(false));
+        api.perform(get("/api/v1/spaces/" + team)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.space.key").value("AP" + pageId))
+                .andExpect(jsonPath("$.rootPages[0].id").value(teamRoot));
+        // The tree follows the opened space unless a space is named.
+        api.perform(get("/api/v1/tree")).andExpect(jsonPath("$.items[0].id").value(teamRoot));
+        api.perform(get("/api/v1/tree").param("space", String.valueOf(spaces.findByKey("KR").orElseThrow().getId())))
+                .andExpect(jsonPath("$.items[?(@.id==" + teamRoot + ")]").isEmpty());
+        // Root pages are created in a named space; the detail names the space.
+        String created = json(api, "/api/v1/pages", "{\"space\":" + team + ",\"name\":\"ap-new-" + pageId + "\",\"content\":\"<p>x</p>\"}")
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        int newPage = JsonPath.read(created, "$.id");
+        assertEquals(team, jdbc.queryForObject("SELECT space_id FROM page WHERE id = ?", Integer.class, newPage));
+        api.perform(get("/api/v1/pages/" + newPage)).andExpect(jsonPath("$.space.key").value("AP" + pageId));
+        json(api, "/api/v1/pages", "{\"space\":" + spaces.findByKey("KR").orElseThrow().getId() + ",\"name\":\"kr-new-" + pageId + "\"}")
+                .andExpect(status().isCreated());
+        // Search limited to a space and hits naming their space.
+        jdbc.update("UPDATE page SET content = ? WHERE id IN (?, ?)", "<p>apneedle" + pageId + "</p>", teamRoot, otherPageId);
+        api.perform(get("/api/v1/search").param("q", "apneedle" + pageId)).andExpect(jsonPath("$.items", org.hamcrest.Matchers.hasSize(2)))
+                .andExpect(jsonPath("$.items[?(@.id==" + teamRoot + ")].space.key").value("AP" + pageId));
+        api.perform(get("/api/v1/search").param("q", "apneedle" + pageId).param("space", String.valueOf(team)))
+                .andExpect(jsonPath("$.items", org.hamcrest.Matchers.hasSize(1)));
+        // Moving to the top level of another space.
+        api.perform(get("/api/v1/pages/" + otherPageId + "/move-options").param("parent", "0").param("space", String.valueOf(team)))
+                .andExpect(jsonPath("$.space.key").value("AP" + pageId)).andExpect(jsonPath("$.validDestination").value(true))
+                .andExpect(jsonPath("$.items[?(@.id==" + teamRoot + ")]").isNotEmpty());
+        json(api, "/api/v1/pages/" + otherPageId + "/move", "{\"parent\":0,\"space\":" + team + ",\"revision\":0}")
+                .andExpect(status().isOk()).andExpect(jsonPath("$.space.key").value("AP" + pageId));
+        assertEquals(team, jdbc.queryForObject("SELECT space_id FROM page WHERE id = ?", Integer.class, otherPageId));
+        // Without a grant the space does not exist for the client.
+        var stranger = new Browser();
+        json(stranger, "/api/v1/auth/login", "{\"username\":\"" + outsider + "\",\"password\":\"" + PASSWORD + "\"}").andExpect(status().isOk());
+        stranger.perform(get("/api/v1/spaces")).andExpect(jsonPath("$[?(@.key=='AP" + pageId + "')]").isEmpty());
+        stranger.perform(get("/api/v1/spaces/" + team)).andExpect(status().isForbidden());
+        json(stranger, "/api/v1/spaces/" + team + "/open", "").andExpect(status().isForbidden());
+        json(stranger, "/api/v1/pages", "{\"space\":" + team + ",\"name\":\"blocked\"}").andExpect(status().isForbidden());
+    }
 }

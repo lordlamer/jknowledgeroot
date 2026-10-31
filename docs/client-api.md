@@ -51,9 +51,10 @@ Zeitstempel werden als ISO-8601 mit Zeitzonen-Offset geliefert
 
 | Bereich | Endpunkte |
 |---|---|
-| Navigation | `GET /tree?parent=&after=&space=` (50 Einträge, `nextAfter`, `hasChildren`, `starred`; `parent=0` liefert die Hauptseiten von `space`, ohne Angabe die des zuletzt in der Sitzung gewählten beziehungsweise des Standard-Space), `GET /starred`, `GET /search?q=&start=` |
-| Seiten | `GET/PUT/DELETE /pages/{id}`, `POST /pages`, `PUT/DELETE /pages/{id}/star` |
-| Verschieben | `GET /pages/{id}/move-options?parent=&query=&start=`, `POST /pages/{id}/move` |
+| Spaces | `GET /spaces` (betretbare Spaces mit `key`, `name`, `homePageId`, `archived`, `canCreateRootPage`, `canManage`, `current`), `GET /spaces/{id}` (Details und bis zu 100 Hauptseiten), `POST /spaces/{id}/open` (merkt den Space für die Sitzung wie der Umschalter der Web-UI) |
+| Navigation | `GET /tree?parent=&after=&space=` (50 Einträge, `nextAfter`, `hasChildren`, `starred`; `parent=0` liefert die Hauptseiten von `space`, ohne Angabe die des zuletzt in der Sitzung gewählten beziehungsweise des Standard-Space), `GET /starred`, `GET /search?q=&start=&space=` (Treffer nennen ihren `space`) |
+| Seiten | `GET/PUT/DELETE /pages/{id}` (Details nennen `space` mit `id`, `key`, `name`), `POST /pages` (`space` für eine neue Hauptseite; Unterseiten nehmen den Space der Elternseite), `PUT/DELETE /pages/{id}/star` |
+| Verschieben | `GET /pages/{id}/move-options?parent=&query=&start=&space=` (bei `parent=0` die Hauptseiten von `space`, Antwort nennt `space`), `POST /pages/{id}/move` mit `{"parent", "space", "revision"}` (`space` nur für die oberste Ebene eines anderen Space) |
 | Kommentare | `GET/POST /pages/{id}/comments`, `DELETE /pages/{id}/comments/{commentId}` |
 | Anhänge | `GET/POST(multipart "file") /pages/{id}/files`, `GET /files/{id}/content`, `DELETE /files/{id}` |
 | Verlauf | `GET /pages/{id}/history`, `GET /pages/{id}/history/{historyId}`, `GET /pages/{id}/history/compare?from=&to=`, `POST /pages/{id}/history/{historyId}/restore` |

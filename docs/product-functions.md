@@ -165,5 +165,7 @@ die Treffer nennen den Space-Schlüssel.
 
 Die Migration legt den Space „Knowledgeroot" (`KR`) an, der alle bisherigen
 Seiten enthält; Gäste dürfen ihn lesen, angemeldete Benutzer dort Hauptseiten
-anlegen. Die Client-API folgt im nächsten Schritt. Regeln im Detail in
+anlegen. Die Client-API bietet Spaces unter `/api/v1/spaces` und nimmt
+`space` bei Baum, Suche, Seitenanlage und Verschieben an
+([client-api.md](client-api.md)). Regeln im Detail in
 [access-control.md](access-control.md#spaces).
