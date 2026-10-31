@@ -134,9 +134,11 @@ betreten dürfen; Gäste sehen öffentliche Spaces. Jeder Space hat einen festen
 Schlüssel (2–16 Großbuchstaben oder Ziffern), einen Namen, eine Beschreibung
 und eine Homepage, die beim Wechsel in den Space geöffnet wird.
 
-Die Seitenleiste zeigt immer genau einen Space: Der Umschalter über dem Baum
-wechselt den Space und öffnet dessen Homepage, ohne Homepage die
-Space-Übersicht mit den Hauptseiten. Das Öffnen einer Seite wechselt die
+Die Seitenleiste zeigt immer genau einen Space: Der Umschalter in der
+Kopfzeile neben dem Logo nennt den aktuellen Space, listet alle betretbaren
+Spaces und öffnet beim Wechsel die Homepage des Space, ohne Homepage die
+Space-Übersicht mit den Hauptseiten. Der Space-Name über dem Baum führt zur
+Übersicht. Das Öffnen einer Seite wechselt die
 Seitenleiste in den Space der Seite; der zuletzt gewählte Space bleibt in der
 Sitzung. Der Breadcrumb einer Seite beginnt mit ihrem Space. „Neue Seite" im
 Baum legt eine Hauptseite im gezeigten Space an. Die Suche durchsucht alle

@@ -287,7 +287,8 @@ class SpaceIntegrationTest extends IsolatedApplicationTest {
         // Guests enter public spaces only.
         new Browser().perform(get("/spaces/open").param("space", String.valueOf(team))).andExpect(status().isForbidden());
         new Browser().perform(get("/spaces/" + kr)).andExpect(status().isOk());
-        assertTrue(member.page("/").contains("id=\"krSpaceSwitch\""));
+        String welcome = member.page("/");
+        assertTrue(welcome.contains("id=\"krSpaceMenu\"") && welcome.contains("/spaces/open?space=" + team), "the top navigation offers the switcher");
     }
 
     @Test void newRootPagesLandInTheChosenSpace() throws Exception {
