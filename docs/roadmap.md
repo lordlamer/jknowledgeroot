@@ -1197,6 +1197,13 @@ OAuth-Anmeldung; die Client-API für die mobile App (R44) ist bereits enthalten.
   anderen Space und dem Client-API-Ablauf (Liste, Öffnen, Baum, Anlegen,
   Suche, Verschieben, Ausschluss ohne Freigabe); `verify` mit JAR-Smoke-Test
   lokal erfolgreich.
+- **Umgesetzt (Teil 4, Feinschliff):** Der Umschalter in der Kopfzeile ist
+  ein Chip mit Space-Schlüssel und Namen neben dem Logo; das Menü zeigt je
+  Space Schlüssel, Namen, Beschreibung, Häkchen am aktuellen Space und
+  Kennzeichen für archivierte Spaces, darunter „All spaces" und „New space",
+  alles im Stil der Oberfläche statt der Bootstrap-Vorgaben. Die Favoriten in
+  der Seitenleiste und `GET /api/v1/starred?space=` sind je Space gefiltert;
+  Favoriten tragen ihren Space.
 - **Grenzen:** Die mobile App muss den Space-Umschalter noch umsetzen. Die
   Space-Übersicht zeigt bis zu 100 Hauptseiten ohne Blättern. Spaces lassen
   sich archivieren, aber nicht löschen.

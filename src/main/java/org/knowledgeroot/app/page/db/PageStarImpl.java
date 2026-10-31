@@ -69,7 +69,7 @@ public class PageStarImpl implements PageStarDao {
             return List.of();
         }
         List<Page> pages = jdbcClient.sql("""
-                SELECT p.id AS pageId, p.name
+                SELECT p.id AS pageId, p.name, p.space_id
                 FROM user_page_star s
                 JOIN page p ON p.id = s.page_id
                 WHERE s.user_id = :userId
@@ -80,6 +80,7 @@ public class PageStarImpl implements PageStarDao {
                 .query((rs, rowNum) -> Page.builder()
                         .pageId(new PageId(rs.getInt("pageId")))
                         .name(rs.getString("name"))
+                        .spaceId(rs.getInt("space_id"))
                         .build())
                 .list();
 

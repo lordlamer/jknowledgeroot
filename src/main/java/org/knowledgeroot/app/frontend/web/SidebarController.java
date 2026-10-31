@@ -97,11 +97,14 @@ class SidebarController {
      * Empty for guests; security config already restricts this endpoint to authenticated users.
      */
     @GetMapping("/ui/sidebar/starred")
-    public String starred(Model model) {
+    public String starred(Model model, @RequestParam(name = "space", required = false) Integer space) {
         Integer currentUserId = getCurrentUserId();
+        // Favourites follow the space the sidebar shows.
+        int spaceId = space != null ? space : currentSpace.currentId();
         List<Page> starred = currentUserId == null
                 ? List.of()
-                : pageStarDao.listStarredPages(currentUserId);
+                : pageStarDao.listStarredPages(currentUserId).stream()
+                        .filter(page -> page.getSpaceId() != null && page.getSpaceId() == spaceId).toList();
         model.addAttribute("starred", starred);
         return "fragments/sidebar-starred :: starred";
     }

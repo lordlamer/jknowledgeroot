@@ -395,4 +395,24 @@ class SpaceIntegrationTest extends IsolatedApplicationTest {
         json(stranger, "/api/v1/spaces/" + team + "/open", "").andExpect(status().isForbidden());
         json(stranger, "/api/v1/pages", "{\"space\":" + team + ",\"name\":\"blocked\"}").andExpect(status().isForbidden());
     }
+
+    @Test void favouritesFollowTheShownSpace() throws Exception {
+        int team = space("FV" + pageId);
+        spaceGrant(team, "user", readerId, "view");
+        int teamRoot = rootIn(team, "fv-root-" + pageId, true);
+        jdbc.update("INSERT INTO user_page_star (user_id, page_id, create_date) VALUES (?, ?, NOW())", readerId, pageId);
+        jdbc.update("INSERT INTO user_page_star (user_id, page_id, create_date) VALUES (?, ?, NOW())", readerId, teamRoot);
+        var member = signIn(reader);
+        String defaultStarred = member.page("/ui/sidebar/starred");
+        assertTrue(defaultStarred.contains(name(pageId)) && !defaultStarred.contains("fv-root-" + pageId));
+        member.perform(get("/spaces/open").param("space", String.valueOf(team))).andExpect(status().is3xxRedirection());
+        String teamStarred = member.page("/ui/sidebar/starred");
+        assertTrue(teamStarred.contains("fv-root-" + pageId) && !teamStarred.contains(name(pageId)));
+        assertTrue(member.page("/ui/sidebar/starred?space=" + spaces.findByKey("KR").orElseThrow().getId()).contains(name(pageId)));
+        var api = new Browser();
+        json(api, "/api/v1/auth/login", "{\"username\":\"" + reader + "\",\"password\":\"" + PASSWORD + "\"}").andExpect(status().isOk());
+        api.perform(get("/api/v1/starred")).andExpect(jsonPath("$[*].id", org.hamcrest.Matchers.hasItems(pageId, teamRoot)));
+        api.perform(get("/api/v1/starred").param("space", String.valueOf(team)))
+                .andExpect(jsonPath("$[*].id", org.hamcrest.Matchers.contains(teamRoot)));
+    }
 }

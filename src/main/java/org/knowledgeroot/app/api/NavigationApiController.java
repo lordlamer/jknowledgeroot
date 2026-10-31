@@ -63,12 +63,13 @@ class NavigationApiController {
         }).toList(), nextAfter);
     }
 
-    /** Favourites of the signed-in user, most recently starred first; empty for guests. */
+    /** Favourites of the signed-in user, most recently starred first, optionally only those in {@code space}; empty for guests. */
     @GetMapping("/starred")
-    List<ApiModels.PageRef> starred() {
+    List<ApiModels.PageRef> starred(@RequestParam(required = false) Integer space) {
         Integer viewer = api.viewer();
         if (viewer == null) return List.of();
         return stars.listStarredPages(viewer).stream()
+                .filter(page -> space == null || (page.getSpaceId() != null && page.getSpaceId().equals(space)))
                 .filter(page -> api.can(page.getPageId().value(), PagePermission.PermissionLevel.VIEW))
                 .map(ApiModels.PageRef::of).toList();
     }

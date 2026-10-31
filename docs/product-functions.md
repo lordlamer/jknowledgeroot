@@ -135,12 +135,16 @@ Schlüssel (2–16 Großbuchstaben oder Ziffern), einen Namen, eine Beschreibung
 und eine Homepage, die beim Wechsel in den Space geöffnet wird.
 
 Die Seitenleiste zeigt immer genau einen Space: Der Umschalter in der
-Kopfzeile neben dem Logo nennt den aktuellen Space, listet alle betretbaren
-Spaces und öffnet beim Wechsel die Homepage des Space, ohne Homepage die
-Space-Übersicht mit den Hauptseiten. Der Space-Name über dem Baum führt zur
-Übersicht. Das Öffnen einer Seite wechselt die
-Seitenleiste in den Space der Seite; der zuletzt gewählte Space bleibt in der
-Sitzung. Der Breadcrumb einer Seite beginnt mit ihrem Space. „Neue Seite" im
+Kopfzeile neben dem Logo zeigt Schlüssel und Namen des aktuellen Space und
+öffnet ein Menü mit allen betretbaren Spaces (Schlüssel, Name, Beschreibung,
+Häkchen am aktuellen, Kennzeichen „archived") sowie den Einträgen „All
+spaces" und „New space". Der Wechsel öffnet die Homepage des Space, ohne
+Homepage die Space-Übersicht mit den Hauptseiten. Der Space-Name über dem
+Baum führt zur Übersicht. Das Öffnen einer Seite wechselt die Seitenleiste
+in den Space der Seite; der zuletzt gewählte Space bleibt in der Sitzung.
+Auch die Favoriten in der Seitenleiste folgen dem gezeigten Space: Sterne an
+Seiten anderer Spaces bleiben erhalten und erscheinen nach dem Wechsel
+dorthin. Der Breadcrumb einer Seite beginnt mit ihrem Space. „Neue Seite" im
 Baum legt eine Hauptseite im gezeigten Space an. Die Suche durchsucht alle
 Spaces, die man betreten darf, und lässt sich auf einen Space einschränken;
 die Treffer nennen den Space-Schlüssel.

@@ -14,27 +14,39 @@
                 <span class="kr-brand-name">Knowledgeroot<span class="kr-dot">.</span></span>
             </a>
             <!-- Space switcher: a full navigation so that navbar and sidebar render for the new space. -->
+            <span class="kr-space-sep" aria-hidden="true" th:if="${currentSpace != null}"></span>
             <div class="dropdown kr-space-menu" th:if="${currentSpace != null}">
-                <button class="kr-btn kr-space-btn" type="button" id="krSpaceMenu" data-bs-toggle="dropdown" aria-expanded="false"
-                        title="Switch space" style="display:inline-flex; align-items:center; gap:6px; max-width:260px">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-                    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap" th:text="${currentSpace.name}">Space</span>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                <button class="kr-space-chip" type="button" id="krSpaceMenu" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="menu" title="Switch space">
+                    <span class="kr-space-key" th:text="${currentSpace.key}">KR</span>
+                    <span class="kr-space-name" th:text="${currentSpace.name}">Space</span>
+                    <svg class="kr-space-caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
                 </button>
-                <ul class="dropdown-menu" aria-labelledby="krSpaceMenu" style="min-width:260px">
-                    <li><h6 class="dropdown-header">Switch space</h6></li>
-                    <li th:each="space : ${visibleSpaces}">
-                        <a class="dropdown-item" th:classappend="${space.id == currentSpace.id} ? ' active'" th:href="@{/spaces/open(space=${space.id})}"
-                           style="display:flex; align-items:center; gap:8px">
-                            <span style="flex:1; overflow:hidden; text-overflow:ellipsis" th:text="${space.name}">Space</span>
-                            <code style="font-size:11px" th:text="${space.key}">KR</code>
-                            <span th:if="${space.archived}" class="kr-pill">archived</span>
+                <div class="dropdown-menu kr-space-panel" aria-labelledby="krSpaceMenu">
+                    <div class="kr-space-panel-title">Spaces</div>
+                    <div class="kr-space-list">
+                        <a th:each="space : ${visibleSpaces}" class="dropdown-item kr-space-item" th:href="@{/spaces/open(space=${space.id})}"
+                           th:attr="aria-current=${space.id == currentSpace.id} ? 'true' : null">
+                            <span class="kr-space-item-key" th:text="${space.key}">KR</span>
+                            <span class="kr-space-item-text">
+                                <span class="kr-space-item-name" th:text="${space.name}">Space</span>
+                                <span class="kr-space-item-meta" th:if="${space.archived or (space.description != null and !space.description.isBlank())}">
+                                    <span th:if="${space.archived}" class="kr-pill inactive">archived</span>
+                                    <span th:if="${space.description != null and !space.description.isBlank()}" th:text="${space.description}">Description</span>
+                                </span>
+                            </span>
+                            <svg th:if="${space.id == currentSpace.id}" class="kr-space-item-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>
                         </a>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="/spaces" hx-get="/spaces" hx-target="#content" hx-push-url="true">All spaces</a></li>
-                    <li th:if="${@spaceService.canCreateSpaces()}"><a class="dropdown-item" href="/spaces/new" hx-get="/spaces/new" hx-target="#content" hx-push-url="true">New space</a></li>
-                </ul>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item kr-space-action" href="/spaces" hx-get="/spaces" hx-target="#content" hx-push-url="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                        All spaces
+                    </a>
+                    <a class="dropdown-item kr-space-action" th:if="${@spaceService.canCreateSpaces()}" href="/spaces/new" hx-get="/spaces/new" hx-target="#content" hx-push-url="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                        New space
+                    </a>
+                </div>
             </div>
         </div>
 
