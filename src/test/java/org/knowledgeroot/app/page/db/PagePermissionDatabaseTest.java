@@ -12,6 +12,8 @@ import org.knowledgeroot.app.page.api.PageDto;
 import org.knowledgeroot.app.file.domain.FileDao;
 import org.knowledgeroot.app.security.context.domain.UserContext;
 import org.knowledgeroot.app.security.context.domain.UserDetails;
+import org.knowledgeroot.app.space.SpaceRepository;
+import org.knowledgeroot.app.space.SpaceService;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -58,7 +60,7 @@ class PagePermissionDatabaseTest {
         new LiquibaseConfig().liquibase(source, new MockEnvironment()).afterPropertiesSet();
         dataSource = source;
         jdbc = new JdbcTemplate(source);
-        permissions = new PagePermissionImpl(JdbcClient.create(source));
+        permissions = new PagePermissionImpl(JdbcClient.create(source), new SpaceRepository(JdbcClient.create(source)));
         jdbc.update("""
                 INSERT INTO user (id, login, admin, active, created_by, create_date, changed_by, change_date)
                 VALUES (10, 'reader', FALSE, TRUE, 10, NOW(), 10, NOW()),
@@ -199,31 +201,45 @@ class PagePermissionDatabaseTest {
     }
 
     @Test
-    void rootCannotInheritAndInactiveAccountsCannotUseGrants() {
+    void rootMayInheritFromItsSpaceAndInactiveAccountsCannotUseGrants() {
         grant(PagePermission.RoleType.USER, 10, EDIT);
-        assertThrows(IllegalStateException.class, () -> permissions.setInheriting(page, true, 12));
+        permissions.setInheriting(page, true, 12);
+        assertTrue(permissions.inheritsFromSpace(page));
+        assertTrue(permissions.listPermissionsByPageId(page).isEmpty());
+        assertTrue(permissions.hasUserPermission(page, 10, EDIT), "the default space lets signed-in users edit");
+        assertFalse(permissions.hasUserPermission(page, null, EDIT));
+        permissions.setInheriting(page, false, 12);
+        assertFalse(permissions.inheritsFromSpace(page));
+        grant(PagePermission.RoleType.USER, 10, EDIT);
         jdbc.update("UPDATE user SET active = FALSE WHERE id = 10");
         assertFalse(permissions.hasUserPermission(page, 10, VIEW));
         assertFalse(permissions.hasUserPermission(page, 999, VIEW));
     }
 
     @Test
-    void authenticatedRootIsPrivateAndUsesSessionAuditFields() {
+    void authenticatedRootInheritsTheSpaceGrantsAndUsesSessionAuditFields() {
         creationContext(UserDetails.Role.USER, false, mock(PageLabelDao.class)).run(context -> {
-            PageDto dto = PageDto.builder().id(999).createdBy(11).changedBy(11).parent(0).name("private").content("text").build();
+            PageDto dto = PageDto.builder().id(999).createdBy(11).changedBy(11).parent(0).name("shared").content("text").build();
             int id = context.getBean(PageCreationService.class).create(dto, List.of());
             assertNotEquals(999, id);
             assertEquals(10, jdbc.queryForObject("SELECT created_by FROM page WHERE id = ?", Integer.class, id));
             assertEquals(10, jdbc.queryForObject("SELECT changed_by FROM page WHERE id = ?", Integer.class, id));
+            assertEquals(1, jdbc.queryForObject("SELECT space_id FROM page WHERE id = ?", Integer.class, id));
+            // The default space lets guests read and signed-in users edit; the new root inherits that.
+            assertTrue(permissions.isInheriting(new PageId(id)));
+            assertTrue(permissions.inheritsFromSpace(new PageId(id)));
             assertTrue(permissions.hasUserPermission(new PageId(id), 10, EDIT));
+            assertTrue(permissions.hasUserPermission(new PageId(id), 11, EDIT));
             assertTrue(permissions.hasUserPermission(new PageId(id), 12, EDIT));
-            assertFalse(permissions.hasUserPermission(new PageId(id), 11, VIEW));
+            assertTrue(permissions.hasUserPermission(new PageId(id), null, VIEW));
+            assertFalse(permissions.hasUserPermission(new PageId(id), null, EDIT));
+            jdbc.update("DELETE FROM space_permission WHERE role_type = 'guest'");
             assertFalse(permissions.hasUserPermission(new PageId(id), null, VIEW));
         });
     }
 
     @Test
-    void guestRootCreationRequiresOptInAndGrantsOnlyPublicRead() {
+    void guestRootCreationNeedsTheEditLevelOnTheSpace() {
         creationContext(UserDetails.Role.GUEST, false, mock(PageLabelDao.class)).run(context -> {
             assertThrows(ResponseStatusException.class, () -> context.getBean(PageCreationService.class)
                     .create(PageDto.builder().name("blocked").build(), List.of()));
@@ -234,7 +250,7 @@ class PagePermissionDatabaseTest {
                     PageDto.builder().createdBy(12).name("public").content("text").build(), List.of());
             assertNull(jdbc.queryForObject("SELECT created_by FROM page WHERE id = ?", Integer.class, id));
             assertTrue(permissions.hasUserPermission(new PageId(id), null, VIEW));
-            assertFalse(permissions.hasUserPermission(new PageId(id), null, EDIT));
+            assertTrue(permissions.hasUserPermission(new PageId(id), null, EDIT), "space edit lets guests edit inheriting roots");
         });
     }
 
@@ -437,14 +453,19 @@ class PagePermissionDatabaseTest {
                         new PageImpl(mock(FileDao.class), JdbcClient.create(dataSource)), permissions, labels, users));
     }
 
-    private ApplicationContextRunner creationContext(UserDetails.Role role, boolean allowGuestRoot, PageLabelDao labels) {
+    /** {@code guestMayEditSpace} raises the default space's guest grant from view to edit, the new way to allow guest root pages. */
+    private ApplicationContextRunner creationContext(UserDetails.Role role, boolean guestMayEditSpace, PageLabelDao labels) {
         UserContext users = mock(UserContext.class);
         when(users.getUserContext()).thenReturn(UserDetails.builder().userId("10").login("reader").role(role).build());
+        jdbc.update("UPDATE space_permission SET permission_level = ? WHERE space_id = 1 AND role_type = 'guest'",
+                guestMayEditSpace ? "edit" : "view");
+        var client = JdbcClient.create(dataSource);
+        var pages = new PageImpl(mock(FileDao.class), client);
+        var spaces = new SpaceService(new SpaceRepository(client), pages, permissions, users,
+                mock(org.knowledgeroot.app.security.user.domain.UserDao.class), mock(org.knowledgeroot.app.security.user.domain.GroupDao.class));
         return new ApplicationContextRunner().withUserConfiguration(Transactions.class)
-                .withPropertyValues("knowledgeroot.pages.allow-guest-root-creation=" + allowGuestRoot)
                 .withBean("transactionManager", DataSourceTransactionManager.class, () -> new DataSourceTransactionManager(dataSource))
-                .withBean(PageCreationService.class, () -> new PageCreationService(
-                        new PageImpl(mock(FileDao.class), JdbcClient.create(dataSource)), permissions, labels, users));
+                .withBean(PageCreationService.class, () -> new PageCreationService(pages, permissions, labels, users, spaces));
     }
 
     private void grant(PagePermission.RoleType type, Integer roleId, PagePermission.PermissionLevel level) {

@@ -18,7 +18,6 @@ knowledgeroot.bootstrap.login=${KR_BOOTSTRAP_LOGIN:}
 knowledgeroot.bootstrap.password=${KR_BOOTSTRAP_PASSWORD:}
 
 # Guest-created root pages are public to read. Child creation uses parent EDIT rights.
-knowledgeroot.pages.allow-guest-root-creation=${KR_ALLOW_GUEST_ROOT_CREATION:false}
 
 # Shared database-backed login quotas count all attempts before password hashing.
 knowledgeroot.login.account-attempts=${KR_LOGIN_ACCOUNT_ATTEMPTS:5}

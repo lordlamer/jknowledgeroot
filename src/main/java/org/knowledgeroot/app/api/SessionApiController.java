@@ -52,8 +52,7 @@ class SessionApiController {
     private final ObjectProvider<BuildProperties> build;
     private final SecurityContextRepository contextRepository = WebSecurityConfig.securityContextRepository();
     private final WebAuthenticationDetailsSource details = new WebAuthenticationDetailsSource();
-    @Value("${knowledgeroot.pages.allow-guest-root-creation:false}")
-    private boolean allowGuestRootCreation;
+    private final org.knowledgeroot.app.space.SpaceService spaces;
 
     /** Current identity plus a CSRF token for the following state-changing requests. */
     @GetMapping("/session")
@@ -165,7 +164,7 @@ class SessionApiController {
     }
 
     private ApiModels.Capabilities capabilities(boolean guest) {
-        return new ApiModels.Capabilities(!guest || allowGuestRootCreation, recoverySettings.isEnabled(),
+        return new ApiModels.Capabilities(spaces.canCreateRootPage(spaces.defaultSpace().getId()), recoverySettings.isEnabled(),
                 uploadPolicy.maxFileBytes(), uploadPolicy.maxFiles());
     }
 }

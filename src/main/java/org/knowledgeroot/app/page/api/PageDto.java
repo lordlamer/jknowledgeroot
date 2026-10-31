@@ -13,6 +13,8 @@ import java.time.LocalDateTime;
 public class PageDto {
     private Integer id;
     private Long revision;
+    /** Space of a new root page; children take the parent's space, null means the default space. */
+    private Integer spaceId;
     private Integer parent;
     private String name;
     private String content;

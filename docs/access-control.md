@@ -1,7 +1,8 @@
 # Seitenrechte und dynamische Vererbung
 
 Die folgenden Regeln wurden für R05 beschlossen. Öffentlich lesbar bedeutet
-nicht automatisch öffentlich bearbeitbar.
+nicht automatisch öffentlich bearbeitbar. Seit R51 liegt jede Seite in einem
+Space, der als äußere Schranke davor steht; siehe [Spaces](#spaces).
 
 ## Berechtigungsmatrix
 
@@ -21,13 +22,61 @@ Wird die Gastfreigabe auf der Elternseite später entzogen, gilt der Entzug auch
 für alle darunter erbenden Seiten. Es wird kein zusätzlicher öffentlicher
 Eintrag angelegt, der diesen Rechteentzug umgehen würde.
 
+## Spaces
+
+Changeset `1.0.16-spaces` führt Spaces ein: Container um je einen Seitenbaum
+mit eigenen Freigaben (`space`, `space_permission`). Jede Seite gehört genau
+einem Space (`page.space_id`); Unterseiten liegen immer im Space ihrer
+Elternseite. Die Migration legt den Space **Knowledgeroot** (`KR`) an und
+hängt alle vorhandenen Seiten hinein.
+
+**Der Space ist die äußere Schranke.** Wer keine Freigabe auf den Space hat,
+erreicht keine seiner Seiten, unabhängig von den Seitenrechten. Innerhalb des
+Space gelten die Seitenrechte wie bisher. Stufen am Space:
+
+| Stufe | Wirkung |
+| --- | --- |
+| `view` | Space betreten; lesen, was die Seitenrechte erlauben |
+| `edit` | zusätzlich Hauptseiten im Space anlegen |
+| `admin` | zusätzlich Name, Beschreibung, Homepage, Freigaben und Archivierung des Space verwalten |
+
+Freigaben gibt es für Benutzer, Gruppen, Gäste (`guest`, gilt für alle, auch
+Angemeldete) und alle angemeldeten Benutzer (`users`). `admin` ist nur für
+Benutzer und Gruppen möglich. Administratoren der Anwendung haben jede Stufe
+in jedem Space. Der Standard-Space erhält bei der Migration `guest: view` und
+`users: edit`, damit sich am bisherigen Verhalten nichts ändert.
+
+**Hauptseiten erben vom Space.** Eine neue Hauptseite hat keine eigenen
+Freigaben, sondern übernimmt die des Space: `view` am Space liest sie,
+`edit` und `admin` bearbeiten sie. Administratoren können sie wie jede Seite
+auf eigene Freigaben umstellen; dabei werden die Benutzer-, Gruppen- und
+Gastfreigaben des Space übernommen und der Umstellende erhält Bearbeitungsrecht.
+`users` hat auf Seitenebene keine Entsprechung und entfällt dabei. Bestehende
+Hauptseiten behalten ihre lokalen Freigaben. `PagePermissionDao.inheritsFromSpace`
+beantwortet, ob eine Seite (über ihre Kette erbender Elternseiten) vom Space
+erbt; `permissionSource` liefert dann `null`.
+
+**Archivierte Spaces** sind schreibgeschützt, auch für Administratoren, und
+nur noch für Administratoren und Space-Verwalter sichtbar. Der letzte aktive
+Space lässt sich nicht archivieren.
+
+**Spaces anlegen** dürfen Administratoren und wer das globale Recht
+`create-space` hat (`global_permission`, Pflege unter Admin → Permissions
+für Benutzer, Gruppen oder alle angemeldeten Benutzer). Wer einen Space
+anlegt, wird darin `admin`; eine Homepage mit dem Namen des Space entsteht
+automatisch und ist in den Space-Einstellungen änderbar.
+
+**Verschieben** unter eine Elternseite eines anderen Space nimmt den gesamten
+Teilbaum in diesen Space mit; die bisherige Prüfung des Bearbeitungsrechts an
+Quelle und Ziel bleibt. Beim Verschieben auf die oberste Ebene bleibt die Seite
+in ihrem Space.
+
 ## Hauptseiten durch Gäste
 
-`KR_ALLOW_GUEST_ROOT_CREATION` beziehungsweise
-`knowledgeroot.pages.allow-guest-root-creation` steuert ausschließlich das Anlegen
-von Hauptseiten durch Gäste. Standard ist `false`; `true` erlaubt die Erstellung
-öffentlich lesbarer Hauptseiten. Die Einstellung gilt für Formular und POST;
-die Navigation blendet die entsprechende Schaltfläche passend ein.
+Die frühere Einstellung `KR_ALLOW_GUEST_ROOT_CREATION` entfällt. Gäste legen
+Hauptseiten an, wenn der Space ihnen die Stufe `edit` einräumt; solche Seiten
+erben die Freigaben des Space und sind damit für Gäste bearbeitbar. Die
+Navigation blendet die Schaltfläche passend ein.
 
 Unterseiten richten sich unabhängig davon nach den Elternrechten. Ein Gast mit
 reinem Leserecht kann keine Unterseite erstellen. Der REST-Schreibzugriff bleibt

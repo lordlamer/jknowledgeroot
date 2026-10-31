@@ -60,8 +60,11 @@ public interface PagePermissionDao {
 
     boolean isInheriting(PageId pageId);
 
-    /** Resolve the nearest page with local permissions; null means an invalid hierarchy. */
+    /** Resolve the nearest page with local permissions; null means the space (see below) or an invalid hierarchy. */
     PageId permissionSource(PageId pageId);
+
+    /** Whether the page takes its grants from its space (a root page without local permissions, or its inheriting descendants). */
+    boolean inheritsFromSpace(PageId pageId);
 
     /** Explicitly switch mode; leaving inheritance copies currently effective grants. */
     void setInheriting(PageId pageId, boolean inherit, Integer actorId);

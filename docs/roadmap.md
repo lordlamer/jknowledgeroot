@@ -1147,6 +1147,40 @@ OAuth-Anmeldung; die Client-API für die mobile App (R44) ist bereits enthalten.
   Upgrade `KR_MASTER_KEY` setzen. Kein Audit-Log; Einrichtung, Erfolg,
   Fehlschlag und Reset stehen im Anwendungslog.
 
+### R51 – Spaces: Container mit eigenen Rechten (Teil 1 von 3)
+
+- [x] Lokal umgesetzt und geprüft am 31. Oktober 2026.
+- **Ziel:** Spaces wie in Confluence: je ein eigener Seitenbaum, eigene
+  Freigaben als äußere Schranke vor den unveränderten Seitenrechten,
+  Anlegen durch Berechtigte unabhängig von der Administratorrolle, eigene
+  Homepage je Space.
+- **Umgesetzt (Teil 1):** Changeset `1.0.16-spaces` (`space`,
+  `space_permission` mit `view`/`edit`/`admin` für Benutzer, Gruppen,
+  Gäste und alle Angemeldeten, `global_permission` für `create-space`,
+  `page.space_id` mit Standard-Space `KR` für alle bestehenden Seiten);
+  `SpaceRepository`/`SpaceService`; die Lesbarkeitsabfrage und
+  `PagePermissionImpl` prüfen zuerst den Space, Hauptseiten erben vom Space
+  und lassen sich auf lokale Freigaben umstellen; archivierte Spaces sind
+  schreibgeschützt und nur für Verwalter sichtbar; Verschieben unter eine
+  Seite eines anderen Space nimmt den Teilbaum mit; Seiten `/spaces`,
+  `/spaces/new` und `/spaces/{id}/settings` (Name, Beschreibung, Homepage,
+  Freigaben, Archivieren); globales Recht „Create spaces" unter
+  Admin → Permissions; `KR_ALLOW_GUEST_ROOT_CREATION` entfällt zugunsten
+  der Gastfreigabe am Space. Beschreibung in
+  [access-control.md](access-control.md#spaces) und
+  [product-functions.md](product-functions.md#spaces).
+- **Geprüft:** `SpaceIntegrationTest` (Standard-Space, Space-Schranke vor
+  Seitenrechten, Hauptseiten erben vom Space und Umstellung auf lokale
+  Freigaben, archivierte Spaces, Anlegen per globalem Recht mit Homepage und
+  Verwaltung, Verschieben über Space-Grenzen); `PagePermissionDatabaseTest`
+  und `PageAccessWebTest` an das Space-Modell angepasst; `InstallationTest`
+  prüft die Migration bestehender Daten.
+- **Grenzen:** Die Seitenleiste zeigt noch die Hauptseiten aller Spaces; der
+  Space-Umschalter mit Baum, Breadcrumb, Suche je Space und Homepage-Aufruf
+  (Teil 2) sowie die Client-API (Teil 3) folgen. Die Prüfung
+  `canCreateRootPage` für die Schaltfläche „Neue Seite" bezieht sich bis
+  dahin auf den Standard-Space.
+
 ## Nachweise der Bestandsaufnahme
 
 - `mvn -B test` bei der ursprünglichen Bestandsaufnahme: Anwendung kompiliert unter Java 25; Testkompilierung scheitert am Konstruktoraufruf in `PageControllerTest`. Dieser Befund ist durch R01 behoben; das aktuelle Prüfergebnis steht dort.

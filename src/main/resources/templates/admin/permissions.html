@@ -19,9 +19,50 @@
             <p class="kr-page-subtitle" style="margin:0">Manage workspace-wide permissions.</p>
         </div>
     </header>
-    <div class="alert kr-alert-info" role="alert">
-        No global permissions to display yet.
-    </div>
+    <div th:if="${saved}" class="alert kr-alert-info" role="alert">Saved.</div>
+    <p th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></p>
+    <section class="kr-editor-pane" aria-labelledby="create-space-heading">
+        <h2 id="create-space-heading">Create spaces</h2>
+        <p>Administrators can always create spaces. Everyone listed here may create spaces as well and becomes the administrator of the spaces they create.</p>
+        <table class="table" th:unless="${#lists.isEmpty(spaceCreators)}">
+            <thead><tr><th>Who</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="grant : ${spaceCreators}">
+                <td><span th:text="${grant.roleName}">Name</span> <small th:text="'(' + ${grant.role.value} + ')'">(user)</small></td>
+                <td>
+                    <form method="post" th:action="@{'/admin/permissions/create-space/' + ${grant.id} + '/delete'}" style="display:inline">
+                        <button type="submit" class="kr-btn">Remove</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <form method="post" th:action="@{/admin/permissions/create-space}" class="kr-form-row">
+            <div class="kr-field">
+                <label for="role-type">Role</label>
+                <select id="role-type" name="roleType">
+                    <option value="user">User</option>
+                    <option value="group">Group</option>
+                    <option value="users">All signed-in users</option>
+                </select>
+            </div>
+            <div class="kr-field">
+                <label for="role-id">User or group</label>
+                <select id="role-id" name="roleId">
+                    <option value="">—</option>
+                    <optgroup label="Users">
+                        <option th:each="user : ${users}" th:value="${user.id.value()}" th:text="${user.login}">login</option>
+                    </optgroup>
+                    <optgroup label="Groups">
+                        <option th:each="group : ${groups}" th:value="${group.id.value()}" th:text="${group.name}">group</option>
+                    </optgroup>
+                </select>
+            </div>
+            <div class="kr-field" style="align-self:flex-end">
+                <button type="submit" class="kr-btn accent">Allow</button>
+            </div>
+        </form>
+    </section>
 </div>
 </body>
 </html>

@@ -38,6 +38,7 @@ class PasswordAdministrationWebTest {
     @MockitoBean UserContext context;
     @MockitoBean DatabaseAuthentificationProvider provider;
     @MockitoBean org.knowledgeroot.app.security.mfa.SecondFactorService secondFactors;
+    @MockitoBean org.knowledgeroot.app.space.SpaceService spaces;
     private User existing;
 
     @BeforeEach

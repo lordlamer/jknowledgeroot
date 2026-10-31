@@ -86,10 +86,8 @@
                     <div class="alert alert-info">
                         <p th:if="${page}">Diese Unterseite erbt die Rechte der Elternseite.
                             Spätere Änderungen der Elternrechte gelten automatisch auch hier.</p>
-                        <p th:if="${page == null and isguest}">Diese Hauptseite wird öffentlich lesbar.
-                            Gäste erhalten dadurch kein Bearbeitungsrecht.</p>
-                        <p th:if="${page == null and !isguest}">Diese Hauptseite ist zunächst nur für
-                            Sie und Administratoren zugänglich.</p>
+                        <p th:if="${page == null}">Diese Hauptseite übernimmt die Rechte ihres Space:
+                            Wer den Space lesen darf, liest sie; wer dort bearbeiten darf, bearbeitet sie.</p>
                         <p>Administratoren können nach dem Erstellen abweichende Freigaben festlegen.</p>
                     </div>
                 </div>

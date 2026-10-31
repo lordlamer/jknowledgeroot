@@ -70,14 +70,18 @@ public class PageMoveService {
                     UNION DISTINCT SELECT p.id FROM page p JOIN subtree s ON p.parent=s.id
                 ) SELECT id FROM subtree WHERE id<>:id
                 """).param("id", id.value()).query(Integer.class).list();
+        // A page moved below a parent in another space takes that space along with its subtree.
+        Integer targetSpace = parent > 0
+                ? jdbc.sql("SELECT space_id FROM page WHERE id=?").param(parent).query(Integer.class).single()
+                : page.getSpaceId();
         // Record the original content, location and labels, then invalidate old edit forms.
         page.setParent(parent);
         page.setChangedBy(Integer.valueOf(users.getUserContext().getUserId()));
         page.setChangeDate(LocalDateTime.now());
         pages.updatePage(page);
-        if (parent == 0 && permissions.isInheriting(id)) permissions.setInheriting(id, false, page.getChangedBy());
-        jdbc.sql("UPDATE page SET parent=? WHERE id=?").params(parent, id.value()).update();
-        if (!subtree.isEmpty()) jdbc.sql("UPDATE page SET revision=revision+1 WHERE id IN (:ids)").param("ids", subtree).update();
+        jdbc.sql("UPDATE page SET parent=?, space_id=? WHERE id=?").params(parent, targetSpace, id.value()).update();
+        if (!subtree.isEmpty()) jdbc.sql("UPDATE page SET revision=revision+1, space_id=:space WHERE id IN (:ids)")
+                .param("space", targetSpace).param("ids", subtree).update();
     }
 
     private record Parent(int parent, boolean deleted) { }

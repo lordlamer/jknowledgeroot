@@ -102,4 +102,8 @@
         <sqlFile path="changes/1.0.15-second-factor.mariadb.sql"
                  relativeToChangelogFile="true" encoding="UTF-8" splitStatements="true" stripComments="true"/>
     </changeSet>
+    <changeSet id="1.0.16-spaces" author="knowledgeroot" dbms="mariadb">
+        <sqlFile path="changes/1.0.16-spaces.mariadb.sql"
+                 relativeToChangelogFile="true" encoding="UTF-8" splitStatements="true" stripComments="true"/>
+    </changeSet>
 </databaseChangeLog>
