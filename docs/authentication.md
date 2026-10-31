@@ -162,7 +162,10 @@ leitet jeden Aufruf außer `/mfa`, Abmelden und statischen Ressourcen auf
 - Die Client-API antwortet auf `POST /api/v1/auth/login` mit
   `authenticated: false` und `mfa.pending: true`, solange der Code aussteht;
   `POST /api/v1/auth/mfa` mit `{"code"}` schließt die Anmeldung ab. Die
-  Einrichtung über die API folgt noch; bis dahin verweist sie auf die Web-UI.
+  Einrichtung läuft über `POST /api/v1/auth/mfa/setup` und
+  `/confirm`, sowohl beim erzwungenen ersten Login als auch aus dem Profil;
+  `GET`/`DELETE /api/v1/profile/mfa` liefern Status und Entfernen mit denselben
+  Regeln wie die Web-UI ([client-api.md](client-api.md)).
 
 Die Passwortwiederherstellung per E-Mail umgeht den zweiten Faktor nicht: Nach
 dem Zurücksetzen gilt beim nächsten Login dieselbe Prüfung.

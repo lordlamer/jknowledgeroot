@@ -251,4 +251,55 @@ class SecondFactorWebIntegrationTest extends IsolatedApplicationTest {
         api.perform(get("/api/v1/pages/" + pageId)).andExpect(status().isOk());
         api.json("/api/v1/auth/mfa", "{\"code\":\"000000\"}").andExpect(status().isConflict());
     }
+
+    @Test void clientApiEnrolsAtSignInWhenThePolicyRequiresIt() throws Exception {
+        settings.update(MfaPolicy.REQUIRED, adminId);
+        var api = new Browser();
+        api.json("/api/v1/auth/login", "{\"username\":\"" + reader + "\",\"password\":\"" + PASSWORD + "\"}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.authenticated").value(false))
+                .andExpect(jsonPath("$.mfa.pending").value(true))
+                .andExpect(jsonPath("$.mfa.requirement").value("enrol"));
+        api.json("/api/v1/auth/mfa", "{\"code\":\"000000\"}").andExpect(status().isConflict());
+        api.json("/api/v1/auth/mfa/confirm", "{\"code\":\"000000\"}").andExpect(status().isBadRequest());
+        String setup = api.json("/api/v1/auth/mfa/setup", "").andExpect(status().isOk())
+                .andExpect(jsonPath("$.otpauthUri").value(startsWith("otpauth://totp/Knowledgeroot:" + reader)))
+                .andExpect(jsonPath("$.qrSvg").value(startsWith("<svg")))
+                .andReturn().getResponse().getContentAsString();
+        String secret = JsonPath.read(setup, "$.secret");
+        api.json("/api/v1/auth/mfa/confirm", "{\"code\":\"000000\"}").andExpect(status().isBadRequest());
+        api.json("/api/v1/auth/mfa/confirm", "{\"code\":\"" + code(secret, 0) + "\"}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.recoveryCodes", hasSize(10)))
+                .andExpect(jsonPath("$.authenticated").value(true));
+        api.perform(get("/api/v1/session")).andExpect(jsonPath("$.authenticated").value(true))
+                .andExpect(jsonPath("$.user.login").value(reader)).andExpect(jsonPath("$.mfa.enrolled").value(true));
+        api.perform(get("/api/v1/pages/" + pageId)).andExpect(status().isOk());
+        api.json("/api/v1/auth/mfa/setup", "").andExpect(status().isConflict());
+        assertTrue(factors.enrolled(readerId));
+    }
+
+    @Test void clientApiProfileManagesTheToken() throws Exception {
+        settings.update(MfaPolicy.OPTIONAL, adminId);
+        var api = new Browser();
+        api.json("/api/v1/auth/login", "{\"username\":\"" + editor + "\",\"password\":\"" + PASSWORD + "\"}")
+                .andExpect(status().isOk()).andExpect(jsonPath("$.authenticated").value(true));
+        api.perform(get("/api/v1/profile/mfa")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.enrolled").value(false)).andExpect(jsonPath("$.required").value(false))
+                .andExpect(jsonPath("$.policy").value("optional"));
+        String setup = api.json("/api/v1/auth/mfa/setup", "").andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        String secret = JsonPath.read(setup, "$.secret");
+        api.json("/api/v1/auth/mfa/confirm", "{\"code\":\"" + code(secret, 0) + "\"}")
+                .andExpect(status().isOk()).andExpect(jsonPath("$.authenticated").value(true));
+        api.perform(get("/api/v1/profile/mfa")).andExpect(jsonPath("$.enrolled").value(true))
+                .andExpect(jsonPath("$.recoveryCodesLeft").value(10)).andExpect(jsonPath("$.enrolledAt").isString());
+        api.perform(MockMvcRequestBuilders.delete("/api/v1/profile/mfa").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"currentPassword\":\"wrong\",\"code\":\"" + code(secret, 1) + "\"}"))
+                .andExpect(status().isBadRequest());
+        api.perform(MockMvcRequestBuilders.delete("/api/v1/profile/mfa").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"currentPassword\":\"" + PASSWORD + "\",\"code\":\"" + code(secret, 1) + "\"}"))
+                .andExpect(status().isNoContent());
+        api.perform(get("/api/v1/profile/mfa")).andExpect(jsonPath("$.enrolled").value(false));
+        new Browser().perform(get("/api/v1/profile/mfa")).andExpect(status().isUnauthorized());
+    }
 }

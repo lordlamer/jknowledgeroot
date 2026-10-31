@@ -1123,6 +1123,12 @@ OAuth-Anmeldung; die Client-API für die mobile App (R44) ist bereits enthalten.
   Client-API mit `mfa.pending` im Login und `POST /api/v1/auth/mfa`.
   Beschreibung in [product-functions.md](product-functions.md#zweiter-faktor-authenticator-app)
   und [client-api.md](client-api.md).
+- **Umgesetzt (Teil 3 von 3):** Einrichtung und Verwaltung über die Client-API:
+  `POST /api/v1/auth/mfa/setup` und `/confirm` (beim erzwungenen ersten Login
+  und aus dem Profil; die Bestätigung schließt eine ausstehende Anmeldung ab und
+  rotiert das CSRF-Token), `GET /api/v1/profile/mfa` (Status, Policy, Pflicht)
+  und `DELETE /api/v1/profile/mfa` (Passwort und Code, gesperrt bei
+  verpflichtender Policy).
 - **Geprüft:** `TotpTest` mit den RFC-6238-Vektoren, Drift-Fenster,
   Base32, otpauth-URI, Wiederherstellungscodes und SVG; `SecretCipherTest`
   (Roundtrip, fremder Schlüssel, manipulierte Daten, Produktionspflicht);
@@ -1134,11 +1140,12 @@ OAuth-Anmeldung; die Client-API für die mobile App (R44) ist bereits enthalten.
   (Policy aus, Codeabfrage und Sperre der übrigen Routen, fünf Fehlversuche,
   Wiederherstellungscode, erzwungene Einrichtung, nur Administratoren,
   Profil-Einrichtung und -Entfernen, gesperrtes Entfernen, Admin-Policy und
-  -Reset, API-Login mit zweitem Schritt).
-- **Grenzen:** Die Einrichtung über die Client-API fehlt noch (Teil 3); bei
-  `requirement: "enrol"` verweist die API auf die Web-UI. Die mobile App muss
-  den zweiten Login-Schritt noch umsetzen. Bestehende Produktionsumgebungen
-  müssen vor dem Upgrade `KR_MASTER_KEY` setzen.
+  -Reset, API-Login mit zweitem Schritt, API-Einrichtung beim erzwungenen
+  Login, API-Profilstatus und -Entfernen).
+- **Grenzen:** Die mobile App muss den zweiten Login-Schritt und die
+  Einrichtung noch umsetzen. Bestehende Produktionsumgebungen müssen vor dem
+  Upgrade `KR_MASTER_KEY` setzen. Kein Audit-Log; Einrichtung, Erfolg,
+  Fehlschlag und Reset stehen im Anwendungslog.
 
 ## Nachweise der Bestandsaufnahme
 

@@ -33,6 +33,17 @@ public final class ApiModels {
 
     public record CodeRequest(String code) {}
 
+    public record SecondFactorStatus(boolean enrolled, @JsonSerialize(using = ServerTime.class) LocalDateTime enrolledAt,
+                                     int recoveryCodesLeft, boolean required, String policy) {}
+
+    /** Shown once; {@code qrSvg} is an inline SVG of the otpauth URI, {@code secret} the manual key. */
+    public record SecondFactorEnrolment(String secret, String otpauthUri, String qrSvg) {}
+
+    /** {@code authenticated} is true when a pending sign-in was completed by the confirmation. */
+    public record SecondFactorConfirmed(List<String> recoveryCodes, boolean authenticated) {}
+
+    public record SecondFactorRemoval(String currentPassword, String code) {}
+
     public record LoginRequest(String username, String password) {}
 
     public record EmailRequest(String email) {}
