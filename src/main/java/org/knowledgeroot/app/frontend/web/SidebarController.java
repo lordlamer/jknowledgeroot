@@ -19,6 +19,7 @@ class SidebarController {
     private final PageDao pageImpl;
     private final PageStarDao pageStarDao;
     private final UserContext userContext;
+    private final org.knowledgeroot.app.space.CurrentSpace currentSpace;
 
     /**
      * Get the current user ID for permission checks.
@@ -50,10 +51,13 @@ class SidebarController {
             Model model,
             @RequestParam(name = "parent", required = false) Integer parent,
             @RequestParam(name = "singlePage", required = false) Integer singlePage,
-            @RequestParam(name = "after", defaultValue = "0") int after
+            @RequestParam(name = "after", defaultValue = "0") int after,
+            @RequestParam(name = "space", required = false) Integer space
     ) {
         if(parent == null)
             parent = 0;
+        // The top level belongs to a space: the requested one, else the one remembered in the session.
+        int spaceId = space != null ? space : currentSpace.currentId();
 
         RequestValidation.require(parent >= 0 && after >= 0);
         RequestValidation.id(singlePage);
@@ -71,7 +75,7 @@ class SidebarController {
             if (parentPage == null) return "fragments/sidebar-entries :: entries";
         }
         if (singlePage == null) {
-            List<Page> visiblePages = pageImpl.listNavigationPages(parent, after, currentUserId);
+            List<Page> visiblePages = pageImpl.listNavigationPages(spaceId, parent, after, currentUserId);
             model.addAttribute("pages", visiblePages.stream().limit(50).toList());
             model.addAttribute("hasNext", visiblePages.size() > 50);
             if (visiblePages.size() > 50) model.addAttribute("nextAfter", visiblePages.get(49).getPageId().value());

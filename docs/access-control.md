@@ -69,8 +69,10 @@ automatisch und ist in den Space-Einstellungen änderbar.
 **Verschieben** unter eine Elternseite eines anderen Space nimmt den gesamten
 Teilbaum in diesen Space mit; die bisherige Prüfung des Bearbeitungsrechts an
 Quelle und Ziel bleibt. Beim Verschieben auf die oberste Ebene bleibt die Seite
-in ihrem Space und übernimmt wie bisher ihre wirksamen Freigaben als lokale,
-statt stillschweigend auf die Freigaben des Space zu wechseln.
+in ihrem Space, sofern kein anderer Space gewählt wird, und übernimmt wie
+bisher ihre wirksamen Freigaben als lokale, statt stillschweigend auf die
+Freigaben des Space zu wechseln. Die oberste Ebene eines anderen Space ist
+nur ein Ziel, wenn der Benutzer dort Hauptseiten anlegen darf (`edit`).
 
 ## Hauptseiten durch Gäste
 

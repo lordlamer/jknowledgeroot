@@ -32,11 +32,17 @@ class NavigationApiController {
     private final ApiSupport api;
     private final PageDao pages;
     private final PageStarDao stars;
+    private final org.knowledgeroot.app.space.CurrentSpace currentSpace;
 
-    /** Visible children of a parent (0 = top level), 50 per request; continue with {@code after=nextAfter}. */
+    /**
+     * Visible children of a parent (0 = top level of {@code space}, default: the session's space),
+     * 50 per request; continue with {@code after=nextAfter}.
+     */
     @GetMapping("/tree")
-    ApiModels.TreeResponse tree(@RequestParam(defaultValue = "0") int parent, @RequestParam(defaultValue = "0") int after) {
-        RequestValidation.require(parent >= 0 && after >= 0);
+    ApiModels.TreeResponse tree(@RequestParam(defaultValue = "0") int parent, @RequestParam(defaultValue = "0") int after,
+                                @RequestParam(required = false) Integer space) {
+        RequestValidation.require(parent >= 0 && after >= 0 && (space == null || space > 0));
+        int spaceId = space != null ? space : currentSpace.currentId();
         Integer viewer = api.viewer();
         ApiModels.PageRef parentRef = null;
         if (parent > 0) {
@@ -44,7 +50,7 @@ class NavigationApiController {
             if (parentPage.isEmpty()) return new ApiModels.TreeResponse(null, List.of(), null);
             parentRef = ApiModels.PageRef.of(parentPage.get());
         }
-        List<Page> visible = pages.listNavigationPages(parent, after, viewer);
+        List<Page> visible = pages.listNavigationPages(spaceId, parent, after, viewer);
         List<Page> items = visible.stream().limit(TREE_PAGE_SIZE).toList();
         Set<Integer> withChildren = pages.parentsWithVisibleChildren(
                 items.stream().map(page -> page.getPageId().value()).toList(), viewer);

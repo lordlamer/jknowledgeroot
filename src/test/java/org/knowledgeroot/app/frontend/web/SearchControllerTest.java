@@ -16,7 +16,8 @@ class SearchControllerTest {
     private final PageDao pages = mock(PageDao.class);
     private final UserContext users = mock(UserContext.class);
     private final HtmxRequest request = mock(HtmxRequest.class);
-    private final SearchController controller = new SearchController(pages, users);
+    private final org.knowledgeroot.app.space.SpaceService spaces = mock(org.knowledgeroot.app.space.SpaceService.class);
+    private final SearchController controller = new SearchController(pages, users, spaces);
 
     @Test
     void searchUsesVisibleWindowAndOnlyDisplaysTwentyShortTextSnippets() {
@@ -25,7 +26,7 @@ class SearchControllerTest {
                 .mapToObj(id -> Page.builder().pageId(new PageId(id)).name("page")
                         .content("<p>" + "text ".repeat(100) + "</p>").build()).toList());
         var model = new ExtendedModelMap();
-        assertEquals("search/search", controller.showSearch(" wiki ", 20, model, request));
+        assertEquals("search/search", controller.showSearch(" wiki ", 20, null, model, request));
         verify(pages).listVisiblePages(argThat(filter -> filter.getStart() == 20 && filter.getLimit() == 21
                 && filter.getQuery().equals("wiki")), isNull());
         var hits = (List<SearchController.SearchHit>) model.get("pages");
@@ -59,7 +60,7 @@ class SearchControllerTest {
                 Page.builder().pageId(new PageId(3)).parent(2).name("Guides").build()));
         when(pages.findNavigationPage(new PageId(2), null)).thenReturn(java.util.Optional.empty());
         var model = new ExtendedModelMap();
-        controller.showSearch("wiki", 0, model, request);
+        controller.showSearch("wiki", 0, null, model, request);
         var hits = (List<SearchController.SearchHit>) model.get("pages");
         assertEquals(List.of("Guides"), hits.get(0).path());
         assertEquals(List.of("Guides"), hits.get(1).path());
@@ -70,15 +71,15 @@ class SearchControllerTest {
     void blankSearchDoesNotReadAllPages() {
         when(users.getUserContext()).thenReturn(UserDetails.builder().role(UserDetails.Role.GUEST).build());
         var model = new ExtendedModelMap();
-        controller.showSearch(" ", 0, model, request);
+        controller.showSearch(" ", 0, null, model, request);
         assertEquals(List.of(), model.get("pages"));
         verifyNoInteractions(pages);
     }
 
     @Test
     void invalidSearchLimitsAreRejectedBeforeQuery() {
-        assertThrows(ResponseStatusException.class, () -> controller.showSearch("x".repeat(201), 0, new ExtendedModelMap(), request));
-        assertThrows(ResponseStatusException.class, () -> controller.showSearch("x", -1, new ExtendedModelMap(), request));
+        assertThrows(ResponseStatusException.class, () -> controller.showSearch("x".repeat(201), 0, null, new ExtendedModelMap(), request));
+        assertThrows(ResponseStatusException.class, () -> controller.showSearch("x", -1, null, new ExtendedModelMap(), request));
         verifyNoInteractions(pages);
     }
 }

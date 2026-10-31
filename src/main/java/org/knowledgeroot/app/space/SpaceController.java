@@ -21,12 +21,49 @@ class SpaceController {
     private final PageDao pages;
     private final UserDao users;
     private final GroupDao groups;
+    private final CurrentSpace currentSpace;
+    private final org.knowledgeroot.app.security.context.domain.UserContext userContext;
 
     @GetMapping("/spaces")
     String list(Model model, HtmxRequest htmx) {
         model.addAttribute("spaces", spaces.visibleSpaces());
         model.addAttribute("canCreate", spaces.canCreateSpaces());
         return htmx.isHtmxRequest() ? "space/list :: body" : "space/list";
+    }
+
+    /** Switches the sidebar to a space and opens its home page, or the overview when it has none. */
+    @GetMapping("/spaces/open")
+    String open(@RequestParam int space) {
+        spaces.requireView(space);
+        currentSpace.switchTo(space);
+        Space target = spaces.space(space);
+        if (target.getHomePageId() != null) return "redirect:/ui/page/" + target.getHomePageId() + "?trigger=reload-sidebar";
+        return "redirect:/spaces/" + space + "?trigger=reload-sidebar";
+    }
+
+    @GetMapping("/spaces/{id}")
+    String overview(@PathVariable int id, @RequestParam(required = false) String trigger, Model model, HtmxRequest htmx,
+                    jakarta.servlet.http.HttpServletResponse response) {
+        spaces.requireView(id);
+        currentSpace.switchTo(id);
+        Space space = spaces.space(id);
+        var roots = new PageFilter();
+        roots.setSpaceId(id);
+        roots.setParent(0);
+        roots.setDeleted(false);
+        roots.setLimit(101);
+        var viewer = userContextViewer();
+        model.addAttribute("space", space);
+        model.addAttribute("rootPages", pages.listVisiblePages(roots, viewer));
+        model.addAttribute("canCreate", spaces.canCreateRootPage(id));
+        model.addAttribute("canManage", spaces.canManage(id));
+        if ("reload-sidebar".equals(trigger)) response.addHeader("HX-Trigger", "reload-sidebar");
+        return htmx.isHtmxRequest() ? "space/overview :: body" : "space/overview";
+    }
+
+    private Integer userContextViewer() {
+        var user = userContext.getUserContext();
+        return user.isGuest() ? null : Integer.valueOf(user.getUserId());
     }
 
     @GetMapping("/spaces/new")

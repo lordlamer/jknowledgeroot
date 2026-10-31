@@ -73,6 +73,10 @@ class SpaceIntegrationTest extends IsolatedApplicationTest {
         return browser;
     }
 
+    private String name(int id) {
+        return jdbc.queryForObject("SELECT name FROM page WHERE id = ?", String.class, id);
+    }
+
     private int space(String key) {
         jdbc.update("INSERT INTO space (space_key, name, description, create_date, change_date) VALUES (?, ?, '', NOW(3), NOW(3))", key, key + " space");
         return jdbc.queryForObject("SELECT id FROM space WHERE space_key = ?", Integer.class, key);
@@ -253,5 +257,83 @@ class SpaceIntegrationTest extends IsolatedApplicationTest {
         assertFalse(permissions.hasUserPermission(new PageId(pageId), readerId, VIEW), "reader has a page grant but no grant on the new space");
         spaceGrant(team, "user", readerId, "view");
         assertTrue(permissions.hasUserPermission(new PageId(pageId), readerId, VIEW));
+    }
+
+    @Test void switchingSpacesMovesTheSidebarAndOpensTheHomePage() throws Exception {
+        int team = space("SW" + pageId);
+        spaceGrant(team, "users", null, "edit");
+        int home = rootIn(team, "sw-home-" + pageId, true);
+        jdbc.update("UPDATE space SET home_page_id = ? WHERE id = ?", home, team);
+        int kr = spaces.findByKey("KR").orElseThrow().getId();
+        var member = signIn(editor);
+        member.perform(get("/spaces/open").param("space", String.valueOf(team)))
+                .andExpect(redirectedUrl("/ui/page/" + home + "?trigger=reload-sidebar"));
+        String sidebar = member.page("/ui/sidebar");
+        assertTrue(sidebar.contains("sw-home-" + pageId), "the sidebar shows the opened space");
+        assertFalse(sidebar.contains(name(pageId)), "root pages of other spaces stay out of the tree");
+        member.perform(get("/spaces/open").param("space", String.valueOf(kr)))
+                .andExpect(redirectedUrl("/spaces/" + kr + "?trigger=reload-sidebar"));
+        String overview = member.perform(get("/spaces/" + kr).param("trigger", "reload-sidebar")).andExpect(status().isOk())
+                .andExpect(header().string("HX-Trigger", "reload-sidebar")).andReturn().getResponse().getContentAsString();
+        assertTrue(overview.contains("Top-level pages"));
+        // The default space has hundreds of root pages in the shared test database; it is enough that the team root is gone.
+        assertFalse(member.page("/ui/sidebar").contains("sw-home-" + pageId), "the sidebar switched back to the default space");
+        assertTrue(member.page("/ui/sidebar?space=" + team).contains("sw-home-" + pageId), "an explicit space wins over the session");
+        assertTrue(member.page("/spaces/" + team).contains("sw-home-" + pageId), "the overview lists the root pages of the space");
+        // Opening a page moves the sidebar into its space.
+        member.perform(get("/ui/page/" + home)).andExpect(status().isOk())
+                .andExpect(content().string(containsString("/spaces/" + team)));
+        assertTrue(member.page("/ui/sidebar").contains("sw-home-" + pageId));
+        // Guests enter public spaces only.
+        new Browser().perform(get("/spaces/open").param("space", String.valueOf(team))).andExpect(status().isForbidden());
+        new Browser().perform(get("/spaces/" + kr)).andExpect(status().isOk());
+        assertTrue(member.page("/").contains("id=\"krSpaceSwitch\""));
+    }
+
+    @Test void newRootPagesLandInTheChosenSpace() throws Exception {
+        int team = space("NR" + pageId);
+        spaceGrant(team, "user", editorId, "edit");
+        var member = signIn(editor);
+        assertTrue(member.page("/ui/page/new?space=" + team).contains("Top level of NR" + pageId));
+        signIn(reader).perform(get("/ui/page/new").param("space", String.valueOf(team))).andExpect(status().isForbidden());
+        member.post("/ui/page/new", "spaceId", String.valueOf(team), "name", "nr-root-" + pageId, "content", "<p>x</p>", "revision", "0")
+                .andExpect(status().is3xxRedirection());
+        int created = jdbc.queryForObject("SELECT id FROM page WHERE name = ?", Integer.class, "nr-root-" + pageId);
+        assertEquals(team, jdbc.queryForObject("SELECT space_id FROM page WHERE id = ?", Integer.class, created));
+        assertTrue(permissions.inheritsFromSpace(new PageId(created)));
+        signIn(reader).post("/ui/page/new", "spaceId", String.valueOf(team), "name", "blocked", "revision", "0").andExpect(status().isForbidden());
+    }
+
+    @Test void searchCanBeLimitedToOneSpace() throws Exception {
+        int team = space("SE" + pageId);
+        spaceGrant(team, "users", null, "view");
+        int teamPage = rootIn(team, "se-root-" + pageId, true);
+        jdbc.update("UPDATE page SET content = ? WHERE id IN (?, ?)", "<p>needle" + pageId + "</p>", pageId, teamPage);
+        var member = signIn(reader);
+        String all = member.page("/search?q=needle" + pageId);
+        assertTrue(all.contains("se-root-" + pageId) && all.contains(name(pageId)));
+        assertTrue(all.contains(">SE" + pageId + "<"), "results show the space key");
+        String limited = member.page("/search?q=needle" + pageId + "&space=" + team);
+        assertTrue(limited.contains("se-root-" + pageId) && !limited.contains(name(pageId)));
+    }
+
+    @Test void pagesCanMoveToTheTopLevelOfAnotherSpace() throws Exception {
+        int team = space("MT" + pageId);
+        spaceGrant(team, "user", editorId, "edit");
+        spaceGrant(team, "user", readerId, "view");
+        jdbc.update("INSERT INTO page_permission (page_id, role_type, role_id, permission_level, created_by, create_date, changed_by, change_date) VALUES (?, 'user', ?, 'edit', ?, NOW(), ?, NOW())", otherPageId, editorId, adminId, adminId);
+        jdbc.update("INSERT INTO page_permission (page_id, role_type, role_id, permission_level, created_by, create_date, changed_by, change_date) VALUES (?, 'user', ?, 'edit', ?, NOW(), ?, NOW())", otherPageId, readerId, adminId, adminId);
+        var member = signIn(editor);
+        String form = member.page("/ui/page/" + otherPageId + "/move?parent=0&space=" + team);
+        assertTrue(form.contains("Top level of MT" + pageId + " space"));
+        assertTrue(form.contains("name=\"space\""));
+        // Reader may edit the page but not create root pages in the destination space.
+        signIn(reader).post("/ui/page/" + otherPageId + "/move", "parent", "0", "space", String.valueOf(team), "revision", "0")
+                .andExpect(status().isForbidden());
+        member.post("/ui/page/" + otherPageId + "/move", "parent", "0", "space", String.valueOf(team), "revision", "0")
+                .andExpect(status().is3xxRedirection());
+        assertEquals(team, jdbc.queryForObject("SELECT space_id FROM page WHERE id = ?", Integer.class, otherPageId));
+        assertEquals(0, jdbc.queryForObject("SELECT parent FROM page WHERE id = ?", Integer.class, otherPageId));
+        assertTrue(member.page("/ui/sidebar?space=" + team).contains(name(otherPageId)));
     }
 }

@@ -51,7 +51,7 @@ Zeitstempel werden als ISO-8601 mit Zeitzonen-Offset geliefert
 
 | Bereich | Endpunkte |
 |---|---|
-| Navigation | `GET /tree?parent=&after=` (50 Einträge, `nextAfter`, `hasChildren`, `starred`), `GET /starred`, `GET /search?q=&start=` |
+| Navigation | `GET /tree?parent=&after=&space=` (50 Einträge, `nextAfter`, `hasChildren`, `starred`; `parent=0` liefert die Hauptseiten von `space`, ohne Angabe die des zuletzt in der Sitzung gewählten beziehungsweise des Standard-Space), `GET /starred`, `GET /search?q=&start=` |
 | Seiten | `GET/PUT/DELETE /pages/{id}`, `POST /pages`, `PUT/DELETE /pages/{id}/star` |
 | Verschieben | `GET /pages/{id}/move-options?parent=&query=&start=`, `POST /pages/{id}/move` |
 | Kommentare | `GET/POST /pages/{id}/comments`, `DELETE /pages/{id}/comments/{commentId}` |

@@ -25,7 +25,7 @@
                 <span class="kr-pill active">Draft</span>
                 <span class="kr-dotsep">·</span>
                 <span th:if="${page}" th:text="'Under ' + ${page.name}">Under …</span>
-                <span th:unless="${page}">Top level</span>
+                <span th:unless="${page}" th:text="${space != null} ? 'Top level of ' + ${space.name} : 'Top level'">Top level</span>
             </div>
         </div>
         <div class="kr-page-actions">
@@ -63,6 +63,7 @@
                         <input type="text" class="form-control" id="parent-page" th:value="${page.getName()}" readonly>
                         <input type="hidden" name="parent" th:value="${page.getPageId()}">
                     </div>
+                    <input type="hidden" name="spaceId" th:if="${page == null and space != null}" th:value="${space.id}">
                     <div class="mb-3">
                         <label for="page-name" class="form-label">Name</label>
                         <input type="text" class="form-control" id="page-name" name="name" required>

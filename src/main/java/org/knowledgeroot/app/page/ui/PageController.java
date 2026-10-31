@@ -46,6 +46,8 @@ public class PageController {
     private final GroupDao groupImpl;
     private final UserContext userContext;
     private final PageCreationService pageCreationService;
+    private final org.knowledgeroot.app.space.CurrentSpace currentSpace;
+    private final org.knowledgeroot.app.space.SpaceService spaceService;
     private final PageEditingService pageEditingService;
     private final FileDao fileDao;
     private final UploadPolicy uploadPolicy;
@@ -89,9 +91,12 @@ public class PageController {
         return out;
     }
 
+    /** Form for a new top-level page in {@code space}, by default the space the sidebar shows. */
     @GetMapping("/ui/page/new")
-    public String showNewPage(HtmxRequest htmxRequest) {
-        pageCreationService.requireCanCreate(null);
+    public String showNewPage(@RequestParam(name = "space", required = false) Integer space, Model model, HtmxRequest htmxRequest) {
+        int spaceId = space != null ? space : currentSpace.currentId();
+        pageCreationService.requireCanCreate(null, spaceId);
+        model.addAttribute("space", spaceService.space(spaceId));
         if(htmxRequest.isHtmxRequest()) {
             return "page/new :: body";
         }
@@ -124,6 +129,9 @@ public class PageController {
 
         model.addAttribute("page", page);
         model.addAttribute("breadcrumb", hierarchy);
+        // The sidebar follows the page into its space.
+        currentSpace.follow(page.getSpaceId());
+        model.addAttribute("space", page.getSpaceId() == null ? null : spaceService.space(page.getSpaceId()));
 
         // Prüfen der Bearbeitungsberechtigungen
         boolean canEdit = pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.EDIT);

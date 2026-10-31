@@ -1175,11 +1175,21 @@ OAuth-Anmeldung; die Client-API für die mobile App (R44) ist bereits enthalten.
   Verwaltung, Verschieben über Space-Grenzen); `PagePermissionDatabaseTest`
   und `PageAccessWebTest` an das Space-Modell angepasst; `InstallationTest`
   prüft die Migration bestehender Daten.
-- **Grenzen:** Die Seitenleiste zeigt noch die Hauptseiten aller Spaces; der
-  Space-Umschalter mit Baum, Breadcrumb, Suche je Space und Homepage-Aufruf
-  (Teil 2) sowie die Client-API (Teil 3) folgen. Die Prüfung
-  `canCreateRootPage` für die Schaltfläche „Neue Seite" bezieht sich bis
-  dahin auf den Standard-Space.
+- **Umgesetzt (Teil 2):** `CurrentSpace` merkt den gezeigten Space in der
+  Sitzung; Umschalter in der Seitenleiste (`/spaces/open`) öffnet die
+  Homepage oder die Space-Übersicht `/spaces/{id}`; die Seitenleiste listet
+  die Hauptseiten des gezeigten Space (`listNavigationPages` mit Space),
+  das Öffnen einer Seite wechselt den Space, der Breadcrumb beginnt mit dem
+  Space; „Neue Seite" legt im gezeigten Space an (`/ui/page/new?space=`);
+  Suche mit Space-Filter und Space-Schlüssel in den Treffern; Verschieben
+  auf die oberste Ebene eines anderen Space (`space` im Dialog, Recht zum
+  Anlegen von Hauptseiten nötig); `GET /api/v1/tree` nimmt `space`. Die
+  Layout-Attribute sind auf die HTML-Controller beschränkt und tolerieren
+  Datenbankausfälle, damit Health-Probes und APIs unberührt bleiben.
+- **Grenzen:** Die Client-API kennt Spaces erst über `tree?space=`;
+  Space-Liste, Space in der Seitenansicht, Suche je Space und Anlegen von
+  Hauptseiten mit Space-Angabe über die API folgen (Teil 3). Die
+  Space-Übersicht zeigt bis zu 101 Hauptseiten ohne Blättern.
 
 ## Nachweise der Bestandsaufnahme
 

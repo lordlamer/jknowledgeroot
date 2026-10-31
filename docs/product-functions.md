@@ -134,6 +134,15 @@ betreten dürfen; Gäste sehen öffentliche Spaces. Jeder Space hat einen festen
 Schlüssel (2–16 Großbuchstaben oder Ziffern), einen Namen, eine Beschreibung
 und eine Homepage, die beim Wechsel in den Space geöffnet wird.
 
+Die Seitenleiste zeigt immer genau einen Space: Der Umschalter über dem Baum
+wechselt den Space und öffnet dessen Homepage, ohne Homepage die
+Space-Übersicht mit den Hauptseiten. Das Öffnen einer Seite wechselt die
+Seitenleiste in den Space der Seite; der zuletzt gewählte Space bleibt in der
+Sitzung. Der Breadcrumb einer Seite beginnt mit ihrem Space. „Neue Seite" im
+Baum legt eine Hauptseite im gezeigten Space an. Die Suche durchsucht alle
+Spaces, die man betreten darf, und lässt sich auf einen Space einschränken;
+die Treffer nennen den Space-Schlüssel.
+
 - **Rechte am Space:** Lesen (betreten und lesen, was die Seitenrechte
   erlauben), Bearbeiten (zusätzlich Hauptseiten anlegen), Verwalten
   (zusätzlich Einstellungen, Freigaben, Archivierung). Freigaben gibt es für
@@ -150,10 +159,11 @@ und eine Homepage, die beim Wechsel in den Space geöffnet wird.
   Spaces sind schreibgeschützt und nur für Verwalter und Administratoren
   sichtbar; der letzte aktive Space kann nicht archiviert werden.
 - **Verschieben** einer Seite unter eine Seite eines anderen Space nimmt ihren
-  Teilbaum mit in diesen Space.
+  Teilbaum mit in diesen Space. Im Verschieben-Dialog lässt sich auch die
+  oberste Ebene eines anderen Space als Ziel wählen; dafür braucht man dort
+  das Recht, Hauptseiten anzulegen.
 
 Die Migration legt den Space „Knowledgeroot" (`KR`) an, der alle bisherigen
 Seiten enthält; Gäste dürfen ihn lesen, angemeldete Benutzer dort Hauptseiten
-anlegen. Space-Umschalter in der Seitenleiste, Baum und Suche je Space sowie
-die Client-API folgen in den nächsten Schritten. Regeln im Detail in
+anlegen. Die Client-API folgt im nächsten Schritt. Regeln im Detail in
 [access-control.md](access-control.md#spaces).

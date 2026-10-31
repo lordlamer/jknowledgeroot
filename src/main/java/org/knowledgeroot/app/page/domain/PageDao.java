@@ -14,7 +14,8 @@ public interface PageDao {
     List<Page> listVisiblePages(PageFilter pageFilter, Integer viewer);
 
     /** Navigation metadata only; 50 visible entries plus one continuation indicator. */
-    List<Page> listNavigationPages(int parent, int after, Integer viewer);
+    /** Visible children of {@code parent}; for the top level ({@code parent = 0}) the root pages of {@code spaceId}. */
+    List<Page> listNavigationPages(int spaceId, int parent, int after, Integer viewer);
     Optional<Page> findNavigationPage(PageId id, Integer viewer);
 
     /** The given parents that have at least one child the viewer may see. */

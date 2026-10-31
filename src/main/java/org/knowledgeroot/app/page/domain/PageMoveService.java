@@ -17,6 +17,7 @@ public class PageMoveService {
     private final PageDao pages;
     private final PagePermissionDao permissions;
     private final UserContext users;
+    private final org.knowledgeroot.app.space.SpaceService spaces;
 
     public int actor() {
         var user = users.getUserContext();
@@ -28,6 +29,12 @@ public class PageMoveService {
         return parent == 0 || permissions.hasUserPermission(new PageId(parent), actor(), PagePermission.PermissionLevel.EDIT);
     }
 
+    /** The top level of a space is a destination for whoever may create root pages there. */
+    public boolean canUseTopLevel(int spaceId) {
+        actor();
+        return spaces.canCreateRootPage(spaceId);
+    }
+
     public Page movablePage(PageId id) {
         if (!permissions.hasUserPermission(id, actor(), PagePermission.PermissionLevel.EDIT))
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
@@ -36,20 +43,28 @@ public class PageMoveService {
         return page;
     }
 
-    @Transactional(isolation=org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public void move(PageId id, int parent, Long revision) {
+        move(id, parent, revision, null);
+    }
+
+    /** @param space the space whose top level receives the page when {@code parent} is 0; null keeps the page's space */
+    @Transactional(isolation=org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
+    public void move(PageId id, int parent, Long revision, Integer space) {
         movablePage(id);
-        if (parent < 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        if (parent < 0 || (space != null && space <= 0)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         // Only structural moves take this mutex. Ordinary edits keep their row-level locks.
         jdbc.sql("SELECT id FROM page_tree_lock WHERE id=1 FOR UPDATE").query(Integer.class).single();
         long current = jdbc.sql("SELECT revision FROM page WHERE id=? FOR UPDATE").param(id.value()).query(Long.class).single();
         var page = movablePage(id);
         page.setRevision(current);
         PageEditingService.requireRevision(page, revision);
-        if (java.util.Objects.equals(page.getParent(), parent)) {
+        Integer topLevelSpace = parent == 0 ? (space != null ? space : page.getSpaceId()) : null;
+        if (java.util.Objects.equals(page.getParent(), parent) && (parent > 0 || topLevelSpace.equals(page.getSpaceId()))) {
             if (!canUseDestination(parent)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
             return;
         }
+        if (parent == 0 && !topLevelSpace.equals(page.getSpaceId()) && !canUseTopLevel(topLevelSpace))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         var visited = new HashSet<Integer>();
         int ancestor = parent;
         while (ancestor > 0) {
@@ -73,7 +88,7 @@ public class PageMoveService {
         // A page moved below a parent in another space takes that space along with its subtree.
         Integer targetSpace = parent > 0
                 ? jdbc.sql("SELECT space_id FROM page WHERE id=?").param(parent).query(Integer.class).single()
-                : page.getSpaceId();
+                : topLevelSpace;
         // Record the original content, location and labels, then invalidate old edit forms.
         page.setParent(parent);
         page.setChangedBy(Integer.valueOf(users.getUserContext().getUserId()));

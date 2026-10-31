@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class PageFilter {
     private Integer id;
+    private Integer spaceId;
     private Integer parent;
     private String name;
     private String content;

@@ -48,6 +48,7 @@ class PageAccessWebTest {
     @MockitoBean org.knowledgeroot.app.file.domain.FileDao files;
     @MockitoBean org.knowledgeroot.app.file.domain.UploadPolicy uploadPolicy;
     @MockitoBean org.knowledgeroot.app.space.SpaceService spaces;
+    @MockitoBean org.knowledgeroot.app.space.CurrentSpace currentSpace;
     private RequestPostProcessor caller;
     private final PageId pageId = new PageId(100);
 
@@ -56,6 +57,8 @@ class PageAccessWebTest {
         as(UserDetails.Role.USER);
         when(spaces.defaultSpace()).thenReturn(org.knowledgeroot.app.space.Space.builder().id(1).key("KR").name("Knowledgeroot").build());
         when(spaces.canCreateRootPage(1)).thenReturn(true);
+        when(spaces.space(1)).thenReturn(org.knowledgeroot.app.space.Space.builder().id(1).key("KR").name("Knowledgeroot").build());
+        when(currentSpace.currentId()).thenReturn(1);
         when(pages.findById(pageId)).thenReturn(Page.builder().pageId(pageId).parent(10)
                 .name("page").content("text").active(true).deleted(false).build());
         when(permissions.permissionSource(pageId)).thenReturn(pageId);

@@ -96,8 +96,9 @@ public class WebSecurityConfig {
                             "/help",
                             "/about"
                     ).permitAll();
-                    // The space overview lists public spaces to guests; everything else about spaces needs a sign-in.
-                    auth.requestMatchers(HttpMethod.GET, "/spaces").permitAll();
+                    // Space overviews and switching are open to guests of public spaces; creating and managing need a sign-in.
+                    auth.requestMatchers("/spaces/new", "/spaces/*/settings", "/spaces/*/archive", "/spaces/*/permissions/**").authenticated();
+                    auth.requestMatchers(HttpMethod.GET, "/spaces", "/spaces/open", "/spaces/*").permitAll();
 
                     auth.requestMatchers("/ui/admin/**", "/admin/**").hasRole("ADMIN");
 

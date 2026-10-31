@@ -6,20 +6,57 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.beans.factory.annotation.Value;
 
-@ControllerAdvice
+/**
+ * Model attributes for the HTML layout. Limited to the Thymeleaf controllers so that the
+ * actuator endpoints and the JSON APIs never pay for (or fail on) the space lookups.
+ */
+@ControllerAdvice(basePackages = {"org.knowledgeroot.app.frontend.web", "org.knowledgeroot.app.page.ui",
+        "org.knowledgeroot.app.space", "org.knowledgeroot.app.security.user.web", "org.knowledgeroot.app.profile.web",
+        "org.knowledgeroot.app.security.mfa", "org.knowledgeroot.app.login", "org.knowledgeroot.app.security.recovery",
+        "org.knowledgeroot.app.file.web"})
 @RequiredArgsConstructor
+@lombok.extern.slf4j.Slf4j
 public class LayoutDefines {
     private final UserContext userContext;
     /** Absent in web slice tests without the space beans; then nobody may create root pages. */
     private final org.springframework.beans.factory.ObjectProvider<org.knowledgeroot.app.space.SpaceService> spaces;
 
-    /** Root pages need the edit level on the space; until the UI selects a space, the default space decides. */
+    private final org.springframework.beans.factory.ObjectProvider<org.knowledgeroot.app.space.CurrentSpace> currentSpace;
+
+    /** Root pages need the edit level on the space the sidebar currently shows. */
     @ModelAttribute("canCreateRootPage")
     public boolean canCreateRootPage() {
         var service = spaces.getIfAvailable();
-        if (service == null) return false;
-        var space = service.defaultSpace();
-        return space != null && service.canCreateRootPage(space.getId());
+        var current = currentSpace.getIfAvailable();
+        if (service == null || current == null) return false;
+        try {
+            return current.current().map(space -> service.canCreateRootPage(space.getId())).orElse(false);
+        } catch (org.springframework.dao.DataAccessException e) {
+            log.warn("Space lookup for the layout failed: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    @ModelAttribute("currentSpace")
+    public org.knowledgeroot.app.space.Space currentSpace() {
+        var current = currentSpace.getIfAvailable();
+        if (current == null) return null;
+        try {
+            return current.current().orElse(null);
+        } catch (org.springframework.dao.DataAccessException e) {
+            return null;
+        }
+    }
+
+    @ModelAttribute("visibleSpaces")
+    public java.util.List<org.knowledgeroot.app.space.Space> visibleSpaces() {
+        var service = spaces.getIfAvailable();
+        if (service == null) return java.util.List.of();
+        try {
+            return service.visibleSpaces();
+        } catch (org.springframework.dao.DataAccessException e) {
+            return java.util.List.of();
+        }
     }
 
     @ModelAttribute("isguest")

@@ -25,7 +25,7 @@ class SidebarNavigationIntegrationTest extends IsolatedApplicationTest {
         assertEquals(visible.subList(0, 50), ids);
         assertFalse(first.contains("hidden-"));
         assertTrue(first.contains("after=" + visible.get(49)));
-        var metadata = pages.listNavigationPages(pageId, 0, null);
+        var metadata = pages.listNavigationPages(1, pageId, 0, null);
         assertEquals(51, metadata.size());
         assertNull(metadata.getFirst().getContent());
         assertNull(metadata.getFirst().getFiles());

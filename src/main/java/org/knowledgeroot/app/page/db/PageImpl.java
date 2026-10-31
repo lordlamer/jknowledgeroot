@@ -27,8 +27,10 @@ public class PageImpl implements PageDao {
     private final JdbcClient jdbcClient;
 
     @Override
-    public List<Page> listNavigationPages(int parent, int after, Integer viewer) {
+    public List<Page> listNavigationPages(int spaceId, int parent, int after, Integer viewer) {
         org.knowledgeroot.app.util.RequestValidation.require(parent >= 0 && after >= 0);
+        if (parent == 0) return navigationPages("space_id = :space AND parent = 0 AND id > :after ORDER BY id LIMIT 51",
+                Map.of("space", spaceId, "after", after), viewer);
         return navigationPages("parent = :parent AND id > :after ORDER BY id LIMIT 51",
                 Map.of("parent", parent, "after", after), viewer);
     }
@@ -119,6 +121,11 @@ public class PageImpl implements PageDao {
         if (pageFilter.getId() != null) {
             sqlParams.put("id", "id = :id");
             params.put("id", pageFilter.getId());
+        }
+
+        if (pageFilter.getSpaceId() != null) {
+            sqlParams.put("space", "space_id = :space");
+            params.put("space", pageFilter.getSpaceId());
         }
 
         if (pageFilter.getParent() != null) {
