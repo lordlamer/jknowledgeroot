@@ -42,6 +42,11 @@ On Windows (PowerShell):
 .\mvnw.cmd -B --no-transfer-progress verify
 ```
 
+The JavaScript of the build, release and deployment scripts and of the editor is
+linted with the repository's `eslint.config.mjs` (`npx eslint .`); Codacy keeps its
+own rule selection for the application code and leaves those scripts out (see
+`.codacy.yml`).
+
 The build compiles the application, runs the enabled tests, and creates the
 executable JAR in `target/`. The previously disabled integration classes now use
 isolated databases, actual login/CSRF and JDBC sessions. Installation tests exercise a real MariaDB in
