@@ -15,7 +15,11 @@ export function verifyBuildInfo(properties, version, revision) {
     const prefix = `build.${key}=`;
     const values = properties.split(/\r?\n/).filter(line => line.startsWith(prefix)).map(line => line.slice(prefix.length));
     assert.equal(values.length, 1, `JAR build.${key} missing or ambiguous`);
-    assert.equal(values[0], expected, `JAR build.${key} must match the current build`);
+    assert.equal(
+      values[0],
+      expected,
+      `JAR build.${key} must match the current build`,
+    );
   }
   return {version, revision};
 }

@@ -31,11 +31,23 @@ test('assembles the verified JAR, evidence and sha256sum-compatible checksums', 
     assert.deepEqual(readdirSync(assetDir).sort(), [...result.files].sort());
     const sums = readFileSync(join(assetDir, 'SHA256SUMS'), 'utf8');
     const lines = sums.split('\n');
-    assert.ok(lines.includes(`${sha256(jarBytes)}  knowledgeroot-${version}.jar`), sums);
+    assert.ok(
+      lines.includes(`${sha256(jarBytes)}  knowledgeroot-${version}.jar`),
+      sums,
+    );
     // Every evidence file is listed once with a hex checksum, as sha256sum prints it.
-    const listed = name => lines.filter(line => line.endsWith(`  ${name}`) && /^[0-9a-f]{64}$/.test(line.slice(0, -(name.length + 2))));
+    const listed = (name) =>
+      lines.filter(
+        (line) =>
+          line.endsWith(`  ${name}`) &&
+          /^[0-9a-f]{64}$/.test(line.slice(0, -(name.length + 2))),
+      );
     for (const name of EVIDENCE) {
-      assert.equal(listed(name).length, 1, `${name} must be listed once in SHA256SUMS`);
+      assert.equal(
+        listed(name).length,
+        1,
+        `${name} must be listed once in SHA256SUMS`,
+      );
       assert.equal(readFileSync(join(assetDir, name), 'utf8'), readFileSync(join(target, name), 'utf8'));
     }
     assert.equal(sums.split('\n').filter(Boolean).length, EVIDENCE.length + 1);
