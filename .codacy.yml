@@ -1,5 +1,17 @@
 ---
-# Codacy analysis settings. The Liquibase migrations are MariaDB SQL on purpose (every changeset is
-# marked dbms="mariadb"); an ANSI-SQL check cannot judge them, so they stay out of the analysis.
+# Codacy analysis settings.
 exclude_paths:
+  # The Liquibase migrations are MariaDB SQL on purpose (every changeset is marked dbms="mariadb");
+  # an ANSI-SQL check cannot judge them.
   - "src/main/resources/dbupdates/**"
+engines:
+  eslint:
+    # Codacy's ESLint applies its own rule selection, which is tuned for application code served
+    # from Node: file paths from variables, Jest's expect(), resolvable node_modules. The build,
+    # release and deployment scripts and the editor bundle source are Node 24 tooling with their
+    # own node:test suites; they are linted locally with the repository's eslint.config.mjs
+    # (npx eslint .) instead.
+    exclude_paths:
+      - "scripts/**"
+      - "deploy/**"
+      - "frontend/**"
