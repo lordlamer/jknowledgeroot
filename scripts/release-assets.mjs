@@ -6,11 +6,28 @@ import {sha256} from './release-evidence.mjs';
 
 export const ASSET_DIR = 'target/release-assets';
 export const EVIDENCE = ['release-manifest.json', 'dependency-audit.json', 'image-audit-summary.json', 'database-image-audit-summary.json'];
-const TAG = /^v(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$/;
 const DIGEST = /^sha256:[0-9a-f]{64}$/;
 
+/**
+ * The version named by a release tag: "v", a SemVer core and optionally "-" plus a pre-release
+ * identifier. Checked in two plain expressions rather than one with nested quantifiers, which the
+ * security check refuses.
+ * @param {string} tag the git tag, e.g. v1.0.0-rc.3
+ * @returns {string | null} the version without the "v", or null for anything else
+ */
+function tagVersion(tag) {
+  if (typeof tag !== 'string' || !tag.startsWith('v')) return null;
+  const version = tag.slice(1);
+  const dash = version.indexOf('-');
+  const core = dash < 0 ? version : version.slice(0, dash);
+  const prerelease = dash < 0 ? '' : version.slice(dash + 1);
+  if (!/^\d+\.\d+\.\d+$/.test(core)) return null;
+  if (dash >= 0 && !/^[0-9A-Za-z.-]+$/.test(prerelease)) return null;
+  return version;
+}
+
 export function isPrerelease(tag) {
-  const version = TAG.exec(tag)?.[1];
+  const version = tagVersion(tag);
   assert(version, `Unsupported release tag: ${tag}`);
   return version.includes('-');
 }
