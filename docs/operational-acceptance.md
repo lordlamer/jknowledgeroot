@@ -1,8 +1,9 @@
 # Protokoll für die Betriebsabnahme
 
 Dieses Protokoll ist für die konkrete Staging-/Produktionsumgebung auszufüllen.
-Lokale Tests ersetzen die Abnahme auf dem Zielsystem nicht. Der aktuelle Kandidat
-ist `1.0.0-rc.3`; eine Produktionsfreigabe wurde noch nicht erteilt.
+Lokale Tests ersetzen die Abnahme auf dem Zielsystem nicht. Die aktuelle Version
+ist `1.0.0` (Tag `v1.0.0` auf `release/1.0`); die Abnahme auf einem konkreten
+Zielsystem ist mit diesem Protokoll zu dokumentieren und bisher nicht erteilt.
 
 ## Umgebung und Verantwortliche
 
