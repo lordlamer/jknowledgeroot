@@ -1,5 +1,7 @@
 /* ============================================================
-   Knowledgeroot — redesigned layout (Graphite & Signal + Black bar)
+   Knowledgeroot — redesigned layout (Graphite & Signal)
+   Light: white surfaces under a graphite bar. Dark: the graphite greys of
+   modern IDE themes instead of pure black. Lime stays the signal colour.
 ============================================================ */
 
 :root {
@@ -29,49 +31,54 @@
     --kr-sidebar-w:    280px;
     --kr-header-h:     52px;
 
-    /* Black bar header tokens (light theme) */
-    --kr-header-bg:           #0a0a0a;
-    --kr-header-fg:           #fafafa;
-    --kr-header-fg-2:         #c8c8c6;
-    --kr-header-fg-3:         #7a7a78;
-    --kr-header-border:       #0a0a0a;
-    --kr-header-input-bg:     #1c1c1c;
-    --kr-header-input-border: #2a2a2a;
-    --kr-header-input-focus-bg: #262626;
-    --kr-header-hover:        #1c1c1c;
-    --kr-header-chip-bg:      #1c1c1c;
-    --kr-header-chip-border:  #2a2a2a;
+    /* Graphite bar (light theme): the same bar as in the dark theme over white content */
+    --kr-header-bg:           #2b2d30;
+    --kr-header-fg:           #dfe1e5;
+    --kr-header-fg-2:         #bcbec4;
+    --kr-header-fg-3:         #8c8f97;
+    --kr-header-border:       #2b2d30;
+    --kr-header-input-bg:     #1e1f22;
+    --kr-header-input-border: #43454a;
+    --kr-header-input-focus-bg: #1e1f22;
+    --kr-header-hover:        #35373b;
+    --kr-header-chip-bg:      #35373b;
+    --kr-header-chip-border:  #43454a;
+    --kr-header-key-fg:       #c4ff3d;
+    --kr-header-dot:          #c4ff3d;
 }
 
 body.kr-dark {
-    --kr-bg:           #0a0a0a;
-    --kr-surface:      #141414;
-    --kr-surface-2:    #1c1c1c;
-    --kr-surface-3:    #262626;
-    --kr-border:       #2a2a2a;
-    --kr-border-2:     #3a3a3a;
-    --kr-text:         #fafafa;
-    --kr-text-2:       #b8b8b8;
-    --kr-text-3:       #6a6a6a;
+    /* Graphite greys like IDE dark themes: content darkest, panels one step lighter */
+    --kr-bg:           #1e1f22;
+    --kr-surface:      #2b2d30;
+    --kr-surface-2:    #35373b;
+    --kr-surface-3:    #43454a;
+    --kr-border:       #393b40;
+    --kr-border-2:     #4e5157;
+    --kr-text:         #dfe1e5;
+    --kr-text-2:       #bcbec4;
+    --kr-text-3:       #8c8f97;
     --kr-accent:       #c4ff3d;
     --kr-accent-2:     #a8e020;
-    --kr-accent-soft:  #1e2805;
-    --kr-accent-ink:   #e0ff8a;
-    --kr-shadow-sm:    0 1px 2px rgba(0,0,0,.5);
-    --kr-shadow-md:    0 6px 16px rgba(0,0,0,.45);
-    --kr-shadow-lg:    0 20px 48px rgba(0,0,0,.6);
+    --kr-accent-soft:  #2f3d14;
+    --kr-accent-ink:   #d9ff80;
+    --kr-shadow-sm:    0 1px 2px rgba(0,0,0,.35);
+    --kr-shadow-md:    0 6px 16px rgba(0,0,0,.35);
+    --kr-shadow-lg:    0 20px 48px rgba(0,0,0,.5);
 
-    --kr-header-bg:           #000000;
-    --kr-header-fg:           #fafafa;
-    --kr-header-fg-2:         #b8b8b8;
-    --kr-header-fg-3:         #6a6a6a;
-    --kr-header-border:       #000000;
-    --kr-header-input-bg:     #161616;
-    --kr-header-input-border: #262626;
-    --kr-header-input-focus-bg: #1c1c1c;
-    --kr-header-hover:        #181818;
-    --kr-header-chip-bg:      #161616;
-    --kr-header-chip-border:  #262626;
+    --kr-header-bg:           #2b2d30;
+    --kr-header-fg:           #dfe1e5;
+    --kr-header-fg-2:         #bcbec4;
+    --kr-header-fg-3:         #8c8f97;
+    --kr-header-border:       #393b40;
+    --kr-header-input-bg:     #1e1f22;
+    --kr-header-input-border: #43454a;
+    --kr-header-input-focus-bg: #1e1f22;
+    --kr-header-hover:        #35373b;
+    --kr-header-chip-bg:      #35373b;
+    --kr-header-chip-border:  #43454a;
+    --kr-header-key-fg:       #c4ff3d;
+    --kr-header-dot:          #c4ff3d;
 }
 
 /* ---------- Base ---------- */
@@ -160,9 +167,10 @@ kbd {
     font-family: 'Inter', sans-serif;
 }
 body.kr-dark .kr-brand-mark { color: #0a0a0a; }
+/* The mark is the lime tile on the graphite bar in both themes. */
+body:not(.kr-dark) .kr-brand-mark { background: #c4ff3d; color: #0a0a0a; }
 .kr-brand-name { font-size: 14.5px; }
-.kr-brand-name .kr-dot { color: var(--kr-accent); }
-body:not(.kr-dark) .kr-brand-name .kr-dot { color: #c4ff3d; }
+.kr-brand-name .kr-dot { color: var(--kr-header-dot); }
 
 .kr-navleft, .kr-navright {
     display: flex;
@@ -283,6 +291,9 @@ body:not(.kr-dark) .kr-btn.accent {
     background: #111111; color: #fafafa; border-color: #111111;
 }
 body:not(.kr-dark) .kr-btn.accent:hover { background: #2a2a2a; border-color: #2a2a2a; }
+/* In the bar the accent button is lime like in the dark theme; in the content it stays black. */
+body:not(.kr-dark) .app-navbar .kr-btn.accent { background: #c4ff3d; color: #0a0a0a; border-color: #c4ff3d; }
+body:not(.kr-dark) .app-navbar .kr-btn.accent:hover { background: #a8e020; border-color: #a8e020; color: #0a0a0a; }
 body.kr-dark .kr-btn.accent:hover { background: var(--kr-accent-2); border-color: var(--kr-accent-2); }
 .kr-btn.ghost { background: transparent; border-color: transparent; color: var(--kr-text-2); }
 .kr-btn.ghost:hover { background: var(--kr-surface-2); color: var(--kr-text); }
@@ -1334,6 +1345,8 @@ body.kr-login-page { padding-top: 0; }
 }
 .kr-login-brand .kr-brand-mark { background: #111; color: #c4ff3d; }
 .kr-login-brand .kr-brand-name .kr-dot { color: #111; }
+body.kr-dark .kr-login-brand .kr-brand-mark { background: #c4ff3d; color: #0a0a0a; }
+body.kr-dark .kr-login-brand .kr-brand-name .kr-dot { color: #c4ff3d; }
 
 .kr-login-right {
     display: grid;
@@ -1503,7 +1516,7 @@ body.kr-dark .app-navbar .dropdown-item.text-danger:hover { background: #3a1e1e;
     border-radius: 6px;
     background: var(--kr-header-chip-bg);
     border: 1px solid var(--kr-header-chip-border);
-    color: #c4ff3d;
+    color: var(--kr-header-key-fg);
     font-size: 10.5px;
     font-weight: 700;
     letter-spacing: .04em;

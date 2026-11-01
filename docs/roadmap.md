@@ -1251,6 +1251,23 @@ OAuth-Anmeldung; die Client-API für die mobile App (R44) ist bereits enthalten.
   Connector neu. Kein Audit-Log über das Anwendungslog hinaus. Die mobile App
   ist nicht betroffen.
 
+### R53 – Graphit-Theme statt Schwarz
+
+- [x] Lokal umgesetzt und geprüft am 1. November 2026.
+- **Ziel:** Der Dark Mode soll wie moderne IDE-Themes in Graugrün statt
+  reinem Schwarz erscheinen, die Kopfzeile im Light Mode nicht mehr schwarz.
+- **Umgesetzt:** Nur Farb-Tokens in `layout.css`: Dark Mode mit Inhalt
+  `#1e1f22`, Leisten `#2b2d30`, Feldern `#35373b`, Rahmen `#393b40` und
+  Text `#dfe1e5`; Light Mode behält den weißen Inhalt und bekommt dieselbe
+  Graphit-Kopfzeile wie der Dark Mode, Marke und „New" dort in Lime,
+  `Edit`/`Comment` im Inhalt bleiben schwarz; Login-Seite mit Lime-Marke
+  im Dark Mode; Vorlade-Hintergrund im neuen Grau. Drei Varianten für den
+  Light Mode wurden als Screenshots verglichen (hellgraue Leiste, dunkle
+  Kopfzeile, dunkle Kopfzeile plus Seitenleiste); gewählt wurde die dunkle
+  Kopfzeile.
+- **Geprüft:** Screenshots der Seitenansicht mit Seitenleiste und der
+  Login-Seite in beiden Themes gegen die laufende Anwendung.
+
 ## Nachweise der Bestandsaufnahme
 
 - `mvn -B test` bei der ursprünglichen Bestandsaufnahme: Anwendung kompiliert unter Java 25; Testkompilierung scheitert am Konstruktoraufruf in `PageControllerTest`. Dieser Befund ist durch R01 behoben; das aktuelle Prüfergebnis steht dort.
