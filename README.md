@@ -70,9 +70,12 @@ See the [editor guide](docs/editor.md) for supported content and upgrade checks.
 
 ## Initial administrator and upgrades
 
-The current release candidate is **1.0.0-rc.3**; the 1.0 line is stabilised on the
-branch `release/1.0`, while `master` carries the development version
-**1.1.0-SNAPSHOT** (published as `latest`). Release tags publish the Docker
+The current stable release is **1.0.0** from the maintenance branch `release/1.0`,
+where 1.0.x fixes are backported. `master` carries the next line as
+**1.1.0-rc.1**, the first release candidate of 1.1 (also published as `latest`):
+spaces with their own permissions, two-factor authentication, the MCP server for
+AI assistants, the graphite theme and the client API for the mobile app; see the
+[product functions](docs/product-functions.md). Release tags publish the Docker
 images and a GitHub release that carries the verified JAR with checksums. See the
 [release guide](docs/release.md) for artifact identity and remaining approval checks,
 and [backup and recovery](docs/recovery.md) for tested backup, restore, upgrade

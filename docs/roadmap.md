@@ -1092,9 +1092,11 @@ eine gewünschte Erweiterung auf Bearbeiter ist gesondert zu entscheiden.
 
 ## 9. Version 1.1
 
-Geplant sind die Anmeldung mit zweitem Faktor (TOTP, Policy durch
-Administratoren), Spaces mit je eigener Seitenstruktur und ein MCP-Server mit
-OAuth-Anmeldung; die Client-API für die mobile App (R44) ist bereits enthalten.
+Die 1.1-Linie bringt die Anmeldung mit zweitem Faktor (TOTP, Policy durch
+Administratoren), Spaces mit je eigener Seitenstruktur, einen MCP-Server mit
+OAuth-Anmeldung und das Graphit-Theme; die Client-API für die mobile App (R44)
+ist bereits enthalten. Der erste Kandidat `1.1.0-rc.1` (R55) umfasst R49 bis
+R54.
 
 ### R49 – Zweiter Faktor (TOTP) mit Policy, Anmeldung in zwei Schritten und Profil
 
@@ -1142,8 +1144,9 @@ OAuth-Anmeldung; die Client-API für die mobile App (R44) ist bereits enthalten.
   Profil-Einrichtung und -Entfernen, gesperrtes Entfernen, Admin-Policy und
   -Reset, API-Login mit zweitem Schritt, API-Einrichtung beim erzwungenen
   Login, API-Profilstatus und -Entfernen).
-- **Grenzen:** Die mobile App muss den zweiten Login-Schritt und die
-  Einrichtung noch umsetzen. Bestehende Produktionsumgebungen müssen vor dem
+- **Grenzen:** Die mobile App beherrscht den zweiten Login-Schritt und die
+  Einrichtung seit dem 1. November 2026 (knowledgeroot-app, PR #1).
+  Bestehende Produktionsumgebungen müssen vor dem
   Upgrade `KR_MASTER_KEY` setzen. Kein Audit-Log; Einrichtung, Erfolg,
   Fehlschlag und Reset stehen im Anwendungslog.
 
@@ -1207,7 +1210,8 @@ OAuth-Anmeldung; die Client-API für die mobile App (R44) ist bereits enthalten.
   htmx einen anderen Space, tauscht die Antwort Umschalter und Kopf der
   Seitenleiste out-of-band und lädt Baum und Favoriten neu; ein vollständiger
   Seitenaufruf zeigt den Space direkt im Layout.
-- **Grenzen:** Die mobile App muss den Space-Umschalter noch umsetzen. Die
+- **Grenzen:** Die mobile App hat den Space-Umschalter seit dem 1. November
+  2026 (knowledgeroot-app, PR #1). Die
   Space-Übersicht zeigt bis zu 100 Hauptseiten ohne Blättern. Spaces lassen
   sich archivieren, aber nicht löschen.
 
@@ -1246,10 +1250,10 @@ OAuth-Anmeldung; die Client-API für die mobile App (R44) ist bereits enthalten.
   Speichern, Kommentar und Unterseiten, Refresh-Rotation, Profil und Trennen,
   Passwortwechsel, Ausschalten); `McpSettingsTest` für die Rückkehr-Allow-List;
   die bestehende Testsuite unverändert grün.
-- **Grenzen:** Keine Tools für Löschen, Verschieben, Anhänge und Rechte. Die
-  Zustimmung gilt je registriertem Client; claude.ai registriert sich je
-  Connector neu. Kein Audit-Log über das Anwendungslog hinaus. Die mobile App
-  ist nicht betroffen.
+- **Grenzen:** Löschen, Verschieben, Anhänge und das Audit-Log kamen mit R54
+  nach; Rechte bleiben ohne Tool. Die Zustimmung gilt je registriertem Client;
+  claude.ai registriert sich je Connector neu. Die mobile App ist nicht
+  betroffen.
 
 ### R53 – Graphit-Theme statt Schwarz
 
@@ -1296,6 +1300,32 @@ OAuth-Anmeldung; die Client-API für die mobile App (R44) ist bereits enthalten.
   `McpIntegrationTest` an das Markdown-Standardformat angepasst.
 - **Grenzen:** Kein Hochladen von Anhängen; Labelzählung nur über lesbare
   Seiten; Ratenbegrenzung je Instanz im Speicher.
+
+### R55 – Version 1.0.0 freigeben und 1.1.0-rc.1 vorbereiten
+
+- [x] Vorbereitet am 1. November 2026; die Tags folgen nach dem Merge.
+- **Ziel:** Die 1.0-Linie als stabile Version 1.0.0 abschließen und die
+  1.1-Linie mit R49 bis R54 als ersten Kandidaten veröffentlichen, damit
+  Spaces, zweiter Faktor, MCP-Server und Graphit-Theme ausprobiert werden
+  können.
+- **Umgesetzt:** Auf `release/1.0` POM und beide Dockerfiles auf `1.0.0`,
+  R50 (Connector/J 3.5.11) nachgezogen, damit der Abhängigkeitsscan des Tags
+  frei bleibt; README, [release.md](release.md) und das Abnahmeprotokoll
+  beschreiben die stabile Version. Auf `master` POM und beide Dockerfiles auf
+  `1.1.0-rc.1`; README, release.md, Abnahmeprotokoll und die Grenzen von R49,
+  R51 und R52 aktualisiert (die mobile App beherrscht Spaces und zweiten
+  Faktor, R54 hat die MCP-Lücken geschlossen). Vorher wurden die 14 offenen
+  Dependabot-/Snyk-PRs geschlossen, die alle durch neuere Versionen auf
+  `master` überholt waren, und 51 verwaiste Branches gelöscht; es bleiben
+  `master` und `release/1.0`. Die Homepage knowledgeroot.org nennt 1.0.0 als
+  stabile Version, beschreibt die 1.1-Funktionen mit neuen Screenshots und
+  zeigt, wie der Kandidat per Docker-Tag `v1.1.0-rc.1` oder JAR ausprobiert
+  wird.
+- **Geprüft:** `./mvnw verify` auf beiden Branches lokal; PR-Läufe der CI.
+- **Grenzen:** Die Tags `v1.0.0` und `v1.1.0-rc.1` werden erst nach dem Merge
+  gepusht; Lauf-IDs, Digests und JAR-Prüfsummen trägt ein Folge-Commit in
+  release.md nach. Das Abnahmeprotokoll für ein Zielsystem bleibt offen.
+  `release/1.0` ist weiterhin nicht per Ruleset geschützt.
 
 ## Nachweise der Bestandsaufnahme
 
