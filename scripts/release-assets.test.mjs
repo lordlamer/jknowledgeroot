@@ -6,6 +6,10 @@ import {join} from 'node:path';
 import {sha256} from './release-evidence.mjs';
 import {EVIDENCE, assembleAssets, formatChecksums, isPrerelease, renderReleaseNotes, validateManifest} from './release-assets.mjs';
 
+// The verify job exports RELEASE_TAG for the real assembly that follows these tests; the fixtures
+// carry their own tag, so the environment must not leak into them.
+delete process.env.RELEASE_TAG;
+
 const version = '1.0.0-rc.3', tag = `v${version}`, revision = 'a'.repeat(40);
 const jarBytes = Buffer.from('not really a jar');
 const appDigest = `sha256:${'1'.repeat(64)}`, databaseDigest = `sha256:${'2'.repeat(64)}`;
