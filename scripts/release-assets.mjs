@@ -8,8 +8,13 @@ export const ASSET_DIR = 'target/release-assets';
 export const EVIDENCE = ['release-manifest.json', 'dependency-audit.json', 'image-audit-summary.json', 'database-image-audit-summary.json'];
 const DIGEST = /^sha256:[0-9a-f]{64}$/;
 
-// A release tag is "v", a SemVer core and optionally "-" plus a pre-release identifier. Checked in
-// two plain expressions rather than one with nested quantifiers, which the security check refuses.
+/**
+ * The version named by a release tag: "v", a SemVer core and optionally "-" plus a pre-release
+ * identifier. Checked in two plain expressions rather than one with nested quantifiers, which the
+ * security check refuses.
+ * @param {string} tag the git tag, e.g. v1.0.0-rc.3
+ * @returns {string | null} the version without the "v", or null for anything else
+ */
 function tagVersion(tag) {
   if (typeof tag !== 'string' || !tag.startsWith('v')) return null;
   const version = tag.slice(1);
