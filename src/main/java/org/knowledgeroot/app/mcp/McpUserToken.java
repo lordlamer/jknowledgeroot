@@ -26,11 +26,14 @@ public class McpUserToken extends KnowledgerootUserToken {
     private final Set<String> scopes;
     private final List<GrantedAuthority> authorities;
     private final transient Jwt jwt;
+    /** Registered client the token was issued to (claim {@code cid}), for the audit. */
+    private final String clientId;
 
     public McpUserToken(UserDetails user, Collection<String> scopes, Jwt jwt) {
         super(user);
         this.scopes = new LinkedHashSet<>(scopes);
         this.jwt = jwt;
+        this.clientId = jwt == null ? null : jwt.getClaimAsString("cid");
         var all = new ArrayList<GrantedAuthority>(super.getAuthorities());
         this.scopes.forEach(scope -> all.add(new SimpleGrantedAuthority("SCOPE_" + scope)));
         this.authorities = List.copyOf(all);
@@ -52,5 +55,9 @@ public class McpUserToken extends KnowledgerootUserToken {
 
     public Jwt getJwt() {
         return jwt;
+    }
+
+    public String getClientId() {
+        return clientId;
     }
 }

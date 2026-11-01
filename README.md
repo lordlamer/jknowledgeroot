@@ -109,11 +109,14 @@ endpoints, authentication and the accompanying utf8mb4 migration.
 ## AI assistants (MCP server)
 
 Assistants such as Claude connect to `https://<host>/mcp` over OAuth 2.1 with the
-user's own account and act with that user's permissions: search, read and, when
-the user allows it on the consent page, create and edit pages and add comments.
-Administrators switch the server on under *Admin → Settings* and keep the list of
-hosts assistants may return to; users see and disconnect their assistants in the
-profile. See the [MCP guide](docs/mcp.md).
+user's own account and act with that user's permissions: search, read pages,
+attachments and history and, when the user allows it on the consent page, create,
+edit, move, delete and restore pages, manage labels, favourites and comments.
+Content travels as Markdown. Pages and spaces are also MCP resources, and ready-made
+prompts summarise a space, find stale pages or draft a page. Administrators switch
+the server on under *Admin → Settings*, keep the list of hosts assistants may return
+to and see every call and connection under *Admin → MCP*; users see and disconnect
+their assistants in the profile. See the [MCP guide](docs/mcp.md).
 
 ## Page permissions
 

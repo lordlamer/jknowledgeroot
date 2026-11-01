@@ -110,4 +110,8 @@
         <sqlFile path="changes/1.0.17-mcp.mariadb.sql"
                  relativeToChangelogFile="true" encoding="UTF-8" splitStatements="true" stripComments="true"/>
     </changeSet>
+    <changeSet id="1.0.18-mcp-audit" author="knowledgeroot" dbms="mariadb">
+        <sqlFile path="changes/1.0.18-mcp-audit.mariadb.sql"
+                 relativeToChangelogFile="true" encoding="UTF-8" splitStatements="true" stripComments="true"/>
+    </changeSet>
 </databaseChangeLog>

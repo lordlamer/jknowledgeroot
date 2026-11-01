@@ -26,6 +26,7 @@
         <build.revision>unknown</build.revision>
         <htmx-spring-boot.version>5.1.0</htmx-spring-boot.version>
         <spring-ai.version>2.0.2</spring-ai.version>
+        <flexmark.version>0.64.8</flexmark.version>
         <!-- Security fixes newer than Boot 4.1.1's managed Tomcat; remove when the BOM catches up. -->
         <tomcat.version>11.0.25</tomcat.version>
         <!-- Jackson patch releases fixing the October 2026 OSV findings; remove when the BOM catches up. -->
@@ -110,6 +111,27 @@
                     <artifactId>spring-boot-starter-web</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <!-- MCP content tools: Markdown in and out for assistants, text of PDF attachments. -->
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark</artifactId>
+            <version>${flexmark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-ext-tables</artifactId>
+            <version>${flexmark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-html2md-converter</artifactId>
+            <version>${flexmark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.8</version>
         </dependency>
         <!-- Minio Dependencies -->
         <dependency>
@@ -224,6 +246,23 @@
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcprov-jdk18on</artifactId>
                 <version>1.86</version>
+            </dependency>
+            <!-- PDFBox 3.0.8 brings the matching bcpkix/bcutil of an older BouncyCastle; keep all three in step. -->
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcpkix-jdk18on</artifactId>
+                <version>1.86</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcutil-jdk18on</artifactId>
+                <version>1.86</version>
+            </dependency>
+            <!-- flexmark's HTML converter brings jsoup 1.15.4; use the current release. -->
+            <dependency>
+                <groupId>org.jsoup</groupId>
+                <artifactId>jsoup</artifactId>
+                <version>1.23.2</version>
             </dependency>
             <!-- MinIO 9.0.3 brings Guava 33.6.0 (GHSA-xxph-c9ww-hj94) and snappy-java 1.1.10.8
                  (GHSA-gwq9-9ffj-mvrv, GHSA-q233-g92q-qxp6, GHSA-xqrx-qh46-34m7); remove when it catches up. -->

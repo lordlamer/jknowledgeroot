@@ -30,6 +30,11 @@ public class PageFilter {
     private LocalDateTime changeDateEnd;
     private Boolean deleted;
 
+    /** Only pages carrying this label (exact name). */
+    private String label;
+    /** Newest change first instead of the id order. */
+    private Boolean newestFirst;
+
     private Integer start;
     private Integer limit;
 }
