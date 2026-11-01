@@ -1303,7 +1303,8 @@ R54.
 
 ### R55 – Version 1.0.0 freigeben und 1.1.0-rc.1 vorbereiten
 
-- [x] Vorbereitet am 1. November 2026; die Tags folgen nach dem Merge.
+- [x] Umgesetzt am 1. November 2026; beide Tags sind veröffentlicht (siehe
+  [release.md](release.md)).
 - **Ziel:** Die 1.0-Linie als stabile Version 1.0.0 abschließen und die
   1.1-Linie mit R49 bis R54 als ersten Kandidaten veröffentlichen, damit
   Spaces, zweiter Faktor, MCP-Server und Graphit-Theme ausprobiert werden
@@ -1322,10 +1323,33 @@ R54.
   zeigt, wie der Kandidat per Docker-Tag `v1.1.0-rc.1` oder JAR ausprobiert
   wird.
 - **Geprüft:** `./mvnw verify` auf beiden Branches lokal; PR-Läufe der CI.
-- **Grenzen:** Die Tags `v1.0.0` und `v1.1.0-rc.1` werden erst nach dem Merge
-  gepusht; Lauf-IDs, Digests und JAR-Prüfsummen trägt ein Folge-Commit in
-  release.md nach. Das Abnahmeprotokoll für ein Zielsystem bleibt offen.
-  `release/1.0` ist weiterhin nicht per Ruleset geschützt.
+- **Grenzen:** Das Abnahmeprotokoll für ein Zielsystem bleibt offen.
+  `release/1.0` ist weiterhin nicht per Ruleset geschützt. Der erste
+  Tag-Versuch scheiterte an R56.
+
+### R56 – Tag-Läufe scheitern am Fixture-Test der Release-Assets
+
+- [x] Behoben am 1. November 2026.
+- **Anlass:** Die ersten Tag-Läufe von `v1.0.0` (41347537762) und
+  `v1.1.0-rc.1` (41347538306) brachen im Schritt „Assemble release assets"
+  ab, bevor etwas veröffentlicht wurde: Die Unit-Tests von
+  `scripts/release-assets.test.mjs` laufen im selben Schritt mit exportiertem
+  `RELEASE_TAG`, und `assembleAssets()` fällt ohne übergebenen Tag auf die
+  Umgebung zurück. Der Test „untagged builds assemble without a tag check"
+  verglich so den echten Tag mit der Fixture-Version `1.0.0-rc.3`; beim
+  rc.3-Tag war das zufällig identisch.
+- **Umgesetzt:** Die Testdatei löscht `RELEASE_TAG` vor den Tests (#291,
+  Backport #292). Weil das Ruleset bestehende `v*`-Tags schützt und keine
+  Bypass-Akteure kennt, wurde es für das Löschen der beiden unveröffentlichten
+  Tags vorübergehend entfernt; es ist mit denselben Regeln wieder einzurichten
+  ([repository-protection.md](repository-protection.md)). Die Tags wurden auf
+  die korrigierten Merge-Commits gesetzt.
+- **Geprüft:** `RELEASE_TAG=v9.9.9 node --test scripts/release-assets.test.mjs`
+  lokal (4 Tests), PR-Läufe und die erfolgreichen Tag-Läufe (siehe
+  [release.md](release.md)).
+- **Grenzen:** Ein Tag-Lauf, der nach `verify` scheitert, lässt sich wegen des
+  Rulesets nur mit neuer Nummer oder vorübergehend deaktiviertem Ruleset
+  wiederholen; beides ist jetzt in [release.md](release.md) beschrieben.
 
 ## Nachweise der Bestandsaufnahme
 
