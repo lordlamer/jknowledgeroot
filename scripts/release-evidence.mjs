@@ -10,10 +10,12 @@ export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 
 export function verifyBuildInfo(properties, version, revision) {
   for (const [key, expected] of Object.entries({version, revision})) {
-    // Maven generates these two values without Java-properties escapes.
-    const values = [...properties.matchAll(new RegExp(`^build\\.${key}=([^\\r\\n]*)`, 'gm'))];
+    // Maven generates these two values without Java-properties escapes; comparing line by line
+    // keeps the key out of a regular expression.
+    const prefix = `build.${key}=`;
+    const values = properties.split(/\r?\n/).filter(line => line.startsWith(prefix)).map(line => line.slice(prefix.length));
     assert.equal(values.length, 1, `JAR build.${key} missing or ambiguous`);
-    assert.equal(values[0][1], expected, `JAR build.${key} must match the current build`);
+    assert.equal(values[0], expected, `JAR build.${key} must match the current build`);
   }
   return {version, revision};
 }

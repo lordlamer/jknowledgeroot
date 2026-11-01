@@ -30,9 +30,12 @@ test('assembles the verified JAR, evidence and sha256sum-compatible checksums', 
     assert.equal(result.version, version);
     assert.deepEqual(readdirSync(assetDir).sort(), [...result.files].sort());
     const sums = readFileSync(join(assetDir, 'SHA256SUMS'), 'utf8');
-    assert.match(sums, new RegExp(`^${sha256(jarBytes)}  knowledgeroot-${version}\\.jar$`, 'm'));
+    const lines = sums.split('\n');
+    assert.ok(lines.includes(`${sha256(jarBytes)}  knowledgeroot-${version}.jar`), sums);
+    // Every evidence file is listed once with a hex checksum, as sha256sum prints it.
+    const listed = name => lines.filter(line => line.endsWith(`  ${name}`) && /^[0-9a-f]{64}$/.test(line.slice(0, -(name.length + 2))));
     for (const name of EVIDENCE) {
-      assert.match(sums, new RegExp(`^[0-9a-f]{64}  ${name.replace('.', '\\.')}$`, 'm'));
+      assert.equal(listed(name).length, 1, `${name} must be listed once in SHA256SUMS`);
       assert.equal(readFileSync(join(assetDir, name), 'utf8'), readFileSync(join(target, name), 'utf8'));
     }
     assert.equal(sums.split('\n').filter(Boolean).length, EVIDENCE.length + 1);
@@ -73,9 +76,10 @@ test('pre-release detection follows the SemVer tag', () => {
 
 test('release notes name the JAR checksum, both registry digests and the candidate status', () => {
   const notes = renderReleaseNotes({tag, manifest: manifest(), appDigest, databaseDigest});
-  assert.match(notes, new RegExp(`knowledgeroot-${version}\\.jar.*${sha256(jarBytes)}`));
-  assert.match(notes, new RegExp(`lordlamer/knowledgeroot:${tag}\` = \`lordlamer/knowledgeroot@${appDigest}`));
-  assert.match(notes, new RegExp(`database-${tag}\` = \`lordlamer/knowledgeroot@${databaseDigest}`));
+  // Literal comparisons instead of regular expressions built from the fixture values.
+  assert.ok(notes.split('\n').some(line => line.includes(`knowledgeroot-${version}.jar`) && line.includes(sha256(jarBytes))), notes);
+  assert.ok(notes.includes(`lordlamer/knowledgeroot:${tag}\` = \`lordlamer/knowledgeroot@${appDigest}`), notes);
+  assert.ok(notes.includes(`database-${tag}\` = \`lordlamer/knowledgeroot@${databaseDigest}`), notes);
   assert.match(notes, /25\.0\.4\.1\+1-LTS, 12\.3\.3-MariaDB/);
   assert.match(notes, /release candidate/);
   const final = renderReleaseNotes({tag: 'v1.0.0', manifest: {...manifest(), version: '1.0.0', jar: 'target/knowledgeroot-1.0.0.jar'}, appDigest, databaseDigest});
