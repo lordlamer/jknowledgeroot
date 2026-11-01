@@ -203,8 +203,13 @@ public class PageImpl implements PageDao {
             params.put("deleted", pageFilter.getDeleted());
         }
 
+        if (pageFilter.getLabel() != null) {
+            sqlParams.put("label", "id IN (SELECT tc.page_id FROM tag_content tc JOIN tag t ON t.id = tc.tag_id WHERE t.name = :label)");
+            params.put("label", pageFilter.getLabel());
+        }
+
         if (!sqlParams.isEmpty()) sql.append(" WHERE ").append(String.join(" AND ", sqlParams.values()));
-        sql.append(" ORDER BY id ASC");
+        sql.append(Boolean.TRUE.equals(pageFilter.getNewestFirst()) ? " ORDER BY change_date DESC, id DESC" : " ORDER BY id ASC");
 
         if(pageFilter.getLimit() != null && pageFilter.getStart() != null) {
             params.put("limit", pageFilter.getLimit());

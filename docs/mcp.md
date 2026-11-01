@@ -51,23 +51,72 @@ Aufruf.
 
 ## Werkzeuge
 
-| Tool | Zugriff | Zweck |
-|---|---|---|
-| `list_spaces` | lesen | Betretbare Spaces mit id, key, name, description |
-| `search_pages(query, space?, start?)` | lesen | Volltextsuche, 20 Treffer je Aufruf mit Pfad, Space und Ausschnitt |
-| `get_page(id)` | lesen | Seite mit Breadcrumb, Labels, Inhalt als HTML, Revision und Link |
-| `list_pages(parent?, space?)` | lesen | Unterseiten einer Seite oder Hauptseiten eines Space (50 je Aufruf) |
-| `list_starred()` | lesen | Favoriten des Benutzers |
-| `list_comments(page)` | lesen | Kommentare einer Seite |
-| `create_page(name, content, parent?, space?, labels?)` | schreiben | Neue Seite unter einer Elternseite oder als Hauptseite |
-| `update_page(id, revision, name?, content?, labels?)` | schreiben | Speichern mit Revisionsprüfung; ausgelassene Felder bleiben |
-| `add_comment(page, text)` | schreiben | Kommentar im Namen des Benutzers |
+Lesend (Scope `mcp:read`):
 
-Inhalte sind HTML wie im Editor; der Sanitizer entfernt Skripte und Stile
-beim Speichern. Fehlermeldungen an den Assistenten sind feste Texte
+| Tool | Zweck |
+|---|---|
+| `list_spaces` | Betretbare Spaces mit id, key, name, description |
+| `get_space(id)` | Beschreibung, Homepage, eigene Rechte im Space |
+| `search_pages(query, space?, start?, label?, changed_since?, changed_by?)` | Volltextsuche, 20 Treffer je Aufruf mit Pfad, Space und Ausschnitt; Filter nach Label, Änderungsdatum (YYYY-MM-DD) und Login des letzten Bearbeiters |
+| `get_page(id, format?)` | Seite mit Breadcrumb, Labels, Inhalt (Markdown, mit `format=html` HTML), Revision, Link, Anzahl Kommentare und Anhänge |
+| `list_pages(parent?, space?)` | Unterseiten einer Seite oder Hauptseiten eines Space (50 je Aufruf) |
+| `get_tree(parent?, space?, depth?)` | Teilbaum als verschachtelte Knoten, bis 4 Ebenen und 500 Knoten |
+| `list_starred()` | Favoriten des Benutzers |
+| `list_comments(page)` | Kommentare einer Seite |
+| `recent_changes(space?, since?, start?)` | Zuletzt geänderte Seiten, neueste zuerst |
+| `list_labels(space?)` | Labels mit Seitenzahl, nur über lesbare Seiten gezählt |
+| `pages_by_label(label, space?, start?)` | Seiten mit einem Label |
+| `list_attachments(page)` | Anhänge mit Größe, Typ und Download-Link |
+| `get_attachment(id, max_chars?)` | Text eines Anhangs: Text, Markdown, CSV, JSON, XML, HTML (als Markdown) und PDF, bis 100.000 Zeichen und 10 MB; andere Typen nur mit Link |
+| `get_history(page, start?)` | Gespeicherte Versionen mit History-ID; gelöschte Seiten sehen nur Administratoren |
+| `get_revision(page, history_id, format?)` | Eine frühere Version mit Inhalt |
+| `compare_revisions(page, from, to?)` | Wortweise Unterschiede von Name und Text zweier Versionen oder zur aktuellen Seite |
+
+Schreibend (Scope `mcp:write`):
+
+| Tool | Zweck |
+|---|---|
+| `create_page(name, content, parent?, space?, labels?, format?)` | Neue Seite unter einer Elternseite oder als Hauptseite |
+| `update_page(id, revision, name?, content?, labels?, format?)` | Speichern mit Revisionsprüfung; ausgelassene Felder bleiben |
+| `set_labels(id, revision, labels)` | Labels ersetzen |
+| `add_comment(page, text)`, `delete_comment(page, comment_id)` | Kommentare im Namen des Benutzers |
+| `star_page(id, starred?)` | Favorit setzen oder entfernen |
+| `delete_page(id, revision)`, `restore_page(id, revision, history_id?)` | In den Papierkorb; zurück holen Administratoren wie unter Admin → Deleted pages, Bearbeiter stellen frühere Versionen her |
+| `move_page(id, parent, revision, space?)` | Verschieben unter eine Seite oder auf die oberste Ebene eines Space |
+| `delete_attachment(id)` | Anhang entfernen |
+
+Inhalte sind standardmäßig Markdown: Beim Lesen wird das gespeicherte HTML
+in Markdown umgewandelt (flexmark), beim Schreiben Markdown in HTML; mit
+`format=html` geht beides unverändert durch. Der Sanitizer entfernt Skripte
+und Stile beim Speichern. Fehlermeldungen an den Assistenten sind feste Texte
 („You may not edit this page.", „The page has changed meanwhile…"); technische
-Ursachen stehen nur im Serverlog. Löschen, Verschieben, Anhänge und
-Rechteverwaltung gibt es bewusst nicht über MCP.
+Ursachen stehen nur im Serverlog. Hochladen von Anhängen und die Rechte- und
+Space-Verwaltung gibt es bewusst nicht über MCP.
+
+## Resources und Prompts
+
+- **Resources** hängen Clients als Kontext an, ohne ein Tool aufzurufen:
+  `knowledgeroot://page/{id}` liefert die Seite als Markdown mit Space,
+  Pfad, Labels, Änderung, Link und Revision; `knowledgeroot://space/{id}`
+  eine Übersicht des Space mit seinen Hauptseiten. Beide gehorchen den
+  Leserechten wie die Tools.
+- **Prompts** sind Vorlagen, die Clients dem Benutzer anbieten:
+  `summarize_space(space)`, `find_stale_pages(space?, months?)` und
+  `draft_page(topic, parent?)`. Sie beschreiben dem Assistenten, welche
+  Tools er in welcher Reihenfolge nutzt; Änderungen verlangen sie erst nach
+  Rückfrage beim Benutzer.
+
+## Audit und Grenzen
+
+Jeder Aufruf eines Tools, einer Resource oder eines Prompts landet in
+`mcp_audit`: Zeitpunkt, Benutzer, verbundener Client, Name, eine Kurzform
+der Parameter (Texte gekürzt, Seiteninhalte nur als Länge), Ergebnis
+(`ok`, `denied`, `limited`, `error`, `failed`), die Meldung an den
+Assistenten, Dauer und Absenderadresse. Administratoren sehen unter
+Admin → MCP alle verbundenen Assistenten aller Benutzer (mit Trennen) und
+das Protokoll, filterbar nach Login und seitenweise; Einträge werden nach
+90 Tagen gelöscht. Je Benutzer sind 240 Aufrufe pro Minute erlaubt, darüber
+bekommt der Assistent eine Bitte zu warten.
 
 ## Ablauf und Absicherung
 
@@ -110,6 +159,11 @@ Einstellungen: `mcp.enabled`, `mcp.redirect-hosts` in `app_setting`.
 
 ## Prüfung
 
+`McpFeaturesIntegrationTest` deckt die Inhaltswerkzeuge ab: Markdown hin und
+zurück, Labels, Favoriten, Baum, letzte Änderungen, Suchfilter, Verlauf mit
+Version und Vergleich, Anhänge (Text und Binärdatei), Kommentar löschen,
+Verschieben, Löschen und Wiederherstellen, Resources, Prompts, die
+Audit-Zeilen und die Admin-Seite mit Trennen durch den Administrator.
 `McpIntegrationTest` läuft gegen einen echten Port mit MariaDB: Server aus
 (404), Einschalten und Validierung der Host-Liste, Metadata-Dokumente und
 `WWW-Authenticate`, Registrierung (fremder Host und vertrauliche Clients

@@ -38,6 +38,22 @@ public class PageLabelImpl implements PageLabelDao {
     }
 
     @Override
+    public List<LabelCount> listLabels(Integer spaceId, Integer viewer) {
+        var params = new java.util.HashMap<String, Object>();
+        params.put("viewer", viewer);
+        params.put("space", spaceId);
+        return jdbcClient.sql(ReadablePagesSql.CTE + """
+                SELECT t.name, COUNT(DISTINCT tc.page_id) AS pages
+                FROM tag_content tc
+                JOIN tag t ON t.id = tc.tag_id
+                JOIN page p ON p.id = tc.page_id
+                WHERE p.deleted = 0 AND p.id IN (SELECT id FROM readable_pages) AND (:space IS NULL OR p.space_id = :space)
+                GROUP BY t.name
+                ORDER BY t.name ASC
+                """).params(params).query((rs, row) -> new LabelCount(rs.getString("name"), rs.getInt("pages"))).list();
+    }
+
+    @Override
     public void setForPage(PageId pageId, List<String> labels) {
         // Normalise: trim, drop empty, truncate, de-duplicate case-insensitively
         // while preserving the first-seen casing.

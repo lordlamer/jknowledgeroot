@@ -122,7 +122,8 @@ public class McpSecurityConfig {
             // A plain list: the authorization table stores the claims as JSON with an allow-list of collection types.
             context.getClaims().audience(new java.util.ArrayList<>(List.of(issuer + McpUrls.MCP_PATH)))
                     .claim(McpAuthenticationConverter.CREDENTIAL_CLAIM, user.getCredentialTag())
-                    .claim("login", user.getLogin());
+                    .claim("login", user.getLogin())
+                    .claim("cid", context.getRegisteredClient().getId());
         };
     }
 

@@ -1268,6 +1268,35 @@ OAuth-Anmeldung; die Client-API für die mobile App (R44) ist bereits enthalten.
 - **Geprüft:** Screenshots der Seitenansicht mit Seitenleiste und der
   Login-Seite in beiden Themes gegen die laufende Anwendung.
 
+### R54 – MCP-Server: vollständiger Werkzeugsatz, Resources, Prompts und Audit
+
+- [x] Lokal umgesetzt und geprüft am 1. November 2026.
+- **Ziel:** Alle noch fehlenden MCP-Funktionen außer dem Hochladen von
+  Anhängen nachreichen, Markdown als Austauschformat, und jeden Aufruf
+  revisionssicher protokollieren mit Einsicht für Administratoren.
+- **Umgesetzt:** Neue Tools `get_space`, `get_tree`, `recent_changes`,
+  `list_labels`, `pages_by_label`, `list_attachments`, `get_attachment`
+  (Text, Markdown, CSV, JSON, XML, HTML, PDF über PDFBox 3.0.8),
+  `get_history`, `get_revision`, `compare_revisions`, `set_labels`,
+  `delete_comment`, `star_page`, `delete_page`, `restore_page`,
+  `move_page`, `delete_attachment`; `search_pages` filtert nach Label,
+  Änderungsdatum und Bearbeiter (`PageFilter.label`/`newestFirst`,
+  `PageLabelDao.listLabels` über die lesbaren Seiten). Inhalte sind
+  Markdown (flexmark 0.64.8, HTML mit `format=html`). Resources
+  `knowledgeroot://page/{id}` und `knowledgeroot://space/{id}`, Prompts
+  `summarize_space`, `find_stale_pages`, `draft_page`. Audit in
+  `mcp_audit` (Changeset `1.0.18-mcp-audit`) über `McpToolSupport` für
+  Tools, Resources und Prompts mit Client aus dem Token-Claim `cid`,
+  Ratenbegrenzung 240 Aufrufe je Benutzer und Minute, Aufräumen nach
+  90 Tagen; Admin-Seite `/admin/mcp` mit allen Verbindungen (Trennen) und
+  dem Protokoll. Beschreibung in [mcp.md](mcp.md).
+- **Geprüft:** `McpFeaturesIntegrationTest` gegen echten Port und MariaDB
+  mit dem MCP-Java-SDK-Client (alle neuen Tools, Suchfilter, Resources,
+  Prompts, Audit-Zeilen ohne Seiteninhalte, Admin-Seite mit Trennen);
+  `McpIntegrationTest` an das Markdown-Standardformat angepasst.
+- **Grenzen:** Kein Hochladen von Anhängen; Labelzählung nur über lesbare
+  Seiten; Ratenbegrenzung je Instanz im Speicher.
+
 ## Nachweise der Bestandsaufnahme
 
 - `mvn -B test` bei der ursprünglichen Bestandsaufnahme: Anwendung kompiliert unter Java 25; Testkompilierung scheitert am Konstruktoraufruf in `PageControllerTest`. Dieser Befund ist durch R01 behoben; das aktuelle Prüfergebnis steht dort.

@@ -134,7 +134,11 @@ Assistent registriert sich selbst, der Benutzer meldet sich wie gewohnt an
 (auch mit zweitem Faktor) und entscheidet auf der Zustimmungsseite, ob der
 Assistent nur lesen oder auch Seiten anlegen, bearbeiten und kommentieren
 darf. Der Assistent sieht genau die Spaces und Seiten, die der Benutzer sehen
-darf, und schreibt in dessen Namen mit Revisionsprüfung. Im Profil stehen die
+darf, und schreibt in dessen Namen mit Revisionsprüfung; dazu gehören Baum,
+Suche mit Filtern, Labels, Favoriten, Kommentare, Anhänge lesen, Verlauf mit
+Vergleich, Verschieben, Löschen und Wiederherstellen. Administratoren sehen
+unter Admin → MCP jeden Aufruf mit Benutzer, Assistent, Parametern und
+Ergebnis und können Verbindungen trennen. Im Profil stehen die
 verbundenen Assistenten mit Zugriff und Gültigkeit; dort lassen sie sich
 trennen. Ein Passwortwechsel trennt alle. Administratoren pflegen die Liste
 der Hosts, zu denen Assistenten nach der Anmeldung zurückkehren dürfen;

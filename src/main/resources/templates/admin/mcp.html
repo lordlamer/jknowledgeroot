@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
+<head>
+    <title>Knowledgeroot MCP</title>
+</head>
+<body>
+<div class="kr-page-wrap" style="max-width:1200px">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb" style="padding-left:0; padding-right:0">
+            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
+            <li class="breadcrumb-item">Admin</li>
+            <li class="breadcrumb-item active" aria-current="page">MCP</li>
+        </ol>
+    </nav>
+
+    <header class="kr-page-header" style="padding:12px 0 20px">
+        <div class="kr-page-title-wrap">
+            <h1 class="kr-page-title" style="font-size:24px">MCP server</h1>
+            <p class="kr-page-subtitle" style="margin:0">
+                <span th:if="${enabled}">Switched on. </span><span th:unless="${enabled}">Switched off; existing connections do not work. </span>
+                Assistants connected by users and what they called. Switch and allowed hosts are under
+                <a href="/admin/settings" hx-get="/admin/settings" hx-target="#content" hx-push-url="true">Settings</a>.
+            </p>
+        </div>
+    </header>
+
+    <div th:if="${disconnected}" class="alert kr-alert-info" role="status" style="margin-bottom:16px">Assistant disconnected.</div>
+
+    <h2 style="font-size:17px; margin:8px 0 10px">Connected assistants</h2>
+    <p th:if="${#lists.isEmpty(connections)}" style="color:var(--kr-text-2)">No assistant is connected.</p>
+    <table class="kr-tbl" th:if="${!#lists.isEmpty(connections)}" id="mcp-connections">
+        <thead>
+        <tr>
+            <th scope="col">User</th>
+            <th scope="col">Assistant</th>
+            <th scope="col">Access</th>
+            <th scope="col">Connected</th>
+            <th scope="col">Valid until</th>
+            <th scope="col" style="text-align:right">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="entry : ${connections}">
+            <td><b th:text="${entry.login() != null} ? ${entry.login()} : ('#' + ${entry.userId()})">login</b></td>
+            <td>
+                <span th:text="${entry.connection().clientName()}">Claude</span>
+                <small th:if="${!entry.connection().redirectHost().isEmpty()}" style="display:block; color:var(--kr-text-3)" th:text="${entry.connection().redirectHost()}">claude.ai</small>
+            </td>
+            <td th:text="${entry.connection().canWrite()} ? 'Read and write' : 'Read only'">Read only</td>
+            <td th:text="${entry.connection().connectedAt() != null} ? ${#temporals.format(entry.connection().connectedAt(), 'yyyy-MM-dd HH:mm')} : ''">date</td>
+            <td th:text="${entry.connection().validUntil() != null} ? ${#temporals.format(entry.connection().validUntil(), 'yyyy-MM-dd HH:mm')} : ''">date</td>
+            <td style="text-align:right">
+                <form method="post" th:action="@{/admin/mcp/connections/revoke}" style="display:inline">
+                    <input type="hidden" name="userId" th:value="${entry.userId()}">
+                    <input type="hidden" name="client" th:value="${entry.connection().clientId()}">
+                    <button type="submit" class="kr-btn danger sm">Disconnect</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2 style="font-size:17px; margin:28px 0 10px">Audit log</h2>
+    <form method="get" th:action="@{/admin/mcp}" hx-get="/admin/mcp" hx-target="#content" hx-push-url="true"
+          style="display:flex; gap:8px; align-items:center; margin-bottom:12px">
+        <input type="text" name="user" th:value="${user}" placeholder="Filter by login" class="form-control" style="max-width:260px">
+        <button type="submit" class="kr-btn">Filter</button>
+        <span style="color:var(--kr-text-3); font-size:12.5px" th:text="'Entries are kept for ' + ${retentionDays} + ' days.'">Entries are kept for 90 days.</span>
+    </form>
+    <p th:if="${#lists.isEmpty(entries)}" style="color:var(--kr-text-2)">No calls recorded yet.</p>
+    <table class="kr-tbl" th:if="${!#lists.isEmpty(entries)}" id="mcp-audit">
+        <thead>
+        <tr>
+            <th scope="col">Time</th>
+            <th scope="col">User</th>
+            <th scope="col">Assistant</th>
+            <th scope="col">Call</th>
+            <th scope="col">Parameters</th>
+            <th scope="col">Outcome</th>
+            <th scope="col" style="text-align:right">ms</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="entry : ${entries}">
+            <td style="white-space:nowrap" th:text="${#temporals.format(entry.createdAt(), 'yyyy-MM-dd HH:mm:ss')}">time</td>
+            <td th:text="${entry.login()}">login</td>
+            <td th:text="${entry.clientName() != null} ? ${entry.clientName()} : ''">Claude</td>
+            <td><code th:text="${entry.kind() == 'tool'} ? ${entry.name()} : (${entry.kind()} + ' ' + ${entry.name()})">get_page</code></td>
+            <td style="color:var(--kr-text-2); font-size:12.5px; max-width:360px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap"
+                th:text="${entry.parameters()}" th:title="${entry.parameters()}">id=1</td>
+            <td>
+                <span class="kr-pill active" th:if="${entry.outcome() == 'ok'}">ok</span>
+                <span class="kr-pill inactive" th:unless="${entry.outcome() == 'ok'}" th:text="${entry.outcome()}" th:title="${entry.detail()}">error</span>
+            </td>
+            <td style="text-align:right; color:var(--kr-text-3)" th:text="${entry.durationMs()}">12</td>
+        </tr>
+        </tbody>
+    </table>
+    <div style="display:flex; gap:8px; margin-top:12px" th:if="${start > 0 or hasNext}">
+        <a class="kr-btn sm" th:if="${start > 0}" th:href="@{/admin/mcp(user=${user},start=${start - pageSize < 0 ? 0 : start - pageSize})}"
+           th:attr="hx-get=@{/admin/mcp(user=${user},start=${start - pageSize < 0 ? 0 : start - pageSize})}" hx-target="#content" hx-push-url="true">Newer</a>
+        <a class="kr-btn sm" th:if="${hasNext}" th:href="@{/admin/mcp(user=${user},start=${start + pageSize})}"
+           th:attr="hx-get=@{/admin/mcp(user=${user},start=${start + pageSize})}" hx-target="#content" hx-push-url="true">Older</a>
+    </div>
+</div>
+</body>
+</html>

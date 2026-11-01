@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 @ControllerAdvice(basePackages = {"org.knowledgeroot.app.frontend.web", "org.knowledgeroot.app.page.ui",
         "org.knowledgeroot.app.space", "org.knowledgeroot.app.security.user.web", "org.knowledgeroot.app.profile.web",
         "org.knowledgeroot.app.security.mfa", "org.knowledgeroot.app.login", "org.knowledgeroot.app.security.recovery",
-        "org.knowledgeroot.app.file.web"})
+        "org.knowledgeroot.app.file.web", "org.knowledgeroot.app.mcp.oauth"})
 @RequiredArgsConstructor
 @lombok.extern.slf4j.Slf4j
 public class LayoutDefines {
