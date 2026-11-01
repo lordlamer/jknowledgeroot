@@ -25,6 +25,7 @@
         <project.build.outputTimestamp>2026-09-13T00:00:00Z</project.build.outputTimestamp>
         <build.revision>unknown</build.revision>
         <htmx-spring-boot.version>5.1.0</htmx-spring-boot.version>
+        <spring-ai.version>2.0.2</spring-ai.version>
         <!-- Security fixes newer than Boot 4.1.1's managed Tomcat; remove when the BOM catches up. -->
         <tomcat.version>11.0.25</tomcat.version>
         <!-- Jackson patch releases fixing the October 2026 OSV findings; remove when the BOM catches up. -->
@@ -88,6 +89,27 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <!-- MCP server for AI assistants: OAuth 2.1 authorization server, JWT resource server and the Spring AI transport. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security-oauth2-authorization-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
+            <version>${spring-ai.version}</version>
+            <exclusions>
+                <!-- Boot 4 names the MVC starter spring-boot-starter-webmvc; the alias would duplicate it. -->
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-web</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- Minio Dependencies -->
         <dependency>

@@ -56,6 +56,29 @@
     <p th:if="${mfa == null or !mfa.enrolled()}">Not set up. A code from an authenticator app protects your account in addition to the password.</p>
     <a class="kr-btn" href="/profile/mfa" hx-get="/profile/mfa" hx-target="#content" hx-push-url="true">Manage</a>
 </section>
+<section class="kr-editor-pane mt-4" aria-labelledby="connections-heading" th:if="${mcpEnabled == true or (connections != null and !connections.isEmpty())}">
+    <h2 id="connections-heading">Connected assistants</h2>
+    <p>AI assistants that may use Knowledgeroot in your name over the MCP server. Disconnecting ends their access.</p>
+    <p th:if="${disconnected}" class="alert kr-alert-info" role="status">Assistant disconnected.</p>
+    <p th:if="${connections == null or connections.isEmpty()}">No assistant is connected.</p>
+    <table class="table" th:if="${connections != null and !connections.isEmpty()}">
+        <thead><tr><th>Assistant</th><th>Access</th><th>Connected</th><th>Valid until</th><th></th></tr></thead>
+        <tbody>
+        <tr th:each="connection : ${connections}">
+            <td><span th:text="${connection.clientName()}">Claude</span><small th:if="${!connection.redirectHost().isEmpty()}" style="display:block; color:var(--kr-text-3)" th:text="${connection.redirectHost()}">claude.ai</small></td>
+            <td th:text="${connection.canWrite()} ? 'Read and write' : 'Read only'">Read only</td>
+            <td th:text="${connection.connectedAt() != null} ? ${#temporals.format(connection.connectedAt(), 'yyyy-MM-dd HH:mm')} : ''">2026-11-01</td>
+            <td th:text="${connection.validUntil() != null} ? ${#temporals.format(connection.validUntil(), 'yyyy-MM-dd HH:mm')} : ''">2026-11-08</td>
+            <td style="text-align:right">
+                <form method="post" th:action="@{/profile/connections/revoke}" style="display:inline">
+                    <input type="hidden" name="client" th:value="${connection.clientId()}">
+                    <button type="submit" class="kr-btn danger sm">Disconnect</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</section>
 <section class="kr-editor-pane mt-4" aria-labelledby="password-heading">
     <p th:if="${@environment.getProperty('knowledgeroot.recovery.enabled', 'false') == 'true'}">
         <a th:href="@{/profile/recovery}">Confirm email for password recovery</a>

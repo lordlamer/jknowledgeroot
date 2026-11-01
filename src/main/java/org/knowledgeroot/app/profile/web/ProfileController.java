@@ -31,6 +31,8 @@ class ProfileController {
     private final UserContext userContext;
     private final ProfilePasswordService passwords;
     private final org.knowledgeroot.app.security.mfa.SecondFactorService secondFactors;
+    private final org.knowledgeroot.app.mcp.oauth.McpConnections mcpConnections;
+    private final org.knowledgeroot.app.mcp.McpSettings mcpSettings;
 
     @PostMapping("/profile/password")
     public String changePassword(@RequestParam String currentPassword, @RequestParam String newPassword,
@@ -42,6 +44,10 @@ class ProfileController {
             if (e.getStatusCode().value() != 400 && e.getStatusCode().value() != 409) throw e;
             model.addAttribute("userDetails", myProfileDao.findMyProfile());
             model.addAttribute("passwordError", e.getReason());
+            int userId = Integer.parseInt(userContext.getUserContext().getUserId());
+            model.addAttribute("mfa", secondFactors.status(userId));
+            model.addAttribute("connections", mcpConnections.list(userId));
+            model.addAttribute("mcpEnabled", mcpSettings.enabled());
             return "profile/show";
         }
         new SecurityContextLogoutHandler().logout(request, response, SecurityContextHolder.getContext().getAuthentication());
@@ -58,6 +64,7 @@ class ProfileController {
     @GetMapping("/profile")
     public String showProfile(
             @RequestParam(name = "updated", required = false) boolean updated,
+            @RequestParam(name = "disconnected", required = false) String disconnected,
             Model model,
             HtmxRequest htmxRequest
     ) {
@@ -70,6 +77,9 @@ class ProfileController {
         model.addAttribute("userDetails", myProfileDao.findMyProfile());
         model.addAttribute("updated", updated);
         model.addAttribute("mfa", secondFactors.status(Integer.parseInt(userDetails.getUserId())));
+        model.addAttribute("connections", mcpConnections.list(Integer.parseInt(userDetails.getUserId())));
+        model.addAttribute("mcpEnabled", mcpSettings.enabled());
+        model.addAttribute("disconnected", disconnected != null);
 
         if (htmxRequest.isHtmxRequest()) {
             return "profile/show :: body";

@@ -126,6 +126,21 @@ Token in der Benutzerverwaltung zurück; der Benutzer richtet danach einen
 neuen ein. Fünf falsche Codes beenden die Sitzung, die Anmeldung beginnt von
 vorn. Technische Details in [authentication.md](authentication.md#zweiter-faktor-totp).
 
+## KI-Assistenten über MCP
+
+Administratoren schalten unter Admin → Settings den MCP-Server ein. Danach
+verbinden Benutzer Assistenten wie Claude mit `https://<host>/mcp`: Der
+Assistent registriert sich selbst, der Benutzer meldet sich wie gewohnt an
+(auch mit zweitem Faktor) und entscheidet auf der Zustimmungsseite, ob der
+Assistent nur lesen oder auch Seiten anlegen, bearbeiten und kommentieren
+darf. Der Assistent sieht genau die Spaces und Seiten, die der Benutzer sehen
+darf, und schreibt in dessen Namen mit Revisionsprüfung. Im Profil stehen die
+verbundenen Assistenten mit Zugriff und Gültigkeit; dort lassen sie sich
+trennen. Ein Passwortwechsel trennt alle. Administratoren pflegen die Liste
+der Hosts, zu denen Assistenten nach der Anmeldung zurückkehren dürfen;
+Assistenten auf dem eigenen Rechner sind immer erlaubt. Einzelheiten in
+[mcp.md](mcp.md).
+
 ## Spaces
 
 Ein Space ist ein Container um einen eigenen Seitenbaum, vergleichbar mit

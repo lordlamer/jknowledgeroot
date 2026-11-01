@@ -53,8 +53,20 @@ class LoginController {
     @GetMapping("/login/success")
     public String loginSuccess(
             HtmxRequest htmxRequest,
+            jakarta.servlet.http.HttpServletRequest request,
             HttpServletResponse response
     ) {
+        // An assistant's OAuth flow sent the browser here; continue it instead of opening the start page.
+        var requestCache = new org.springframework.security.web.savedrequest.HttpSessionRequestCache();
+        var saved = requestCache.getRequest(request, response);
+        if (saved != null && saved.getRedirectUrl() != null && saved.getRedirectUrl().contains("/oauth2/authorize")) {
+            requestCache.removeRequest(request, response);
+            if (htmxRequest.isHtmxRequest()) {
+                response.setHeader("HX-Redirect", saved.getRedirectUrl());
+                return "login :: body";
+            }
+            return "redirect:" + saved.getRedirectUrl();
+        }
         if (htmxRequest.isHtmxRequest()) {
             response.setHeader("HX-Redirect", "/");
             return "login :: body";

@@ -106,6 +106,15 @@ The Knowledgeroot Flutter app uses the JSON API under `/api/v1` with the regular
 session and CSRF protection. See the [client API guide](docs/client-api.md) for
 endpoints, authentication and the accompanying utf8mb4 migration.
 
+## AI assistants (MCP server)
+
+Assistants such as Claude connect to `https://<host>/mcp` over OAuth 2.1 with the
+user's own account and act with that user's permissions: search, read and, when
+the user allows it on the consent page, create and edit pages and add comments.
+Administrators switch the server on under *Admin → Settings* and keep the list of
+hosts assistants may return to; users see and disconnect their assistants in the
+profile. See the [MCP guide](docs/mcp.md).
+
 ## Page permissions
 
 Every page lives in a space, a container with its own permissions (view, edit,
