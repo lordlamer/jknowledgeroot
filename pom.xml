@@ -5,7 +5,7 @@
 
 	<groupId>org.knowledgeroot</groupId>
 	<artifactId>knowledgeroot</artifactId>
-	<version>1.0.0-rc.3</version>
+	<version>1.0.0</version>
 	<packaging>jar</packaging>
 
 	<name>knowledgeroot</name>
@@ -30,6 +30,8 @@
         <!-- Jackson patch releases fixing the October 2026 OSV findings; remove when the BOM catches up. -->
         <jackson-2-bom.version>2.21.8</jackson-2-bom.version>
         <jackson-bom.version>3.1.8</jackson-bom.version>
+        <!-- MariaDB Connector/J fixing the 30 October 2026 OSV findings; remove when the BOM catches up. -->
+        <mariadb.version>3.5.11</mariadb.version>
 	</properties>
 
     <dependencies>
