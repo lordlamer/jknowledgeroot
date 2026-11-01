@@ -1211,6 +1211,46 @@ OAuth-Anmeldung; die Client-API für die mobile App (R44) ist bereits enthalten.
   Space-Übersicht zeigt bis zu 100 Hauptseiten ohne Blättern. Spaces lassen
   sich archivieren, aber nicht löschen.
 
+### R52 – MCP-Server mit OAuth 2.1 für KI-Assistenten
+
+- [x] Lokal umgesetzt und geprüft am 1. November 2026.
+- **Ziel:** KI-Assistenten wie Claude sollen Knowledgeroot wie in eproc-api
+  als MCP-Server nutzen: Anmeldung per OAuth mit dem eigenen Konto, Lesen und
+  auf Wunsch Schreiben mit den Rechten des Benutzers, abschaltbar durch
+  Administratoren.
+- **Umgesetzt:** Spring AI 2.0.2 (`spring-ai-starter-mcp-server-webmvc`,
+  Streamable HTTP zustandslos auf `/mcp`) und der in Spring Security 7.1
+  enthaltene Authorization Server statt des Eigenbaus aus eproc: Authorization
+  Code mit PKCE, Refresh-Rotation, dynamische Client-Registrierung (RFC 7591,
+  offen, aber nur öffentliche Clients mit Rückkehr-URIs auf freigegebene Hosts
+  oder `localhost`), Metadata nach RFC 8414 und RFC 9728, Bearer-401 mit
+  `resource_metadata`. Anmeldung über den Formular-Login einschließlich
+  zweitem Faktor, eigene Zustimmungsseite `/oauth2/consent` mit Wahl zwischen
+  `mcp:read` und `mcp:write`. Access-Tokens als JWT (15 Minuten,
+  Benutzer-ID als Subjekt, Zielgruppe `/mcp`, Passwortmarke), Refresh 7 Tage;
+  Signaturschlüssel in `oauth2_signing_key`, privat mit `KR_MASTER_KEY`
+  verschlüsselt. Changeset `1.0.17-mcp` mit den Tabellen des Authorization
+  Servers. Tools `list_spaces`, `search_pages`, `get_page`, `list_pages`,
+  `list_starred`, `list_comments` sowie mit Schreibrecht `create_page`,
+  `update_page` (Revisionsprüfung) und `add_comment`; jedes Tool läuft durch
+  `McpToolSupport` (Scope-Prüfung, Log, feste Fehlertexte statt Ursachen).
+  Admin → Settings schaltet den Server und pflegt die Host-Liste; das Profil
+  zeigt verbundene Assistenten und trennt sie; stündliches Aufräumen
+  abgelaufener Autorisierungen. Passwortwechsel, Deaktivierung und Löschung
+  beenden den Zugriff. Beschreibung in [mcp.md](mcp.md) und
+  [product-functions.md](product-functions.md#ki-assistenten-über-mcp).
+- **Geprüft:** `McpIntegrationTest` gegen echten Port und MariaDB mit dem
+  MCP-Java-SDK-Client (Server aus, Einschalten und Host-Validierung, Metadata,
+  `WWW-Authenticate`, Registrierung mit Ablehnungen, Ablauf über Login und
+  Zustimmung, Leser, Außenstehender, Bearbeiter mit Anlegen, Revisionskonflikt,
+  Speichern, Kommentar und Unterseiten, Refresh-Rotation, Profil und Trennen,
+  Passwortwechsel, Ausschalten); `McpSettingsTest` für die Rückkehr-Allow-List;
+  die bestehende Testsuite unverändert grün.
+- **Grenzen:** Keine Tools für Löschen, Verschieben, Anhänge und Rechte. Die
+  Zustimmung gilt je registriertem Client; claude.ai registriert sich je
+  Connector neu. Kein Audit-Log über das Anwendungslog hinaus. Die mobile App
+  ist nicht betroffen.
+
 ## Nachweise der Bestandsaufnahme
 
 - `mvn -B test` bei der ursprünglichen Bestandsaufnahme: Anwendung kompiliert unter Java 25; Testkompilierung scheitert am Konstruktoraufruf in `PageControllerTest`. Dieser Befund ist durch R01 behoben; das aktuelle Prüfergebnis steht dort.

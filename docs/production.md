@@ -110,6 +110,7 @@ Beim direkten JAR-Start außerdem `KR_STORAGE_DRIVER=file` und ein persistentes
 | `KR_DB_USER`, `KR_DB_PASSWORD` | Eigenes Laufzeitkonto |
 | `KR_MASTER_KEY` | Mindestens 32 zufällige Zeichen; verschlüsselt gespeicherte TOTP-Secrets des zweiten Faktors. In Produktion Pflicht, mit den Backups aufbewahren, nicht beiläufig wechseln |
 | `KR_MIGRATION_USER`, `KR_MIGRATION_PASSWORD` | Eigenes Migrationskonto auf derselben Datenbank |
+| `KR_PUBLIC_URL` | Optional, empfohlen sobald der MCP-Server eingeschaltet ist: öffentliche HTTPS-Origin, die als Aussteller und Zielgruppe der OAuth-Tokens dient (siehe [mcp.md](mcp.md)); auch für die Passwort-Wiederherstellung |
 
 root und identische Benutzernamen für beide Aufgaben werden abgelehnt. Die
 Anwendung prüft fehlende Einstellungen früh, ohne deren Werte auszugeben. Im

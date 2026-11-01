@@ -46,6 +46,19 @@
             </label>
         </div>
     </div>
+    <div class="kr-editor-pane mt-4">
+        <h2>MCP server for AI assistants</h2>
+        <p>Assistants such as Claude connect to <code th:text="${mcpUrl}">https://example.org/mcp</code>, sign in as the user with the normal login and then read or, if allowed on the consent page, write with that user&#39;s permissions. See <a href="https://github.com/lordlamer/jknowledgeroot/blob/master/docs/mcp.md" target="_blank" rel="noopener">docs/mcp.md</a>.</p>
+        <div class="kr-check" style="margin-bottom:12px">
+            <input type="checkbox" id="mcp-enabled" name="mcpEnabled" value="on" th:checked="${mcpEnabled}">
+            <label for="mcp-enabled"><strong>Enable the MCP server</strong> <small style="display:block">Off: the endpoint and the OAuth routes answer 404; existing connections stop working.</small></label>
+        </div>
+        <div class="kr-field">
+            <label for="mcp-redirect-hosts">Allowed assistant hosts</label>
+            <textarea id="mcp-redirect-hosts" name="mcpRedirectHosts" rows="3" th:text="${mcpRedirectHosts}"></textarea>
+            <small>Hosts an assistant may name as return address when it registers, one per line; <code>*.example.org</code> covers sub-domains. Assistants on the user&#39;s own machine (localhost) are always allowed.</small>
+        </div>
+    </div>
 </form>
 </body>
 </html>
