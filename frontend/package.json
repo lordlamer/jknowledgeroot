@@ -1,6 +1,9 @@
 {
   "name": "knowledgeroot-editor",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "private": true,
   "license": "BSD-2-Clause",
   "scripts": {

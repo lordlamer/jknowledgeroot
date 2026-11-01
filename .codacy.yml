@@ -1,0 +1,5 @@
+---
+# Codacy analysis settings. The Liquibase migrations are MariaDB SQL on purpose (every changeset is
+# marked dbms="mariadb"); an ANSI-SQL check cannot judge them, so they stay out of the analysis.
+exclude_paths:
+  - "src/main/resources/dbupdates/**"
