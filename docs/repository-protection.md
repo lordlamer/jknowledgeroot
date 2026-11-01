@@ -15,6 +15,12 @@ und Löschen vorhandener `v*`-Tags. Es gibt keine Bypass-Akteure, auch keine
 Administrator-Ausnahme. Administratoren können die Regeln selbst weiterhin ändern;
 das ist keine Absicherung gegen einen böswilligen Repository-Eigentümer.
 Andere Branches und Tags sind nicht betroffen. Neue Release-Tags bleiben möglich.
+Am 1. November 2026 wurde das Tag-Ruleset einmalig entfernt, um die beiden
+Tags `v1.0.0` und `v1.1.0-rc.1` zu löschen, deren erster Lauf an R56
+gescheitert war, bevor etwas veröffentlicht wurde; es wurde anschließend aus
+[release-tag-integrity.json](../.github/rulesets/release-tag-integrity.json)
+neu angelegt. Ein Tag, dessen Lauf nach `verify` scheitert, lässt sich sonst
+nur unter neuer Nummer wiederholen.
 
 Zusätzlich gilt das unten beschriebene Ruleset für geprüfte Änderungen.
 

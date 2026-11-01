@@ -6,26 +6,50 @@ auf dem Wartungsbranch `release/1.0` mit der Version `1.0.0`; spätere
 1.0.x-Korrekturen werden auf `master` entwickelt und dorthin übernommen. Tags
 mit SNAPSHOT-Version lehnt die Artefaktprüfung ab.
 
-Die Version **1.0.0** ist auf `release/1.0` vorbereitet: POM und beide
-Dockerfiles tragen `1.0.0`; gegenüber `1.0.0-rc.3` enthält sie nur die
+Die Version **1.0.0** ist seit dem 1. November 2026 als Tag `v1.0.0` auf
+Commit `0329927c46bc21c4c9eae22ce1dc21f7a721c863` (`release/1.0`) veröffentlicht: Der
+[Tag-Lauf 41354063652](https://github.com/lordlamer/jknowledgeroot/actions/runs/41354063652)
+bestand `verify`, und der Publish-Job hat beide Images auf Docker Hub gelegt
+(`lordlamer/knowledgeroot:v1.0.0`, Digest
+`sha256:b9645088c98506340278854ee36b9e3cd5e081ccd735d59a8c0cf3569523cb94`;
+`lordlamer/knowledgeroot:database-v1.0.0`, Digest
+`sha256:f36859294bd2b3f49bf80320bd74aaf76e574da3ae86fb0c6f789c7a508120eb`) und das
+[GitHub-Release v1.0.0](https://github.com/lordlamer/jknowledgeroot/releases/tag/v1.0.0)
+mit `knowledgeroot-1.0.0.jar` (SHA-256
+`00a20039d9c83b6164de7308b4a5964e94646a440942714a40d427867a376228`), `SHA256SUMS`, Manifest und Auditberichten angelegt. Gegenüber `1.0.0-rc.3` enthält sie nur die
 Sicherheitskorrekturen vom Oktober (R45, R46, R50) und die CI-Änderungen für
-den Release-Branch (R43, R47). Der Tag `v1.0.0` auf dem Merge-Commit dieses
-Branches veröffentlicht `lordlamer/knowledgeroot:v1.0.0` und
-`database-v1.0.0` sowie das GitHub-Release mit `knowledgeroot-1.0.0.jar` und
-`SHA256SUMS`; Lauf-ID, Registry-Digests und JAR-Prüfsumme werden nach der
-Veröffentlichung nachgetragen.
+den Release-Branch (R43, R47, R56). Das ist die stabile Version der 1.0-Linie;
+die Abnahme auf einem konkreten Zielsystem bleibt Sache des Betreibers
+([operational-acceptance.md](operational-acceptance.md)).
 
-Der Kandidat **1.1.0-rc.1** ist auf `master` vorbereitet: POM und beide
-Dockerfiles tragen `1.1.0-rc.1`. Er enthält gegenüber 1.0.0 den zweiten
+Die Version **1.1.0-rc.1** ist seit dem 1. November 2026 als Tag `v1.1.0-rc.1` auf
+Commit `8706f27b20190162e57567b1fcf6ffa1ab91621d` (`master`) veröffentlicht: Der
+[Tag-Lauf 41354063023](https://github.com/lordlamer/jknowledgeroot/actions/runs/41354063023)
+bestand `verify`, und der Publish-Job hat beide Images auf Docker Hub gelegt
+(`lordlamer/knowledgeroot:v1.1.0-rc.1`, Digest
+`sha256:224416a457e71cd550826a286e580bc3ef2e789be82cbb480b453ad2f860c73e`;
+`lordlamer/knowledgeroot:database-v1.1.0-rc.1`, Digest
+`sha256:27c91dc4494e410bf6c51763a90ffe03aa102dd9dcc60fdb079a4ff53de7beeb`) und das
+[GitHub-Release v1.1.0-rc.1](https://github.com/lordlamer/jknowledgeroot/releases/tag/v1.1.0-rc.1)
+mit `knowledgeroot-1.1.0-rc.1.jar` (SHA-256
+`cc5754021ed6c9099f87d4d7642992eb1b3e9f5d8d05902380debd3b0a59d92a`), `SHA256SUMS`, Manifest und Auditberichten angelegt, als Vorabversion markiert. Der Kandidat enthält gegenüber 1.0.0 den zweiten
 Faktor (R49), Spaces (R51), den MCP-Server mit OAuth 2.1 und vollständigem
 Werkzeugsatz (R52, R54), das Graphit-Theme (R53) und die Client-API der
-mobilen App (R44). Der Tag `v1.1.0-rc.1` auf dem Merge-Commit veröffentlicht
-`lordlamer/knowledgeroot:v1.1.0-rc.1` und `database-v1.1.0-rc.1` sowie ein
-als Vorabversion markiertes GitHub-Release mit `knowledgeroot-1.1.0-rc.1.jar`.
-Für ein Upgrade von 1.0 muss vorher `KR_MASTER_KEY` gesetzt sein
-([authentication.md](authentication.md#zweiter-faktor-totp)); die Changesets
-`1.0.15` bis `1.0.18` laufen beim Start. Ein Kandidat ist kein endgültiges
-`v1.1.0`; das entsteht später auf einem Wartungsbranch `release/1.1`.
+mobilen App (R44). Für ein Upgrade von 1.0 muss vorher `KR_MASTER_KEY` gesetzt
+sein ([authentication.md](authentication.md#zweiter-faktor-totp)); die
+Changesets `1.0.15` bis `1.0.18` laufen beim Start. Ein Kandidat ist kein
+endgültiges `v1.1.0`; das entsteht später auf einem Wartungsbranch
+`release/1.1`.
+
+Ein erster Versuch mit denselben Tag-Namen scheiterte am 1. November 2026 im
+Schritt „Assemble release assets": Die Unit-Tests von
+`scripts/release-assets.test.mjs` liefen im selben Schritt mit exportiertem
+`RELEASE_TAG` und verglichen ihn mit der Fixture-Version `1.0.0-rc.3`; beim
+rc.3-Tag war das zufällig identisch. Es wurde nichts veröffentlicht. Da das
+Ruleset bestehende `v*`-Tags schützt, wurde es für das Löschen der beiden
+Tags vorübergehend entfernt und ist mit denselben Regeln wieder einzurichten
+([repository-protection.md](repository-protection.md)); die Tags wurden nach
+der Korrektur (#291, #292) auf die neuen Commits gesetzt.
 
 Der Kandidat **1.0.0-rc.3** ist seit dem 25. Oktober 2026 als Tag `v1.0.0-rc.3`
 auf Commit `46c5aa0` veröffentlicht: Der

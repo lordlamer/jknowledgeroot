@@ -13,7 +13,7 @@ noch nicht protokolliert.
 | Datum / prüfende Person | Offen |
 | Domain und Staging-/Produktionssystem | Offen |
 | Betreiber / Vertretung / Alarmempfänger | Offen |
-| Release-Commit, Registry-Digest und Manifest | Commit `46c5aa0`, Tag `v1.0.0-rc.3`, Lauf 40180456687; App-Digest `sha256:f9f483afc6df705927385c7a72d2d04846f0da98841a4558883c503bbbc3adff`, Datenbank-Digest `sha256:04634a6d57d046a25d3c65b06a994756c14a7a38d8892570454be388a7b78dfc`. Manifest, Auditberichte und JAR liegen dauerhaft im GitHub-Release; Abnahme offen |
+| Release-Commit, Registry-Digest und Manifest | Commit `0329927`, Tag `v1.0.0`, Lauf 41354063652; App-Digest `sha256:b9645088c98506340278854ee36b9e3cd5e081ccd735d59a8c0cf3569523cb94`, Datenbank-Digest `sha256:f36859294bd2b3f49bf80320bd74aaf76e574da3ae86fb0c6f789c7a508120eb`. Manifest, Auditberichte und JAR liegen dauerhaft im GitHub-Release; Abnahme offen |
 | Datenbankversion, Speicherort und Proxyversion | Offen |
 | CPU/RAM, freier DB-/Datei-/Temp-/Backupplatz | Offen |
 | Nutzung / erwartete gleichzeitige Nutzer und Datenmenge | Intern und öffentlich; anfangs eher klein, später auch größere Bestände. Konkrete Parallelität und Datenmenge offen. |
