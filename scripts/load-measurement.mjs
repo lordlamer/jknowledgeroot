@@ -39,7 +39,7 @@ export async function measure({count, concurrency, scenarios, clients}) {
   const samples = [];
   const started = performance.now();
   await Promise.all(Array.from({length:concurrency}, async (_, worker) => {
-    while (true) {
+    for (;;) {
       const index = next++;
       if (index >= count) return;
       const scenario = scenarios[index % scenarios.length];

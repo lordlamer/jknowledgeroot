@@ -1,0 +1,53 @@
+// ESLint flat configuration for the JavaScript in this repository: the build, release and
+// deployment scripts (Node 24, ES modules) and the browser code of the editor and the web UI.
+// Codacy picks this file up instead of its default rule set; it uses only ESLint's core rules,
+// so no plugin has to be present where the analysis runs.
+const nodeGlobals = {
+  AbortSignal: 'readonly', Buffer: 'readonly', URL: 'readonly', URLSearchParams: 'readonly', TextDecoder: 'readonly',
+  TextEncoder: 'readonly', clearInterval: 'readonly', clearTimeout: 'readonly', console: 'readonly', crypto: 'readonly',
+  fetch: 'readonly', performance: 'readonly', process: 'readonly', queueMicrotask: 'readonly', setImmediate: 'readonly',
+  setInterval: 'readonly', setTimeout: 'readonly', structuredClone: 'readonly', Headers: 'readonly', Request: 'readonly',
+  Response: 'readonly', FormData: 'readonly',
+};
+
+const browserGlobals = {
+  window: 'readonly', document: 'readonly', navigator: 'readonly', location: 'readonly', localStorage: 'readonly',
+  sessionStorage: 'readonly', console: 'readonly', fetch: 'readonly', setTimeout: 'readonly', clearTimeout: 'readonly',
+  setInterval: 'readonly', clearInterval: 'readonly', requestAnimationFrame: 'readonly', URL: 'readonly',
+  URLSearchParams: 'readonly', FormData: 'readonly', Blob: 'readonly', File: 'readonly', FileReader: 'readonly',
+  Event: 'readonly', CustomEvent: 'readonly', HTMLElement: 'readonly', Node: 'readonly', Element: 'readonly',
+  MutationObserver: 'readonly', DOMParser: 'readonly', Option: 'readonly', XMLHttpRequest: 'readonly', htmx: 'readonly', bootstrap: 'readonly',
+  prompt: 'readonly', alert: 'readonly', confirm: 'readonly', getComputedStyle: 'readonly', matchMedia: 'readonly',
+};
+
+const rules = {
+  'no-undef': 'error',
+  'no-unused-vars': ['error', {args: 'after-used', argsIgnorePattern: '^_', caughtErrors: 'none'}],
+  'no-unreachable': 'error',
+  'no-dupe-keys': 'error',
+  'no-duplicate-case': 'error',
+  'no-self-assign': 'error',
+  'no-unsafe-negation': 'error',
+  'no-constant-condition': ['error', {checkLoops: false}],
+  'use-isnan': 'error',
+  'valid-typeof': 'error',
+  eqeqeq: ['error', 'smart'],
+  'prefer-const': 'error',
+};
+
+export default [
+  {
+    ignores: ['target/**', 'frontend/node_modules/**', 'frontend/dist/**', 'src/main/resources/static/resources/editor/**',
+      'src/main/resources/static/resources/css/**', '**/*.min.js'],
+  },
+  {
+    files: ['scripts/**/*.mjs', 'deploy/**/*.mjs', 'frontend/build.mjs', 'eslint.config.mjs'],
+    languageOptions: {ecmaVersion: 2024, sourceType: 'module', globals: nodeGlobals},
+    rules,
+  },
+  {
+    files: ['frontend/*.js', 'src/main/resources/static/resources/**/*.js'],
+    languageOptions: {ecmaVersion: 2024, sourceType: 'module', globals: browserGlobals},
+    rules,
+  },
+];
