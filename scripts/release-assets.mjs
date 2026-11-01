@@ -6,12 +6,23 @@ import {sha256} from './release-evidence.mjs';
 
 export const ASSET_DIR = 'target/release-assets';
 export const EVIDENCE = ['release-manifest.json', 'dependency-audit.json', 'image-audit-summary.json', 'database-image-audit-summary.json'];
-// The pre-release part is bounded to the 25 repetitions the regular-expression check allows; tags are short.
-const TAG = /^v(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]{1,25})?)$/;
 const DIGEST = /^sha256:[0-9a-f]{64}$/;
 
+// A release tag is "v", a SemVer core and optionally "-" plus a pre-release identifier. Checked in
+// two plain expressions rather than one with nested quantifiers, which the security check refuses.
+function tagVersion(tag) {
+  if (typeof tag !== 'string' || !tag.startsWith('v')) return null;
+  const version = tag.slice(1);
+  const dash = version.indexOf('-');
+  const core = dash < 0 ? version : version.slice(0, dash);
+  const prerelease = dash < 0 ? '' : version.slice(dash + 1);
+  if (!/^\d+\.\d+\.\d+$/.test(core)) return null;
+  if (dash >= 0 && !/^[0-9A-Za-z.-]+$/.test(prerelease)) return null;
+  return version;
+}
+
 export function isPrerelease(tag) {
-  const version = TAG.exec(tag)?.[1];
+  const version = tagVersion(tag);
   assert(version, `Unsupported release tag: ${tag}`);
   return version.includes('-');
 }
