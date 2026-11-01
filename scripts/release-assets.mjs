@@ -6,8 +6,8 @@ import {sha256} from './release-evidence.mjs';
 
 export const ASSET_DIR = 'target/release-assets';
 export const EVIDENCE = ['release-manifest.json', 'dependency-audit.json', 'image-audit-summary.json', 'database-image-audit-summary.json'];
-// A bounded pre-release part keeps the expression linear; real tags are short anyway.
-const TAG = /^v(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]{1,64})?)$/;
+// The pre-release part is bounded to the 25 repetitions the regular-expression check allows; tags are short.
+const TAG = /^v(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]{1,25})?)$/;
 const DIGEST = /^sha256:[0-9a-f]{64}$/;
 
 export function isPrerelease(tag) {
