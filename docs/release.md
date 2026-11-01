@@ -1,10 +1,31 @@
-# Release-Kandidat und Freigabe
+# Release und Freigabe
 
-Seit dem 30. Oktober 2026 trägt `master` die Entwicklungsversion
-**1.1.0-SNAPSHOT**; `latest` entsteht daraus. Die 1.0-Linie wird auf dem
-Wartungsbranch `release/1.0` stabilisiert, dort bleibt die Version
-`1.0.0-rc.3`, bis das endgültige `v1.0.0` getaggt wird. Tags mit
-SNAPSHOT-Version lehnt die Artefaktprüfung ab.
+Seit dem 1. November 2026 trägt `master` die Version **1.1.0-rc.1**, den
+ersten Kandidaten der 1.1-Linie; `latest` entsteht daraus. Die 1.0-Linie liegt
+auf dem Wartungsbranch `release/1.0` mit der Version `1.0.0`; spätere
+1.0.x-Korrekturen werden auf `master` entwickelt und dorthin übernommen. Tags
+mit SNAPSHOT-Version lehnt die Artefaktprüfung ab.
+
+Die Version **1.0.0** ist auf `release/1.0` vorbereitet: POM und beide
+Dockerfiles tragen `1.0.0`; gegenüber `1.0.0-rc.3` enthält sie nur die
+Sicherheitskorrekturen vom Oktober (R45, R46, R50) und die CI-Änderungen für
+den Release-Branch (R43, R47). Der Tag `v1.0.0` auf dem Merge-Commit dieses
+Branches veröffentlicht `lordlamer/knowledgeroot:v1.0.0` und
+`database-v1.0.0` sowie das GitHub-Release mit `knowledgeroot-1.0.0.jar` und
+`SHA256SUMS`; Lauf-ID, Registry-Digests und JAR-Prüfsumme werden nach der
+Veröffentlichung nachgetragen.
+
+Der Kandidat **1.1.0-rc.1** ist auf `master` vorbereitet: POM und beide
+Dockerfiles tragen `1.1.0-rc.1`. Er enthält gegenüber 1.0.0 den zweiten
+Faktor (R49), Spaces (R51), den MCP-Server mit OAuth 2.1 und vollständigem
+Werkzeugsatz (R52, R54), das Graphit-Theme (R53) und die Client-API der
+mobilen App (R44). Der Tag `v1.1.0-rc.1` auf dem Merge-Commit veröffentlicht
+`lordlamer/knowledgeroot:v1.1.0-rc.1` und `database-v1.1.0-rc.1` sowie ein
+als Vorabversion markiertes GitHub-Release mit `knowledgeroot-1.1.0-rc.1.jar`.
+Für ein Upgrade von 1.0 muss vorher `KR_MASTER_KEY` gesetzt sein
+([authentication.md](authentication.md#zweiter-faktor-totp)); die Changesets
+`1.0.15` bis `1.0.18` laufen beim Start. Ein Kandidat ist kein endgültiges
+`v1.1.0`; das entsteht später auf einem Wartungsbranch `release/1.1`.
 
 Der Kandidat **1.0.0-rc.3** ist seit dem 25. Oktober 2026 als Tag `v1.0.0-rc.3`
 auf Commit `46c5aa0` veröffentlicht: Der
