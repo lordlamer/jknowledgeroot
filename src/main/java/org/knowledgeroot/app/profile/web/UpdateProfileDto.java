@@ -14,4 +14,5 @@ class UpdateProfileDto {
     private String email;
     private String firstName;
     private String surName;
+    private String language;
 }

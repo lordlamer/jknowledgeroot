@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class AdminController {
     private final UserDao userImpl;
+    private final org.knowledgeroot.app.i18n.UiMessages uiMessages;
     private final GroupDao groupImpl;
     private final PasswordService passwords;
     private final org.knowledgeroot.app.security.mfa.SecondFactorService secondFactors;
@@ -73,7 +74,7 @@ public class AdminController {
                 .email(user.getEmail())
                 .password(passwords.encodeNewPassword(user.getPassword()))
                 .admin(Boolean.TRUE.equals(user.getAdmin()))
-                .language("en_US")
+                .language(org.knowledgeroot.app.i18n.Languages.normalise(user.getLanguage()))
                 .timezone("UTC")
                 .timeStart(LocalDateTime.now())
                 .timeEnd(LocalDateTime.now())
@@ -134,6 +135,7 @@ public class AdminController {
         user.setLogin(userDto.getLogin());
         user.setEmail(userDto.getEmail());
         user.setAdmin(Boolean.TRUE.equals(userDto.getAdmin()));
+        user.setLanguage(org.knowledgeroot.app.i18n.Languages.normalise(userDto.getLanguage()));
 
         // update password if new password is set
         if (replacement != null) {
@@ -295,7 +297,7 @@ public class AdminController {
         } catch (org.springframework.web.server.ResponseStatusException e) {
             if (e.getStatusCode().value() != 400 && e.getStatusCode().value() != 409) throw e;
             permissionsModel(model);
-            model.addAttribute("error", e.getReason());
+            model.addAttribute("error", uiMessages.reason(e));
             return htmxRequest.isHtmxRequest() ? "admin/permissions :: body" : "admin/permissions";
         }
         return "redirect:/admin/permissions?saved";

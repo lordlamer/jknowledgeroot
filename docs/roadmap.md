@@ -1351,6 +1351,43 @@ R54.
   Rulesets nur mit neuer Nummer oder vorübergehend deaktiviertem Ruleset
   wiederholen; beides ist jetzt in [release.md](release.md) beschrieben.
 
+### R57 – Sprachen der Oberfläche
+
+- [x] Lokal umgesetzt und geprüft am 3. November 2026.
+- **Ziel:** Benutzer wählen ihre Sprache im Profil, Administratoren in der
+  Benutzerverwaltung; alle festen Texte der Oberfläche sind übersetzbar,
+  beginnend mit den gängigen Sprachen.
+- **Umgesetzt:** Spring-`MessageSource` mit `i18n/messages*.properties`
+  (Englisch als Basis, Deutsch, Französisch, Spanisch, Italienisch,
+  Niederländisch; rund 710 Schlüssel), `UserLocaleResolver` (Profilsprache,
+  sonst `Accept-Language`, sonst Englisch, nie die Serversprache), Auswahl
+  „Automatisch" oder eine Sprache im Profil und beim Anlegen und Bearbeiten
+  von Benutzern, Changeset `1.0.19-user-language` (der nie gewählte
+  Platzhalter `en_US` wird zu „Automatisch"). Alle 49 Templates auf
+  Schlüssel umgestellt, `html lang` folgt der Sprache, Datumsformate je
+  Sprache. Skripttexte (Fehlerbanner, Link kopieren, Upload, Editor-Toolbar,
+  Berechtigungen im Editor) über `window.krI18n`/`krT`; die bisher fest
+  deutschen Editor- und Berechtigungstexte sind damit im englischen UI
+  englisch. Fehlermeldungen der Dienste werden in HTML-Controllern über
+  `UiMessages` übersetzt, die Client-API und der MCP-Server bleiben
+  englisch. Wiederherstellungs-Mails in der Sprache des Empfängers. Nach
+  einem Sprachwechsel im Profil lädt htmx die ganze Seite neu. Ungenutztes
+  Template `file/new.html` entfernt. Beschreibung in
+  [translations.md](translations.md).
+- **Geprüft:** `MessageBundleTest` (gleiche Schlüssel und Parameter in allen
+  Sprachen, gültige `MessageFormat`-Muster, alle benutzten Schlüssel
+  vorhanden, Rückfalltexte der Skripte, jede feste Begründung übersetzbar),
+  `TemplateTextTest` (kein fester Text in Templates), `LanguagesTest`
+  (Auswahlreihenfolge, Normalisierung, `Accept-Language`) und
+  `I18nWebIntegrationTest` gegen MariaDB (Browsersprache für Gäste,
+  Profilwahl mit sofortiger Wirkung und `HX-Redirect`, Ablehnung
+  unbekannter Codes, Wahl durch Administratoren, übersetzte Begründung,
+  Migration). Der Browser-Smoketest läuft fest mit `en-US`.
+- **Grenzen:** Die Übersetzungen sind maschinell erstellt und sollten von
+  Muttersprachlern durchgesehen werden. Die Client-API bietet die Sprache noch
+  nicht an. `user.timezone` wird weiterhin nicht ausgewertet. Begründungen
+  mit variablem Inhalt bleiben englisch.
+
 ## Nachweise der Bestandsaufnahme
 
 - `mvn -B test` bei der ursprünglichen Bestandsaufnahme: Anwendung kompiliert unter Java 25; Testkompilierung scheitert am Konstruktoraufruf in `PageControllerTest`. Dieser Befund ist durch R01 behoben; das aktuelle Prüfergebnis steht dort.

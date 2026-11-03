@@ -1,64 +1,64 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
-<head><title>Knowledgeroot :: Move page</title></head>
+<head><title th:text="#{page.move.title}">Knowledgeroot :: Move page</title></head>
 <body>
-<nav aria-label="breadcrumb">
+<nav th:aria-label="#{common.breadcrumb}">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a th:href="@{'/ui/page/' + ${page.pageId}}" th:hx-get="@{'/ui/page/' + ${page.pageId}}"
                                        hx-target="#content" hx-push-url="true" th:text="${page.name}">Page</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Move</li>
+        <li class="breadcrumb-item active" aria-current="page" th:text="#{page.move.breadcrumb}">Move</li>
     </ol>
 </nav>
 <header class="kr-page-header">
     <div class="kr-page-title-wrap">
-        <h1 class="kr-page-title">Move page</h1>
-        <p class="kr-page-subtitle mb-0">The page and all its sub-pages move together. Links, attachments and saved versions stay with their pages.</p>
+        <h1 class="kr-page-title" th:text="#{page.move.heading}">Move page</h1>
+        <p class="kr-page-subtitle mb-0" th:text="#{page.move.subtitle}">The page and all its sub-pages move together. Links, attachments and saved versions stay with their pages.</p>
     </div>
     <div class="kr-page-actions">
         <a class="kr-btn" th:href="@{'/ui/page/' + ${page.pageId}}" th:hx-get="@{'/ui/page/' + ${page.pageId}}"
-           hx-target="#content" hx-push-url="true">Cancel</a>
+           hx-target="#content" hx-push-url="true" th:text="#{common.cancel}">Cancel</a>
     </div>
 </header>
 <section class="kr-content-area kr-move">
     <div class="kr-move-summary">
         <div>
-            <span class="kr-move-label">Page</span>
+            <span class="kr-move-label" th:text="#{page.move.page}">Page</span>
             <strong th:text="${page.name}"></strong>
         </div>
         <div>
-            <span class="kr-move-label">Current location</span>
+            <span class="kr-move-label" th:text="#{page.move.current-location}">Current location</span>
             <span class="kr-move-path">
-                <span>Top level</span>
+                <span th:text="#{page.move.top-level}">Top level</span>
                 <th:block th:each="ancestor : ${currentPath}"><span class="kr-move-sep">/</span><span th:text="${ancestor.name}"></span></th:block>
             </span>
         </div>
     </div>
 
-    <div th:if="${inherits}" class="kr-callout warn">This page inherits access rights. Moving it changes access to the new parent's rights, including for inheriting sub-pages. Moving to the top level preserves the current effective rights as local grants.</div>
-    <div th:unless="${inherits}" class="kr-callout">This page keeps its local access rights. Sub-pages keep their inheritance settings.</div>
+    <div th:if="${inherits}" class="kr-callout warn" th:text="#{page.move.inherits}">This page inherits access rights. Moving it changes access to the new parent's rights, including for inheriting sub-pages. Moving to the top level preserves the current effective rights as local grants.</div>
+    <div th:unless="${inherits}" class="kr-callout" th:text="#{page.move.local}">This page keeps its local access rights. Sub-pages keep their inheritance settings.</div>
 
     <div class="kr-panel kr-move-picker">
         <div class="kr-move-picker-head">
-            <h2 class="kr-panel-title">Choose a destination</h2>
+            <h2 class="kr-panel-title" th:text="#{page.move.choose}">Choose a destination</h2>
             <form method="get" th:action="@{'/ui/page/' + ${page.pageId} + '/move'}"
                   th:hx-get="@{'/ui/page/' + ${page.pageId} + '/move'}" hx-target="#content" hx-push-url="true" class="kr-move-search">
                 <input type="hidden" name="parent" th:value="${parent}">
-                <label for="destination-query" class="visually-hidden">Find a destination</label>
+                <label for="destination-query" class="visually-hidden" th:text="#{page.move.search.label}">Find a destination</label>
                 <i class="bi bi-search" aria-hidden="true"></i>
-                <input id="destination-query" name="query" type="search" th:value="${query}" maxlength="255" placeholder="Find a destination…">
-                <button type="submit" class="kr-btn sm">Search</button>
+                <input id="destination-query" name="query" type="search" th:value="${query}" maxlength="255" th:placeholder="#{page.move.search.placeholder}">
+                <button type="submit" class="kr-btn sm" th:text="#{common.search}">Search</button>
             </form>
         </div>
 
         <form th:if="${#strings.isEmpty(query) and #lists.size(spaces) > 1}" method="get" th:action="@{'/ui/page/' + ${page.pageId} + '/move'}"
               th:hx-get="@{'/ui/page/' + ${page.pageId} + '/move'}" hx-target="#content" hx-push-url="true" hx-trigger="change" class="kr-move-search">
             <input type="hidden" name="parent" value="0">
-            <label for="destination-space">Space</label>
+            <label for="destination-space" th:text="#{page.move.space}">Space</label>
             <select id="destination-space" name="space">
                 <option th:each="s : ${spaces}" th:value="${s.id}" th:text="${s.name}" th:selected="${s.id == destinationSpace.id}">Space</option>
             </select>
         </form>
-        <nav class="kr-move-location" th:if="${#strings.isEmpty(query)}" aria-label="Destination path">
+        <nav class="kr-move-location" th:if="${#strings.isEmpty(query)}" th:aria-label="#{page.move.path}">
             <a th:unless="${destination == null}" th:href="@{'/ui/page/' + ${page.pageId} + '/move'(parent=0,space=${destinationSpace.id})}"
                th:hx-get="@{'/ui/page/' + ${page.pageId} + '/move'(parent=0,space=${destinationSpace.id})}" hx-target="#content" hx-push-url="true"><i class="bi bi-house" aria-hidden="true"></i> <span th:text="${destinationSpace.name}">Top level</span></a>
             <strong th:if="${destination == null}"><i class="bi bi-house" aria-hidden="true"></i> <span th:text="${destinationSpace.name}">Top level</span></strong>
@@ -71,46 +71,46 @@
             </th:block>
         </nav>
         <div class="kr-move-location" th:unless="${#strings.isEmpty(query)}">
-            <span th:text="'Results for “' + ${query} + '”'"></span>
+            <span th:text="#{page.move.results-for(${query})}"></span>
             <a class="kr-btn sm ghost" th:href="@{'/ui/page/' + ${page.pageId} + '/move'(parent=${parent})}"
-               th:hx-get="@{'/ui/page/' + ${page.pageId} + '/move'(parent=${parent})}" hx-target="#content" hx-push-url="true">Clear search</a>
+               th:hx-get="@{'/ui/page/' + ${page.pageId} + '/move'(parent=${parent})}" hx-target="#content" hx-push-url="true" th:text="#{page.move.clear-search}">Clear search</a>
         </div>
 
         <ul class="kr-move-list" th:unless="${#lists.isEmpty(items)}">
             <li th:each="item : ${items}">
                 <a th:href="@{'/ui/page/' + ${page.pageId} + '/move'(parent=${item.pageId.value()})}"
                    th:hx-get="@{'/ui/page/' + ${page.pageId} + '/move'(parent=${item.pageId.value()})}"
-                   hx-target="#content" hx-push-url="true" th:title="'Open ' + ${item.name}">
+                   hx-target="#content" hx-push-url="true" th:title="#{page.move.open(${item.name})}">
                     <i class="bi bi-file-earmark-text kr-move-ico" aria-hidden="true"></i>
                     <span class="kr-move-name" th:text="${item.name}"></span>
                     <i class="bi bi-chevron-right kr-move-chev" aria-hidden="true"></i>
                 </a>
             </li>
         </ul>
-        <p class="kr-move-empty" th:if="${#lists.isEmpty(items) and #strings.isEmpty(query)}">
+        <p class="kr-move-empty" th:if="${#lists.isEmpty(items) and #strings.isEmpty(query)}" th:text="#{page.move.no-sub-pages}">
             No sub-pages here. You can still move the page into this location.
         </p>
-        <p class="kr-move-empty" th:if="${#lists.isEmpty(items) and !#strings.isEmpty(query)}">No pages found.</p>
+        <p class="kr-move-empty" th:if="${#lists.isEmpty(items) and !#strings.isEmpty(query)}" th:text="#{page.move.no-results}">No pages found.</p>
 
-        <nav class="kr-pager" th:if="${start > 0 or hasNext}" aria-label="Destination pages">
-            <a class="kr-btn sm" th:if="${start > 0}" th:href="@{'/ui/page/' + ${page.pageId} + '/move'(parent=${parent},query=${query},start=${T(java.lang.Math).max(0,start - 50)})}">← Previous</a>
-            <a class="kr-btn sm" th:if="${hasNext}" th:href="@{'/ui/page/' + ${page.pageId} + '/move'(parent=${parent},query=${query},start=${start + 50})}">Next →</a>
+        <nav class="kr-pager" th:if="${start > 0 or hasNext}" th:aria-label="#{page.move.pages}">
+            <a class="kr-btn sm" th:if="${start > 0}" th:href="@{'/ui/page/' + ${page.pageId} + '/move'(parent=${parent},query=${query},start=${T(java.lang.Math).max(0,start - 50)})}" th:text="#{page.move.previous}">← Previous</a>
+            <a class="kr-btn sm" th:if="${hasNext}" th:href="@{'/ui/page/' + ${page.pageId} + '/move'(parent=${parent},query=${query},start=${start + 50})}" th:text="#{page.move.next}">Next →</a>
         </nav>
 
         <form method="post" th:action="@{'/ui/page/' + ${page.pageId} + '/move'}" class="kr-move-footer" th:if="${#strings.isEmpty(query)}">
             <input type="hidden" name="revision" th:value="${page.revision}"><input type="hidden" name="parent" th:value="${parent}">
             <input type="hidden" name="space" th:if="${parent == 0}" th:value="${destinationSpace.id}">
             <div class="kr-move-target">
-                <span class="kr-move-label">Destination</span>
-                <strong th:text="${destination == null ? 'Top level of ' + destinationSpace.name : destination.name}"></strong>
-                <span th:if="${alreadyHere}" class="kr-move-hint">The page is already here.</span>
-                <span th:if="${insideSubtree}" class="kr-move-hint warn">A page cannot be moved into itself or its sub-pages.</span>
-                <span th:if="${!validDestination and !insideSubtree}" class="kr-move-hint warn">Choose a destination you can edit, outside this page's subtree.</span>
+                <span class="kr-move-label" th:text="#{page.move.destination}">Destination</span>
+                <strong th:text="${destination == null} ? #{page.move.top-level-of(${destinationSpace.name})} : ${destination.name}"></strong>
+                <span th:if="${alreadyHere}" class="kr-move-hint" th:text="#{page.move.already-here}">The page is already here.</span>
+                <span th:if="${insideSubtree}" class="kr-move-hint warn" th:text="#{page.move.inside-subtree}">A page cannot be moved into itself or its sub-pages.</span>
+                <span th:if="${!validDestination and !insideSubtree}" class="kr-move-hint warn" th:text="#{page.move.invalid-destination}">Choose a destination you can edit, outside this page's subtree.</span>
             </div>
-            <button type="submit" class="kr-btn accent" th:disabled="${!validDestination || alreadyHere}">Move here</button>
+            <button type="submit" class="kr-btn accent" th:disabled="${!validDestination || alreadyHere}" th:text="#{page.move.submit}">Move here</button>
         </form>
         <div class="kr-move-footer" th:unless="${#strings.isEmpty(query)}">
-            <span class="kr-move-hint">Open a result to choose it as the destination.</span>
+            <span class="kr-move-hint" th:text="#{page.move.open-result}">Open a result to choose it as the destination.</span>
         </div>
     </div>
 </section>

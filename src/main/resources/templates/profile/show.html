@@ -2,77 +2,92 @@
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
 <head>
-    <title>Knowledgeroot Profile</title>
+    <title th:text="#{profile.show.title}">Knowledgeroot Profile</title>
 </head>
 <body>
 <form th:hx-post="'/profile'" hx-target="#content">
-    <nav aria-label="breadcrumb">
+    <nav th:aria-label="#{common.breadcrumb}">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Profile</li>
+            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true" th:text="#{common.home}">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page" th:text="#{common.profile}">Profile</li>
         </ol>
     </nav>
 
     <header class="kr-page-header">
         <div class="kr-page-title-wrap">
-            <h1 class="kr-page-title">Profile</h1>
-            <p class="kr-page-subtitle" style="margin:0">Manage your account details.</p>
+            <h1 class="kr-page-title" th:text="#{common.profile}">Profile</h1>
+            <p class="kr-page-subtitle" style="margin:0" th:text="#{profile.show.subtitle}">Manage your account details.</p>
         </div>
         <div class="kr-page-actions">
-            <button type="submit" class="kr-btn accent">Save changes</button>
+            <button type="submit" class="kr-btn accent" th:text="#{common.save-changes}">Save changes</button>
         </div>
     </header>
 
     <div class="kr-editor-pane">
-        <div th:if="${updated}" class="alert kr-alert-info" role="alert" style="margin-bottom:16px">
+        <div th:if="${updated}" class="alert kr-alert-info" role="alert" style="margin-bottom:16px" th:text="#{profile.show.updated}">
             Profile updated.
         </div>
 
         <div class="kr-form-row">
             <div class="kr-field">
-                <label for="login">Login</label>
+                <label for="login" th:text="#{common.login}">Login</label>
                 <input type="text" id="login" name="login" th:value="${userDetails.getLogin()}">
             </div>
             <div class="kr-field">
-                <label for="email">E-mail</label>
+                <label for="email" th:text="#{common.email}">E-mail</label>
                 <input type="text" id="email" name="email" th:value="${userDetails.getEmail()}">
             </div>
         </div>
         <div class="kr-form-row">
             <div class="kr-field">
-                <label for="first-name">First name</label>
+                <label for="first-name" th:text="#{common.first-name}">First name</label>
                 <input type="text" id="first-name" name="firstName" th:value="${userDetails.getFirstName()}">
             </div>
             <div class="kr-field">
-                <label for="sur-name">Last name</label>
+                <label for="sur-name" th:text="#{common.last-name}">Last name</label>
                 <input type="text" id="sur-name" name="surName" th:value="${userDetails.getSurName()}">
             </div>
+        </div>
+        <div class="kr-field">
+            <label for="language" th:text="#{common.language}">Language</label>
+            <select id="language" name="language">
+                <option value="" th:selected="${userDetails.getLanguage() == ''}" th:text="#{common.language.automatic}">Automatic (browser language)</option>
+                <option th:each="language : ${languages}" th:value="${language.code()}"
+                        th:selected="${language.code() == userDetails.getLanguage()}" th:text="${language.nativeName()}">English</option>
+            </select>
+            <small th:text="#{common.language.hint}">Used for menus, messages and e-mails. Page contents are not translated.</small>
         </div>
     </div>
 </form>
 <section class="kr-editor-pane mt-4" aria-labelledby="mfa-heading">
-    <h2 id="mfa-heading">Two-factor authentication</h2>
-    <p th:if="${mfa != null and mfa.enrolled()}">Active. Unused recovery codes: <span th:text="${mfa.recoveryCodesLeft()}">10</span>.</p>
-    <p th:if="${mfa == null or !mfa.enrolled()}">Not set up. A code from an authenticator app protects your account in addition to the password.</p>
-    <a class="kr-btn" href="/profile/mfa" hx-get="/profile/mfa" hx-target="#content" hx-push-url="true">Manage</a>
+    <h2 id="mfa-heading" th:text="#{profile.show.mfa.heading}">Two-factor authentication</h2>
+    <p th:if="${mfa != null and mfa.enrolled()}" th:text="#{profile.show.mfa.active(${mfa.recoveryCodesLeft()})}">Active. Unused recovery codes: 10.</p>
+    <p th:if="${mfa == null or !mfa.enrolled()}" th:text="#{profile.show.mfa.inactive}">Not set up. A code from an authenticator app protects your account in addition to the password.</p>
+    <a class="kr-btn" href="/profile/mfa" hx-get="/profile/mfa" hx-target="#content" hx-push-url="true" th:text="#{profile.show.mfa.manage}">Manage</a>
 </section>
 <section class="kr-editor-pane mt-4" aria-labelledby="connections-heading" th:if="${mcpEnabled == true or (connections != null and !connections.isEmpty())}">
-    <h2 id="connections-heading">Connected assistants</h2>
-    <p>AI assistants that may use Knowledgeroot in your name over the MCP server. Disconnecting ends their access.</p>
-    <p th:if="${disconnected}" class="alert kr-alert-info" role="status">Assistant disconnected.</p>
-    <p th:if="${connections == null or connections.isEmpty()}">No assistant is connected.</p>
+    <h2 id="connections-heading" th:text="#{profile.show.connections.heading}">Connected assistants</h2>
+    <p th:text="#{profile.show.connections.intro}">AI assistants that may use Knowledgeroot in your name over the MCP server. Disconnecting ends their access.</p>
+    <p th:if="${disconnected}" class="alert kr-alert-info" role="status" th:text="#{profile.show.connections.disconnected}">Assistant disconnected.</p>
+    <p th:if="${connections == null or connections.isEmpty()}" th:text="#{profile.show.connections.none}">No assistant is connected.</p>
     <table class="table" th:if="${connections != null and !connections.isEmpty()}">
-        <thead><tr><th>Assistant</th><th>Access</th><th>Connected</th><th>Valid until</th><th></th></tr></thead>
+        <thead><tr>
+            <th th:text="#{profile.show.connections.assistant}">Assistant</th>
+            <th th:text="#{profile.show.connections.access}">Access</th>
+            <th th:text="#{profile.show.connections.connected}">Connected</th>
+            <th th:text="#{profile.show.connections.valid-until}">Valid until</th>
+            <th></th>
+        </tr></thead>
         <tbody>
         <tr th:each="connection : ${connections}">
             <td><span th:text="${connection.clientName()}">Claude</span><small th:if="${!connection.redirectHost().isEmpty()}" style="display:block; color:var(--kr-text-3)" th:text="${connection.redirectHost()}">claude.ai</small></td>
-            <td th:text="${connection.canWrite()} ? 'Read and write' : 'Read only'">Read only</td>
-            <td th:text="${connection.connectedAt() != null} ? ${#temporals.format(connection.connectedAt(), 'yyyy-MM-dd HH:mm')} : ''">2026-11-01</td>
-            <td th:text="${connection.validUntil() != null} ? ${#temporals.format(connection.validUntil(), 'yyyy-MM-dd HH:mm')} : ''">2026-11-08</td>
+            <td th:text="${connection.canWrite()} ? #{common.access.read-write} : #{common.access.read-only}">Read only</td>
+            <td th:text="${connection.connectedAt() != null} ? ${#temporals.format(connection.connectedAt(), #messages.msg('format.datetime'))} : ''">2026-11-01</td>
+            <td th:text="${connection.validUntil() != null} ? ${#temporals.format(connection.validUntil(), #messages.msg('format.datetime'))} : ''">2026-11-08</td>
             <td style="text-align:right">
                 <form method="post" th:action="@{/profile/connections/revoke}" style="display:inline">
                     <input type="hidden" name="client" th:value="${connection.clientId()}">
-                    <button type="submit" class="kr-btn danger sm">Disconnect</button>
+                    <button type="submit" class="kr-btn danger sm" th:text="#{profile.show.connections.disconnect}">Disconnect</button>
                 </form>
             </td>
         </tr>
@@ -81,25 +96,25 @@
 </section>
 <section class="kr-editor-pane mt-4" aria-labelledby="password-heading">
     <p th:if="${@environment.getProperty('knowledgeroot.recovery.enabled', 'false') == 'true'}">
-        <a th:href="@{/profile/recovery}">Confirm email for password recovery</a>
+        <a th:href="@{/profile/recovery}" th:text="#{profile.show.recovery-link}">Confirm email for password recovery</a>
     </p>
-    <h2 id="password-heading">Change password</h2>
-    <p>Use 16–128 characters. After changing your password, sign in again on all devices.</p>
+    <h2 id="password-heading" th:text="#{profile.show.password.heading}">Change password</h2>
+    <p th:text="#{profile.show.password.hint}">Use 16–128 characters. After changing your password, sign in again on all devices.</p>
     <p th:if="${passwordError}" class="alert alert-danger" role="alert" th:text="${passwordError}"></p>
     <form method="post" th:action="@{/profile/password}">
         <div class="kr-field">
-            <label for="current-password">Current password</label>
+            <label for="current-password" th:text="#{profile.show.password.current}">Current password</label>
             <input id="current-password" name="currentPassword" type="password" autocomplete="current-password" maxlength="1024" required>
         </div>
         <div class="kr-field">
-            <label for="new-password">New password</label>
+            <label for="new-password" th:text="#{common.new-password}">New password</label>
             <input id="new-password" name="newPassword" type="password" autocomplete="new-password" minlength="16" maxlength="128" required>
         </div>
         <div class="kr-field">
-            <label for="confirm-password">Repeat new password</label>
+            <label for="confirm-password" th:text="#{profile.show.password.repeat}">Repeat new password</label>
             <input id="confirm-password" name="confirmPassword" type="password" autocomplete="new-password" minlength="16" maxlength="128" required>
         </div>
-        <button type="submit" class="kr-btn accent mt-3">Change password</button>
+        <button type="submit" class="kr-btn accent mt-3" th:text="#{profile.show.password.submit}">Change password</button>
     </form>
 </section>
 </body>

@@ -33,6 +33,7 @@ class ProfileController {
     private final org.knowledgeroot.app.security.mfa.SecondFactorService secondFactors;
     private final org.knowledgeroot.app.mcp.oauth.McpConnections mcpConnections;
     private final org.knowledgeroot.app.mcp.McpSettings mcpSettings;
+    private final org.knowledgeroot.app.i18n.UiMessages uiMessages;
 
     @PostMapping("/profile/password")
     public String changePassword(@RequestParam String currentPassword, @RequestParam String newPassword,
@@ -43,7 +44,7 @@ class ProfileController {
         } catch (ResponseStatusException e) {
             if (e.getStatusCode().value() != 400 && e.getStatusCode().value() != 409) throw e;
             model.addAttribute("userDetails", myProfileDao.findMyProfile());
-            model.addAttribute("passwordError", e.getReason());
+            model.addAttribute("passwordError", uiMessages.reason(e));
             int userId = Integer.parseInt(userContext.getUserContext().getUserId());
             model.addAttribute("mfa", secondFactors.status(userId));
             model.addAttribute("connections", mcpConnections.list(userId));
@@ -95,7 +96,7 @@ class ProfileController {
      * @return redirect to profile page
      */
     @PostMapping("/profile")
-    public String updateProfile(@ModelAttribute UpdateProfileDto updateProfileDto) {
+    public String updateProfile(@ModelAttribute UpdateProfileDto updateProfileDto, HtmxRequest htmxRequest) {
         log.info("Update profile: {}", updateProfileDto);
 
         UserDetails userDetails = userContext.getUserContext();
@@ -105,15 +106,21 @@ class ProfileController {
             return "redirect:/login";
         }
 
+        String previousLanguage = myProfileDao.findMyProfile().getLanguage();
         MyProfile updateProfile = MyProfile.builder()
                 .login(updateProfileDto.getLogin())
                 .email(updateProfileDto.getEmail())
                 .firstName(updateProfileDto.getFirstName())
                 .surName(updateProfileDto.getSurName())
+                .language(updateProfileDto.getLanguage())
                 .build();
 
         myProfileDao.updateMyProfile(updateProfile);
 
+        // A new language changes the navigation and the script messages too, so htmx loads the whole page.
+        boolean languageChanged = !java.util.Objects.equals(previousLanguage,
+                org.knowledgeroot.app.i18n.Languages.normalise(updateProfileDto.getLanguage()));
+        if (languageChanged && htmxRequest.isHtmxRequest()) return "redirect:htmx:/profile?updated=true";
         return "redirect:/profile?updated=true";
     }
 }

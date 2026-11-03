@@ -2,16 +2,16 @@
      class="container-fluid p-0"
      th:fragment="mainShell(contentFragment)">
     <div class="app-main">
-        <aside class="app-sidebar" id="sidebar" data-tab="pages" aria-label="Page navigation">
+        <aside class="app-sidebar" id="sidebar" data-tab="pages" th:aria-label="#{layout.sidebar.label}">
             <div class="kr-sidebar-tabs" role="tablist">
-                <button class="kr-sidebar-tab active" type="button" role="tab" aria-selected="true" data-tab="pages">Pages</button>
+                <button class="kr-sidebar-tab active" type="button" role="tab" aria-selected="true" data-tab="pages" th:text="#{common.pages}">Pages</button>
                 <button class="kr-sidebar-tab" type="button" role="tab" aria-selected="false" data-tab="starred"
-                        th:if="${isuser or isadmin}">Starred</button>
+                        th:if="${isuser or isadmin}" th:text="#{common.starred}">Starred</button>
             </div>
             <div class="kr-tree-search">
                 <div class="kr-tree-search-wrap">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-                    <input class="kr-tree-search-input" id="krTreeFilter" type="search" placeholder="Filter loaded pages…" aria-label="Filter loaded pages">
+                    <input class="kr-tree-search-input" id="krTreeFilter" type="search" th:placeholder="#{layout.filter.placeholder}" th:aria-label="#{layout.filter.label}">
                 </div>
             </div>
             <div class="kr-sidebar-scroll">
@@ -26,11 +26,11 @@
                      hx-get="/ui/sidebar"
                      hx-trigger="load, reload-sidebar from:body"
                      hx-target="#sidebar-tree"></div>
-                <div class="kr-sidebar-empty" id="sidebar-starred-empty">No starred pages in this space yet — open any page and click <b>Star</b>.</div>
+                <div class="kr-sidebar-empty" id="sidebar-starred-empty" th:utext="#{layout.starred-empty}">No starred pages in this space yet — open any page and click <b>Star</b>.</div>
             </div>
             <div class="kr-sidebar-footer">
                 <span class="kr-online-dot" aria-hidden="true"></span>
-                <span>online</span>
+                <span th:text="#{layout.online}">online</span>
                 <span style="margin-left:auto"><kbd>⌘</kbd> <kbd>/</kbd></span>
             </div>
         </aside>

@@ -20,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 class ProfileSecondFactorController {
     static final String PENDING_SECRET = "knowledgeroot.mfa.profilePendingSecret";
     private final UserContext userContext;
+    private final org.knowledgeroot.app.i18n.UiMessages uiMessages;
     private final SecondFactorService factors;
     private final MfaSettings settings;
     private final CredentialRepository credentials;
@@ -60,7 +61,7 @@ class ProfileSecondFactorController {
                 session.removeAttribute(PENDING_SECRET);
                 return "redirect:/profile/mfa";
             }
-            return setupView(factors.enrolment(user.getLogin(), secret), e.getReason(), model, htmx);
+            return setupView(factors.enrolment(user.getLogin(), secret), uiMessages.reason(e), model, htmx);
         }
     }
 

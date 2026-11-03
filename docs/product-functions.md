@@ -145,6 +145,18 @@ der Hosts, zu denen Assistenten nach der Anmeldung zurückkehren dürfen;
 Assistenten auf dem eigenen Rechner sind immer erlaubt. Einzelheiten in
 [mcp.md](mcp.md).
 
+## Sprache der Oberfläche
+
+Im Profil wählt jeder Benutzer unter **Language** eine Sprache oder
+„Automatisch"; Administratoren setzen sie beim Anlegen oder Bearbeiten eines
+Benutzers. „Automatisch" folgt der Browsersprache, ohne passende Sprache gilt
+Englisch. Angeboten werden Englisch, Deutsch, Französisch, Spanisch,
+Italienisch und Niederländisch. Die Sprache gilt für Menüs, Formulare,
+Meldungen, Datumsformate und die Wiederherstellungs-Mails, nicht für
+Seiteninhalte. Nach dem Speichern lädt die Seite in der neuen Sprache. Gäste
+und die Anmeldeseite folgen der Browsersprache. Einzelheiten und wie man eine
+Sprache ergänzt in [translations.md](translations.md).
+
 ## Spaces
 
 Ein Space ist ein Container um einen eigenen Seitenbaum, vergleichbar mit

@@ -217,7 +217,7 @@ class PageAccessWebTest {
         when(permissions.isInheriting(pageId)).thenReturn(true);
         when(permissions.permissionSource(pageId)).thenReturn(new PageId(10));
         mvc.perform(get("/ui/page/100/edit").with(caller).header("HX-Request", "true"))
-                .andExpect(status().isOk()).andExpect(content().string(containsString("Eigene Rechte verwenden")))
+                .andExpect(status().isOk()).andExpect(content().string(containsString("Use own permissions")))
                 .andExpect(content().string(not(containsString("id=\"role-type\""))));
         mvc.perform(put("/ui/page/100/permission/9").with(caller).with(csrf()).param("permissionLevel", "edit"))
                 .andExpect(status().isConflict());

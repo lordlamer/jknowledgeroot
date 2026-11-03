@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest({AdminController.class, UserRestController.class})
-@Import({WebSecurityConfig.class, PasswordService.class})
+@Import({WebSecurityConfig.class, PasswordService.class, org.knowledgeroot.app.i18n.UiMessages.class})
 class PasswordAdministrationWebTest {
     @Autowired MockMvc mvc;
     @Autowired PasswordService passwords;

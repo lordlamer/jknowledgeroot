@@ -25,7 +25,7 @@ class MyProfileImpl implements MyProfileDao {
     public MyProfile findMyProfile() {
         UserDetails userDetails = userContext.getUserContext();
 
-        return jdbcClient.sql("SELECT login, email, first_name, last_name FROM user WHERE id = ?")
+        return jdbcClient.sql("SELECT login, email, first_name, last_name, language FROM user WHERE id = ?")
                 .params(userDetails.getUserId())
                 .query(rs -> {
                     if(rs.next()) {
@@ -34,6 +34,9 @@ class MyProfileImpl implements MyProfileDao {
                                 .email(rs.getString("email"))
                                 .firstName(rs.getString("first_name"))
                                 .surName(rs.getString("last_name"))
+                                .language(org.knowledgeroot.app.i18n.Languages.find(rs.getString("language"))
+                                        .map(org.knowledgeroot.app.i18n.Languages.Language::code)
+                                        .orElse(org.knowledgeroot.app.i18n.Languages.AUTOMATIC))
                                 .build();
                     }
 
@@ -56,12 +59,13 @@ class MyProfileImpl implements MyProfileDao {
 
         recoveryEmails.invalidateIfChanged(Integer.parseInt(userDetails.getUserId()), myProfile.getEmail());
         jdbcClient
-                .sql("UPDATE user SET email = ?, first_name = ?, last_name = ?, login = ? WHERE id = ?")
+                .sql("UPDATE user SET email = ?, first_name = ?, last_name = ?, login = ?, language = ? WHERE id = ?")
                 .params(
                         myProfile.getEmail(),
                         myProfile.getFirstName(),
                         myProfile.getSurName(),
                         myProfile.getLogin(),
+                        org.knowledgeroot.app.i18n.Languages.normalise(myProfile.getLanguage()),
                         userDetails.getUserId()
                 )
                 .update();

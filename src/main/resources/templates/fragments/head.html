@@ -10,6 +10,18 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
 
+    <!-- Messages for the scripts in the page language (R57); krT(key, fallback, ...args) fills {0}, {1}. -->
+    <script th:inline="javascript">
+        window.krI18n = /*[[${jsMessages}]]*/ {};
+        window.krT = function (key, fallback) {
+            var text = (window.krI18n && window.krI18n[key]) || fallback || key;
+            var args = Array.prototype.slice.call(arguments, 2);
+            // One pass, so a value that itself contains "{1}" is not replaced again.
+            return text.replace(/\{(\d+)\}/g, function (match, index) {
+                return index < args.length ? String(args[index]) : match;
+            });
+        };
+    </script>
     <script type="text/javascript" th:src="@{/webjars/htmx.org/dist/htmx.min.js}"></script>
 
     <link th:rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}"/>
@@ -42,16 +54,9 @@
             const alert = document.createElement('div');
             alert.className = 'kr-request-error alert alert-danger';
             alert.setAttribute('role', 'alert');
-            const messages = {
-                400: 'Please check your input and try again.',
-                403: 'You do not have permission for this action.',
-                404: 'The requested item was not found.',
-                409: 'This page has changed, or its sub-pages prevent this action. Your input is still here. Compare with the current page in another tab before reloading.',
-                428: 'Reload the page before editing. Copy your unsaved input first.',
-                413: 'The upload exceeds the allowed size or file count.',
-                503: 'File storage is currently unavailable. Please try again later.'
-            };
-            alert.textContent = messages[event.detail.xhr?.status] || 'The request failed. Please try again.';
+            const status = event.detail.xhr?.status;
+            const known = [400, 403, 404, 409, 413, 428, 503].includes(status);
+            alert.textContent = known ? krT('request.' + status) : krT('request.failed', 'The request failed. Please try again.');
             scope.prepend(alert);
         }
         document.addEventListener('htmx:responseError', showRequestError);
@@ -311,15 +316,15 @@
             var url = window.location.origin + '/ui/page/' + id;
             var done = function () {
                 var origHtml = link.innerHTML;
-                link.textContent = '✓ Link copied';
+                link.textContent = '✓ ' + krT('link.copied', 'Link copied');
                 window.setTimeout(function () { link.innerHTML = origHtml; }, 1200);
             };
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(url).then(done).catch(function () {
-                    window.prompt('Copy link', url);
+                    window.prompt(krT('link.copy', 'Copy link'), url);
                 });
             } else {
-                window.prompt('Copy link', url);
+                window.prompt(krT('link.copy', 'Copy link'), url);
             }
         });
     </script>

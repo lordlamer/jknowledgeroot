@@ -11,7 +11,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
+@lombok.RequiredArgsConstructor
 class LoginController {
+    private final org.knowledgeroot.app.i18n.UiMessages messages;
+
     @GetMapping("/login")
     public String login(
             @RequestParam(value = "error", required = false) String error,
@@ -40,7 +43,7 @@ class LoginController {
         }
 
         if (logout != null) {
-            model.addAttribute("msg", "You've been logged out successfully.");
+            model.addAttribute("msg", messages.get("login.logged-out"));
         }
 
         if(htmxRequest.isHtmxRequest()) {

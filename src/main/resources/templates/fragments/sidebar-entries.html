@@ -8,7 +8,7 @@
     <li th:if="${hasNext}" class="sidebar-more-pages" th:id="'nav-more-' + ${parentId}">
         <button type="button" class="btn btn-sm btn-link" hx-swap="outerHTML" hx-disabled-elt="this"
                 th:attr="hx-get=@{/ui/sidebar(parent=${parentId},after=${nextAfter})}, hx-target='#nav-more-' + ${parentId}">
-            Load more pages
+            <th:block th:text="#{sidebar.load-more}">Load more pages</th:block>
         </button>
     </li>
 </th:block>

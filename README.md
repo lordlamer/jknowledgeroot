@@ -126,6 +126,15 @@ the server on under *Admin → Settings*, keep the list of hosts assistants may 
 to and see every call and connection under *Admin → MCP*; users see and disconnect
 their assistants in the profile. See the [MCP guide](docs/mcp.md).
 
+## Interface languages
+
+The interface is available in English, German, French, Spanish, Italian and
+Dutch. Users pick their language in the profile (or "automatic" for the
+browser language); administrators can set it in the user administration.
+Texts live in `src/main/resources/i18n/`; the build checks that every
+language is complete and that templates contain no hard-coded text. See the
+[translation guide](docs/translations.md) for adding a language.
+
 ## Page permissions
 
 Every page lives in a space, a container with its own permissions (view, edit,

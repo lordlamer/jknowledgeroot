@@ -2,28 +2,28 @@
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
 <head>
-    <title>Knowledgeroot Groups</title>
+    <title th:text="#{admin.groups.title}">Knowledgeroot Groups</title>
 </head>
 <body>
 <div class="kr-page-wrap" style="max-width:1100px">
-    <nav aria-label="breadcrumb">
+    <nav th:aria-label="#{common.breadcrumb}">
         <ol class="breadcrumb" style="padding-left:0; padding-right:0">
-            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
-            <li class="breadcrumb-item">Admin</li>
-            <li class="breadcrumb-item active" aria-current="page">Groups</li>
+            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true" th:text="#{common.home}">Home</a></li>
+            <li class="breadcrumb-item" th:text="#{common.admin}">Admin</li>
+            <li class="breadcrumb-item active" aria-current="page" th:text="#{common.groups}">Groups</li>
         </ol>
     </nav>
 
     <header class="kr-page-header" style="padding:12px 0 20px">
         <div class="kr-page-title-wrap">
-            <h1 class="kr-page-title" style="font-size:24px">Groups</h1>
-            <p class="kr-page-subtitle" style="margin:0" th:text="${groups.size()} + ' groups'">0 groups</p>
+            <h1 class="kr-page-title" style="font-size:24px" th:text="#{common.groups}">Groups</h1>
+            <p class="kr-page-subtitle" style="margin:0" th:text="#{admin.groups.count(${groups.size()})}">0 groups</p>
         </div>
         <div class="kr-page-actions">
             <button type="button" class="kr-btn accent"
                     hx-get="/admin/groups/create" hx-target="#content" hx-push-url="true">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-                Add group
+                <span th:text="#{admin.groups.add}">Add group</span>
             </button>
         </div>
     </header>
@@ -37,17 +37,17 @@
                     <div class="kr-gc-name" th:text="${group.getName()}">name</div>
                     <div class="kr-gc-desc" th:text="${group.getDescription()}">description</div>
                 </div>
-                <span class="kr-pill active" th:if="${group.getActive()}">Active</span>
-                <span class="kr-pill inactive" th:unless="${group.getActive()}">Inactive</span>
+                <span class="kr-pill active" th:if="${group.getActive()}" th:text="#{admin.groups.active}">Active</span>
+                <span class="kr-pill inactive" th:unless="${group.getActive()}" th:text="#{admin.groups.inactive}">Inactive</span>
             </div>
             <div class="kr-gc-actions">
                 <button type="button" class="kr-btn sm" style="flex:1"
                         th:attr="hx-get='/admin/groups/' + ${group.getId()}"
-                        hx-target="#content" hx-push-url="true">Edit</button>
+                        hx-target="#content" hx-push-url="true" th:text="#{common.edit}">Edit</button>
                 <button type="button" class="kr-btn sm danger"
                         th:attr="hx-delete='/admin/groups/' + ${group.getId()}"
-                        hx-confirm="Really delete?"
-                        hx-target="closest .kr-group-card" hx-swap="outerHTML">Delete</button>
+                        th:hx-confirm="#{admin.groups.delete.confirm}"
+                        hx-target="closest .kr-group-card" hx-swap="outerHTML" th:text="#{common.delete}">Delete</button>
             </div>
         </div>
     </div>

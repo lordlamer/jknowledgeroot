@@ -18,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 class SpaceController {
     private final SpaceService spaces;
+    private final org.knowledgeroot.app.i18n.UiMessages uiMessages;
     private final PageDao pages;
     private final UserDao users;
     private final GroupDao groups;
@@ -82,7 +83,7 @@ class SpaceController {
             return "redirect:/spaces/" + space.getId() + "/settings?created";
         } catch (ResponseStatusException e) {
             if (e.getStatusCode().value() != 400 && e.getStatusCode().value() != 409) throw e;
-            model.addAttribute("error", e.getReason());
+            model.addAttribute("error", uiMessages.reason(e));
             model.addAttribute("key", key);
             model.addAttribute("name", name);
             model.addAttribute("description", description);
@@ -109,7 +110,7 @@ class SpaceController {
         } catch (ResponseStatusException e) {
             if (e.getStatusCode().value() != 400) throw e;
             settingsModel(id, model);
-            model.addAttribute("error", e.getReason());
+            model.addAttribute("error", uiMessages.reason(e));
             return htmx.isHtmxRequest() ? "space/settings :: body" : "space/settings";
         }
     }
@@ -122,7 +123,7 @@ class SpaceController {
         } catch (ResponseStatusException e) {
             if (e.getStatusCode().value() != 409) throw e;
             settingsModel(id, model);
-            model.addAttribute("error", e.getReason());
+            model.addAttribute("error", uiMessages.reason(e));
             return htmx.isHtmxRequest() ? "space/settings :: body" : "space/settings";
         }
     }
@@ -136,7 +137,7 @@ class SpaceController {
         } catch (ResponseStatusException e) {
             if (e.getStatusCode().value() != 400 && e.getStatusCode().value() != 409) throw e;
             settingsModel(id, model);
-            model.addAttribute("error", e.getReason());
+            model.addAttribute("error", uiMessages.reason(e));
             return htmx.isHtmxRequest() ? "space/settings :: body" : "space/settings";
         }
     }

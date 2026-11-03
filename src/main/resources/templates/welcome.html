@@ -2,21 +2,21 @@
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{knowledgeroot :: layout(~{::title}, ~{::div})}">
 <head>
-    <title>Welcome to Knowledgeroot</title>
+    <title th:text="#{welcome.title}">Welcome to Knowledgeroot</title>
 </head>
 <body>
 <div class="kr-welcome">
     <div class="kr-welcome-mark" aria-hidden="true">K</div>
-    <h1>Your team's knowledge, at home.</h1>
-    <p>A calm, structured place to write docs, store runbooks, and keep what matters to your team searchable and versioned.</p>
+    <h1 th:text="#{welcome.heading}">Your team's knowledge, at home.</h1>
+    <p th:text="#{welcome.intro}">A calm, structured place to write docs, store runbooks, and keep what matters to your team searchable and versioned.</p>
     <div class="kr-cta">
         <button th:if="${canCreateRootPage}" class="kr-btn primary" type="button" hx-get="/ui/page/new" hx-target="#content" hx-push-url="true">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-            Create your first page
+            <th:block th:text="#{welcome.create-first-page}">Create your first page</th:block>
         </button>
         <button class="kr-btn" type="button" onclick="document.querySelector('.kr-search-input')?.focus();">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-            Search
+            <th:block th:text="#{common.search}">Search</th:block>
         </button>
     </div>
 </div>

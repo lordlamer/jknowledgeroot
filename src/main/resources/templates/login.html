@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/head :: appHead(~{::title})}">
-    <title>Knowledgeroot Login</title>
+    <title th:text="#{login.title}">Knowledgeroot Login</title>
 </head>
 <body class="kr-login-page" th:fragment="body">
 <div class="kr-login-shell">
@@ -11,44 +11,44 @@
             <span class="kr-brand-name">Knowledgeroot<span class="kr-dot">.</span></span>
         </a>
         <div class="kr-login-hero">
-            <h1>Your team's knowledge, at home.</h1>
-            <p>A calm, structured place to write docs, store runbooks, and keep what matters to your team searchable and versioned.</p>
+            <h1 th:text="#{login.hero.title}">Your team's knowledge, at home.</h1>
+            <p th:text="#{login.hero.text}">A calm, structured place to write docs, store runbooks, and keep what matters to your team searchable and versioned.</p>
         </div>
         <div style="color:var(--kr-text-3); font-size:12px">© Knowledgeroot</div>
     </div>
     <div class="kr-login-right">
         <form class="kr-login-card" method="post" action="/logmein">
-            <h2>Sign in</h2>
-            <p class="kr-sub">Welcome back. Please enter your credentials.</p>
+            <h2 th:text="#{login.sign-in}">Sign in</h2>
+            <p class="kr-sub" th:text="#{login.welcome}">Welcome back. Please enter your credentials.</p>
 
             <div th:if="${error}" class="kr-login-alert" role="alert">
                 <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
-                Login failed. Check your credentials or wait before trying again.
+                <th:block th:text="#{login.failed}">Login failed. Check your credentials or wait before trying again.</th:block>
             </div>
             <div th:if="${msg}" class="kr-login-info" role="status" th:text="${msg}"></div>
-            <div th:if="${param.passwordChanged != null}" class="kr-login-info" role="status">Password changed. Sign in with your new password.</div>
-            <div th:if="${param.mfaLocked != null}" class="kr-login-alert" role="alert">Too many wrong codes. Sign in again.</div>
+            <div th:if="${param.passwordChanged != null}" class="kr-login-info" role="status" th:text="#{login.password-changed}">Password changed. Sign in with your new password.</div>
+            <div th:if="${param.mfaLocked != null}" class="kr-login-alert" role="alert" th:text="#{login.mfa-locked}">Too many wrong codes. Sign in again.</div>
 
             <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
             <div class="kr-field">
-                <label for="loginUsername">Username</label>
+                <label for="loginUsername" th:text="#{login.username}">Username</label>
                 <input type="text" id="loginUsername" name="username" maxlength="255" autocomplete="username" required autofocus>
             </div>
             <div class="kr-field">
-                <label for="loginPassword">Password</label>
+                <label for="loginPassword" th:text="#{common.password}">Password</label>
                 <input type="password" id="loginPassword" name="password" maxlength="1024" autocomplete="current-password" required>
             </div>
             <div class="kr-check">
                 <input type="checkbox" id="remember" name="remember-me" value="true">
-                <label for="remember">Keep me signed in</label>
+                <label for="remember" th:text="#{login.remember}">Keep me signed in</label>
             </div>
             <button class="kr-btn primary" type="submit">
                 <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
-                Sign in
+                <th:block th:text="#{login.sign-in}">Sign in</th:block>
             </button>
             <a th:if="${@environment.getProperty('knowledgeroot.recovery.enabled', 'false') == 'true'}"
-               th:href="@{/account/forgot-password}">Forgot your password?</a>
+               th:href="@{/account/forgot-password}" th:text="#{login.forgot}">Forgot your password?</a>
         </form>
     </div>
 </div>

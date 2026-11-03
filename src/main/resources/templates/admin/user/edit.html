@@ -2,71 +2,80 @@
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
 <head>
-    <title>Knowledgeroot :: edit user</title>
+    <title th:text="#{admin.user-edit.title}">Knowledgeroot :: edit user</title>
 </head>
 <body>
 <form th:hx-post="'/admin/users/' + ${user.getId()}" hx-target="#content">
-    <nav aria-label="breadcrumb">
+    <nav th:aria-label="#{common.breadcrumb}">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
-            <li class="breadcrumb-item">Admin</li>
-            <li class="breadcrumb-item"><a href="#" hx-get="/admin/users" hx-target="#content" hx-push-url="true">Users</a></li>
+            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true" th:text="#{common.home}">Home</a></li>
+            <li class="breadcrumb-item" th:text="#{common.admin}">Admin</li>
+            <li class="breadcrumb-item"><a href="#" hx-get="/admin/users" hx-target="#content" hx-push-url="true" th:text="#{common.users}">Users</a></li>
             <li class="breadcrumb-item active" aria-current="page" th:text="${user.getLogin()}">User</li>
         </ol>
     </nav>
 
     <header class="kr-page-header">
         <div class="kr-page-title-wrap">
-            <h1 class="kr-page-title">Edit user</h1>
+            <h1 class="kr-page-title" th:text="#{admin.user-edit.heading}">Edit user</h1>
             <p class="kr-page-subtitle" style="margin:0" th:text="${user.getLogin()}">login</p>
         </div>
         <div class="kr-page-actions">
             <button type="button" class="kr-btn"
-                    hx-get="/admin/users" hx-target="#content" hx-push-url="true">Cancel</button>
-            <button type="submit" class="kr-btn accent">Save</button>
+                    hx-get="/admin/users" hx-target="#content" hx-push-url="true" th:text="#{common.cancel}">Cancel</button>
+            <button type="submit" class="kr-btn accent" th:text="#{common.save}">Save</button>
         </div>
     </header>
 
     <div class="kr-editor-pane">
         <div class="kr-form-row">
             <div class="kr-field">
-                <label for="login">Login</label>
+                <label for="login" th:text="#{common.login}">Login</label>
                 <input type="text" id="login" name="login" th:value="${user.getLogin()}">
             </div>
             <div class="kr-field">
-                <label for="email">E-mail</label>
+                <label for="email" th:text="#{common.email}">E-mail</label>
                 <input type="email" id="email" name="email" th:value="${user.getEmail()}">
             </div>
         </div>
         <div class="kr-form-row">
             <div class="kr-field">
-                <label for="firstname">First name</label>
+                <label for="firstname" th:text="#{common.first-name}">First name</label>
                 <input type="text" id="firstname" name="firstName" th:value="${user.getFirstName()}">
             </div>
             <div class="kr-field">
-                <label for="lastname">Last name</label>
+                <label for="lastname" th:text="#{common.last-name}">Last name</label>
                 <input type="text" id="lastname" name="lastName" th:value="${user.getLastName()}">
             </div>
         </div>
         <div class="kr-field">
-            <label for="password">New password</label>
+            <label for="language" th:text="#{common.language}">Language</label>
+            <select id="language" name="language">
+                <option value="" th:selected="${user.getLanguage() == null or user.getLanguage() == ''}" th:text="#{common.language.automatic}">Automatic (browser language)</option>
+                <option th:each="language : ${languages}" th:value="${language.code()}"
+                        th:selected="${language.code() == user.getLanguage()}" th:text="${language.nativeName()}">English</option>
+            </select>
+            <small th:text="#{common.language.hint}">Used for menus, messages and e-mails. Page contents are not translated.</small>
+        </div>
+        <div class="kr-field">
+            <label for="password" th:text="#{common.new-password}">New password</label>
             <input type="password" id="password" name="password" value="" minlength="16" maxlength="128" autocomplete="new-password">
-            <small>Leave empty to keep the password. New passwords: 16–128 characters; spaces are preserved.</small>
+            <small th:text="#{admin.user-edit.password.hint}">Leave empty to keep the password. New passwords: 16–128 characters; spaces are preserved.</small>
         </div>
         <div class="kr-field" style="display:flex; align-items:center; gap:8px">
             <input class="form-check-input" type="checkbox" value="true" id="admin" name="admin" th:checked="${user.getAdmin()}">
-            <label for="admin" style="margin:0">Admin</label>
+            <label for="admin" style="margin:0" th:text="#{common.admin-role}">Admin</label>
         </div>
     </div>
 </form>
 <section class="kr-editor-pane mt-4" aria-labelledby="mfa-heading" th:if="${mfa != null}">
-    <h2 id="mfa-heading">Two-factor authentication</h2>
-    <p th:if="${!mfa.enrolled()}">Not set up.</p>
+    <h2 id="mfa-heading" th:text="#{admin.user-edit.mfa.heading}">Two-factor authentication</h2>
+    <p th:if="${!mfa.enrolled()}" th:text="#{admin.user-edit.mfa.inactive}">Not set up.</p>
     <div th:if="${mfa.enrolled()}">
-        <p>Active since <span th:text="${#temporals.format(mfa.enrolledAt(), 'yyyy-MM-dd HH:mm')}">date</span>, unused recovery codes: <span th:text="${mfa.recoveryCodesLeft()}">10</span>.</p>
+        <p th:text="#{admin.user-edit.mfa.active(${#temporals.format(mfa.enrolledAt(), #messages.msg('format.datetime'))}, ${mfa.recoveryCodesLeft()})}">Active since 2026-11-01 10:00, unused recovery codes: 10.</p>
         <form th:hx-post="'/admin/users/' + ${user.getId()} + '/mfa/reset'" hx-target="#content"
-              hx-confirm="Remove this user's second factor? The user can set up a new one afterwards.">
-            <button type="submit" class="kr-btn">Reset two-factor authentication</button>
+              th:hx-confirm="#{admin.user-edit.mfa.reset.confirm}">
+            <button type="submit" class="kr-btn" th:text="#{admin.user-edit.mfa.reset}">Reset two-factor authentication</button>
         </form>
     </div>
 </section>

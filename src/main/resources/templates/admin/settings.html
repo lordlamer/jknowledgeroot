@@ -2,61 +2,61 @@
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
 <head>
-    <title>Knowledgeroot :: settings</title>
+    <title th:text="#{admin.settings.title}">Knowledgeroot :: settings</title>
 </head>
 <body>
 <form method="post" th:action="@{/admin/settings}">
-    <nav aria-label="breadcrumb">
+    <nav th:aria-label="#{common.breadcrumb}">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
-            <li class="breadcrumb-item">Admin</li>
-            <li class="breadcrumb-item active" aria-current="page">Settings</li>
+            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true" th:text="#{common.home}">Home</a></li>
+            <li class="breadcrumb-item" th:text="#{common.admin}">Admin</li>
+            <li class="breadcrumb-item active" aria-current="page" th:text="#{common.settings}">Settings</li>
         </ol>
     </nav>
 
     <header class="kr-page-header">
         <div class="kr-page-title-wrap">
-            <h1 class="kr-page-title">Settings</h1>
-            <p class="kr-page-subtitle" style="margin:0">Application-wide settings that apply immediately.</p>
+            <h1 class="kr-page-title" th:text="#{common.settings}">Settings</h1>
+            <p class="kr-page-subtitle" style="margin:0" th:text="#{admin.settings.subtitle}">Application-wide settings that apply immediately.</p>
         </div>
         <div class="kr-page-actions">
-            <button type="submit" class="kr-btn accent">Save</button>
+            <button type="submit" class="kr-btn accent" th:text="#{common.save}">Save</button>
         </div>
     </header>
 
     <div class="kr-editor-pane">
-        <div th:if="${saved}" class="alert kr-alert-info" role="alert" style="margin-bottom:16px">Settings saved.</div>
-        <h2>Two-factor authentication</h2>
-        <p>Users set up an authenticator app in their profile. The policy decides who is asked for a code and who must set one up at the next sign-in.</p>
+        <div th:if="${saved}" class="alert kr-alert-info" role="alert" style="margin-bottom:16px" th:text="#{admin.settings.saved}">Settings saved.</div>
+        <h2 th:text="#{admin.settings.mfa.heading}">Two-factor authentication</h2>
+        <p th:text="#{admin.settings.mfa.intro}">Users set up an authenticator app in their profile. The policy decides who is asked for a code and who must set one up at the next sign-in.</p>
         <div class="kr-field" th:each="option : ${policies}" style="display:flex; align-items:flex-start; gap:8px">
             <input class="form-check-input" type="radio" name="mfaPolicy" th:id="'mfa-' + ${option.value}" th:value="${option.value}" th:checked="${option == policy}">
             <label th:for="'mfa-' + ${option.value}" style="margin:0">
                 <strong th:switch="${option.name()}">
-                    <span th:case="'OFF'">Off</span>
-                    <span th:case="'OPTIONAL'">Optional</span>
-                    <span th:case="'REQUIRED_FOR_ADMINS'">Required for administrators</span>
-                    <span th:case="'REQUIRED'">Required for everyone</span>
+                    <span th:case="'OFF'" th:text="#{admin.settings.mfa.off}">Off</span>
+                    <span th:case="'OPTIONAL'" th:text="#{admin.settings.mfa.optional}">Optional</span>
+                    <span th:case="'REQUIRED_FOR_ADMINS'" th:text="#{admin.settings.mfa.required-for-admins}">Required for administrators</span>
+                    <span th:case="'REQUIRED'" th:text="#{admin.settings.mfa.required}">Required for everyone</span>
                 </strong>
                 <small th:switch="${option.name()}" style="display:block">
-                    <span th:case="'OFF'">Nobody is asked for a code; tokens users set up are kept.</span>
-                    <span th:case="'OPTIONAL'">Users who set up a token are asked for it; everyone else signs in with the password only.</span>
-                    <span th:case="'REQUIRED_FOR_ADMINS'">Administrators must set up a token at the next sign-in; other users as with Optional.</span>
-                    <span th:case="'REQUIRED'">Everyone must set up a token at the next sign-in.</span>
+                    <span th:case="'OFF'" th:text="#{admin.settings.mfa.off.hint}">Nobody is asked for a code; tokens users set up are kept.</span>
+                    <span th:case="'OPTIONAL'" th:text="#{admin.settings.mfa.optional.hint}">Users who set up a token are asked for it; everyone else signs in with the password only.</span>
+                    <span th:case="'REQUIRED_FOR_ADMINS'" th:text="#{admin.settings.mfa.required-for-admins.hint}">Administrators must set up a token at the next sign-in; other users as with Optional.</span>
+                    <span th:case="'REQUIRED'" th:text="#{admin.settings.mfa.required.hint}">Everyone must set up a token at the next sign-in.</span>
                 </small>
             </label>
         </div>
     </div>
     <div class="kr-editor-pane mt-4">
-        <h2>MCP server for AI assistants</h2>
-        <p>Assistants such as Claude connect to <code th:text="${mcpUrl}">https://example.org/mcp</code>, sign in as the user with the normal login and then read or, if allowed on the consent page, write with that user&#39;s permissions. See <a href="https://github.com/lordlamer/jknowledgeroot/blob/master/docs/mcp.md" target="_blank" rel="noopener">docs/mcp.md</a>. Connections and the audit log are under <a href="/admin/mcp" hx-get="/admin/mcp" hx-target="#content" hx-push-url="true">Admin → MCP</a>.</p>
+        <h2 th:text="#{admin.settings.mcp.heading}">MCP server for AI assistants</h2>
+        <p><th:block th:text="#{admin.settings.mcp.intro.connect}">Assistants such as Claude connect to</th:block> <code th:text="${mcpUrl}">https://example.org/mcp</code><th:block th:text="#{admin.settings.mcp.intro.sign-in}">, sign in as the user with the normal login and then read or, if allowed on the consent page, write with that user&#39;s permissions. See</th:block> <a href="https://github.com/lordlamer/jknowledgeroot/blob/master/docs/mcp.md" target="_blank" rel="noopener" translate="no">docs/mcp.md</a><th:block th:text="#{admin.settings.mcp.intro.audit}">. Connections and the audit log are under</th:block> <a href="/admin/mcp" hx-get="/admin/mcp" hx-target="#content" hx-push-url="true" th:text="#{admin.settings.mcp.intro.audit-link}">Admin → MCP</a><th:block th:text="#{admin.settings.mcp.intro.end}">.</th:block></p>
         <div class="kr-check" style="margin-bottom:12px">
             <input type="checkbox" id="mcp-enabled" name="mcpEnabled" value="on" th:checked="${mcpEnabled}">
-            <label for="mcp-enabled"><strong>Enable the MCP server</strong> <small style="display:block">Off: the endpoint and the OAuth routes answer 404; existing connections stop working.</small></label>
+            <label for="mcp-enabled"><strong th:text="#{admin.settings.mcp.enable}">Enable the MCP server</strong> <small style="display:block" th:text="#{admin.settings.mcp.enable.hint}">Off: the endpoint and the OAuth routes answer 404; existing connections stop working.</small></label>
         </div>
         <div class="kr-field">
-            <label for="mcp-redirect-hosts">Allowed assistant hosts</label>
+            <label for="mcp-redirect-hosts" th:text="#{admin.settings.mcp.hosts}">Allowed assistant hosts</label>
             <textarea id="mcp-redirect-hosts" name="mcpRedirectHosts" rows="3" th:text="${mcpRedirectHosts}"></textarea>
-            <small>Hosts an assistant may name as return address when it registers, one per line; <code>*.example.org</code> covers sub-domains. Assistants on the user&#39;s own machine (localhost) are always allowed.</small>
+            <small><th:block th:text="#{admin.settings.mcp.hosts.hint}">Hosts an assistant may name as return address when it registers, one per line;</th:block> <code translate="no">*.example.org</code> <th:block th:text="#{admin.settings.mcp.hosts.hint.wildcard}">covers sub-domains. Assistants on the user&#39;s own machine (localhost) are always allowed.</th:block></small>
         </div>
     </div>
 </form>

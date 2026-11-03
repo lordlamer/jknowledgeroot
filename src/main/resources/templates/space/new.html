@@ -2,26 +2,26 @@
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
 <head>
-    <title>Knowledgeroot New space</title>
+    <title th:text="#{space.new.title}">Knowledgeroot New space</title>
 </head>
 <body>
 <form method="post" th:action="@{/spaces}">
-    <nav aria-label="breadcrumb">
+    <nav th:aria-label="#{common.breadcrumb}">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
-            <li class="breadcrumb-item"><a href="/spaces" hx-get="/spaces" hx-target="#content" hx-push-url="true">Spaces</a></li>
-            <li class="breadcrumb-item active" aria-current="page">New space</li>
+            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true" th:text="#{common.home}">Home</a></li>
+            <li class="breadcrumb-item"><a href="/spaces" hx-get="/spaces" hx-target="#content" hx-push-url="true" th:text="#{common.spaces}">Spaces</a></li>
+            <li class="breadcrumb-item active" aria-current="page" th:text="#{space.new.heading}">New space</li>
         </ol>
     </nav>
 
     <header class="kr-page-header">
         <div class="kr-page-title-wrap">
-            <h1 class="kr-page-title">New space</h1>
-            <p class="kr-page-subtitle" style="margin:0">You become the administrator of the new space; a home page is created with it.</p>
+            <h1 class="kr-page-title" th:text="#{space.new.heading}">New space</h1>
+            <p class="kr-page-subtitle" style="margin:0" th:text="#{space.new.subtitle}">You become the administrator of the new space; a home page is created with it.</p>
         </div>
         <div class="kr-page-actions">
-            <a class="kr-btn" href="/spaces" hx-get="/spaces" hx-target="#content" hx-push-url="true">Cancel</a>
-            <button type="submit" class="kr-btn accent">Create space</button>
+            <a class="kr-btn" href="/spaces" hx-get="/spaces" hx-target="#content" hx-push-url="true" th:text="#{common.cancel}">Cancel</a>
+            <button type="submit" class="kr-btn accent" th:text="#{space.new.submit}">Create space</button>
         </div>
     </header>
 
@@ -29,18 +29,18 @@
         <p th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></p>
         <div class="kr-form-row">
             <div class="kr-field">
-                <label for="space-key">Key</label>
+                <label for="space-key" th:text="#{space.new.key}">Key</label>
                 <input type="text" id="space-key" name="key" th:value="${key}" maxlength="16" pattern="[A-Za-z][A-Za-z0-9]{1,15}" required
                        style="text-transform:uppercase">
-                <small>2–16 letters or digits, starting with a letter. Cannot be changed later.</small>
+                <small th:text="#{space.new.key.hint}">2–16 letters or digits, starting with a letter. Cannot be changed later.</small>
             </div>
             <div class="kr-field">
-                <label for="space-name">Name</label>
+                <label for="space-name" th:text="#{common.name}">Name</label>
                 <input type="text" id="space-name" name="name" th:value="${name}" maxlength="255" required>
             </div>
         </div>
         <div class="kr-field">
-            <label for="space-description">Description</label>
+            <label for="space-description" th:text="#{common.description}">Description</label>
             <textarea id="space-description" name="description" rows="3" maxlength="2000" th:text="${description}"></textarea>
         </div>
     </div>

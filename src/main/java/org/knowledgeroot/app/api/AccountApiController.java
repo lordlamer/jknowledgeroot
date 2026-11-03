@@ -123,7 +123,7 @@ class AccountApiController {
         LocalDateTime now = LocalDateTime.now();
         users.createUser(User.builder().login(login).firstName(text(input.firstName())).lastName(text(input.lastName()))
                 .email(optionalEmail(input.email())).password(passwords.encodeNewPassword(input.password()))
-                .admin(Boolean.TRUE.equals(input.admin())).language("en_US").timezone("UTC")
+                .admin(Boolean.TRUE.equals(input.admin())).language(org.knowledgeroot.app.i18n.Languages.AUTOMATIC).timezone("UTC")
                 .timeStart(now).timeEnd(now).active(!Boolean.FALSE.equals(input.active()))
                 .createdBy(actor).createDate(now).changedBy(actor).changeDate(now).deleted(false).build());
         var filter = new UserFilter();

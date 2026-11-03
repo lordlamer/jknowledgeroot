@@ -17,4 +17,6 @@ class UserDto {
     @ToString.Exclude
     private String password;
     private Boolean admin;
+    /** A supported language code, or empty for the browser language. */
+    private String language;
 }

@@ -4,11 +4,11 @@
          th:id="'comments-' + ${pageId}">
 
     <h3>
-        Comments
+        <th:block th:text="#{page.comments.heading}">Comments</th:block>
         <span class="kr-c-count" th:if="${comments != null and !#lists.isEmpty(comments)}" th:text="'· ' + ${#lists.size(comments)}">· 0</span>
     </h3>
 
-    <div th:if="${comments == null or #lists.isEmpty(comments)}" class="kr-c-empty">
+    <div th:if="${comments == null or #lists.isEmpty(comments)}" class="kr-c-empty" th:text="#{page.comments.empty}">
         No comments yet.
     </div>
 
@@ -17,7 +17,7 @@
         <div class="kr-c-body">
             <div class="kr-c-meta">
                 <span class="kr-c-who" th:text="${c.authorDisplayName}">Author</span>
-                <span class="kr-c-time" th:text="${#temporals.format(c.createDate, 'dd.MM.yyyy HH:mm')}">date</span>
+                <span class="kr-c-time" th:text="${#temporals.format(c.createDate, #messages.msg('format.datetime'))}">date</span>
             </div>
             <div class="kr-c-txt" th:text="${c.content}">Comment text</div>
             <div class="kr-c-actions"
@@ -26,7 +26,7 @@
                         th:attr="hx-delete='/ui/page/' + ${pageId} + '/comments/' + ${c.id}"
                         th:hx-target="'#comments-' + ${pageId}"
                         hx-swap="outerHTML"
-                        hx-confirm="Delete this comment?">Delete</button>
+                        th:hx-confirm="#{page.comments.delete.confirm}" th:text="#{common.delete}">Delete</button>
             </div>
         </div>
     </div>
@@ -39,14 +39,14 @@
         <span class="kr-avatar" aria-hidden="true" th:text="${currentInitial}">U</span>
         <div class="kr-c-composer-body">
             <textarea name="content" required maxlength="4000" rows="3"
-                      placeholder="Write a comment…"></textarea>
+                      th:placeholder="#{page.comments.placeholder}"></textarea>
             <div class="kr-c-composer-actions">
-                <button type="submit" class="kr-btn accent">Comment</button>
+                <button type="submit" class="kr-btn accent" th:text="#{page.comments.submit}">Comment</button>
             </div>
         </div>
     </form>
 
-    <div th:unless="${canComment}" class="kr-c-signin">
+    <div th:unless="${canComment}" class="kr-c-signin" th:utext="#{page.comments.sign-in}">
         <a href="/login">Sign in</a> to comment.
     </div>
 </section>

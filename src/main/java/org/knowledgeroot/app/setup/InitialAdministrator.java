@@ -62,7 +62,7 @@ public final class InitialAdministrator {
             var statement = connection.prepareStatement("""
                     INSERT INTO user (login, password, admin, active, language, timezone,
                                       created_by, create_date, changed_by, change_date)
-                    VALUES (?, ?, TRUE, TRUE, 'en_US', 'UTC', 0, CURRENT_TIMESTAMP, 0, CURRENT_TIMESTAMP)
+                    VALUES (?, ?, TRUE, TRUE, '', 'UTC', 0, CURRENT_TIMESTAMP, 0, CURRENT_TIMESTAMP)
                     """, Statement.RETURN_GENERATED_KEYS);
             statement.setString(1, login.toLowerCase(Locale.ROOT));
             statement.setString(2, hash);

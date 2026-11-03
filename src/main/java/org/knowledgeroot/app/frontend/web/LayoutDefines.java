@@ -23,6 +23,9 @@ public class LayoutDefines {
 
     private final org.springframework.beans.factory.ObjectProvider<org.knowledgeroot.app.space.CurrentSpace> currentSpace;
 
+    /** Absent in web slice tests without the i18n beans; the scripts then use their English fallbacks. */
+    private final org.springframework.beans.factory.ObjectProvider<org.knowledgeroot.app.i18n.JsMessages> jsMessages;
+
     /** Root pages need the edit level on the space the sidebar currently shows. */
     @ModelAttribute("canCreateRootPage")
     public boolean canCreateRootPage() {
@@ -71,6 +74,19 @@ public class LayoutDefines {
         } catch (org.springframework.dao.DataAccessException e) {
             return java.util.List.of();
         }
+    }
+
+    /** Languages offered in the profile and in the user administration. */
+    @ModelAttribute("languages")
+    public java.util.List<org.knowledgeroot.app.i18n.Languages.Language> languages() {
+        return org.knowledgeroot.app.i18n.Languages.ALL;
+    }
+
+    /** Messages for the browser scripts, rendered as window.krI18n in the page head. */
+    @ModelAttribute("jsMessages")
+    public java.util.Map<String, String> jsMessages(java.util.Locale locale) {
+        var source = jsMessages.getIfAvailable();
+        return source == null ? java.util.Map.of() : source.forLocale(locale);
     }
 
     @ModelAttribute("isguest")

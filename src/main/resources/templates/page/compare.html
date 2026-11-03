@@ -1,34 +1,34 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
-<head><title>Knowledgeroot :: Compare versions</title></head>
+<head><title th:text="#{page.compare.title}">Knowledgeroot :: Compare versions</title></head>
 <body>
-<nav aria-label="breadcrumb">
+<nav th:aria-label="#{common.breadcrumb}">
     <ol class="breadcrumb">
         <li class="breadcrumb-item" th:unless="${page.deleted}"><a th:href="@{'/ui/page/' + ${page.pageId}}" th:text="${page.name}">Page</a></li>
         <li class="breadcrumb-item" th:if="${page.deleted}" th:text="${page.name}">Page</li>
-        <li class="breadcrumb-item"><a th:href="@{'/ui/page/' + ${page.pageId} + '/history'}">History</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Compare</li>
+        <li class="breadcrumb-item"><a th:href="@{'/ui/page/' + ${page.pageId} + '/history'}" th:text="#{common.history}">History</a></li>
+        <li class="breadcrumb-item active" aria-current="page" th:text="#{page.compare.breadcrumb}">Compare</li>
     </ol>
 </nav>
 <header class="kr-page-header">
     <div class="kr-page-title-wrap">
-        <h1 class="kr-page-title">Compare versions</h1>
+        <h1 class="kr-page-title" th:text="#{page.compare.heading}">Compare versions</h1>
         <div class="kr-diff-legend">
-            <span><del class="kr-diff-del">Removed</del></span>
-            <span><ins class="kr-diff-ins">Added</ins></span>
-            <span>Large changes are shown as complete blocks.</span>
+            <span><del class="kr-diff-del" th:text="#{page.compare.removed}">Removed</del></span>
+            <span><ins class="kr-diff-ins" th:text="#{page.compare.added}">Added</ins></span>
+            <span th:text="#{page.compare.large-changes}">Large changes are shown as complete blocks.</span>
         </div>
     </div>
-    <div class="kr-page-actions"><a class="kr-btn" th:href="@{'/ui/page/' + ${page.pageId} + '/history'}">Back to history</a></div>
+    <div class="kr-page-actions"><a class="kr-btn" th:href="@{'/ui/page/' + ${page.pageId} + '/history'}" th:text="#{page.compare.back}">Back to history</a></div>
 </header>
 <section class="kr-content-area wide kr-compare">
     <section class="kr-panel">
-        <h2 class="kr-panel-title">Page name</h2>
+        <h2 class="kr-panel-title" th:text="#{page.compare.name}">Page name</h2>
         <div class="kr-diff kr-diff-name"><th:block th:each="part : ${nameDiff}"><del th:if="${part.kind == 'removed'}" class="kr-diff-del" th:text="${part.text}"></del><ins th:if="${part.kind == 'added'}" class="kr-diff-ins" th:text="${part.text}"></ins><span th:if="${part.kind == 'same'}" th:text="${part.text}"></span></th:block></div>
     </section>
 
     <section class="kr-panel">
-        <h2 class="kr-panel-title">Text changes</h2>
+        <h2 class="kr-panel-title" th:text="#{page.compare.text}">Text changes</h2>
         <div class="kr-diff kr-diff-text"><th:block th:each="part : ${textDiff}"><del th:if="${part.kind == 'removed'}" class="kr-diff-del" th:text="${part.text}"></del><ins th:if="${part.kind == 'added'}" class="kr-diff-ins" th:text="${part.text}"></ins><span th:if="${part.kind == 'same'}" th:text="${part.text}"></span></th:block></div>
     </section>
 
@@ -37,23 +37,23 @@
             <header class="kr-compare-head">
                 <div class="kr-row-spaced">
                     <span class="kr-version" th:classappend="${version.id == 0} ? 'current'"
-                          th:text="${version.id == 0} ? 'Current · v' + ${version.revision} : 'v' + ${version.revision}"></span>
-                    <span class="kr-compare-side" th:text="${stat.first} ? 'Before' : 'After'"></span>
+                          th:text="${version.id == 0} ? #{page.compare.current-short(${version.revision})} : #{page.compare.version-short(${version.revision})}"></span>
+                    <span class="kr-compare-side" th:text="${stat.first} ? #{page.compare.before} : #{page.compare.after}"></span>
                 </div>
-                <h2 th:text="(${version.id == 0} ? 'Current version ' : 'Saved version ') + ${version.revision}"></h2>
-                <p class="kr-compare-date" th:text="${#temporals.format(version.changedAt, 'dd.MM.yyyy HH:mm')}"></p>
+                <h2 th:text="${version.id == 0} ? #{page.compare.current-version(${version.revision})} : #{page.compare.saved-version(${version.revision})}"></h2>
+                <p class="kr-compare-date" th:text="${#temporals.format(version.changedAt, #messages.msg('format.datetime'))}"></p>
                 <div class="kr-page-labels" th:if="${version.labelsCaptured and !#lists.isEmpty(version.labels)}">
                     <span class="kr-tag" th:each="label : ${version.labels}" th:text="${label}"></span>
                 </div>
-                <p class="kr-compare-note" th:if="${version.labelsCaptured and #lists.isEmpty(version.labels)}">No labels</p>
-                <p class="kr-compare-note" th:unless="${version.labelsCaptured}">Labels were not captured for this legacy version.</p>
+                <p class="kr-compare-note" th:if="${version.labelsCaptured and #lists.isEmpty(version.labels)}" th:text="#{page.compare.no-labels}">No labels</p>
+                <p class="kr-compare-note" th:unless="${version.labelsCaptured}" th:text="#{page.compare.labels-not-captured}">Labels were not captured for this legacy version.</p>
             </header>
             <article class="kr-content kr-compare-content" th:utext="${version.content}"></article>
         </section>
     </div>
 
     <details class="kr-panel kr-compare-html">
-        <summary>Content and formatting changes (HTML)</summary>
+        <summary th:text="#{page.compare.html}">Content and formatting changes (HTML)</summary>
         <pre class="kr-diff kr-diff-html"><th:block th:each="part : ${contentDiff}"><del th:if="${part.kind == 'removed'}" class="kr-diff-del" th:text="${part.text}"></del><ins th:if="${part.kind == 'added'}" class="kr-diff-ins" th:text="${part.text}"></ins><span th:if="${part.kind == 'same'}" th:text="${part.text}"></span></th:block></pre>
     </details>
 </section>

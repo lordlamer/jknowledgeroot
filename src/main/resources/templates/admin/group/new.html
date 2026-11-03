@@ -2,38 +2,38 @@
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
 <head>
-    <title>Knowledgeroot :: new group</title>
+    <title th:text="#{admin.group-new.title}">Knowledgeroot :: new group</title>
 </head>
 <body>
 <form hx-post="/admin/groups" hx-target="#content">
-    <nav aria-label="breadcrumb">
+    <nav th:aria-label="#{common.breadcrumb}">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
-            <li class="breadcrumb-item">Admin</li>
-            <li class="breadcrumb-item"><a href="#" hx-get="/admin/groups" hx-target="#content" hx-push-url="true">Groups</a></li>
-            <li class="breadcrumb-item active" aria-current="page">New group</li>
+            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true" th:text="#{common.home}">Home</a></li>
+            <li class="breadcrumb-item" th:text="#{common.admin}">Admin</li>
+            <li class="breadcrumb-item"><a href="#" hx-get="/admin/groups" hx-target="#content" hx-push-url="true" th:text="#{common.groups}">Groups</a></li>
+            <li class="breadcrumb-item active" aria-current="page" th:text="#{admin.group-new.breadcrumb}">New group</li>
         </ol>
     </nav>
 
     <header class="kr-page-header">
         <div class="kr-page-title-wrap">
-            <h1 class="kr-page-title">Create new group</h1>
-            <p class="kr-page-subtitle" style="margin:0">Add a new group to the workspace.</p>
+            <h1 class="kr-page-title" th:text="#{admin.group-new.heading}">Create new group</h1>
+            <p class="kr-page-subtitle" style="margin:0" th:text="#{admin.group-new.subtitle}">Add a new group to the workspace.</p>
         </div>
         <div class="kr-page-actions">
             <button type="button" class="kr-btn"
-                    hx-get="/admin/groups" hx-target="#content" hx-push-url="true">Cancel</button>
-            <button type="submit" class="kr-btn accent">Create group</button>
+                    hx-get="/admin/groups" hx-target="#content" hx-push-url="true" th:text="#{common.cancel}">Cancel</button>
+            <button type="submit" class="kr-btn accent" th:text="#{admin.group-new.submit}">Create group</button>
         </div>
     </header>
 
     <div class="kr-editor-pane">
         <div class="kr-field">
-            <label for="name">Name</label>
+            <label for="name" th:text="#{common.name}">Name</label>
             <input type="text" id="name" name="name" value="">
         </div>
         <div class="kr-field">
-            <label for="description">Description</label>
+            <label for="description" th:text="#{common.description}">Description</label>
             <textarea id="description" name="description" rows="4"></textarea>
         </div>
     </div>

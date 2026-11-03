@@ -2,12 +2,23 @@
 (function () {
     'use strict';
 
-    var MESSAGES = {
-        400: 'The upload was rejected. Check that no file is empty.',
-        403: 'You do not have permission to upload files to this page.',
-        413: 'The upload exceeds the allowed size or file count.',
-        503: 'File storage is currently unavailable. Please try again later.'
-    };
+    // Texts come from window.krT (page head); the English fallbacks keep the dialog usable without it.
+    function t(key, fallback) {
+        if (window.krT) return window.krT.apply(null, arguments);
+        var text = fallback;
+        for (var i = 2; i < arguments.length; i++) text = text.split('{' + (i - 2) + '}').join(String(arguments[i]));
+        return text;
+    }
+
+    function message(status) {
+        switch (status) {
+            case 400: return t('upload.error.400', 'The upload was rejected. Check that no file is empty.');
+            case 403: return t('upload.error.403', 'You do not have permission to upload files to this page.');
+            case 413: return t('request.413', 'The upload exceeds the allowed size or file count.');
+            case 503: return t('request.503', 'File storage is currently unavailable. Please try again later.');
+            default: return t('upload.error.failed', 'The upload failed. Please try again.');
+        }
+    }
 
     function formatSize(bytes) {
         if (bytes < 1024) return bytes + ' B';
@@ -24,11 +35,11 @@
     function problems(d) {
         var max = limits(d);
         var files = d._files || [];
-        if (files.length > max.files) return 'Choose at most ' + max.files + ' files.';
+        if (files.length > max.files) return t('upload.too-many', 'Choose at most {0} files.', max.files);
         var tooLarge = files.filter(function (f) { return f.size > max.bytes; });
-        if (tooLarge.length) return tooLarge[0].name + ' is larger than ' + formatSize(max.bytes) + '.';
+        if (tooLarge.length) return t('upload.too-large', '{0} is larger than {1}.', tooLarge[0].name, formatSize(max.bytes));
         var empty = files.filter(function (f) { return f.size === 0; });
-        if (empty.length) return empty[0].name + ' is empty.';
+        if (empty.length) return t('upload.empty', '{0} is empty.', empty[0].name);
         return null;
     }
 
@@ -54,7 +65,7 @@
             var remove = document.createElement('button');
             remove.type = 'button';
             remove.className = 'kr-upload-remove';
-            remove.setAttribute('aria-label', 'Remove ' + file.name);
+            remove.setAttribute('aria-label', t('upload.remove', 'Remove {0}', file.name));
             remove.dataset.krUploadRemove = String(index);
             remove.innerHTML = '<i class="bi bi-x" aria-hidden="true"></i>';
             li.append(name, size, remove);
@@ -105,7 +116,7 @@
         var submit = d.querySelector('[data-kr-upload-submit]');
         d._busy = true;
         submit.disabled = true;
-        submit.textContent = 'Uploading…';
+        submit.textContent = t('upload.uploading', 'Uploading…');
         progress.hidden = false;
         bar.style.width = '0%';
         showError(d, null);
@@ -115,7 +126,7 @@
         });
         function finish(error) {
             d._busy = false;
-            submit.textContent = 'Upload';
+            submit.textContent = t('upload.submit', 'Upload');
             if (error) {
                 progress.hidden = true;
                 showError(d, error);
@@ -128,9 +139,9 @@
             else window.location.reload();
         }
         xhr.addEventListener('load', function () {
-            finish(xhr.status >= 200 && xhr.status < 400 ? null : (MESSAGES[xhr.status] || 'The upload failed. Please try again.'));
+            finish(xhr.status >= 200 && xhr.status < 400 ? null : message(xhr.status));
         });
-        xhr.addEventListener('error', function () { finish('The upload failed. Check your connection and try again.'); });
+        xhr.addEventListener('error', function () { finish(t('upload.error.network', 'The upload failed. Check your connection and try again.')); });
         xhr.send(data);
     }
 
