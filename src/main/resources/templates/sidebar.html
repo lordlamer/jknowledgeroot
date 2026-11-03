@@ -12,7 +12,7 @@
     <th:block th:if="${parentId != 0 and parentPage != null}">
         <li class="sidebar-node" th:id="'nav-page-' + ${parentPage.pageId}">
             <div class="sidebar-node-row">
-                <button class="sidebar-toggle" type="button" aria-label="Collapse page" aria-expanded="true"
+                <button class="sidebar-toggle" type="button" th:aria-label="#{sidebar.collapse}" aria-expanded="true"
                         th:attr="hx-get=@{/ui/sidebar(singlePage=${parentPage.pageId})}, hx-target='#nav-page-' + ${parentPage.pageId}"
                         hx-swap="outerHTML" hx-disabled-elt="this">
                     <i class="bi bi-chevron-down"></i>

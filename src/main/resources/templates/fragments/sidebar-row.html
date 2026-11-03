@@ -19,7 +19,7 @@
     <div class="dropdown sidebar-more-wrap" th:if="${canStar}">
         <button class="sidebar-more" type="button"
                 data-bs-toggle="dropdown" data-bs-boundary="viewport" data-bs-strategy="fixed"
-                aria-expanded="false" aria-label="More options" title="More options">
+                aria-expanded="false" th:aria-label="#{sidebar.more-options}" th:title="#{sidebar.more-options}">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>
             </svg>
@@ -29,26 +29,26 @@
                    th:attr="hx-get='/ui/page/' + ${page.pageId} + '/new'"
                    hx-target="#content" hx-push-url="true">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-                Add sub-page
+                <th:block th:text="#{sidebar.add-sub-page}">Add sub-page</th:block>
             </a></li>
             <li><a class="dropdown-item" href="#"
                    th:attr="hx-get='/ui/page/' + ${page.pageId} + '/edit'"
                    hx-target="#content" hx-push-url="true">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                Edit
+                <th:block th:text="#{common.edit}">Edit</th:block>
             </a></li>
             <li><a class="dropdown-item kr-copy-link" href="#"
                    th:attr="data-page-id=${page.pageId.value()}">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                Copy link
+                <th:block th:text="#{sidebar.copy-link}">Copy link</th:block>
             </a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item text-danger" href="#"
                    th:attr="hx-delete='/ui/page/' + ${page.pageId} + '?revision=' + ${page.revision}"
                    hx-target="#content"
-                   hx-confirm="Delete this page?">
+                   th:hx-confirm="#{sidebar.delete-confirm}">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
-                Delete
+                <th:block th:text="#{common.delete}">Delete</th:block>
             </a></li>
         </ul>
     </div>

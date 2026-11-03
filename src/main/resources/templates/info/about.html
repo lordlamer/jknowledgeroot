@@ -2,31 +2,31 @@
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
 <head>
-    <title>About Knowledgeroot</title>
+    <title th:text="#{info.about.title}">About Knowledgeroot</title>
 </head>
 <body>
 <div class="kr-page-wrap" style="max-width:900px">
-    <nav aria-label="breadcrumb">
+    <nav th:aria-label="#{common.breadcrumb}">
         <ol class="breadcrumb" style="padding-left:0; padding-right:0">
-            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
-            <li class="breadcrumb-item active" aria-current="page">About</li>
+            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true" th:text="#{common.home}">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page" th:text="#{info.about.crumb}">About</li>
         </ol>
     </nav>
 
     <header class="kr-page-header" style="padding:12px 0 20px">
         <div class="kr-page-title-wrap">
-            <h1 class="kr-page-title">About Knowledgeroot</h1>
-            <p class="kr-page-subtitle" style="margin:0">Knowledgeroot Knowledgebase · Version 2.0 (2026-dev)</p>
+            <h1 class="kr-page-title" th:text="#{info.about.title}">About Knowledgeroot</h1>
+            <p class="kr-page-subtitle" style="margin:0" th:text="#{info.about.subtitle}">Knowledgeroot Knowledgebase · Version 2.0 (2026-dev)</p>
         </div>
     </header>
 
     <section class="kr-content">
         <p>
-            Homepage:
-            <a href="http://www.knowledgeroot.org" target="_blank" rel="noopener">http://www.knowledgeroot.org</a>
+            <th:block th:text="#{info.about.homepage}">Homepage:</th:block>
+            <a href="http://www.knowledgeroot.org" target="_blank" rel="noopener" translate="no">http://www.knowledgeroot.org</a>
         </p>
-        <h2>License</h2>
-        <pre>Copyright (c) 2026, Frank Habermann &lt;lordlamer@lordlamer.de&gt;
+        <h2 th:text="#{info.about.license}">License</h2>
+        <pre translate="no">Copyright (c) 2026, Frank Habermann &lt;lordlamer@lordlamer.de&gt;
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,

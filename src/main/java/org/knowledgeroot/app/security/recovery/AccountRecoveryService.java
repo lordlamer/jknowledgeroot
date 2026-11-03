@@ -25,12 +25,13 @@ public class AccountRecoveryService {
     private final LoginAttemptLimiter limiter;
     private final PasswordService passwords;
     private final CredentialRepository credentials;
+    private final org.knowledgeroot.app.i18n.UiMessages messages;
 
     public AccountRecoveryService(JdbcTemplate jdbc, PlatformTransactionManager manager,
             RecoverySettings settings, RecoveryDelivery delivery, LoginAttemptLimiter limiter,
-            PasswordService passwords, CredentialRepository credentials) {
+            PasswordService passwords, CredentialRepository credentials, org.knowledgeroot.app.i18n.UiMessages messages) {
         this.jdbc = jdbc; this.settings = settings; this.delivery = delivery;
-        this.limiter = limiter; this.passwords = passwords; this.credentials = credentials;
+        this.limiter = limiter; this.passwords = passwords; this.credentials = credentials; this.messages = messages;
         transaction = new TransactionTemplate(manager);
         transaction.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
     }
@@ -43,13 +44,14 @@ public class AccountRecoveryService {
         requireEnabled();
         String email = RecoverySettings.email(address);
         if (email == null || !reserve("request", email, remote)) return;
+        java.util.Locale requested = org.springframework.context.i18n.LocaleContextHolder.getLocale();
         // Both known and unknown addresses take this same bounded asynchronous path.
         delivery.submit(() -> {
             var ids = jdbc.queryForList("""
                     SELECT u.id FROM user u JOIN recovery_email e ON e.user_id=u.id
                     WHERE e.email=? AND BINARY LOWER(TRIM(u.email))=? AND u.active=1 AND u.deleted=0
                     """, Integer.class, email, email);
-            if (ids.size() == 1) issue(ids.getFirst(), "reset", email, null);
+            if (ids.size() == 1) issue(ids.getFirst(), "reset", email, null, requested);
         });
     }
 
@@ -62,10 +64,20 @@ public class AccountRecoveryService {
         String email = RecoverySettings.email(jdbc.queryForObject("SELECT email FROM user WHERE id=?", String.class, id));
         if (email == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Save a valid email address in your profile first.");
         String tag = PasswordService.credentialTag(credential.hash());
-        delivery.submit(() -> issue(id, "verify", email, tag));
+        java.util.Locale requested = org.springframework.context.i18n.LocaleContextHolder.getLocale();
+        delivery.submit(() -> issue(id, "verify", email, tag, requested));
     }
 
-    private void issue(int id, String purpose, String email, String expectedTag) {
+    /** The recipient's chosen language, otherwise the language of the request that caused the mail. */
+    private java.util.Locale mailLocale(int id, java.util.Locale requested) {
+        String stored = jdbc.query("SELECT language FROM user WHERE id=?", (rs, row) -> rs.getString(1), id)
+                .stream().findFirst().orElse(null);
+        return org.knowledgeroot.app.i18n.Languages.find(stored)
+                .map(org.knowledgeroot.app.i18n.Languages.Language::locale)
+                .orElse(requested == null ? org.knowledgeroot.app.i18n.Languages.DEFAULT.locale() : requested);
+    }
+
+    private void issue(int id, String purpose, String email, String expectedTag, java.util.Locale requested) {
         byte[] entropy = new byte[32]; RANDOM.nextBytes(entropy);
         String raw = HexFormat.of().formatHex(entropy);
         String hash = PasswordService.credentialTag(raw);
@@ -85,10 +97,10 @@ public class AccountRecoveryService {
         if (!created) return;
         try {
             String path = purpose.equals("reset") ? "/account/reset-password" : "/account/verify-email";
-            String action = purpose.equals("reset") ? "Reset your Knowledgeroot password" : "Confirm your Knowledgeroot email address";
-            delivery.send(email, action, action + ":\n\n" + settings.getPublicUrl() + path + "?token=" + raw
-                    + "\n\nThis link expires in 30 minutes and can be used once."
-                    + "\nIf you did not request this message, you can ignore it. Your password has not changed.");
+            java.util.Locale locale = mailLocale(id, requested);
+            String action = messages.get(locale, purpose.equals("reset") ? "mail.reset.subject" : "mail.verify.subject");
+            delivery.send(email, action, messages.get(locale, "mail.link.body", action,
+                    settings.getPublicUrl() + path + "?token=" + raw));
         } catch (RuntimeException ex) {
             jdbc.update("DELETE FROM recovery_token WHERE token_hash=?", hash);
             throw ex;
@@ -109,16 +121,20 @@ public class AccountRecoveryService {
         if (replacement == null || !replacement.equals(confirmation))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The new passwords do not match.");
         String encoded = passwords.encodeNewPassword(replacement);
+        java.util.Locale requested = org.springframework.context.i18n.LocaleContextHolder.getLocale();
+        int[] account = new int[1];
         String email = transaction.execute(status -> {
             Token claim = claim(token, "reset");
+            account[0] = claim.id();
             if (!verified(claim.id(), claim.email())) invalid();
             jdbc.update("UPDATE user SET password=?,changed_by=id,change_date=NOW() WHERE id=?", encoded, claim.id());
             jdbc.update("DELETE FROM recovery_token WHERE user_id=?", claim.id());
             return claim.email();
         });
-        delivery.submit(() -> delivery.send(email, "Your Knowledgeroot password was changed",
-                "Your password was reset. Sign in with your new password. Previous sessions are no longer valid."
-                        + "\nIf you did not make this change, contact your administrator."));
+        delivery.submit(() -> {
+            java.util.Locale locale = mailLocale(account[0], requested);
+            delivery.send(email, messages.get(locale, "mail.changed.subject"), messages.get(locale, "mail.changed.body"));
+        });
     }
 
     public void verify(String token, String remote) {

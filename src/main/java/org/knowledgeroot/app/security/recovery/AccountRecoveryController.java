@@ -17,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 public class AccountRecoveryController {
     private final AccountRecoveryService recovery;
+    private final org.knowledgeroot.app.i18n.UiMessages uiMessages;
     private final RecoveryEmailRepository emails;
     private final UserContext users;
 
@@ -56,7 +57,7 @@ public class AccountRecoveryController {
             model.addAttribute("sent", true);
         } catch (ResponseStatusException ex) {
             if (ex.getStatusCode().value() != 400) throw ex;
-            model.addAttribute("error", ex.getReason());
+            model.addAttribute("error", uiMessages.reason(ex));
         }
         return "account/profile";
     }
@@ -88,7 +89,7 @@ public class AccountRecoveryController {
             if (ex.getStatusCode().value() != 400) throw ex;
             model.addAttribute("purpose", purpose);
             model.addAttribute("hasToken", token(request, purpose) != null);
-            model.addAttribute("error", ex.getReason());
+            model.addAttribute("error", uiMessages.reason(ex));
             response.setStatus(400);
             return "account/confirm";
         }

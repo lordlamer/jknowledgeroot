@@ -2,60 +2,69 @@
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
 <head>
-    <title>Knowledgeroot :: new user</title>
+    <title th:text="#{admin.user-new.title}">Knowledgeroot :: new user</title>
 </head>
 <body>
 <form hx-post="/admin/users" hx-target="#content">
-    <nav aria-label="breadcrumb">
+    <nav th:aria-label="#{common.breadcrumb}">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
-            <li class="breadcrumb-item">Admin</li>
-            <li class="breadcrumb-item"><a href="#" hx-get="/admin/users" hx-target="#content" hx-push-url="true">Users</a></li>
-            <li class="breadcrumb-item active" aria-current="page">New user</li>
+            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true" th:text="#{common.home}">Home</a></li>
+            <li class="breadcrumb-item" th:text="#{common.admin}">Admin</li>
+            <li class="breadcrumb-item"><a href="#" hx-get="/admin/users" hx-target="#content" hx-push-url="true" th:text="#{common.users}">Users</a></li>
+            <li class="breadcrumb-item active" aria-current="page" th:text="#{admin.user-new.breadcrumb}">New user</li>
         </ol>
     </nav>
 
     <header class="kr-page-header">
         <div class="kr-page-title-wrap">
-            <h1 class="kr-page-title">Create new user</h1>
-            <p class="kr-page-subtitle" style="margin:0">Add a new account to the workspace.</p>
+            <h1 class="kr-page-title" th:text="#{admin.user-new.heading}">Create new user</h1>
+            <p class="kr-page-subtitle" style="margin:0" th:text="#{admin.user-new.subtitle}">Add a new account to the workspace.</p>
         </div>
         <div class="kr-page-actions">
             <button type="button" class="kr-btn"
-                    hx-get="/admin/users" hx-target="#content" hx-push-url="true">Cancel</button>
-            <button type="submit" class="kr-btn accent">Create user</button>
+                    hx-get="/admin/users" hx-target="#content" hx-push-url="true" th:text="#{common.cancel}">Cancel</button>
+            <button type="submit" class="kr-btn accent" th:text="#{admin.user-new.submit}">Create user</button>
         </div>
     </header>
 
     <div class="kr-editor-pane">
         <div class="kr-form-row">
             <div class="kr-field">
-                <label for="login">Login</label>
+                <label for="login" th:text="#{common.login}">Login</label>
                 <input type="text" id="login" name="login" value="">
             </div>
             <div class="kr-field">
-                <label for="email">E-mail</label>
+                <label for="email" th:text="#{common.email}">E-mail</label>
                 <input type="email" id="email" name="email" value="">
             </div>
         </div>
         <div class="kr-form-row">
             <div class="kr-field">
-                <label for="firstname">First name</label>
+                <label for="firstname" th:text="#{common.first-name}">First name</label>
                 <input type="text" id="firstname" name="firstName" value="">
             </div>
             <div class="kr-field">
-                <label for="lastname">Last name</label>
+                <label for="lastname" th:text="#{common.last-name}">Last name</label>
                 <input type="text" id="lastname" name="lastName" value="">
             </div>
         </div>
         <div class="kr-field">
-            <label for="password">Password</label>
+            <label for="language" th:text="#{common.language}">Language</label>
+            <select id="language" name="language">
+                <option value="" th:text="#{common.language.automatic}">Automatic (browser language)</option>
+                <option th:each="language : ${languages}" th:value="${language.code()}"
+                        th:text="${language.nativeName()}">English</option>
+            </select>
+            <small th:text="#{common.language.hint}">Used for menus, messages and e-mails. Page contents are not translated.</small>
+        </div>
+        <div class="kr-field">
+            <label for="password" th:text="#{common.password}">Password</label>
             <input type="password" id="password" name="password" value="" minlength="16" maxlength="128" autocomplete="new-password" required>
-            <small>16–128 characters. Spaces are preserved.</small>
+            <small th:text="#{admin.user-new.password.hint}">16–128 characters. Spaces are preserved.</small>
         </div>
         <div class="kr-field" style="display:flex; align-items:center; gap:8px">
             <input class="form-check-input" type="checkbox" value="true" id="admin" name="admin">
-            <label for="admin" style="margin:0">Admin</label>
+            <label for="admin" style="margin:0" th:text="#{common.admin-role}">Admin</label>
         </div>
     </div>
 </form>

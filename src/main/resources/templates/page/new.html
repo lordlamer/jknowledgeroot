@@ -2,17 +2,17 @@
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
 <head>
-    <title>Knowledgeroot :: neue Seite</title>
+    <title th:text="#{page.new.title}">Knowledgeroot :: New page</title>
 </head>
 <body>
-<nav aria-label="breadcrumb">
+<nav th:aria-label="#{common.breadcrumb}">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
+        <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true" th:text="#{common.home}">Home</a></li>
         <li class="breadcrumb-item" th:if="${page}"><a th:href="@{'/ui/page/' + ${page.pageId}}"
                                                        th:attr="hx-get='/ui/page/' + ${page.pageId}"
                                                        hx-target="#content" hx-push-url="true"
                                                        th:text="${page.name}">Parent</a></li>
-        <li class="breadcrumb-item active" aria-current="page">New page</li>
+        <li class="breadcrumb-item active" aria-current="page" th:text="#{page.new.heading}">New page</li>
     </ol>
 </nav>
 
@@ -20,20 +20,20 @@
 
     <header class="kr-page-header">
         <div class="kr-page-title-wrap">
-            <h1 class="kr-page-title">New page</h1>
+            <h1 class="kr-page-title" th:text="#{page.new.heading}">New page</h1>
             <div class="kr-page-meta">
-                <span class="kr-pill active">Draft</span>
+                <span class="kr-pill active" th:text="#{page.new.draft}">Draft</span>
                 <span class="kr-dotsep">·</span>
-                <span th:if="${page}" th:text="'Under ' + ${page.name}">Under …</span>
-                <span th:unless="${page}" th:text="${space != null} ? 'Top level of ' + ${space.name} : 'Top level'">Top level</span>
+                <span th:if="${page}" th:text="#{page.new.under(${page.name})}">Under …</span>
+                <span th:unless="${page}" th:text="${space != null} ? #{page.new.top-level-of(${space.name})} : #{page.new.top-level}">Top level</span>
             </div>
         </div>
         <div class="kr-page-actions">
             <button type="button" class="kr-btn"
-                    th:if="${page}" th:hx-get="'/ui/page/' + ${page.getPageId()}" hx-target="#content" hx-push-url="true">Cancel</button>
+                    th:if="${page}" th:hx-get="'/ui/page/' + ${page.getPageId()}" hx-target="#content" hx-push-url="true" th:text="#{common.cancel}">Cancel</button>
             <button type="button" class="kr-btn"
-                    th:unless="${page}" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Cancel</button>
-            <button type="submit" class="kr-btn accent">Create page</button>
+                    th:unless="${page}" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true" th:text="#{common.cancel}">Cancel</button>
+            <button type="submit" class="kr-btn accent" th:text="#{page.new.submit}">Create page</button>
         </div>
     </header>
 
@@ -42,14 +42,14 @@
             <button class="kr-editor-tab nav-link active" id="site-tab" data-bs-toggle="tab" data-bs-target="#site-content"
                     type="button" role="tab" aria-controls="site-content" aria-selected="true">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                Page
+                <th:block th:text="#{page.new.tab.page}">Page</th:block>
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="kr-editor-tab nav-link" id="permissions-tab" data-bs-toggle="tab" data-bs-target="#permissions-content"
                     type="button" role="tab" aria-controls="permissions-content" aria-selected="false">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                Permissions
+                <th:block th:text="#{common.permissions}">Permissions</th:block>
             </button>
         </li>
     </ul>
@@ -59,25 +59,25 @@
                 <!-- Tab für Seiteninhalt -->
                 <div class="tab-pane fade show active" id="site-content" role="tabpanel" aria-labelledby="site-tab">
                     <div class="mb-3" th:if="${page}">
-                        <label for="parent-page" class="form-label">Übergeordnete Seite</label>
+                        <label for="parent-page" class="form-label" th:text="#{page.new.parent}">Parent page</label>
                         <input type="text" class="form-control" id="parent-page" th:value="${page.getName()}" readonly>
                         <input type="hidden" name="parent" th:value="${page.getPageId()}">
                     </div>
                     <input type="hidden" name="spaceId" th:if="${page == null and space != null}" th:value="${space.id}">
                     <div class="mb-3">
-                        <label for="page-name" class="form-label">Name</label>
+                        <label for="page-name" class="form-label" th:text="#{common.name}">Name</label>
                         <input type="text" class="form-control" id="page-name" name="name" required>
                     </div>
                     <div class="mb-3">
-                        <label for="page-labels" class="form-label">Labels</label>
+                        <label for="page-labels" class="form-label" th:text="#{page.new.labels}">Labels</label>
                         <input type="text" class="form-control" id="page-labels" name="labels"
-                               placeholder="comma-separated, e.g. engineering, public, v2">
-                        <div class="form-text" style="color:var(--kr-text-3); font-size:11.5px; margin-top:4px;">
+                               th:placeholder="#{page.new.labels.placeholder}">
+                        <div class="form-text" style="color:var(--kr-text-3); font-size:11.5px; margin-top:4px;" th:text="#{page.new.labels.hint}">
                             Up to 32 labels, 64 characters each. Separate with commas.
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label for="page-content" class="form-label">Inhalt</label>
+                        <label for="page-content" class="form-label" th:text="#{page.new.content}">Content</label>
                         <textarea class="form-control" id="page-content" data-rich-editor rows="3" name="content"></textarea>
                     </div>
                 </div>
@@ -85,11 +85,11 @@
                 <!-- Tab für Berechtigungen -->
                 <div class="tab-pane fade" id="permissions-content" role="tabpanel" aria-labelledby="permissions-tab">
                     <div class="alert alert-info">
-                        <p th:if="${page}">Diese Unterseite erbt die Rechte der Elternseite.
-                            Spätere Änderungen der Elternrechte gelten automatisch auch hier.</p>
-                        <p th:if="${page == null}">Diese Hauptseite übernimmt die Rechte ihres Space:
-                            Wer den Space lesen darf, liest sie; wer dort bearbeiten darf, bearbeitet sie.</p>
-                        <p>Administratoren können nach dem Erstellen abweichende Freigaben festlegen.</p>
+                        <p th:if="${page}" th:text="#{page.new.permissions.inherit}">This sub-page inherits the permissions of its parent page.
+                            Later changes to the parent page's permissions apply here automatically.</p>
+                        <p th:if="${page == null}" th:text="#{page.new.permissions.space}">This top-level page takes over the permissions of its space:
+                            whoever may read the space can read it; whoever may edit there can edit it.</p>
+                        <p th:text="#{page.new.permissions.admin}">Administrators can set different sharing after the page is created.</p>
                     </div>
                 </div>
             </div>

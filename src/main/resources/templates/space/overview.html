@@ -2,13 +2,13 @@
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
 <head>
-    <title>Knowledgeroot Space</title>
+    <title th:text="#{space.overview.title}">Knowledgeroot Space</title>
 </head>
 <body>
-<nav aria-label="breadcrumb">
+<nav th:aria-label="#{common.breadcrumb}">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
-        <li class="breadcrumb-item"><a href="/spaces" hx-get="/spaces" hx-target="#content" hx-push-url="true">Spaces</a></li>
+        <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true" th:text="#{common.home}">Home</a></li>
+        <li class="breadcrumb-item"><a href="/spaces" hx-get="/spaces" hx-target="#content" hx-push-url="true" th:text="#{common.spaces}">Spaces</a></li>
         <li class="breadcrumb-item active" aria-current="page" th:text="${space.name}">Space</li>
     </ol>
 </nav>
@@ -18,26 +18,26 @@
         <h1 class="kr-page-title" th:text="${space.name}">Space</h1>
         <p class="kr-page-subtitle" style="margin:0">
             <code th:text="${space.key}">KR</code>
-            <span th:if="${space.archived}"> · archived, read-only</span>
-            <span th:if="${!#strings.isEmpty(space.description)}" th:text="' · ' + ${space.description}"></span>
+            <span th:if="${space.archived}" th:text="#{space.overview.archived}"> · archived, read-only</span>
+            <span th:if="${!#strings.isEmpty(space.description)}" th:text="#{space.overview.description(${space.description})}"></span>
         </p>
     </div>
     <div class="kr-page-actions">
         <a th:if="${canCreate}" class="kr-btn accent" th:href="@{/ui/page/new(space=${space.id})}"
-           th:attr="hx-get='/ui/page/new?space=' + ${space.id}" hx-target="#content" hx-push-url="true">New top-level page</a>
+           th:attr="hx-get='/ui/page/new?space=' + ${space.id}" hx-target="#content" hx-push-url="true" th:text="#{space.overview.new-page}">New top-level page</a>
         <a th:if="${canManage}" class="kr-btn" th:href="@{'/spaces/' + ${space.id} + '/settings'}"
-           th:attr="hx-get='/spaces/' + ${space.id} + '/settings'" hx-target="#content" hx-push-url="true">Settings</a>
+           th:attr="hx-get='/spaces/' + ${space.id} + '/settings'" hx-target="#content" hx-push-url="true" th:text="#{common.settings}">Settings</a>
     </div>
 </header>
 
 <div class="kr-editor-pane">
-    <h2>Top-level pages</h2>
-    <p th:if="${#lists.isEmpty(rootPages)}">No pages yet.</p>
+    <h2 th:text="#{space.overview.pages.heading}">Top-level pages</h2>
+    <p th:if="${#lists.isEmpty(rootPages)}" th:text="#{space.overview.pages.none}">No pages yet.</p>
     <ul th:unless="${#lists.isEmpty(rootPages)}">
         <li th:each="page : ${rootPages}">
             <a th:href="@{'/ui/page/' + ${page.pageId}}" th:attr="hx-get='/ui/page/' + ${page.pageId}" hx-target="#content" hx-push-url="true"
                th:text="${page.name}">Page</a>
-            <span th:if="${space.homePageId != null and space.homePageId == page.pageId.value()}" class="kr-pill">home</span>
+            <span th:if="${space.homePageId != null and space.homePageId == page.pageId.value()}" class="kr-pill" th:text="#{space.overview.home}">home</span>
         </li>
     </ul>
 </div>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content)">
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content)">
 <head th:replace="~{fragments/head :: appHead(${title})}"></head>
 <body cds-theme="light">
 <nav th:replace="~{fragments/navbar :: topNav(${isadmin}, ${isguest}, ${isuser})}"></nav>

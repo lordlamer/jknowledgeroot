@@ -2,27 +2,27 @@
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
 <head>
-    <title>Knowledgeroot Help</title>
+    <title th:text="#{info.help.title}">Knowledgeroot Help</title>
 </head>
 <body>
 <div class="kr-page-wrap" style="max-width:900px">
-    <nav aria-label="breadcrumb">
+    <nav th:aria-label="#{common.breadcrumb}">
         <ol class="breadcrumb" style="padding-left:0; padding-right:0">
-            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Help</li>
+            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true" th:text="#{common.home}">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page" th:text="#{info.help.heading}">Help</li>
         </ol>
     </nav>
 
     <header class="kr-page-header" style="padding:12px 0 20px">
         <div class="kr-page-title-wrap">
-            <h1 class="kr-page-title">Help</h1>
-            <p class="kr-page-subtitle" style="margin:0">Get help for Knowledgeroot.</p>
+            <h1 class="kr-page-title" th:text="#{info.help.heading}">Help</h1>
+            <p class="kr-page-subtitle" style="margin:0" th:text="#{info.help.subtitle}">Get help for Knowledgeroot.</p>
         </div>
     </header>
 
     <section class="kr-content">
-        <p>See the docs for guides, API references, and runbooks.</p>
-        <a href="#" class="kr-btn primary">Open docs</a>
+        <p th:text="#{info.help.text}">See the docs for guides, API references, and runbooks.</p>
+        <a href="#" class="kr-btn primary" th:text="#{info.help.open-docs}">Open docs</a>
     </section>
 </div>
 </body>

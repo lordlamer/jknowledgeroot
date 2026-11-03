@@ -176,7 +176,7 @@ class ApplicationSmokeIT {
 
     private void localStorageAndUploadLimits(TestServer server) {
         try (var playwright = Playwright.create(); var browser = playwright.chromium().launch();
-             var context = browser.newContext(new Browser.NewContextOptions().setIgnoreHTTPSErrors(true))) {
+             var context = browser.newContext(new Browser.NewContextOptions().setIgnoreHTTPSErrors(true).setLocale("en-US"))) {
             var page = context.newPage();
             page.navigate(uri(server, "/login").toString());
             page.locator("#loginUsername").fill("smoke.admin");
@@ -227,7 +227,7 @@ class ApplicationSmokeIT {
             });
         } finally { stop(installer); }
         try (var playwright = Playwright.create(); var browser = playwright.chromium().launch();
-             var context = browser.newContext(new Browser.NewContextOptions().setIgnoreHTTPSErrors(true))) {
+             var context = browser.newContext(new Browser.NewContextOptions().setIgnoreHTTPSErrors(true).setLocale("en-US"))) {
             var page = context.newPage();
             var errors = new ArrayList<String>();
             page.onPageError(errors::add);
@@ -435,7 +435,7 @@ class ApplicationSmokeIT {
 
     private void browserProfilePassword(Browser browser, TestServer server, JdbcTemplate jdbc) throws Exception {
         jdbc.update("INSERT INTO user (login,password,active,created_by,create_date,changed_by,change_date) SELECT 'browser.profile',password,TRUE,id,NOW(),id,NOW() FROM user WHERE login='smoke.admin'");
-        try (var context = browser.newContext(new Browser.NewContextOptions().setIgnoreHTTPSErrors(true))) {
+        try (var context = browser.newContext(new Browser.NewContextOptions().setIgnoreHTTPSErrors(true).setLocale("en-US"))) {
             context.route("https://fonts.googleapis.com/**", route -> route.fulfill(new Route.FulfillOptions().setContentType("text/css").setBody("")));
             var page = context.newPage();
             page.navigate(uri(server, "/login").toString());

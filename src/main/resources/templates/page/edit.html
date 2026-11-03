@@ -2,38 +2,38 @@
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
 <head>
-    <title>Knowledgeroot :: Seite bearbeiten</title>
+    <title th:text="#{page.edit.title}">Knowledgeroot :: Edit page</title>
 </head>
 <body>
-<nav aria-label="breadcrumb">
+<nav th:aria-label="#{common.breadcrumb}">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true">Home</a></li>
+        <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true" th:text="#{common.home}">Home</a></li>
         <li class="breadcrumb-item"><a th:href="@{'/ui/page/' + ${page.pageId}}"
                                        th:attr="hx-get='/ui/page/' + ${page.pageId}"
                                        hx-target="#content" hx-push-url="true"
                                        th:text="${page.name}">Page</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Editing</li>
+        <li class="breadcrumb-item active" aria-current="page" th:text="#{page.edit.breadcrumb}">Editing</li>
     </ol>
 </nav>
 
 <form th:hx-post="'/ui/page/' + ${page.pageId} + '/edit'" hx-target="#content">
     <input type="hidden" name="revision" th:value="${page.revision}">
-    <p class="form-text">If someone saves this page first, your changes stay here. Open the current page in another tab to compare before reloading.</p>
+    <p class="form-text" th:text="#{page.edit.conflict-hint}">If someone saves this page first, your changes stay here. Open the current page in another tab to compare before reloading.</p>
 
     <header class="kr-page-header">
         <div class="kr-page-title-wrap">
-            <h1 class="kr-page-title">Edit page</h1>
+            <h1 class="kr-page-title" th:text="#{page.edit.heading}">Edit page</h1>
             <div class="kr-page-meta">
-                <span class="kr-pill active">Draft</span>
+                <span class="kr-pill active" th:text="#{page.edit.draft}">Draft</span>
                 <span class="kr-dotsep">·</span>
-                <span th:text="'Editing ' + ${page.name}">Editing page</span>
+                <span th:text="#{page.edit.editing(${page.name})}">Editing page</span>
             </div>
         </div>
         <div class="kr-page-actions">
             <button type="button" class="kr-btn"
                     th:attr="hx-get='/ui/page/' + ${page.getPageId()}"
-                    hx-target="#content" hx-push-url="true">Cancel</button>
-            <button type="submit" class="kr-btn accent">Save changes</button>
+                    hx-target="#content" hx-push-url="true" th:text="#{common.cancel}">Cancel</button>
+            <button type="submit" class="kr-btn accent" th:text="#{common.save-changes}">Save changes</button>
         </div>
     </header>
 
@@ -42,14 +42,14 @@
             <button class="kr-editor-tab nav-link active" id="site-tab" data-bs-toggle="tab" data-bs-target="#site-content"
                     type="button" role="tab" aria-controls="site-content" aria-selected="true">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                Page
+                <th:block th:text="#{page.edit.tab.page}">Page</th:block>
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button th:if="${canManagePermissions}" class="kr-editor-tab nav-link" id="permissions-tab" data-bs-toggle="tab" data-bs-target="#permissions-content"
                     type="button" role="tab" aria-controls="permissions-content" aria-selected="false">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                Permissions
+                <th:block th:text="#{common.permissions}">Permissions</th:block>
             </button>
         </li>
     </ul>
@@ -59,20 +59,20 @@
                 <!-- Tab für Seiteninhalt -->
                 <div class="tab-pane fade show active" id="site-content" role="tabpanel" aria-labelledby="site-tab">
                     <div class="mb-3">
-                        <label for="page-name" class="form-label">Name</label>
+                        <label for="page-name" class="form-label" th:text="#{common.name}">Name</label>
                         <input type="text" class="form-control" id="page-name" name="name" th:value="${page.name}" required>
                     </div>
                     <div class="mb-3">
-                        <label for="page-labels" class="form-label">Labels</label>
+                        <label for="page-labels" class="form-label" th:text="#{page.edit.labels}">Labels</label>
                         <input type="text" class="form-control" id="page-labels" name="labels"
                                th:value="${labelsJoined}"
-                               placeholder="comma-separated, e.g. engineering, public, v2">
-                        <div class="form-text" style="color:var(--kr-text-3); font-size:11.5px; margin-top:4px;">
+                               th:placeholder="#{page.edit.labels.placeholder}">
+                        <div class="form-text" style="color:var(--kr-text-3); font-size:11.5px; margin-top:4px;" th:text="#{page.edit.labels.hint}">
                             Up to 32 labels, 64 characters each. Separate with commas.
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label for="page-content" class="form-label">Inhalt</label>
+                        <label for="page-content" class="form-label" th:text="#{page.edit.content}">Content</label>
                         <textarea class="form-control" id="page-content" data-rich-editor rows="3" name="content"><th:block th:text="${page.content}">Content</th:block></textarea>
                     </div>
                 </div>
@@ -80,24 +80,24 @@
                 <!-- Tab für Berechtigungen -->
                 <div th:if="${canManagePermissions}" class="tab-pane fade" id="permissions-content" role="tabpanel" aria-labelledby="permissions-tab">
                     <div class="alert alert-info" th:if="${inheritsPermissions}">
-                        <p>Die Rechte werden dynamisch von der übergeordneten Seite geerbt.
-                            Änderungen dort gelten auch für diese Seite.</p>
-                        <a th:if="${permissionSource != null}" th:href="@{'/ui/page/' + ${permissionSource} + '/edit'}">Berechtigungsquelle bearbeiten</a>
+                        <p th:text="#{page.edit.permissions.inherited}">Permissions are inherited dynamically from the parent page.
+                            Changes there also apply to this page.</p>
+                        <a th:if="${permissionSource != null}" th:href="@{'/ui/page/' + ${permissionSource} + '/edit'}" th:text="#{page.edit.permissions.edit-source}">Edit permission source</a>
                         <button type="button" class="btn btn-secondary"
                                 th:hx-post="'/ui/page/' + ${page.pageId} + '/permission-mode'"
                                 hx-vals='{"inherit":"false"}' hx-params="inherit" hx-target="#content"
-                                hx-confirm="Aktuelle Rechte kopieren und die Vererbung aufheben? Spätere Änderungen der Elternrechte gelten dann nicht mehr.">
-                            Eigene Rechte verwenden
+                                th:hx-confirm="#{page.edit.permissions.use-own.confirm}" th:text="#{page.edit.permissions.use-own}">
+                            Use own permissions
                         </button>
                     </div>
                     <div th:unless="${inheritsPermissions}">
                     <div class="alert alert-info" th:if="${page.parent != null and page.parent > 0}">
-                        <p>Diese Seite verwendet eigene Rechte.</p>
+                        <p th:text="#{page.edit.permissions.own}">This page uses its own permissions.</p>
                         <button type="button" class="btn btn-secondary"
                                 th:hx-post="'/ui/page/' + ${page.pageId} + '/permission-mode'"
                                 hx-vals='{"inherit":"true"}' hx-params="inherit" hx-target="#content"
-                                hx-confirm="Eigene Rechte entfernen und künftig dynamisch von der Elternseite erben?">
-                            Rechte der Elternseite erben
+                                th:hx-confirm="#{page.edit.permissions.inherit.confirm}" th:text="#{page.edit.permissions.inherit}">
+                            Inherit permissions from the parent page
                         </button>
                     </div>
                     <!-- Vorhandene Berechtigungen anzeigen -->
@@ -105,30 +105,30 @@
                         <table class="table table-striped">
                             <thead>
                             <tr>
-                                <th>Rolle</th>
-                                <th>Typ</th>
-                                <th>Berechtigung</th>
-                                <th>Aktionen</th>
+                                <th th:text="#{page.edit.permissions.role}">Role</th>
+                                <th th:text="#{page.edit.permissions.type}">Type</th>
+                                <th th:text="#{page.edit.permissions.level}">Permission</th>
+                                <th th:text="#{common.actions}">Actions</th>
                             </tr>
                             </thead>
                             <tbody>
                             <tr th:each="perm : ${permissions}">
-                                <td th:text="${perm.roleName}">Benutzer/Gruppe</td>
-                                <td th:text="${perm.roleType.value}">Typ</td>
+                                <td th:text="${perm.roleName}">User/group</td>
+                                <td th:text="${perm.roleType.value}">user</td>
                                 <td>
                                     <select class="form-select permission-select"
                                             th:id="'perm-level-' + ${perm.id}"
                                             th:attr="data-perm-id=${perm.id},data-original-level=${perm.permissionLevel.value}">
-                                        <option value="none" th:selected="${perm.permissionLevel.value == 'none'}">Keine</option>
-                                        <option value="view" th:selected="${perm.permissionLevel.value == 'view'}">Anzeigen</option>
-                                        <option value="edit" th:selected="${perm.permissionLevel.value == 'edit'}">Bearbeiten</option>
+                                        <option value="none" th:selected="${perm.permissionLevel.value == 'none'}" th:text="#{page.edit.permissions.level.none}">None</option>
+                                        <option value="view" th:selected="${perm.permissionLevel.value == 'view'}" th:text="#{page.edit.permissions.level.view}">View</option>
+                                        <option value="edit" th:selected="${perm.permissionLevel.value == 'edit'}" th:text="#{common.edit}">Edit</option>
                                     </select>
                                 </td>
                                 <td>
                                     <button type="button" class="btn btn-danger btn-sm delete-permission-btn"
                                             th:attr="data-perm-id=${perm.id}"
                                             onclick="markPermissionForDeletion(this)">
-                                        <i class="bi bi-trash"></i> Löschen
+                                        <i class="bi bi-trash"></i> <th:block th:text="#{common.delete}">Delete</th:block>
                                     </button>
                                 </td>
                             </tr>
@@ -138,44 +138,44 @@
 
                     <!-- Keine Berechtigungen vorhanden -->
                     <div class="alert alert-info" th:if="${permissions == null || permissions.isEmpty()}">
-                        <p>Keine Berechtigungen definiert.</p>
+                        <p th:text="#{page.edit.permissions.none}">No permissions defined.</p>
                     </div>
 
                     <!-- Neue Berechtigung hinzufügen -->
                     <div class="card mt-3">
                         <div class="card-header">
-                            <h5 class="mb-0">Neue Berechtigung hinzufügen</h5>
+                            <h5 class="mb-0" th:text="#{page.edit.permissions.add.heading}">Add new permission</h5>
                         </div>
                         <div class="card-body">
                             <div id="new-permission-form">
                                 <div class="row g-3 mb-3">
                                     <div class="col-md-4">
-                                        <label for="role-type" class="form-label">Rollentyp</label>
+                                        <label for="role-type" class="form-label" th:text="#{page.edit.permissions.role-type}">Role type</label>
                                         <select class="form-select" id="role-type" name="roleType" required>
-                                            <option value="user">Benutzer</option>
-                                            <option value="group">Gruppe</option>
-                                            <option value="guest">Gast</option>
+                                            <option value="user" th:text="#{page.edit.permissions.role-type.user}">User</option>
+                                            <option value="group" th:text="#{page.edit.permissions.role-type.group}">Group</option>
+                                            <option value="guest" th:text="#{page.edit.permissions.role-type.guest}">Guest</option>
                                         </select>
                                     </div>
                                     <div class="col-md-4">
-                                        <label for="role-id" class="form-label">Auswählen</label>
+                                        <label for="role-id" class="form-label" th:text="#{page.edit.permissions.select}">Select</label>
                                         <select class="form-select" id="role-id">
-                                            <option value="" disabled selected>Bitte wählen...</option>
+                                            <option value="" disabled selected th:text="#{page.edit.permissions.choose}">Please choose…</option>
                                             <!-- Diese Optionen werden dynamisch per JavaScript gefüllt -->
                                         </select>
                                         <input type="hidden" id="role-id-hidden" name="roleId" value="">
                                     </div>
                                     <div class="col-md-4">
-                                        <label for="permission-level" class="form-label">Berechtigung</label>
+                                        <label for="permission-level" class="form-label" th:text="#{page.edit.permissions.level}">Permission</label>
                                         <select class="form-select" id="permission-level" name="permissionLevel" required>
-                                            <option value="none">Keine</option>
-                                            <option value="view">Anzeigen</option>
-                                            <option value="edit">Bearbeiten</option>
+                                            <option value="none" th:text="#{page.edit.permissions.level.none}">None</option>
+                                            <option value="view" th:text="#{page.edit.permissions.level.view}">View</option>
+                                            <option value="edit" th:text="#{common.edit}">Edit</option>
                                         </select>
                                     </div>
                                 </div>
-                                <button type="button" class="btn btn-primary" id="add-permission-btn" 
-                                        onclick="addPermissionLocally()">Hinzufügen</button>
+                                <button type="button" class="btn btn-primary" id="add-permission-btn"
+                                        onclick="addPermissionLocally()" th:text="#{page.edit.permissions.add}">Add</button>
                             </div>
                         </div>
                     </div>
@@ -184,11 +184,11 @@
             </div>
         </div>
     <div style="padding:0 28px 24px; display:flex; gap:8px">
-        <button type="submit" class="kr-btn accent">Save changes</button>
+        <button type="submit" class="kr-btn accent" th:text="#{common.save-changes}">Save changes</button>
         <button type="button" class="kr-btn"
                 th:hx-get="'/ui/page/' + ${page.getPageId()}"
                 hx-target="#content"
-                hx-push-url="true">Cancel</button>
+                hx-push-url="true" th:text="#{common.cancel}">Cancel</button>
     </div>
 </form>
 
@@ -228,7 +228,7 @@
         defaultOption.value = '';
         defaultOption.disabled = true;
         defaultOption.selected = true;
-        defaultOption.textContent = 'Bitte wählen...';
+        defaultOption.textContent = krT('edit.choose', 'Please choose…');
         roleSelect.appendChild(defaultOption);
 
         roleIdHidden.value = '';
@@ -283,14 +283,14 @@
      * Mark a permission for deletion
      */
     function markPermissionForDeletion(button) {
-        if (confirm('Möchten Sie diese Berechtigung wirklich löschen?')) {
+        if (confirm(krT('edit.delete.confirm', 'Do you really want to delete this permission?'))) {
             const permId = button.getAttribute('data-perm-id');
             const row = button.closest('tr');
 
             // Validate permission ID
             if (!permId || permId === 'null' || permId === 'undefined') {
                 console.error('Invalid permission ID for deletion:', permId);
-                alert('Fehler: Ungültige Berechtigungs-ID. Die Berechtigung kann nicht gelöscht werden.');
+                alert(krT('edit.delete.invalid-id', 'Error: invalid permission ID. The permission cannot be deleted.'));
                 return;
             }
 
@@ -305,7 +305,7 @@
             // Mark row as deleted visually
             row.style.opacity = '0.5';
             row.style.textDecoration = 'line-through';
-            button.textContent = 'Gelöscht';
+            button.textContent = krT('edit.deleted', 'Deleted');
             button.disabled = true;
             button.classList.remove('btn-danger');
             button.classList.add('btn-secondary');
@@ -333,7 +333,7 @@
         // Get role name for display
         let roleName = '';
         if (roleType === 'guest') {
-            roleName = 'Gast';
+            roleName = krT('edit.guest', 'Guest');
         } else {
             const roleSelect = document.getElementById('role-id');
             const selectedOption = roleSelect.options[roleSelect.selectedIndex];
@@ -373,9 +373,9 @@
         row.setAttribute('data-addition-index', index);
 
         const permissionLevelText = {
-            'none': 'Keine',
-            'view': 'Anzeigen',
-            'edit': 'Bearbeiten'
+            'none': krT('edit.level.none', 'None'),
+            'view': krT('edit.level.view', 'View'),
+            'edit': krT('edit.level.edit', 'Edit')
         };
 
         row.innerHTML = `
@@ -383,14 +383,14 @@
             <td>${permission.roleType}</td>
             <td>
                 <select class="form-select permission-select-new" data-addition-index="${index}">
-                    <option value="none" ${permission.permissionLevel === 'none' ? 'selected' : ''}>Keine</option>
-                    <option value="view" ${permission.permissionLevel === 'view' ? 'selected' : ''}>Anzeigen</option>
-                    <option value="edit" ${permission.permissionLevel === 'edit' ? 'selected' : ''}>Bearbeiten</option>
+                    <option value="none" ${permission.permissionLevel === 'none' ? 'selected' : ''}>${permissionLevelText.none}</option>
+                    <option value="view" ${permission.permissionLevel === 'view' ? 'selected' : ''}>${permissionLevelText.view}</option>
+                    <option value="edit" ${permission.permissionLevel === 'edit' ? 'selected' : ''}>${permissionLevelText.edit}</option>
                 </select>
             </td>
             <td>
                 <button type="button" class="btn btn-danger btn-sm" onclick="removeNewPermission(${index})">
-                    <i class="bi bi-trash"></i> Löschen
+                    <i class="bi bi-trash"></i> ${krT('edit.delete', 'Delete')}
                 </button>
             </td>
         `;
@@ -484,19 +484,21 @@
         const roleId = document.getElementById('role-id').value;
 
         if (roleType !== 'guest' && !roleId) {
-            alert('Bitte wählen Sie einen Benutzer oder eine Gruppe aus.');
+            alert(krT('edit.choose-role', 'Please select a user or group.'));
             return false;
         }
 
         // Check for duplicate permissions
         if (checkForDuplicatePermission(roleType, roleId)) {
             if (roleType === 'guest') {
-                alert('Für Gäste wurde bereits eine Berechtigung definiert.');
+                alert(krT('edit.duplicate.guest', 'A permission has already been defined for guests.'));
             } else {
                 const roleSelect = document.getElementById('role-id');
                 const selectedOption = roleSelect.options[roleSelect.selectedIndex];
                 const roleName = selectedOption ? selectedOption.textContent : '';
-                alert(`Für ${roleType === 'user' ? 'den Benutzer' : 'die Gruppe'} "${roleName}" wurde bereits eine Berechtigung definiert.`);
+                alert(roleType === 'user'
+                    ? krT('edit.duplicate.user', 'A permission has already been defined for the user "{0}".', roleName)
+                    : krT('edit.duplicate.group', 'A permission has already been defined for the group "{0}".', roleName));
             }
             return false;
         }

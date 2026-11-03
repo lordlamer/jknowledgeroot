@@ -12,4 +12,6 @@ public class MyProfile {
     private String email;
     private String firstName;
     private String surName;
+    /** A supported language code, or empty for the browser language. */
+    private String language;
 }

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/head :: appHead(~{::title})}">
-    <title>Knowledgeroot Connect an assistant</title>
+    <title th:text="#{mcp.consent.title}">Knowledgeroot Connect an assistant</title>
 </head>
 <body class="kr-login-page">
 <div class="kr-login-shell">
@@ -11,31 +11,31 @@
             <span class="kr-brand-name">Knowledgeroot<span class="kr-dot">.</span></span>
         </a>
         <div class="kr-login-hero">
-            <h1>An assistant asks for access.</h1>
-            <p>It would act in your name with your permissions. You can take the access away at any time in your profile under connected assistants.</p>
+            <h1 th:text="#{mcp.consent.hero.heading}">An assistant asks for access.</h1>
+            <p th:text="#{mcp.consent.hero.text}">It would act in your name with your permissions. You can take the access away at any time in your profile under connected assistants.</p>
         </div>
         <div style="color:var(--kr-text-3); font-size:12px">© Knowledgeroot</div>
     </div>
     <div class="kr-login-right">
         <form class="kr-login-card" method="post" action="/oauth2/authorize" id="consent">
-            <h2>Allow access?</h2>
+            <h2 th:text="#{mcp.consent.heading}">Allow access?</h2>
             <p class="kr-sub">
                 <strong th:text="${clientName}">Claude</strong><span th:if="${clientHost != null}"> (<span th:text="${clientHost}">claude.ai</span>)</span>
-                wants to use Knowledgeroot as <strong th:text="${user.login}">login</strong>.
+                <th:block th:text="#{mcp.consent.request}">wants to use Knowledgeroot as</th:block> <strong th:text="${user.login}">login</strong><th:block th:text="#{mcp.consent.request.end}">.</th:block>
             </p>
             <input type="hidden" name="client_id" th:value="${clientId}">
             <input type="hidden" name="state" th:value="${state}">
             <input type="hidden" name="scope" th:value="${readScope}">
             <div class="kr-check" style="align-items:flex-start">
                 <input type="checkbox" id="scope-read" checked disabled>
-                <label for="scope-read"><strong>Read</strong><br><small>Search and read the spaces, pages and comments you can see.</small></label>
+                <label for="scope-read"><strong th:text="#{mcp.consent.read}">Read</strong><br><small th:text="#{mcp.consent.read.hint}">Search and read the spaces, pages and comments you can see.</small></label>
             </div>
             <div class="kr-check" th:if="${writeRequested}" style="align-items:flex-start">
                 <input type="checkbox" id="scope-write" name="scope" th:value="${writeScope}">
-                <label for="scope-write"><strong>Write</strong><br><small>Also create and edit pages and add comments where you may. Leave this off for a read-only assistant.</small></label>
+                <label for="scope-write"><strong th:text="#{mcp.consent.write}">Write</strong><br><small th:text="#{mcp.consent.write.hint}">Also create and edit pages and add comments where you may. Leave this off for a read-only assistant.</small></label>
             </div>
-            <button class="kr-btn primary" type="submit">Allow</button>
-            <button class="kr-btn" type="submit" form="deny" style="margin-top:8px">Deny</button>
+            <button class="kr-btn primary" type="submit" th:text="#{mcp.consent.allow}">Allow</button>
+            <button class="kr-btn" type="submit" form="deny" style="margin-top:8px" th:text="#{mcp.consent.deny}">Deny</button>
         </form>
         <form method="post" action="/oauth2/authorize" id="deny" hidden>
             <input type="hidden" name="client_id" th:value="${clientId}">
