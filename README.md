@@ -1,34 +1,152 @@
-# jknowledgeroot
-Knowledgeroot Knowledgebase written in Java
+# Knowledgeroot
 
-## Roadmap
+**A self-hosted knowledge base for teams.** Pages live in a tree inside spaces,
+every change is kept, and access is controlled per space and per page. Written in
+Java with Spring Boot and MariaDB, shipped as a Docker image, licensed under
+BSD-2-Clause.
 
-The [production readiness roadmap](docs/roadmap.md) tracks priorities, acceptance
-criteria, open decisions, and progress toward a production release.
+[![Release](https://img.shields.io/github/v/release/lordlamer/jknowledgeroot?include_prereleases&label=release)](https://github.com/lordlamer/jknowledgeroot/releases)
+[![Docker pulls](https://img.shields.io/docker/pulls/lordlamer/knowledgeroot)](https://hub.docker.com/r/lordlamer/knowledgeroot)
+[![Verify and release](https://github.com/lordlamer/jknowledgeroot/actions/workflows/maven.yml/badge.svg)](https://github.com/lordlamer/jknowledgeroot/actions/workflows/maven.yml)
+[![License](https://img.shields.io/github/license/lordlamer/jknowledgeroot)](LICENSE)
 
-Page edits save content, labels, and submitted permissions in one database
-transaction. Multi-file uploads publish their metadata together and use the
-actual user's audit identity. See [transactions and storage failures](docs/transactions.md)
-for rollback behavior and the handling of unreferenced storage objects.
+Website: [knowledgeroot.org](https://knowledgeroot.org) · Images: [Docker Hub](https://hub.docker.com/r/lordlamer/knowledgeroot) · Docs: [docs/](docs/)
 
-Search and the page API apply permissions before pagination. See
-[search, input limits, and error responses](docs/search-and-validation.md)
-for request limits, compatibility changes, and database indexes.
+| | |
+|---|---|
+| ![A page with labels, a star and comments](docs/screenshots/page.png) | ![Search across spaces with highlighted hits](docs/screenshots/search.png) |
+| ![The space switcher](docs/screenshots/spaces.png) | ![The graphite dark theme](docs/screenshots/dark-theme.png) |
 
-Local storage starts independently of MinIO. New uploads use streaming SHA-256
-hashing; existing MD5 objects remain readable. Defaults are 25 MiB per file,
-100 MiB per request and ten files per upload. See the [storage guide](docs/storage.md)
-for configuration, temporary disk space, safe downloads and manual orphan cleanup.
+## Features
+
+- **Spaces and page trees.** Every page lives in a space with its own view, edit and
+  admin grants. Move whole subtrees, even across spaces; links, comments, labels and
+  attachments survive the move.
+- **Permissions that are enforced once, on the server.** Grants for users, groups, guests
+  or all signed-in users; new pages inherit from their parent, administrators switch a
+  page to local grants. Public read access never implies editing. Search, the API and the
+  MCP server all apply the same rules.
+- **Rich-text editor** (Tiptap, MIT-licensed, no license key): headings, lists, tables,
+  code blocks, quotes, links and images. Pasted HTML is sanitised in the browser and again
+  on the server.
+- **History you can use.** Every save keeps a version; compare any two versions side by
+  side, restore an earlier one, and recover deleted pages as an administrator. Stale
+  revisions are detected and your draft is preserved on a conflict.
+- **Search with filters** across all spaces you may enter, or inside one space, by label,
+  change date and last editor. Permissions are applied before pagination.
+- **Attachments** on local disk or in any S3-compatible bucket, streamed with SHA-256
+  hashing and size limits; comments, labels and favourites on every page.
+- **Sign-in done properly.** PBKDF2 password hashing, login throttling per account and
+  per source address, CSRF protection, sessions in the database, optional password
+  recovery by email, and two-factor authentication (TOTP with recovery codes) with a
+  policy from *off* to *required for everyone*.
+- **AI assistants over MCP.** Claude and other MCP clients connect to `/mcp` with
+  OAuth 2.1 using the user's own account. They see exactly what that user may see; writing
+  is a separate consent. Administrators get an audit log of every call.
+- **Client API and mobile app.** A JSON API under `/api/v1` with the same session and
+  CSRF protection serves the Knowledgeroot Flutter app.
+- **Six interface languages:** English, German, French, Spanish, Italian and Dutch, chosen
+  per user; a light and a graphite dark theme.
+- **Built to operate.** Liveness and readiness probes, administrator metrics, Liquibase
+  migrations on start, a hardened container running as a non-root user, documented backup,
+  restore and rollback procedures, and release artefacts with checksums.
+
+## Versions
+
+| Line | Version | Where | Contains |
+|---|---|---|---|
+| Stable | **1.0.0** | branch `release/1.0`, tag `v1.0.0` | Page tree, editor, history, page permissions, attachments, search, throttled sign-in with password recovery |
+| Next | **1.1.0-rc.1** (`latest`) | branch `master`, tag `v1.1.0-rc.1` | Everything above plus spaces, two-factor authentication, the MCP server, the client API, the graphite theme and interface languages |
+
+Release tags publish both Docker images and a GitHub release with the verified JAR
+and `SHA256SUMS`. See the [release guide](docs/release.md) for artefact identity and
+the [release notes](https://github.com/lordlamer/jknowledgeroot/releases).
+
+## Quick start with Docker Compose
+
+You need Docker with the Compose plugin. The Compose file in `deploy/` starts
+MariaDB and the application with separate migration and runtime database accounts,
+a read-only container file system and a persistent volume for attachments.
+
+```bash
+git clone https://github.com/lordlamer/jknowledgeroot.git
+```
+
+```bash
+cp jknowledgeroot/deploy/production.env.example ~/knowledgeroot.env
+```
+
+Edit `~/knowledgeroot.env` (keep it outside the repository and readable by you only):
+
+- `KR_APP_IMAGE=lordlamer/knowledgeroot:v1.1.0-rc.1` and
+  `KR_DB_IMAGE=lordlamer/knowledgeroot:database-v1.1.0-rc.1` (or the digests of a release)
+- three random database passwords and a random `KR_MASTER_KEY` of at least 32 characters
+- `KR_BOOTSTRAP_LOGIN` and `KR_BOOTSTRAP_PASSWORD` (16 to 128 characters) for the first
+  administrator; there is no default account
+
+```bash
+docker compose -p knowledgeroot --env-file ~/knowledgeroot.env -f jknowledgeroot/deploy/compose.production.yaml up -d
+```
+
+Open <http://localhost:8081>, sign in with the bootstrap account, then remove the two
+bootstrap variables from the env file. For anything beyond your own machine put a
+TLS-terminating reverse proxy in front and read the
+[production deployment guide](docs/production.md) (proxy trust, HTTPS cookies,
+`KR_PUBLIC_URL`, mail) and [backup and recovery](docs/recovery.md).
+
+Without Docker, the JAR from a [GitHub release](https://github.com/lordlamer/jknowledgeroot/releases)
+runs with `java -jar knowledgeroot-<version>.jar` on JDK 25 against your own MariaDB;
+the [installation guide](docs/installation.md) lists the environment variables.
+
+## Connect an AI assistant
+
+1. *Admin → Settings*: enable **MCP server for AI assistants**. The page shows the
+   server URL, `https://<host>/mcp`.
+2. In claude.ai or Claude Desktop add a custom connector with that URL; in Claude Code
+   run `claude mcp add --transport http knowledgeroot https://<host>/mcp`.
+3. Sign in to Knowledgeroot when the assistant asks, and decide on the consent page
+   whether it may only read or also write.
+
+The assistant can then list spaces, search, read pages, attachments and history and,
+with write consent, create, edit, move and comment on pages. Every user sees and
+disconnects their assistants in the profile; administrators see every call under
+*Admin → MCP*. Details in the [MCP guide](docs/mcp.md).
+
+## Documentation
+
+| Topic | Guide |
+|---|---|
+| Product functions of 1.0 and 1.1 | [product-functions.md](docs/product-functions.md) |
+| Installation, first administrator, upgrades | [installation.md](docs/installation.md) |
+| Production deployment, proxy, HTTPS, mail | [production.md](docs/production.md) |
+| Backup, restore, upgrade and rollback | [recovery.md](docs/recovery.md) |
+| Spaces and page permissions | [access-control.md](docs/access-control.md) |
+| Sign-in, sessions, throttling, two-factor | [authentication.md](docs/authentication.md), [account-recovery.md](docs/account-recovery.md) |
+| MCP server for AI assistants | [mcp.md](docs/mcp.md) |
+| Client API for apps | [client-api.md](docs/client-api.md) |
+| Attachments and storage | [storage.md](docs/storage.md), [transactions.md](docs/transactions.md) |
+| Search, input limits, error responses | [search-and-validation.md](docs/search-and-validation.md) |
+| Page history and deleted pages | [page-history.md](docs/page-history.md) |
+| Editor and frontend build | [editor.md](docs/editor.md) |
+| Interface languages | [translations.md](docs/translations.md) |
+| Monitoring, probes and metrics | [monitoring.md](docs/monitoring.md) |
+| Load testing | [load-testing.md](docs/load-testing.md) |
+| Releases, artefacts and checksums | [release.md](docs/release.md) |
+| Dependency and container audits | [dependencies.md](docs/dependencies.md), [image-security.md](docs/image-security.md) |
+| Roadmap and acceptance record | [roadmap.md](docs/roadmap.md), [operational-acceptance.md](docs/operational-acceptance.md) |
+| Announcing releases | [promotion.md](docs/promotion.md) |
+
+Most guides are written in German; the product functions and the MCP guide are the
+best starting points.
 
 ## Build and tests
 
 Install JDK 25 and set `JAVA_HOME` to its installation directory. Start a Docker
-engine for the isolated MariaDB and MinIO tests. The Maven
-Wrapper downloads the pinned Maven version on its first invocation; a separate
-Maven installation is not required. Maven also installs the pinned Node/npm
-toolchain and builds the editor from `frontend/package-lock.json`.
-The browser test downloads Chromium on its first run; Linux needs the system
-libraries described in the [editor and build guide](docs/editor.md).
+engine for the isolated MariaDB and MinIO tests. The Maven Wrapper downloads the
+pinned Maven version on its first invocation; a separate Maven installation is not
+required. Maven also installs the pinned Node/npm toolchain and builds the editor
+from `frontend/package-lock.json`. The browser test downloads Chromium on its first
+run; Linux needs the system libraries described in the [editor and build guide](docs/editor.md).
 
 On Linux or macOS:
 
@@ -42,170 +160,44 @@ On Windows (PowerShell):
 .\mvnw.cmd -B --no-transfer-progress verify
 ```
 
-The JavaScript of the build, release and deployment scripts and of the editor is
-linted with the repository's `eslint.config.mjs` (`npx eslint .`); Codacy keeps its
-own rule selection for the application code and leaves those scripts out (see
-`.codacy.yml`).
+The build compiles the application, runs the tests and creates the executable JAR in
+`target/`. Integration tests use isolated databases, real login and CSRF and JDBC
+sessions; installation tests run against a real MariaDB in Testcontainers. During
+`verify`, Failsafe starts the packaged JAR against disposable MariaDB/RustFS containers
+and checks HTTP login, administrator access, WebJars, session persistence across a
+restart and logout. Chromium checks editor creation and saving, repeated htmx navigation,
+rich-text preservation, malicious paste handling and a real file upload and download.
+A second JAR start uses local storage with an invalid MinIO URL and checks an upload at
+the size limit, its download and HTTP 413 above the limit.
 
-The build compiles the application, runs the enabled tests, and creates the
-executable JAR in `target/`. The previously disabled integration classes now use
-isolated databases, actual login/CSRF and JDBC sessions. Installation tests exercise a real MariaDB in
-Testcontainers. During `verify`, Failsafe starts the packaged JAR against
-disposable MariaDB/RustFS containers and checks real HTTP login, JPA-backed admin
-access, WebJars, JDBC-session persistence across restart, and logout. Chromium
-also checks editor creation/saving, repeated HTMX navigation, rich-text preservation,
-malicious paste handling, and a real file upload/download.
-An additional JAR start uses local storage with an invalid MinIO URL and checks
-an upload at the size limit, its download and HTTP 413 above the limit.
-The roadmap records the tested browser, storage, deployment and recovery paths
-along with their remaining operational limits.
+The JavaScript of the build, release and deployment scripts and of the editor is linted
+with the repository's `eslint.config.mjs` (`npx eslint .`); Codacy keeps its own rule
+selection for the application code and leaves those scripts out (see `.codacy.yml`).
 
-Spring Boot 4.1.1 manages the framework dependencies. See the
+Spring Boot 4.1 manages the framework dependencies. See the
 [dependency and security audit guide](docs/dependencies.md) for migration details,
-the Tomcat security override, repeatable Maven/npm scanning, and the resolved R08 findings.
+the Tomcat security override and repeatable Maven/npm scanning.
 
-The rich-text editor uses self-hosted Tiptap with MIT-licensed extensions;
-the project license remains BSD-2-Clause. No editor license key is required.
-See the [editor guide](docs/editor.md) for supported content and upgrade checks.
+## Local development
 
-## Initial administrator and upgrades
+The project reads credentials and runtime settings from environment variables.
 
-The current stable release is **1.0.0** from the maintenance branch `release/1.0`,
-where 1.0.x fixes are backported. `master` carries the next line as
-**1.1.0-rc.1**, the first release candidate of 1.1 (also published as `latest`):
-spaces with their own permissions, two-factor authentication, the MCP server for
-AI assistants, the graphite theme and the client API for the mobile app; see the
-[product functions](docs/product-functions.md). Release tags publish the Docker
-images and a GitHub release that carries the verified JAR with checksums. See the
-[release guide](docs/release.md) for artifact identity and remaining approval checks,
-and [backup and recovery](docs/recovery.md) for tested backup, restore, upgrade
-and snapshot rollback procedures for the production Compose deployment.
-The [container OS audit](docs/image-security.md) complements Maven/npm scanning;
-the [operational acceptance record](docs/operational-acceptance.md) captures the
-checks still needed on the actual target system.
-Page edits now detect stale revisions. [Page history and deletion](docs/page-history.md)
-explains restoring earlier content, preserving drafts on conflicts, and administrator
-recovery of deleted pages. REST update/delete clients must send the current revision.
-The [1.0 product functions](docs/product-functions.md) describe moving page trees,
-comparing saved versions and changing your password with current-password verification.
-
-Status-only liveness/readiness probes and administrator-only metrics are available.
-Readiness checks the database and selected file storage; the container has a built-in
-readiness healthcheck. See [monitoring and integration tests](docs/monitoring.md)
-for endpoint access, failure detection and operational limits.
-The [repeatable read workload](docs/load-testing.md) compares search and navigation
-on disposable synthetic datasets and records latency, throughput and access failures.
-
-For the production profile, restricted database accounts, a persistent local file
-volume, HTTPS/proxy settings and the release workflow, see the
-[production deployment guide](docs/production.md). The Docker image runs as UID
-10001. Production Compose is separate from the existing development services.
-
-Fresh databases require individually configured `KR_BOOTSTRAP_LOGIN` and
-`KR_BOOTSTRAP_PASSWORD` on the first start. There is no default administrator.
-Demo data requires the explicit `development` profile. Existing installations
-must rotate or disable remaining demo credentials before upgrading outside
-development. See the [installation and upgrade guide](docs/installation.md)
-for bootstrap rules, migration checks, and session schema ownership.
-
-## Mobile app and client API
-
-The Knowledgeroot Flutter app uses the JSON API under `/api/v1` with the regular
-session and CSRF protection. See the [client API guide](docs/client-api.md) for
-endpoints, authentication and the accompanying utf8mb4 migration.
-
-## AI assistants (MCP server)
-
-Assistants such as Claude connect to `https://<host>/mcp` over OAuth 2.1 with the
-user's own account and act with that user's permissions: search, read pages,
-attachments and history and, when the user allows it on the consent page, create,
-edit, move, delete and restore pages, manage labels, favourites and comments.
-Content travels as Markdown. Pages and spaces are also MCP resources, and ready-made
-prompts summarise a space, find stale pages or draft a page. Administrators switch
-the server on under *Admin → Settings*, keep the list of hosts assistants may return
-to and see every call and connection under *Admin → MCP*; users see and disconnect
-their assistants in the profile. See the [MCP guide](docs/mcp.md).
-
-## Interface languages
-
-The interface is available in English, German, French, Spanish, Italian and
-Dutch. Users pick their language in the profile (or "automatic" for the
-browser language); administrators can set it in the user administration.
-Texts live in `src/main/resources/i18n/`; the build checks that every
-language is complete and that templates contain no hard-coded text. See the
-[translation guide](docs/translations.md) for adding a language.
-
-## Page permissions
-
-Every page lives in a space, a container with its own permissions (view, edit,
-admin) for users, groups, guests or all signed-in users. Without a grant on the
-space none of its pages is reachable; inside the space the page permissions
-decide. New child pages dynamically inherit their parent's permissions, new root
-pages inherit the space's grants. Guests may create root pages in spaces that
-give them the edit level and children wherever they have parent-page edit
-permission. Public read access alone never grants editing. Spaces are created by
-administrators and by everyone granted the global right under *Admin → Permissions*;
-the creator administers the space and gets a home page with it.
-
-Only administrators manage sharing and explicitly switch between inherited and
-local permissions. Existing pages retain their local grants during upgrade.
-See the [access-control guide](docs/access-control.md) for the complete rules.
-
-## Login and sessions
-
-New passwords use PBKDF2-HMAC-SHA-256 with 600,000 iterations. Legacy hashes migrate
-after a successful login; known demo credentials still require an explicit password
-change. Password updates invalidate existing sessions on their next request.
-New passwords have 16–128 characters, with whitespace preserved in both UI and API.
-
-Login quotas are shared through MariaDB: by default, five attempts per account and
-30 per source address in 60 seconds. See the [authentication guide](docs/authentication.md)
-for configuration, proxy behavior, migration rules, and upgrade implications.
-
-Each authenticated request reloads the account by its stable user ID. Disabling
-or deleting an account, or changing its USER/ADMIN role, invalidates each existing
-session on its next request. A role change requires a new login. Renaming an
-account keeps its identity and refreshes the login name in the session.
-
-Two-factor authentication (TOTP for authenticator apps, ten single-use recovery
-codes) is set up by each user in the profile; administrators choose under
-*Admin → Settings* whether it is off, optional, required for administrators or
-required for everyone. Stored secrets are encrypted with `KR_MASTER_KEY`, which
-production requires. See the [authentication guide](docs/authentication.md#zweiter-faktor-totp)
-and the [product functions](docs/product-functions.md#zweiter-faktor-authenticator-app).
-
-Logout invalidates the current session. Login and logout require a CSRF token;
-a successful login rotates an existing session ID. If account validation cannot
-reach the database, the request fails before reaching the application endpoint.
-Previously stored unauthenticated application tokens require a new login.
-
-HTTP/session rules are tested with the real provider and security filter chain
-with mocked database access. Hash migration and shared login quotas also have real
-MariaDB tests. The packaged-application smoke test also verifies real HTTP login
-and JDBC-session reuse after restart. Full application tests also cover groups,
-comments, stars, labels, attachments and permission changes.
-
-## Local configuration
-
-The project uses environment variables for credentials and runtime settings.
-
-1. Copy `.env.example` to `.env`
-2. Set secure values in `.env`
-3. Start dependencies:
+1. Copy `.env.example` to `.env` and set your own values.
+2. Start the development dependencies (MariaDB and an S3-compatible store):
    `docker compose --env-file .env up -d`
-4. Start app:
-   `sh ./mvnw spring-boot:run` (Windows: `.\mvnw.cmd spring-boot:run`)
+3. Start the application: `sh ./mvnw spring-boot:run` (Windows: `.\mvnw.cmd spring-boot:run`)
 
-The Spring Boot app reads values from `src/main/resources/application.properties` using `${...}` placeholders.
+Fresh databases require `KR_BOOTSTRAP_LOGIN` and `KR_BOOTSTRAP_PASSWORD` on the first
+start. Demo data is loaded only with the explicit `development` profile; see the
+[installation guide](docs/installation.md). The Docker image runs as UID 10001;
+production Compose is separate from the development services.
 
-## Local override file (without exporting env vars)
+The screenshots above come from a disposable instance seeded with
+`scripts/screenshots/seed.sh` and taken with `scripts/screenshots/shoot.mjs`.
 
-You can also use a local override file that is not committed:
+## History and license
 
-1. Copy `config/application-local.properties.example` to `config/application-local.properties`
-2. Set your local values in `config/application-local.properties`
-3. Start app normally:
-   `sh ./mvnw spring-boot:run` (Windows: `.\mvnw.cmd spring-boot:run`)
-
-`application.properties` imports this file via:
-`spring.config.import=optional:file:./config/application-local.properties`
+Knowledgeroot is the Java rewrite of the PHP knowledge base of the same name by the
+same author; the rewrite started in 2017. The project is licensed under the
+[BSD-2-Clause license](LICENSE). Contributions, bug reports and questions are welcome
+in the [issue tracker](https://github.com/lordlamer/jknowledgeroot/issues).

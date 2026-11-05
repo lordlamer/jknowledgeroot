@@ -1,0 +1,5 @@
+<h2>Nightly backup</h2><p>A cron job on the database host dumps the schema and data at 02:00 and uploads the compressed dump to the backup bucket. Retention is 30 days.</p>
+<pre><code>mariadb-dump --single-transaction --routines knowledgeroot | zstd -19 &gt; knowledgeroot-$(date +%F).sql.zst</code></pre>
+<h2>Verify</h2><ul><li>The dump is not more than 10 % smaller than the previous one</li><li>A restore into the throwaway database succeeds and the row counts match</li></ul>
+<h2>Restore</h2><ol><li>Stop the application</li><li>Restore the dump into a fresh database</li><li>Start the application; migrations run on start</li><li>Check the readiness endpoint and sign in</li></ol>
+<p>Last drill: 14 October 2026, 11 minutes from stop to sign-in.</p>

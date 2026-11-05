@@ -1,0 +1,6 @@
+<p>A review is a conversation about a change, not a gate. Reviewers answer three questions: does it do what the description says, could it break something that is not tested, and will we understand it in a year?</p>
+<h2>For authors</h2><ul><li>Describe <strong>why</strong>, not only what. Link the ticket.</li><li>Keep the change under roughly 400 lines; split otherwise.</li><li>Open a <strong>draft</strong> pull request early for design feedback.</li><li>Self-review the diff before requesting a review.</li></ul>
+<h2>For reviewers</h2><ul><li>Respond within one working day, even if only to say when you will look.</li><li>Prefix comments: <code>nit:</code> for taste, <code>question:</code> for understanding, nothing for blocking issues.</li><li>Approve when it is good enough, not when it is how you would have written it.</li></ul>
+<h2>Example of a blocking comment</h2>
+<pre><code>This retries on every exception, including the ones that will never succeed
+(invalid credentials). Please retry only on IOException and keep the limit.</code></pre>

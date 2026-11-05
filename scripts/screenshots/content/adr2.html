@@ -1,0 +1,3 @@
+<h2>Context</h2><p>The interface is mostly server-rendered pages with a few dynamic parts: the page tree, search, the editor.</p>
+<h2>Decision</h2><p>Server-rendered templates with htmx for partial updates. The rich-text editor is the one component built as a JavaScript bundle.</p>
+<h2>Consequences</h2><ul><li>No client-side state to keep in sync; permissions are enforced once, on the server</li><li>Pages work without JavaScript for reading</li></ul>
