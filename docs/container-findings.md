@@ -1,6 +1,6 @@
 # Bewertung der verbleibenden Containerbefunde
 
-Stand: 13. September 2026, R17; ergänzt am 19. Oktober 2026 (R38) und am 30. Oktober 2026 (R45: `libbrotli1`-HIGH und `zlib1g`-Befund durch das neue Basisimage behoben) auf Basis des Scans mit 23 MEDIUM und vier LOW,
+Stand: 13. September 2026, R17; ergänzt am 19. Oktober 2026 (R38), am 30. Oktober 2026 (R45: `libbrotli1`-HIGH und `zlib1g`-Befund durch das neue Basisimage behoben) und am 5. November 2026 (R60: `apt`-HIGH `CVE-2026-109518` durch ein gezieltes Paket-Upgrade in beiden Images behoben) auf Basis des Scans mit 23 MEDIUM und vier LOW,
 siehe [image-security.md](image-security.md). Diese technische Bewertung ist eine Grundlage für
 die Betriebsabnahme und keine erteilte Risikoakzeptanz. Herstellerstatus und
 Paketbestand beziehen sich auf diesen Zeitpunkt und das geprüfte App-Image.
