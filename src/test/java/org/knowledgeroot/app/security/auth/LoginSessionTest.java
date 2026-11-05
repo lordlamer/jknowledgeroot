@@ -112,15 +112,8 @@ class LoginSessionTest {
         verifyNoInteractions(credentials, accounts, limiter);
     }
 
-    @Test
-    void loginRotatesAnExistingSessionId() throws Exception {
-        MockHttpSession session = new MockHttpSession();
-        String previousId = session.getId();
-        mvc.perform(post("/logmein").session(session).with(csrf())
-                        .param("username", "alice").param("password", PASSWORD))
-                .andExpect(redirectedUrl("/login/success"));
-        assertNotEquals(previousId, session.getId());
-    }
+    // Session id rotation at login is checked against the real server in
+    // LoginSessionRotationIntegrationTest: the MockMvc request of Spring Framework 7.0.10 no longer shows it.
 
     @Test
     void logoutInvalidatesSessionAndRemovesAuthentication() throws Exception {
