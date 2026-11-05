@@ -1388,6 +1388,33 @@ R54.
   nicht an. `user.timezone` wird weiterhin nicht ausgewertet. Begründungen
   mit variablem Inhalt bleiben englisch.
 
+### R58 – GitHub-Auftritt und Ankündigungskanäle
+
+- [x] Lokal umgesetzt am 5. November 2026.
+- **Ziel:** Das Repository soll Besucher aus Listen und Communities überzeugen,
+  bevor das Projekt angekündigt wird: Pitch, Screenshots, Featureliste und ein
+  Fünf-Minuten-Einstieg statt der bisherigen Sammlung von Dokumentationsverweisen.
+- **Umgesetzt:** README neu aufgebaut (Pitch, Badges, vier Screenshots,
+  Featureliste, Versionsübersicht 1.0/1.1, Compose-Schnellstart mit
+  `deploy/compose.production.yaml`, MCP-Anbindung in drei Schritten,
+  Dokumentationstabelle; Build- und Entwicklungsabschnitte gekürzt übernommen).
+  Screenshots unter `docs/screenshots/` samt Social-Preview-Bild, aufgenommen
+  von einer wegwerfbaren Instanz aus den veröffentlichten `v1.1.0-rc.1`-Images
+  mit `scripts/screenshots/seed.sh` (Beispielinhalte über die Client-API) und
+  `scripts/screenshots/shoot.mjs` (headless Chromium über `playwright-core`).
+  [promotion.md](promotion.md) nennt die Kanäle in Reihenfolge (awesome-selfhosted,
+  selfh.st, AlternativeTo, Reddit, Show HN, Fediverse, MCP-Verzeichnisse,
+  App-Kataloge, deutschsprachige Verzeichnisse, freshcode.club), die
+  `gh`-Befehle für Beschreibung, Homepage und Topics sowie die Texte je Kanal.
+- **Geprüft:** Schnellstart der README wörtlich gegen die veröffentlichten
+  rc.1-Images ausgeführt (Compose-Start, Bootstrap-Login, Anlegen von Space und
+  Seiten über UI und API); `npx eslint scripts/screenshots/shoot.mjs` ohne Befund.
+- **Grenzen:** GitHub-Beschreibung, Topics und Social Preview sind noch nicht
+  gesetzt (Befehle in promotion.md). Keine Demo-Instanz. Der Editor fehlt in den
+  Screenshots, weil das rc.1-Image die Toolbar noch deutsch zeigt (R57 kam
+  danach); nach dem 1.1.0-Tag neu aufnehmen. Die Ankündigung selbst soll mit
+  dem stabilen 1.1.0 erfolgen.
+
 ## Nachweise der Bestandsaufnahme
 
 - `mvn -B test` bei der ursprünglichen Bestandsaufnahme: Anwendung kompiliert unter Java 25; Testkompilierung scheitert am Konstruktoraufruf in `PageControllerTest`. Dieser Befund ist durch R01 behoben; das aktuelle Prüfergebnis steht dort.

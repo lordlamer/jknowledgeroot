@@ -1,0 +1,5 @@
+<h2>Cadence</h2><p>We release every two weeks on Tuesday. Hotfixes go out as needed from the maintenance branch.</p>
+<h2>Checklist</h2><ol><li>Changelog reviewed, version bumped</li><li>Tag pushed; CI verifies and publishes the images and the checksums</li><li>Staging upgraded from the published image, smoke test green</li><li>Production upgraded during the maintenance window</li><li>Announcement in the release channel</li></ol>
+<h2>Rollback</h2><p>Roll back by deploying the previous image. Database migrations are backward compatible for one release; see the runbook <em>Database backup and restore</em>.</p>
+<pre><code>git tag v1.4.0
+git push origin v1.4.0</code></pre>

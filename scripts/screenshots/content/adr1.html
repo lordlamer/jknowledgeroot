@@ -1,0 +1,3 @@
+<h2>Context</h2><p>We need a relational store that the team already operates, with full-text search good enough for a few hundred thousand pages.</p>
+<h2>Decision</h2><p>MariaDB is the primary store for pages, history, permissions and sessions. Attachments go to local disk or an S3-compatible bucket.</p>
+<h2>Consequences</h2><ul><li>One system to back up and monitor</li><li>Full-text search stays inside the database; a dedicated search engine is a later decision</li></ul>
