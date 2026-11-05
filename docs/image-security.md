@@ -238,6 +238,25 @@ neue Befunde kamen nicht hinzu. Die Einordnung der verbleibenden Befunde in
 seine Übernahme ist offen, weil der aktuelle Datenbankscan keine Korrektur
 verlangt.
 
+## apt-Korrektur in beiden Images (R60)
+
+Am 5. November 2026 blockierte der gehostete Scan des App-Images mit
+[CVE-2026-109518](https://ubuntu.com/security/CVE-2026-109518) (HIGH) in
+`apt 2.8.3` und `libapt-pkg6.0t64 2.8.3`, Ubuntu-Korrektur `2.8.4ubuntu0.1`
+vom 4. November 2026. Ein Scan aus der Registry zeigt denselben Befund im
+gepinnten Temurin-Digest, im neueren Tag `eclipse-temurin:25.0.5_8-jre-noble`
+vom 1. November und im gepinnten `mariadb:12.3.3`-Digest; kein Hersteller-Build
+enthält die Korrektur bisher. Beide Dockerfiles erweitern deshalb wieder, wie
+vor R38, die Basis um eine gezielte Schicht `apt-get install --only-upgrade`
+mit den beiden auf `2.8.4ubuntu0.1` gepinnten Paketen; Digests, JRE, MariaDB
+und glibc bleiben unverändert, `release-metadata.mjs` besteht unverändert. Die
+Schicht entfällt wieder, sobald ein geprüfter Hersteller-Digest die Version
+enthält.
+
+Ergebnis des lokalen Scans mit dem gepinnten Trivy: App-Image **105 Pakete,
+keine blockierenden Funde**, Datenbankimage **149 Pakete, keine blockierenden
+Funde**; `dpkg-query` bestätigt `apt 2.8.4ubuntu0.1` in beiden Images.
+
 ## Datenbankbewertung und entbehrliche Pakete (R20)
 
 Die [gesonderte Datenbankbewertung](database-findings.md) untersucht die
