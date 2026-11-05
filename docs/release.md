@@ -1,10 +1,17 @@
 # Release und Freigabe
 
-Seit dem 1. November 2026 trägt `master` die Version **1.1.0-rc.1**, den
-ersten Kandidaten der 1.1-Linie; `latest` entsteht daraus. Die 1.0-Linie liegt
-auf dem Wartungsbranch `release/1.0` mit der Version `1.0.0`; spätere
-1.0.x-Korrekturen werden auf `master` entwickelt und dorthin übernommen. Tags
-mit SNAPSHOT-Version lehnt die Artefaktprüfung ab.
+Die Version **1.1.0** ist auf dem Wartungsbranch `release/1.1` vorbereitet: POM
+und beide Dockerfiles tragen `1.1.0`; gegenüber `1.1.0-rc.1` enthält sie die
+Sprachen der Oberfläche (R57), Spring Boot 4.1.2 mit den gegen den echten
+Server geprüften Sitzungstests (#301), die CI-Korrektur der Release-Assets
+(R56) und den neuen GitHub-Auftritt (R58). Der Tag `v1.1.0` auf dem
+Merge-Commit dieses Branches veröffentlicht `lordlamer/knowledgeroot:v1.1.0`
+und `database-v1.1.0` sowie das GitHub-Release mit `knowledgeroot-1.1.0.jar`
+und `SHA256SUMS`; Lauf-ID, Registry-Digests und JAR-Prüfsumme werden nach der
+Veröffentlichung hier nachgetragen. Spätere 1.1.x-Korrekturen entstehen auf
+`master` und werden hierher übernommen; `master` selbst trägt die nächste
+Linie, `latest` entsteht daraus. Die 1.0-Linie liegt auf `release/1.0` mit der
+Version `1.0.0`. Tags mit SNAPSHOT-Version lehnt die Artefaktprüfung ab.
 
 Die Version **1.0.0** ist seit dem 1. November 2026 als Tag `v1.0.0` auf
 Commit `0329927c46bc21c4c9eae22ce1dc21f7a721c863` (`release/1.0`) veröffentlicht: Der
@@ -37,9 +44,9 @@ Faktor (R49), Spaces (R51), den MCP-Server mit OAuth 2.1 und vollständigem
 Werkzeugsatz (R52, R54), das Graphit-Theme (R53) und die Client-API der
 mobilen App (R44). Für ein Upgrade von 1.0 muss vorher `KR_MASTER_KEY` gesetzt
 sein ([authentication.md](authentication.md#zweiter-faktor-totp)); die
-Changesets `1.0.15` bis `1.0.18` laufen beim Start. Ein Kandidat ist kein
-endgültiges `v1.1.0`; das entsteht später auf einem Wartungsbranch
-`release/1.1`.
+Changesets `1.0.15` bis `1.0.18` laufen beim Start (in 1.1.0 zusätzlich
+`1.0.19-user-language` aus R57). Der Kandidat ist durch `1.1.0` auf
+`release/1.1` abgelöst.
 
 Ein erster Versuch mit denselben Tag-Namen scheiterte am 1. November 2026 im
 Schritt „Assemble release assets": Die Unit-Tests von
