@@ -1415,6 +1415,51 @@ R54.
   danach); nach dem 1.1.0-Tag neu aufnehmen. Die Ankündigung selbst soll mit
   dem stabilen 1.1.0 erfolgen.
 
+### R59 – Version 1.1.0 auf release/1.1 freigeben
+
+- [x] Vorbereitet am 5. November 2026; der Tag `v1.1.0` wird nach dem Merge
+  vom Eigentümer gesetzt und veröffentlicht die Artefakte.
+- **Ziel:** Die 1.1-Linie mit Spaces, zweitem Faktor, MCP-Server, Client-API,
+  Graphit-Theme und Oberflächensprachen als stabile Version abschließen, damit
+  die Ankündigung ([promotion.md](promotion.md)) auf ein Release statt auf einen
+  Kandidaten verweist.
+- **Umgesetzt:** Wartungsbranch `release/1.1` von `master` (`388e2a7`)
+  abgezweigt, darauf POM und beide Dockerfiles auf `1.1.0`; README
+  (Versionstabelle, Schnellstart auf `v1.1.0`), [release.md](release.md) und
+  das Abnahmeprotokoll beschreiben die stabile Version. Gegenüber `1.1.0-rc.1`
+  enthält der Branch R56, R57, R58 und Spring Boot 4.1.2 (#301). Vorher wurde
+  PR #296 (Dependabot, Spring Boot 4.1.2) als durch #301 überholt geschlossen;
+  die Dependabot-PRs #295 (zxing 3.5.4), #297 (Playwright 1.64.0), #298
+  (htmx-spring-boot 6.0.1) und #299 (htmx.org 4.0.0) bleiben offen und sind
+  nicht Teil von 1.1.0, die beiden Major-Sprünge brauchen einen eigenen
+  Browsertest in der nächsten Linie.
+- **Geprüft:** `./mvnw verify` lokal auf `release/1.1.0`; PR-Lauf der CI.
+- **Grenzen:** Das Abnahmeprotokoll für ein Zielsystem bleibt offen.
+  `master` trägt noch die Version `1.1.0-rc.1` und wird in einem eigenen
+  Schritt auf die nächste Linie gehoben. Die Screenshots der README stammen
+  vom rc.1-Image und sind nach dem Tag neu aufzunehmen (Editor-Toolbar).
+
+### R60 – apt-Korrektur CVE-2026-109518 in beiden Images
+
+- [x] Lokal umgesetzt und geprüft am 5. November 2026.
+- **Anlass:** Der gehostete Scan für den Release-PR #303 blockierte mit
+  `CVE-2026-109518` (HIGH, `apt` und `libapt-pkg6.0t64 2.8.3`), Ubuntu-Fix
+  `2.8.4ubuntu0.1` vom 4. November. Weder der gepinnte Temurin-Digest noch
+  der neuere Tag `25.0.5_8-jre-noble` noch der MariaDB-Digest enthalten ihn.
+- **Umgesetzt:** Beide Dockerfiles erhalten wieder eine gezielte Schicht
+  `apt-get install --only-upgrade` mit den beiden auf `2.8.4ubuntu0.1`
+  gepinnten Paketen, wie vor R38; Digests und Laufzeitversionen bleiben.
+  Beschreibung in [image-security.md](image-security.md#apt-korrektur-in-beiden-images-r60).
+  Die Änderung wird auf `release/1.1` übernommen, damit 1.1.0 freigegeben
+  werden kann.
+- **Geprüft:** Beide Images lokal gebaut, `dpkg-query` zeigt
+  `apt 2.8.4ubuntu0.1`; `scripts/audit-image.mjs` App **105 Pakete, keine
+  blockierenden Funde**, Datenbank **149 Pakete, keine blockierenden Funde**.
+  Gehosteter Nachweis mit den PR-Läufen.
+- **Grenzen:** Die Schicht ist ein Übergang; bei der nächsten Aktualisierung
+  der Basisimages ist zu prüfen, ob die Hersteller-Builds `apt 2.8.4ubuntu0.1`
+  enthalten, und sie dann zu entfernen.
+
 ## Nachweise der Bestandsaufnahme
 
 - `mvn -B test` bei der ursprünglichen Bestandsaufnahme: Anwendung kompiliert unter Java 25; Testkompilierung scheitert am Konstruktoraufruf in `PageControllerTest`. Dieser Befund ist durch R01 behoben; das aktuelle Prüfergebnis steht dort.

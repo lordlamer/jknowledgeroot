@@ -5,7 +5,12 @@ FROM mariadb:12.3.3@sha256:99c125f103f5d081ebbc9ffe064e63daf7f688ac33a5f7f29af2d
 # This deployment uses preinstalled package keyrings and does not invoke GPG.
 # Keep gpgv and the installed keyring for APT signature verification.
 # Do not autoremove MariaDB's Perl, networking or other runtime dependencies.
+# Ubuntu CVE-2026-109518 (HIGH, apt 2.8.3): no MariaDB build carries apt 2.8.4ubuntu0.1 yet.
+# Remove this layer once a verified MariaDB digest includes that version.
+RUN apt-get update && apt-get install -y --no-install-recommends --only-upgrade \
+        apt=2.8.4ubuntu0.1 libapt-pkg6.0t64=2.8.4ubuntu0.1 \
+    && rm -rf /var/lib/apt/lists/*
 RUN apt-get purge -y gpg libsqlite3-0
-ARG BUILD_VERSION=1.1.0-rc.1
+ARG BUILD_VERSION=1.1.0
 ARG BUILD_REVISION=unknown
 LABEL org.opencontainers.image.version=$BUILD_VERSION org.opencontainers.image.revision=$BUILD_REVISION

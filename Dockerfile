@@ -2,6 +2,11 @@ FROM eclipse-temurin:25.0.4.1_1-jre-noble@sha256:ce8543ddd3070ccbeaac2106a74c938
 # The pinned Temurin digest (17 October 2026) ships JRE 25.0.4.1+1 together with the
 # Ubuntu glibc 2.39-0ubuntu8.9 and openssl 3.0.13-0ubuntu3.16 fixes; the earlier
 # archive download and targeted package upgrades are therefore no longer needed.
+# Ubuntu CVE-2026-109518 (HIGH, apt 2.8.3): no Temurin build carries apt 2.8.4ubuntu0.1 yet.
+# Remove this layer once a verified Temurin digest includes that version.
+RUN apt-get update && apt-get install -y --no-install-recommends --only-upgrade \
+        apt=2.8.4ubuntu0.1 libapt-pkg6.0t64=2.8.4ubuntu0.1 \
+    && rm -rf /var/lib/apt/lists/*
 RUN java -version
 # Pages and attachments are rendered in the browser; the server does not render fonts.
 # Remove the unused native XML parser together with its fontconfig consumers.
@@ -10,7 +15,7 @@ RUN apt-get purge -y fontconfig libfontconfig1 libexpat1
 RUN groupadd --gid 10001 knowledgeroot && useradd --uid 10001 --gid 10001 --no-create-home knowledgeroot \
     && mkdir -p /app /var/lib/knowledgeroot/files && chown -R 10001:10001 /app /var/lib/knowledgeroot
 WORKDIR /app
-ARG BUILD_VERSION=1.1.0-rc.1
+ARG BUILD_VERSION=1.1.0
 ARG BUILD_REVISION=unknown
 LABEL org.opencontainers.image.version=$BUILD_VERSION org.opencontainers.image.revision=$BUILD_REVISION
 COPY --chown=10001:10001 target/*.jar /app/app.jar
