@@ -1415,6 +1415,27 @@ R54.
   danach); nach dem 1.1.0-Tag neu aufnehmen. Die Ankündigung selbst soll mit
   dem stabilen 1.1.0 erfolgen.
 
+### R60 – apt-Korrektur CVE-2026-109518 in beiden Images
+
+- [x] Lokal umgesetzt und geprüft am 5. November 2026.
+- **Anlass:** Der gehostete Scan für den Release-PR #303 blockierte mit
+  `CVE-2026-109518` (HIGH, `apt` und `libapt-pkg6.0t64 2.8.3`), Ubuntu-Fix
+  `2.8.4ubuntu0.1` vom 4. November. Weder der gepinnte Temurin-Digest noch
+  der neuere Tag `25.0.5_8-jre-noble` noch der MariaDB-Digest enthalten ihn.
+- **Umgesetzt:** Beide Dockerfiles erhalten wieder eine gezielte Schicht
+  `apt-get install --only-upgrade` mit den beiden auf `2.8.4ubuntu0.1`
+  gepinnten Paketen, wie vor R38; Digests und Laufzeitversionen bleiben.
+  Beschreibung in [image-security.md](image-security.md#apt-korrektur-in-beiden-images-r60).
+  Die Änderung wird auf `release/1.1` übernommen, damit 1.1.0 freigegeben
+  werden kann.
+- **Geprüft:** Beide Images lokal gebaut, `dpkg-query` zeigt
+  `apt 2.8.4ubuntu0.1`; `scripts/audit-image.mjs` App **105 Pakete, keine
+  blockierenden Funde**, Datenbank **149 Pakete, keine blockierenden Funde**.
+  Gehosteter Nachweis mit den PR-Läufen.
+- **Grenzen:** Die Schicht ist ein Übergang; bei der nächsten Aktualisierung
+  der Basisimages ist zu prüfen, ob die Hersteller-Builds `apt 2.8.4ubuntu0.1`
+  enthalten, und sie dann zu entfernen.
+
 ## Nachweise der Bestandsaufnahme
 
 - `mvn -B test` bei der ursprünglichen Bestandsaufnahme: Anwendung kompiliert unter Java 25; Testkompilierung scheitert am Konstruktoraufruf in `PageControllerTest`. Dieser Befund ist durch R01 behoben; das aktuelle Prüfergebnis steht dort.
