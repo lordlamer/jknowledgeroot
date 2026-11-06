@@ -1,10 +1,29 @@
 # Release und Freigabe
 
-Seit dem 1. November 2026 trägt `master` die Version **1.1.0-rc.1**, den
-ersten Kandidaten der 1.1-Linie; `latest` entsteht daraus. Die 1.0-Linie liegt
-auf dem Wartungsbranch `release/1.0` mit der Version `1.0.0`; spätere
-1.0.x-Korrekturen werden auf `master` entwickelt und dorthin übernommen. Tags
-mit SNAPSHOT-Version lehnt die Artefaktprüfung ab.
+Die Version **1.1.0** ist seit dem 6. November 2026 als Tag `v1.1.0` auf
+Commit `7b02c9d8fdc6600b4c926768fffb4df5687720ca` (`release/1.1`) veröffentlicht: Der
+[Tag-Lauf 42288713995](https://github.com/lordlamer/jknowledgeroot/actions/runs/42288713995)
+bestand `verify`, und der Publish-Job hat beide Images auf Docker Hub gelegt
+(`lordlamer/knowledgeroot:v1.1.0`, Digest
+`sha256:3f973bb042cfb434ee43fa7f62c8efccd69feb1e464b352509f3f27b5fac9082`;
+`lordlamer/knowledgeroot:database-v1.1.0`, Digest
+`sha256:7643e978c753c2d8e1abea2bd32d586a6a323cb10c3d25328613bf3bea1cd9de`) und das
+[GitHub-Release v1.1.0](https://github.com/lordlamer/jknowledgeroot/releases/tag/v1.1.0)
+mit `knowledgeroot-1.1.0.jar` (SHA-256
+`bb4d5467edddb91d1f46a5772e6c7d76794e8dff0266dad1daf5fb89f92182b6`), `SHA256SUMS`,
+Manifest und Auditberichten angelegt. Gegenüber `1.1.0-rc.1` enthält sie die
+Sprachen der Oberfläche (R57), Spring Boot 4.1.2 mit den gegen den echten
+Server geprüften Sitzungstests (#301), die CI-Korrektur der Release-Assets
+(R56), den neuen GitHub-Auftritt (R58) und die apt-Korrektur für
+`CVE-2026-109518` in beiden Images (R60). Das ist die stabile Version der
+1.1-Linie; die Abnahme auf einem konkreten Zielsystem bleibt Sache des
+Betreibers ([operational-acceptance.md](operational-acceptance.md)). Spätere
+1.1.x-Korrekturen entstehen auf `master` und werden auf `release/1.1`
+übernommen; `master` selbst trägt seit dem 6. November 2026 die nächste Linie
+als `1.2.0-SNAPSHOT`, `latest` entsteht daraus. Die 1.0-Linie liegt auf
+`release/1.0` mit der Version `1.0.0`. Tags mit SNAPSHOT-Version lehnt die
+Artefaktprüfung ab; ein Kandidat oder Release der 1.2-Linie bekommt vorher
+eine eigene Version in POM und Dockerfiles.
 
 Die Version **1.0.0** ist seit dem 1. November 2026 als Tag `v1.0.0` auf
 Commit `0329927c46bc21c4c9eae22ce1dc21f7a721c863` (`release/1.0`) veröffentlicht: Der
@@ -37,9 +56,9 @@ Faktor (R49), Spaces (R51), den MCP-Server mit OAuth 2.1 und vollständigem
 Werkzeugsatz (R52, R54), das Graphit-Theme (R53) und die Client-API der
 mobilen App (R44). Für ein Upgrade von 1.0 muss vorher `KR_MASTER_KEY` gesetzt
 sein ([authentication.md](authentication.md#zweiter-faktor-totp)); die
-Changesets `1.0.15` bis `1.0.18` laufen beim Start. Ein Kandidat ist kein
-endgültiges `v1.1.0`; das entsteht später auf einem Wartungsbranch
-`release/1.1`.
+Changesets `1.0.15` bis `1.0.18` laufen beim Start (in 1.1.0 zusätzlich
+`1.0.19-user-language` aus R57). Der Kandidat ist durch `1.1.0` auf
+`release/1.1` abgelöst.
 
 Ein erster Versuch mit denselben Tag-Namen scheiterte am 1. November 2026 im
 Schritt „Assemble release assets": Die Unit-Tests von

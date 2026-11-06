@@ -1415,6 +1415,36 @@ R54.
   danach); nach dem 1.1.0-Tag neu aufnehmen. Die Ankündigung selbst soll mit
   dem stabilen 1.1.0 erfolgen.
 
+### R59 – Version 1.1.0 auf release/1.1 freigeben
+
+- [x] Veröffentlicht am 6. November 2026: Tag `v1.1.0` auf dem Merge-Commit
+  `7b02c9d` von PR #303, Tag-Lauf 42288713995 mit `verify` und Publish
+  bestanden; Digests und JAR-Prüfsumme in [release.md](release.md).
+- **Ziel:** Die 1.1-Linie mit Spaces, zweitem Faktor, MCP-Server, Client-API,
+  Graphit-Theme und Oberflächensprachen als stabile Version abschließen, damit
+  die Ankündigung ([promotion.md](promotion.md)) auf ein Release statt auf einen
+  Kandidaten verweist.
+- **Umgesetzt:** Wartungsbranch `release/1.1` von `master` (`388e2a7`)
+  abgezweigt, darauf POM und beide Dockerfiles auf `1.1.0`; README
+  (Versionstabelle, Schnellstart auf `v1.1.0`), [release.md](release.md) und
+  das Abnahmeprotokoll beschreiben die stabile Version. Gegenüber `1.1.0-rc.1`
+  enthält der Branch R56, R57, R58 und Spring Boot 4.1.2 (#301). Vorher wurde
+  PR #296 (Dependabot, Spring Boot 4.1.2) als durch #301 überholt geschlossen;
+  die Dependabot-PRs #295 (zxing 3.5.4), #297 (Playwright 1.64.0), #298
+  (htmx-spring-boot 6.0.1) und #299 (htmx.org 4.0.0) bleiben offen und sind
+  nicht Teil von 1.1.0, die beiden Major-Sprünge brauchen einen eigenen
+  Browsertest in der nächsten Linie.
+- **Geprüft:** `./mvnw verify` lokal auf `release/1.1.0`; PR-Lauf der CI
+  (erst nach R60 grün, der erste Lauf blockierte im Container-Audit); Tag-Lauf
+  mit `verify` und Publish.
+- **Nachgezogen auf `master`:** POM und beide Dockerfiles auf
+  `1.2.0-SNAPSHOT`, README, release.md und Abnahmeprotokoll wie auf
+  `release/1.1`; die Screenshots der README neu aus den veröffentlichten
+  1.1.0-Images aufgenommen, jetzt mit Editor und Einstellungsseite, und
+  `shoot.mjs` legt den zweiten Space selbst an.
+- **Grenzen:** Das Abnahmeprotokoll für ein Zielsystem bleibt offen. Die
+  Dependabot-PRs #295, #297, #298 und #299 warten auf die 1.2-Linie.
+
 ### R60 – apt-Korrektur CVE-2026-109518 in beiden Images
 
 - [x] Lokal umgesetzt und geprüft am 5. November 2026.

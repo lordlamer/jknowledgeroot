@@ -11,6 +11,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends --only-upgrade 
         apt=2.8.4ubuntu0.1 libapt-pkg6.0t64=2.8.4ubuntu0.1 \
     && rm -rf /var/lib/apt/lists/*
 RUN apt-get purge -y gpg libsqlite3-0
-ARG BUILD_VERSION=1.1.0-rc.1
+ARG BUILD_VERSION=1.2.0-SNAPSHOT
 ARG BUILD_REVISION=unknown
 LABEL org.opencontainers.image.version=$BUILD_VERSION org.opencontainers.image.revision=$BUILD_REVISION
