@@ -1417,8 +1417,9 @@ R54.
 
 ### R59 – Version 1.1.0 auf release/1.1 freigeben
 
-- [x] Vorbereitet am 5. November 2026; der Tag `v1.1.0` wird nach dem Merge
-  vom Eigentümer gesetzt und veröffentlicht die Artefakte.
+- [x] Veröffentlicht am 6. November 2026: Tag `v1.1.0` auf dem Merge-Commit
+  `7b02c9d` von PR #303, Tag-Lauf 42288713995 mit `verify` und Publish
+  bestanden; Digests und JAR-Prüfsumme in [release.md](release.md).
 - **Ziel:** Die 1.1-Linie mit Spaces, zweitem Faktor, MCP-Server, Client-API,
   Graphit-Theme und Oberflächensprachen als stabile Version abschließen, damit
   die Ankündigung ([promotion.md](promotion.md)) auf ein Release statt auf einen
@@ -1433,11 +1434,12 @@ R54.
   (htmx-spring-boot 6.0.1) und #299 (htmx.org 4.0.0) bleiben offen und sind
   nicht Teil von 1.1.0, die beiden Major-Sprünge brauchen einen eigenen
   Browsertest in der nächsten Linie.
-- **Geprüft:** `./mvnw verify` lokal auf `release/1.1.0`; PR-Lauf der CI.
+- **Geprüft:** `./mvnw verify` lokal auf `release/1.1.0`; PR-Lauf der CI
+  (erst nach R60 grün, der erste Lauf blockierte im Container-Audit); Tag-Lauf
+  mit `verify` und Publish.
 - **Grenzen:** Das Abnahmeprotokoll für ein Zielsystem bleibt offen.
-  `master` trägt noch die Version `1.1.0-rc.1` und wird in einem eigenen
-  Schritt auf die nächste Linie gehoben. Die Screenshots der README stammen
-  vom rc.1-Image und sind nach dem Tag neu aufzunehmen (Editor-Toolbar).
+  `master` wird in einem eigenen Schritt auf die nächste Linie gehoben; die
+  Screenshots der README werden dort mit dem 1.1.0-Image neu aufgenommen.
 
 ### R60 – apt-Korrektur CVE-2026-109518 in beiden Images
 

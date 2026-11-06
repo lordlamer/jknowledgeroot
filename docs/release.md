@@ -1,17 +1,27 @@
 # Release und Freigabe
 
-Die Version **1.1.0** ist auf dem Wartungsbranch `release/1.1` vorbereitet: POM
-und beide Dockerfiles tragen `1.1.0`; gegenüber `1.1.0-rc.1` enthält sie die
+Die Version **1.1.0** ist seit dem 6. November 2026 als Tag `v1.1.0` auf
+Commit `7b02c9d8fdc6600b4c926768fffb4df5687720ca` (`release/1.1`) veröffentlicht: Der
+[Tag-Lauf 42288713995](https://github.com/lordlamer/jknowledgeroot/actions/runs/42288713995)
+bestand `verify`, und der Publish-Job hat beide Images auf Docker Hub gelegt
+(`lordlamer/knowledgeroot:v1.1.0`, Digest
+`sha256:3f973bb042cfb434ee43fa7f62c8efccd69feb1e464b352509f3f27b5fac9082`;
+`lordlamer/knowledgeroot:database-v1.1.0`, Digest
+`sha256:7643e978c753c2d8e1abea2bd32d586a6a323cb10c3d25328613bf3bea1cd9de`) und das
+[GitHub-Release v1.1.0](https://github.com/lordlamer/jknowledgeroot/releases/tag/v1.1.0)
+mit `knowledgeroot-1.1.0.jar` (SHA-256
+`bb4d5467edddb91d1f46a5772e6c7d76794e8dff0266dad1daf5fb89f92182b6`), `SHA256SUMS`,
+Manifest und Auditberichten angelegt. Gegenüber `1.1.0-rc.1` enthält sie die
 Sprachen der Oberfläche (R57), Spring Boot 4.1.2 mit den gegen den echten
 Server geprüften Sitzungstests (#301), die CI-Korrektur der Release-Assets
-(R56) und den neuen GitHub-Auftritt (R58). Der Tag `v1.1.0` auf dem
-Merge-Commit dieses Branches veröffentlicht `lordlamer/knowledgeroot:v1.1.0`
-und `database-v1.1.0` sowie das GitHub-Release mit `knowledgeroot-1.1.0.jar`
-und `SHA256SUMS`; Lauf-ID, Registry-Digests und JAR-Prüfsumme werden nach der
-Veröffentlichung hier nachgetragen. Spätere 1.1.x-Korrekturen entstehen auf
-`master` und werden hierher übernommen; `master` selbst trägt die nächste
-Linie, `latest` entsteht daraus. Die 1.0-Linie liegt auf `release/1.0` mit der
-Version `1.0.0`. Tags mit SNAPSHOT-Version lehnt die Artefaktprüfung ab.
+(R56), den neuen GitHub-Auftritt (R58) und die apt-Korrektur für
+`CVE-2026-109518` in beiden Images (R60). Das ist die stabile Version der
+1.1-Linie; die Abnahme auf einem konkreten Zielsystem bleibt Sache des
+Betreibers ([operational-acceptance.md](operational-acceptance.md)). Spätere
+1.1.x-Korrekturen entstehen auf `master` und werden auf `release/1.1`
+übernommen; `master` selbst trägt die nächste Linie, `latest` entsteht daraus.
+Die 1.0-Linie liegt auf `release/1.0` mit der Version `1.0.0`. Tags mit
+SNAPSHOT-Version lehnt die Artefaktprüfung ab.
 
 Die Version **1.0.0** ist seit dem 1. November 2026 als Tag `v1.0.0` auf
 Commit `0329927c46bc21c4c9eae22ce1dc21f7a721c863` (`release/1.0`) veröffentlicht: Der
