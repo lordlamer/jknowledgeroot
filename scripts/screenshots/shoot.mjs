@@ -33,9 +33,23 @@ await page.fill('input[name=password]', password);
 await page.click('button[type=submit]');
 await page.waitForURL(url => !url.toString().includes('/login'));
 
-// Page view with labels, stars and a comment (seed.sh writes the ids to ids.txt; 3 is the review page).
+// A second space for the switcher; the client API cannot create spaces, so use the form.
+const spaces = await (await page.request.get(base + '/api/v1/spaces')).json();
+if (!spaces.some(space => space.key === 'OPS')) {
+  await page.goto(base + '/spaces/new');
+  await page.fill('#space-key', 'OPS');
+  await page.fill('#space-name', 'Operations');
+  await page.fill('#space-description', 'Infrastructure, on-call and vendor contacts. Visible to the operations group only.');
+  await page.click('button[type=submit]:has-text("Create space")');
+  await page.waitForURL(url => url.toString().includes('/spaces/'));
+}
+
+// Page view with labels, stars and a comment (seed.sh prints the ids; 3 is the review page).
 await page.goto(base + '/ui/page/3');
 await shot('page');
+
+await page.goto(base + '/ui/page/1/edit');
+await shot('editor');
 
 await page.goto(base + '/ui/page/1');
 await page.fill('.kr-search-input', 'backup');

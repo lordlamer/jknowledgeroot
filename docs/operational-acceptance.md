@@ -2,8 +2,8 @@
 
 Dieses Protokoll ist für die konkrete Staging-/Produktionsumgebung auszufüllen.
 Lokale Tests ersetzen die Abnahme auf dem Zielsystem nicht. Die aktuelle stabile
-Version ist `1.0.0` auf `release/1.0`, der aktuelle Kandidat der nächsten Linie
-`1.1.0-rc.1` auf `master`; eine Produktionsfreigabe auf einem Zielsystem wurde
+Version ist `1.1.0` auf `release/1.1` (Tag `v1.1.0`); die 1.0-Linie bleibt als
+`1.0.0` auf `release/1.0`. Eine Produktionsfreigabe auf einem Zielsystem wurde
 noch nicht protokolliert.
 
 ## Umgebung und Verantwortliche

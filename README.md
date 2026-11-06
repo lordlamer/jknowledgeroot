@@ -14,8 +14,9 @@ Website: [knowledgeroot.org](https://knowledgeroot.org) · Images: [Docker Hub](
 
 | | |
 |---|---|
-| ![A page with labels, a star and comments](docs/screenshots/page.png) | ![Search across spaces with highlighted hits](docs/screenshots/search.png) |
-| ![The space switcher](docs/screenshots/spaces.png) | ![The graphite dark theme](docs/screenshots/dark-theme.png) |
+| ![A page with labels, a star and comments](docs/screenshots/page.png) | ![The rich-text editor](docs/screenshots/editor.png) |
+| ![Search across spaces with highlighted hits](docs/screenshots/search.png) | ![The space switcher](docs/screenshots/spaces.png) |
+| ![The graphite dark theme](docs/screenshots/dark-theme.png) | ![Two-factor policy and MCP server settings](docs/screenshots/admin-settings.png) |
 
 ## Features
 
@@ -55,8 +56,9 @@ Website: [knowledgeroot.org](https://knowledgeroot.org) · Images: [Docker Hub](
 
 | Line | Version | Where | Contains |
 |---|---|---|---|
-| Stable | **1.0.0** | branch `release/1.0`, tag `v1.0.0` | Page tree, editor, history, page permissions, attachments, search, throttled sign-in with password recovery |
-| Next | **1.1.0-rc.1** (`latest`) | branch `master`, tag `v1.1.0-rc.1` | Everything above plus spaces, two-factor authentication, the MCP server, the client API, the graphite theme and interface languages |
+| Stable | **1.1.0** | branch `release/1.1`, tag `v1.1.0` | Spaces, page tree, editor, history, page permissions, attachments, search, two-factor authentication, the MCP server, the client API, the graphite theme and six interface languages |
+| Previous | **1.0.0** | branch `release/1.0`, tag `v1.0.0` | Without spaces, two-factor authentication, MCP server and client API; upgrading to 1.1 requires `KR_MASTER_KEY` |
+| Development | `1.2.0-SNAPSHOT` (`latest`) | branch `master` | The next line; not for production |
 
 Release tags publish both Docker images and a GitHub release with the verified JAR
 and `SHA256SUMS`. See the [release guide](docs/release.md) for artefact identity and
@@ -78,8 +80,8 @@ cp jknowledgeroot/deploy/production.env.example ~/knowledgeroot.env
 
 Edit `~/knowledgeroot.env` (keep it outside the repository and readable by you only):
 
-- `KR_APP_IMAGE=lordlamer/knowledgeroot:v1.1.0-rc.1` and
-  `KR_DB_IMAGE=lordlamer/knowledgeroot:database-v1.1.0-rc.1` (or the digests of a release)
+- `KR_APP_IMAGE=lordlamer/knowledgeroot:v1.1.0` and
+  `KR_DB_IMAGE=lordlamer/knowledgeroot:database-v1.1.0` (or the digests of a release)
 - three random database passwords and a random `KR_MASTER_KEY` of at least 32 characters
 - `KR_BOOTSTRAP_LOGIN` and `KR_BOOTSTRAP_PASSWORD` (16 to 128 characters) for the first
   administrator; there is no default account
