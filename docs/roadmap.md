@@ -1,6 +1,6 @@
 # Roadmap zur Produktionsreife
 
-Stand: 25. Oktober 2026. Grundlage ist die Code- und Build-Prüfung vom 12. September 2026.
+Stand: 7. November 2026. Grundlage ist die Code- und Build-Prüfung vom 12. September 2026.
 
 Ziel ist eine sicher betreibbare, reproduzierbar gebaute Version mit getesteten
 Zugriffsrechten, Migrationen und Wiederherstellung. Der aktuelle Stand ist noch
@@ -1465,6 +1465,180 @@ R54.
 - **Grenzen:** Die Schicht ist ein Übergang; bei der nächsten Aktualisierung
   der Basisimages ist zu prüfen, ob die Hersteller-Builds `apt 2.8.4ubuntu0.1`
   enthalten, und sie dann zu entfernen.
+
+## 10. Version 1.2
+
+Stand der Planung: 7. November 2026. Version 1.1.0 ist seit dem 6. November
+2026 freigegeben, `master` steht auf `1.2.0-SNAPSHOT`. Die Linie 1.2 bringt
+das Bearbeiten in Arbeitskopien mit automatischem Speichern und gemeinsamem
+Bearbeiten, die Anmeldung über einen externen Identitätsanbieter, Vorlagen,
+Anhänge über API und MCP sowie Benachrichtigungen. Export/Import und ein
+Volltextindex sind eingeplant, werden aber erst nach R66 entschieden und
+können in eine Linie 1.3 wandern. Die Reihenfolge folgt den Abhängigkeiten:
+R62 ändert das Datenmodell, auf dem R64, R65 und R66 aufsetzen.
+
+Ausgangslage aus den Grenzen der 1.1-Einträge: MCP und Client-API laden
+keine Anhänge hoch, MCP hat kein Rechte-Tool (R52/R54); die Client-API
+bietet die Sprache nicht an und `user.timezone` bleibt unausgewertet (R57);
+Versionen und gelöschte Seiten werden nicht ausgedünnt, Spaces lassen sich
+nicht löschen, die Space-Übersicht zeigt höchstens 100 Hauptseiten (R51);
+die Mailwarteschlange von R36 ist nicht dauerhaft; die Suche liest ohne
+Index.
+
+### R61 – Basisimages: Aktualisierung und Audit außerhalb der Feature-PRs
+
+- [ ] Zurückgestellt; wird nach R62 oder beim nächsten blockierenden
+  Basisimage-Befund angegangen.
+- **Anlass:** R60 musste einen Befund im Ubuntu-Paket `apt` selbst
+  korrigieren, obwohl er den Hersteller der Basisimages betrifft. Der
+  Imagescan blockiert jeden PR, sobald ein HIGH-Befund ohne Hersteller-Build
+  erscheint, auch wenn der PR nichts an den Images ändert.
+- **Ziel:** Dependabot beobachtet die Docker-Basisimages (`docker`-Ökosystem
+  für `Dockerfile` und `deploy/Dockerfile.database`) und öffnet eigene PRs
+  für neue Digests. Ein wöchentlicher geplanter Audit-Lauf scannt die
+  veröffentlichten Images `latest` und das aktuelle Stable, damit neue
+  Befunde als Issue sichtbar werden statt erst im nächsten Feature-PR.
+  `apt` und `libapt-pkg` werden aus den Laufzeit-Images entfernt, da zur
+  Laufzeit keine Pakete installiert werden; damit entfällt die Klasse der
+  R60-Befunde. Die Schicht aus R60 entfällt, sobald die Hersteller-Builds
+  die Korrektur enthalten.
+- **Abnahme:** Dependabot-PR für ein Basisimage erscheint; geplanter Lauf
+  erzeugt bei einem künstlich gesetzten Befund ein Issue; beide Images ohne
+  `apt` bestehen Start, Neustart und Audit; Beschreibung in
+  [image-security.md](image-security.md).
+
+### R62 – Arbeitskopie, Entwürfe und automatisches Speichern
+
+- [ ] Geplant.
+- **Ziel:** Jede Seite hat neben der veröffentlichten Version eine
+  Arbeitskopie. Der Editor speichert automatisch in die Arbeitskopie; Leser
+  sehen weiterhin den veröffentlichten Stand. „Veröffentlichen" übernimmt
+  die Arbeitskopie als neue Version in die Historie; „Verwerfen" setzt sie
+  auf die veröffentlichte Version zurück. Eine neue Seite kann als Entwurf
+  angelegt werden: eine Seite ohne veröffentlichte Version, sichtbar nur für
+  Bearbeiter mit Schreibrecht, in Navigation und Suche als Entwurf
+  gekennzeichnet.
+- **Umsetzung:** Migration mit Tabelle für die Arbeitskopie (Seite, Inhalt,
+  Titel, Bearbeiter, Zeitpunkt, Basisrevision) und Entwurfsstatus an der
+  Seite. Autosave per htmx im Abstand weniger Sekunden nach der letzten
+  Änderung, mit sichtbarem Status im Editor („Gespeichert um …"). Die
+  bisherige Revisionsprüfung (409/428) gilt nur noch beim Veröffentlichen
+  gegen die veröffentlichte Version; Historie wächst nur je
+  Veröffentlichung. Client-API: Arbeitskopie lesen und schreiben,
+  Veröffentlichen, Verwerfen, Entwurf anlegen; die mobile App
+  (knowledgeroot-app) wird nachgezogen, damit sie nicht an der Arbeitskopie
+  vorbei speichert. MCP: `update_page` schreibt in die Arbeitskopie und
+  veröffentlicht nur mit ausdrücklichem Parameter.
+- **Abnahme:** Integrationstests für Autosave, Veröffentlichen, Verwerfen,
+  Entwurfssichtbarkeit je Rolle und Space, Rechte beim Veröffentlichen,
+  Migration bestehender Seiten ohne Arbeitskopie; Chromium prüft Autosave
+  und Statusanzeige; Beschreibung in [editor.md](editor.md) und
+  [page-history.md](page-history.md); Upgrade-/Rollbackkette mit der neuen
+  Migration.
+- **Offene Entscheidungen:** Ob Bearbeiter mit Schreibrecht die
+  Arbeitskopie anderer sehen (Vorschlag: ja, es gibt genau eine je Seite);
+  ob Entwürfe in `/api/v1/tree` für Leser ohne Schreibrecht erscheinen
+  (Vorschlag: nein).
+
+### R63 – Gemeinsames Bearbeiten in Echtzeit
+
+- [ ] Geplant; setzt R62 voraus.
+- **Ziel:** Mehrere Benutzer bearbeiten dieselbe Seite gleichzeitig und
+  sehen Cursor, Auswahl und Namen der anderen. Alle arbeiten auf derselben
+  Arbeitskopie aus R62.
+- **Umsetzung:** Tiptap-Erweiterungen Collaboration und Collaboration-Caret
+  auf Basis von Yjs im bestehenden Frontend-Bundle. Kein zusätzlicher
+  Node-Dienst: ein Spring-WebSocket-Endpunkt je Seite reicht Yjs-Updates und
+  Awareness-Nachrichten zwischen den Browsern weiter, hängt die Updates in
+  der Datenbank an die Arbeitskopie an und liefert beim Beitritt den
+  gespeicherten Stand aus; Clients schicken periodisch einen verdichteten
+  Stand, der das Protokoll ersetzt. Die Sitzung und das Seitenrecht gelten
+  für den Socket; bei Rechteentzug oder Archivierung wird die Verbindung
+  getrennt. Ohne WebSocket (Proxy ohne Upgrade) fällt der Editor auf
+  Autosave ohne Live-Anzeige zurück. Proxy-Konfiguration für WebSocket in
+  [production.md](production.md).
+- **Abnahme:** Chromium-Test mit zwei Sitzungen: gleichzeitiges Tippen,
+  Cursor des anderen sichtbar, Veröffentlichen aus einer Sitzung, Beitritt
+  nach Verbindungsabbruch; Lasttest mit mehreren Sockets je Seite;
+  Sanitizer-Kette beim Veröffentlichen unverändert; OSV-Scan des
+  erweiterten Frontend-Lockfiles.
+- **Grenzen (geplant):** Gemeinsames Bearbeiten nur im Browser; die mobile
+  App schreibt weiter über die Arbeitskopie der Client-API.
+
+### R64 – Anmeldung über OpenID Connect
+
+- [ ] Geplant.
+- **Ziel:** Benutzer melden sich wahlweise über einen externen
+  Identitätsanbieter an (OIDC: Keycloak, Authentik, Entra ID, Google).
+  Konten werden beim ersten Login angelegt oder über die Mailadresse mit
+  bestehenden Konten verknüpft; Gruppen können aus Claims übernommen
+  werden.
+- **Umsetzung:** Spring Security OAuth2-Client mit Konfiguration über
+  Umgebungsvariablen (Issuer, Client-ID/-Secret, Scopes, Claim für Gruppen);
+  Login-Seite mit Knopf je Anbieter neben dem lokalen Formular; lokales
+  Passwort und TOTP bleiben für lokale Konten; Administratoren können die
+  lokale Anmeldung für OIDC-Konten sperren. Der MCP-OAuth-Server aus R52
+  bleibt getrennt, nutzt aber dieselbe Anmeldung. Beschreibung in
+  [authentication.md](authentication.md).
+- **Abnahme:** Integrationstest gegen einen eingebetteten OIDC-Anbieter;
+  Erstanmeldung, Verknüpfung, Gruppenübernahme, gesperrte lokale Anmeldung;
+  Chromium-Ablauf; Betriebsanleitung mit Keycloak-Beispiel.
+
+### R65 – Seitenvorlagen und Anhänge über API und MCP
+
+- [ ] Geplant; setzt R62 voraus.
+- **Ziel:** Berechtigte legen je Space Vorlagen an (Titel, Inhalt, Labels);
+  „Neue Seite" bietet sie an. Client-API und MCP können Anhänge hochladen
+  und auflisten; MCP erhält ein Prompt je Vorlage.
+- **Umsetzung:** Vorlagen als Seiten mit Vorlagenstatus im Space;
+  `POST /api/v1/pages/{id}/files` mit Multipart und denselben
+  Größen-/Typprüfungen wie die Oberfläche; MCP-Tool `upload_attachment`
+  und `list_templates`. Beschreibung in [editor.md](editor.md),
+  [client-api.md](client-api.md) und [mcp.md](mcp.md).
+- **Abnahme:** Integrationstests für Vorlagenverwaltung, Anlegen aus
+  Vorlage, Upload über API und MCP mit Rechte- und Größenprüfung.
+
+### R66 – Seiten beobachten und Benachrichtigungen
+
+- [ ] Geplant; setzt R62 voraus.
+- **Ziel:** Benutzer beobachten Seiten oder Spaces und erhalten bei
+  Veröffentlichung, Kommentar oder Verschieben eine Mail; Erwähnungen in
+  Kommentaren benachrichtigen die genannte Person. Ein Verlauf in der
+  Oberfläche zeigt die eigenen Benachrichtigungen.
+- **Umsetzung:** Dauerhafte Mailwarteschlange in der Datenbank mit
+  Wiederholung und Fehleranzeige im Admin-Bereich (ersetzt die flüchtige
+  Warteschlange aus R36); Beobachtungen je Seite/Space; Zusammenfassung
+  mehrerer Änderungen in einer Mail je Intervall; Profil-Einstellung für
+  Häufigkeit und Abmeldung. Beschreibung in [monitoring.md](monitoring.md)
+  und [product-functions.md](product-functions.md).
+- **Abnahme:** Integrationstests für Warteschlange (Wiederholung, Fehler,
+  Reihenfolge), Beobachtungen je Rolle und Rechteentzug, Erwähnungen;
+  Mailinhalte in den sechs Sprachen.
+
+### R67 – Export und Import
+
+- [ ] Geplant; Entscheidung nach R66, ob 1.2 oder 1.3.
+- **Ziel:** Einzelne Seiten und ganze Spaces lassen sich als HTML-Archiv
+  mit Anhängen und als Markdown exportieren, einzelne Seiten als PDF; ein
+  HTML-/Markdown-Import legt Seitenbäume mit Anhängen an.
+- **Umsetzung:** Export als ZIP mit stabiler Struktur, der auch als
+  Sicherung der Inhalte dient; PDF serverseitig ohne Browser-Abhängigkeit
+  (Prüfung der nativen Abhängigkeiten im Image, siehe R17); Import über
+  die Oberfläche und die Client-API mit Rechteprüfung am Zielort.
+- **Abnahme:** Export/Import-Roundtrip mit Rechten, Labels und Anhängen;
+  Imagescan nach Aufnahme neuer nativer Pakete.
+
+### R68 – Volltextindex
+
+- [ ] Geplant; Entscheidung nach R66, ob 1.2 oder 1.3.
+- **Ziel:** Suche über einen Index statt Teilzeichenfolgensuche, mit
+  Gewichtung von Titel, Labels und Inhalt und mit Treffern in Anhängen.
+- **Umsetzung:** Bevorzugt MariaDB FULLTEXT auf einer Indextabelle, die bei
+  Veröffentlichung aktualisiert wird; Alternative eingebettetes Lucene,
+  falls die Qualität nicht reicht. Die Lastmessung aus R27 wird wiederholt.
+- **Abnahme:** Trefferqualität gegen die heutige Suche auf dem
+  Lastdatensatz; Rechteprüfung unverändert; Messwerte in
+  [load-testing.md](load-testing.md).
 
 ## Nachweise der Bestandsaufnahme
 
