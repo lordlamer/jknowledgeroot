@@ -1,9 +1,15 @@
-import { Editor, Extension } from '@tiptap/core';
+import { Editor, Extension, getSchema } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { TableKit } from '@tiptap/extension-table';
 import Image from '@tiptap/extension-image';
 import { TextStyleKit } from '@tiptap/extension-text-style';
 import TextAlign from '@tiptap/extension-text-align';
+import Collaboration from '@tiptap/extension-collaboration';
+import CollaborationCaret from '@tiptap/extension-collaboration-caret';
+import { prosemirrorToYXmlFragment, ySyncPluginKey } from '@tiptap/y-tiptap';
+import { DOMParser as ProseMirrorDOMParser } from '@tiptap/pm/model';
+import * as Y from 'yjs';
+import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate, removeAwarenessStates } from 'y-protocols/awareness';
 import DOMPurify from 'dompurify';
 import './editor.css';
 
@@ -38,10 +44,116 @@ const ExistingBlockStyles = Extension.create({
   }
 });
 
+// Live collaboration (R63). One WebSocket per open editor relays Yjs updates and awareness
+// (carets, names) between the browsers of a page; the server stores the updates and replays them
+// to whoever joins. Frame layout: first byte = type, see CollaborationHandler on the server.
+const FRAME = { update: 0, awareness: 1, snapshot: 2, ready: 3, peerJoined: 4, snapshotRequested: 5 };
+const CARET_COLORS = ['#2563eb', '#db2777', '#059669', '#d97706', '#7c3aed', '#dc2626', '#0891b2', '#4d7c0f'];
+const caretColor = name => CARET_COLORS[[...String(name)].reduce((sum, char) => sum + char.charCodeAt(0), 0) % CARET_COLORS.length];
+
+class LiveProvider {
+  constructor(url, doc, callbacks) {
+    this.url = url;
+    this.doc = doc;
+    this.awareness = new Awareness(doc);
+    this.callbacks = callbacks;
+    this.lastId = 0n;
+    this.attempts = 0;
+    this.ready = false;
+    this.destroyed = false;
+    this.onDocUpdate = (update, origin) => { if (origin !== this) this.send(FRAME.update, update); };
+    this.onAwareness = ({ added, updated, removed }) => {
+      if ([...added, ...updated, ...removed].includes(doc.clientID)) this.announce();
+    };
+    doc.on('update', this.onDocUpdate);
+    this.awareness.on('update', this.onAwareness);
+    this.connect();
+  }
+
+  connect() {
+    if (this.destroyed) return;
+    this.callbacks.status('connecting');
+    const socket = new WebSocket(this.url);
+    socket.binaryType = 'arraybuffer';
+    socket.onopen = () => { this.attempts = 0; };
+    socket.onmessage = event => this.receive(new Uint8Array(event.data));
+    socket.onclose = event => {
+      this.ready = false;
+      if (this.destroyed) return;
+      if (event.code === 4403) this.callbacks.status('lost');
+      else if (event.code === 4409) this.callbacks.status('cleared');
+      else if (this.attempts < 5) {
+        this.attempts += 1;
+        this.callbacks.status('connecting');
+        setTimeout(() => this.connect(), 1000 * this.attempts);
+      } else this.callbacks.status('offline');
+    };
+    socket.onerror = () => { /* onclose follows and decides */ };
+    this.socket = socket;
+  }
+
+  receive(bytes) {
+    const type = bytes[0];
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    if (type === FRAME.update) {
+      this.lastId = view.getBigUint64(1);
+      Y.applyUpdate(this.doc, bytes.subarray(9), this);
+    } else if (type === FRAME.awareness) {
+      applyAwarenessUpdate(this.awareness, bytes.subarray(1), this);
+      this.peers();
+    } else if (type === FRAME.ready) {
+      this.lastId = view.getBigUint64(1);
+      this.ready = true;
+      this.callbacks.ready(bytes[9] === 1);
+      this.announce();
+      this.callbacks.status('live');
+      this.peers();
+    } else if (type === FRAME.peerJoined) {
+      this.announce();
+    } else if (type === FRAME.snapshotRequested) {
+      const upTo = new Uint8Array(8);
+      new DataView(upTo.buffer).setBigUint64(0, this.lastId);
+      const state = Y.encodeStateAsUpdate(this.doc);
+      const payload = new Uint8Array(8 + state.length);
+      payload.set(upTo, 0);
+      payload.set(state, 8);
+      this.send(FRAME.snapshot, payload);
+    }
+  }
+
+  send(type, bytes) {
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN || (type !== FRAME.awareness && !this.ready)) return;
+    const frame = new Uint8Array(1 + bytes.length);
+    frame[0] = type;
+    frame.set(bytes, 1);
+    this.socket.send(frame);
+  }
+
+  announce() {
+    this.send(FRAME.awareness, encodeAwarenessUpdate(this.awareness, [this.doc.clientID]));
+  }
+
+  peers() {
+    this.callbacks.peers(this.awareness.getStates().size);
+  }
+
+  destroy() {
+    this.destroyed = true;
+    // Announce the removed caret first (the listener sends it), then stop listening.
+    removeAwarenessStates(this.awareness, [this.doc.clientID], 'destroy');
+    this.doc.off('update', this.onDocUpdate);
+    this.awareness.off('update', this.onAwareness);
+    if (this.socket) {
+      try { this.socket.close(1000); } catch { /* already closed */ }
+    }
+  }
+}
+
 function initialize(root) {
   const fields = root.matches?.('textarea[data-rich-editor]') ? [root] : root.querySelectorAll('textarea[data-rich-editor]');
   for (const textarea of fields) {
-    if (instances.has(textarea)) continue;
+    if (instances.has(textarea) || textarea.knowledgerootMounted) continue;
+    textarea.knowledgerootMounted = true;
     const shell = document.createElement('div');
     shell.className = 'kr-rich-editor';
     const toolbar = document.createElement('div');
@@ -51,32 +163,114 @@ function initialize(root) {
     const surface = document.createElement('div');
     shell.append(toolbar, surface);
     textarea.before(shell);
+    const fail = error => {
+      shell.remove();
+      textarea.hidden = false;
+      if (textarea.knowledgerootLive) textarea.knowledgerootLive.destroy();
+      delete textarea.knowledgerootLive;
+      console.error('Rich text editor initialization failed', error);
+    };
     try {
       const buttons = [];
       const refresh = editor => buttons.forEach(({ button, active }) => {
         if (active) button.setAttribute('aria-pressed', String(active(editor)));
       });
-      const editor = new Editor({
-        element: surface,
-        extensions: [
-          StarterKit.configure({ link: { openOnClick: false, defaultProtocol: 'https', protocols: ['http', 'https', 'mailto'] } }),
-          TableKit, Image.configure({ allowBase64: false }), TextStyleKit, ExistingBlockStyles,
-          TextAlign.configure({ types: ['heading', 'paragraph'] })
-        ],
-        content: clean(textarea.value),
-        editorProps: {
-          attributes: { 'aria-label': t('editor.content', 'Page content'), role: 'textbox', 'aria-multiline': 'true' },
-          transformPastedHTML: clean
-        },
-        onUpdate: ({ editor }) => { textarea.value = editor.getHTML(); },
-        onTransaction: ({ editor }) => refresh(editor)
-      });
+      // Live collaboration (R63): the form names the socket path and the user; without it the editor works alone.
+      const form = textarea.form;
+      const livePath = form && form.dataset.collab && typeof WebSocket === 'function' ? form.dataset.collab : null;
+      const user = form && form.dataset.collabUser ? form.dataset.collabUser : 'guest';
+      const liveStatus = form ? form.querySelector('[data-live-status]') : null;
+      let provider = null, ydoc = null, editor = null, editorLive = false;
+      const starterKit = { link: { openOnClick: false, defaultProtocol: 'https', protocols: ['http', 'https', 'mailto'] } };
+      const extensions = [
+        TableKit, Image.configure({ allowBase64: false }), TextStyleKit, ExistingBlockStyles,
+        TextAlign.configure({ types: ['heading', 'paragraph'] })
+      ];
+      // In live mode the editor appears once the document is in sync (or live editing proved unavailable),
+      // so nobody edits an empty page while updates are still on their way.
+      const buildExtensions = live => {
+        const config = { ...starterKit };
+        const list = [...extensions];
+        if (live) {
+          config.undoRedo = false; // Collaboration brings its own undo manager.
+          list.push(Collaboration.configure({ document: ydoc }));
+          list.push(CollaborationCaret.configure({ provider, user: { name: user, color: caretColor(user) } }));
+        }
+        return [StarterKit.configure(config), ...list];
+      };
+      const createEditor = live => {
+        if (editor) return editor;
+        try {
+          surface.textContent = '';
+          editor = new Editor({
+            element: surface,
+            extensions: buildExtensions(live),
+            ...(live ? {} : { content: clean(textarea.value) }),
+            editorProps: {
+              attributes: { 'aria-label': t('editor.content', 'Page content'), role: 'textbox', 'aria-multiline': 'true' },
+              transformPastedHTML: clean
+            },
+            onUpdate: ({ editor }) => { textarea.value = editor.getHTML(); },
+            onTransaction: ({ editor }) => refresh(editor)
+          });
+          editorLive = live;
+          editor.on('selectionUpdate', () => {
+            heading.value = String(editor.getAttributes('heading').level || 0);
+          });
+          textarea.knowledgerootEditor = editor;
+          instances.set(textarea, editor);
+          refresh(editor);
+          if (form && form.dataset.autosave) autosave(form, textarea, editor);
+          return editor;
+        } catch (error) {
+          fail(error);
+          return null;
+        }
+      };
+      if (livePath) {
+        ydoc = new Y.Doc();
+        const url = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + livePath;
+        let peerCount = 1;
+        const status = state => {
+          if (liveStatus) {
+            liveStatus.dataset.live = state === 'live' ? 'on' : 'off';
+            liveStatus.textContent = state === 'live'
+              ? (peerCount > 1 ? t('collab.live-with', 'Live editing with {0} others', peerCount - 1) : t('collab.live', 'Live editing on'))
+              : state === 'connecting' ? t('collab.connecting', 'Connecting live editing…')
+              : state === 'lost' ? t('collab.lost', 'You may no longer edit this page.')
+              : state === 'cleared' ? t('collab.cleared', 'The working copy was published or discarded elsewhere. Reload the editor to continue.')
+              : t('collab.offline', 'Live editing unavailable. Changes are still saved as a working copy.');
+          }
+          // Without a live session the editor still has to open, from the working copy in the form.
+          if ((state === 'offline' || state === 'lost' || state === 'cleared') && !editor) createEditor(false);
+        };
+        provider = new LiveProvider(url, ydoc, {
+          status,
+          peers: count => { peerCount = count; if (liveStatus && liveStatus.dataset.live === 'on') status('live'); },
+          ready: seed => {
+            if (editor && !editorLive) { status('offline'); return; }
+            // The first browser on an empty document seeds it from the working copy or the page. The content goes
+            // into the shared document before the editor binds to it, so the result is exactly the parsed page
+            // (no initial empty paragraph from the binding) and every other browser receives the same update.
+            if (seed && !editor) {
+              const body = new window.DOMParser().parseFromString(clean(textarea.value), 'text/html').body;
+              const parsed = ProseMirrorDOMParser.fromSchema(getSchema(buildExtensions(true))).parse(body);
+              const fragment = ydoc.getXmlFragment('default');
+              ydoc.transact(() => { fragment.delete(0, fragment.length); prosemirrorToYXmlFragment(parsed, fragment); });
+            }
+            createEditor(true);
+          }
+        });
+        textarea.knowledgerootLive = provider;
+        surface.textContent = t('collab.connecting', 'Connecting live editing…');
+        setTimeout(() => { if (!editor) { status('offline'); } }, 8000);
+      }
       const button = (label, action, active) => {
         const element = document.createElement('button');
         element.type = 'button';
         element.textContent = label;
         element.title = label;
-        element.addEventListener('click', () => { action(editor); refresh(editor); });
+        element.addEventListener('click', () => { if (editor) { action(editor); refresh(editor); } });
         toolbar.append(element);
         buttons.push({ button: element, active });
       };
@@ -84,6 +278,7 @@ function initialize(root) {
       heading.setAttribute('aria-label', t('editor.block-format', 'Paragraph format'));
       for (let level = 0; level <= 6; level++) heading.add(new Option(level ? t('editor.heading', 'Heading {0}', level) : t('editor.paragraph', 'Paragraph'), level));
       heading.addEventListener('change', () => {
+        if (!editor) return;
         const level = Number(heading.value);
         if (level) editor.chain().focus().setHeading({ level }).run();
         else editor.chain().focus().setParagraph().run();
@@ -114,18 +309,10 @@ function initialize(root) {
       button(t('editor.align-center', 'Center'), e => e.chain().focus().setTextAlign('center').run());
       button(t('editor.undo', 'Undo'), e => e.chain().focus().undo().run());
       button(t('editor.redo', 'Redo'), e => e.chain().focus().redo().run());
-      editor.on('selectionUpdate', () => {
-        heading.value = String(editor.getAttributes('heading').level || 0);
-      });
       textarea.hidden = true;
-      textarea.knowledgerootEditor = editor;
-      instances.set(textarea, editor);
-      refresh(editor);
-      if (textarea.form && textarea.form.dataset.autosave) autosave(textarea.form, textarea, editor);
+      if (!livePath) createEditor(false);
     } catch (error) {
-      shell.remove();
-      textarea.hidden = false;
-      console.error('Rich text editor initialization failed', error);
+      fail(error);
     }
   }
 }
@@ -184,7 +371,8 @@ function autosave(form, textarea, editor) {
     clearTimeout(timer);
     timer = setTimeout(save, DEBOUNCE_MS);
   };
-  editor.on('update', changed);
+  // Remote live changes arrive through the sync plugin; the browser that typed them saves them.
+  editor.on('update', ({ transaction }) => { if (!transaction.getMeta(ySyncPluginKey)) changed(); });
   form.addEventListener('input', event => { if (event.target !== textarea && event.target.form === form) changed(); });
   form.addEventListener('htmx:beforeRequest', event => {
     if (event.detail.elt !== form) return;
@@ -214,13 +402,19 @@ document.addEventListener('submit', event => {
   for (const [textarea, editor] of instances) if (textarea.form === event.target) textarea.value = clean(editor.getHTML());
 }, true);
 document.addEventListener('htmx:beforeCleanupElement', event => {
-  for (const [textarea, editor] of instances) {
-    if (event.detail.elt === textarea || event.detail.elt.contains(textarea)) {
-      if (textarea.knowledgerootAutosave) textarea.knowledgerootAutosave.flush();
-      editor.destroy();
-      instances.delete(textarea);
-      delete textarea.knowledgerootEditor;
-    }
+  const removed = event.detail.elt;
+  if (!removed || !removed.querySelectorAll) return;
+  const fields = removed.matches('textarea[data-rich-editor]') ? [removed] : removed.querySelectorAll('textarea[data-rich-editor]');
+  for (const textarea of fields) {
+    if (textarea.knowledgerootAutosave) textarea.knowledgerootAutosave.flush();
+    if (textarea.knowledgerootLive) textarea.knowledgerootLive.destroy();
+    const editor = instances.get(textarea);
+    if (editor) editor.destroy();
+    instances.delete(textarea);
+    delete textarea.knowledgerootEditor;
+    delete textarea.knowledgerootLive;
+    delete textarea.knowledgerootAutosave;
+    delete textarea.knowledgerootMounted;
   }
 });
 document.addEventListener('htmx:load', event => initialize(event.detail.elt));

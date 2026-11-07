@@ -52,6 +52,30 @@ ausstehender Stand mit `keepalive` nachgereicht. Schlägt ein Autosave fehl,
 bleiben die Eingaben im Editor und die Statuszeile meldet es. Fachliche
 Beschreibung in [product-functions.md](product-functions.md#arbeitskopie-entwürfe-und-automatisches-speichern).
 
+## Gemeinsames Bearbeiten (R63)
+
+Die Tiptap-Erweiterungen Collaboration und Collaboration-Caret binden den
+Editor an ein Yjs-Dokument; `@tiptap/y-tiptap`, `yjs` und `y-protocols`
+(alle MIT) kommen ins Bundle. `LiveProvider` in `frontend/editor.js` ist
+der eigene Transport: ein WebSocket je Editor zu `/ui/page/{id}/collab`,
+binäre Frames mit einem Typbyte (Update, Awareness, Snapshot, Ready, Peer
+joined, Snapshot requested), beschrieben in `CollaborationHandler`. Der
+Server (`spring-boot-starter-websocket`) hängt Updates an das Log der
+Arbeitskopie an und spielt es neuen Teilnehmern vor; beim Beitritt sagt
+das Ready-Frame, ob der Browser das Dokument aus dem Formular befüllen
+muss. Ab einem Megabyte Log fordert der Server den Schreiber zu einem
+Snapshot auf, der die bisherigen Updates ersetzt. Awareness (Cursor,
+Namen) wird nur weitergereicht. Die Undo-Historie von StarterKit ist im
+Live-Modus abgeschaltet, Collaboration bringt ihre eigene mit.
+
+Der Editor wird erst nach dem Ready-Frame erzeugt; bleibt die Verbindung
+aus (acht Sekunden, fünf Verbindungsversuche), entsteht er ohne
+Live-Modus aus dem Formularinhalt. Schließt der Server mit 4403 (Recht
+verloren) oder 4409 (Arbeitskopie veröffentlicht oder verworfen), zeigt die
+Statuszeile den Grund. Das automatische Speichern (R62) läuft weiter, aber
+nur für Transaktionen, die im eigenen Browser entstanden sind; fremde
+Live-Änderungen speichert der Browser, der sie getippt hat.
+
 ## Build und Aktualisierung
 
 Der Maven-Build installiert lokal unter `target/frontend` Node **24.21.0** und npm

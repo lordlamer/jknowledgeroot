@@ -248,3 +248,43 @@ dann als veraltete Arbeitskopie und lässt sich verwerfen. Gleichzeitiges
 Bearbeiten derselben Arbeitskopie führt bis R63 zur Regel „der letzte
 Autosave gewinnt". Migration `1.0.20-working-copy` ergänzt
 `page.published` und die Tabelle `page_draft`.
+
+## Gemeinsames Bearbeiten in Echtzeit
+
+Seit R63 bearbeiten mehrere Benutzer dieselbe Seite gleichzeitig und sehen
+Cursor, Markierung und Namen der anderen. Alle arbeiten auf derselben
+Arbeitskopie: Was einer tippt, erscheint bei den anderen, ohne dass jemand
+speichern muss; „Publish changes" veröffentlicht den gemeinsamen Stand.
+Die Statuszeile unter dem Hinweis zum automatischen Speichern zeigt „Live
+editing on" beziehungsweise „Live editing with n others".
+
+- **Ablauf:** Beim Öffnen des Editors verbindet sich der Browser per
+  WebSocket mit `/ui/page/{id}/collab` und erhält die bisherigen
+  Änderungen der Arbeitskopie; der erste Browser auf einer leeren
+  Arbeitskopie übernimmt den Inhalt des Formulars. Der Editor erscheint
+  erst nach dem Abgleich, damit niemand auf einer leeren Seite tippt.
+  Die Zusammenführung läuft im Browser (Yjs); der Server reicht die
+  Änderungen durch und speichert sie, ohne sie zu interpretieren.
+  Rückgängig und Wiederholen betreffen nur die eigenen Eingaben.
+- **Zugang:** Der Socket verlangt dieselbe Sitzung wie der Editor, das
+  Bearbeitungsrecht an der Seite und die eigene Herkunft der Anwendung;
+  Gäste mit Schreibrecht dürfen wie im Editor. Verliert jemand das Recht,
+  wird die Verbindung innerhalb einer halben Minute getrennt.
+- **Veröffentlichen und Verwerfen** beenden die Live-Sitzung aller
+  Beteiligten; deren Statuszeile bittet darum, den Editor neu zu laden.
+  Veröffentlichen aus einem Formular mit veralteter Revision wird weiterhin
+  mit 409 abgelehnt.
+- **Ohne WebSocket** (etwa ein Proxy ohne Upgrade) fällt der Editor nach
+  wenigen Sekunden auf das Verhalten von R62 zurück: automatisches Speichern
+  der Arbeitskopie, aber keine Live-Anzeige; die Statuszeile sagt es.
+
+Grenzen: Das gemeinsame Bearbeiten gilt für den Browser; die mobile App
+schreibt weiter über die Arbeitskopie der Client-API. Die Live-Sitzungen
+einer Seite liegen im Speicher einer Anwendungsinstanz; bei mehreren
+Instanzen hinter einem Lastverteiler müssen die Bearbeiter derselben Seite
+auf derselben Instanz landen (Sitzungsbindung), sonst sehen sie einander
+nicht. Ein Browser, der die Verbindung verliert, verbindet sich bis zu fünf
+Mal neu. Die Änderungen werden in `page_collab_update` gespeichert und
+regelmäßig durch einen Browser verdichtet; Migration
+`1.0.21-live-collaboration`. Proxy-Einstellungen in
+[production.md](production.md#live-bearbeiten-hinter-dem-proxy).

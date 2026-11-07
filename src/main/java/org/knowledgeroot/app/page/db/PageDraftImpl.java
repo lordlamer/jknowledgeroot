@@ -53,6 +53,8 @@ public class PageDraftImpl implements PageDraftDao {
     @Override
     public void delete(PageId pageId) {
         jdbcClient.sql("DELETE FROM page_draft WHERE page_id = :page").param("page", pageId.value()).update();
+        // The live-collaboration log (R63) describes the working copy and goes with it.
+        jdbcClient.sql("DELETE FROM page_collab_update WHERE page_id = :page").param("page", pageId.value()).update();
     }
 
     @Override

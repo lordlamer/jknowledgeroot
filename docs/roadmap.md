@@ -1571,28 +1571,56 @@ Index.
 
 ### R63 – Gemeinsames Bearbeiten in Echtzeit
 
-- [ ] Geplant; setzt R62 voraus.
+- [x] Lokal umgesetzt und geprüft am 7. November 2026.
 - **Ziel:** Mehrere Benutzer bearbeiten dieselbe Seite gleichzeitig und
   sehen Cursor, Auswahl und Namen der anderen. Alle arbeiten auf derselben
   Arbeitskopie aus R62.
-- **Umsetzung:** Tiptap-Erweiterungen Collaboration und Collaboration-Caret
-  auf Basis von Yjs im bestehenden Frontend-Bundle. Kein zusätzlicher
-  Node-Dienst: ein Spring-WebSocket-Endpunkt je Seite reicht Yjs-Updates und
-  Awareness-Nachrichten zwischen den Browsern weiter, hängt die Updates in
-  der Datenbank an die Arbeitskopie an und liefert beim Beitritt den
-  gespeicherten Stand aus; Clients schicken periodisch einen verdichteten
-  Stand, der das Protokoll ersetzt. Die Sitzung und das Seitenrecht gelten
-  für den Socket; bei Rechteentzug oder Archivierung wird die Verbindung
-  getrennt. Ohne WebSocket (Proxy ohne Upgrade) fällt der Editor auf
-  Autosave ohne Live-Anzeige zurück. Proxy-Konfiguration für WebSocket in
-  [production.md](production.md).
-- **Abnahme:** Chromium-Test mit zwei Sitzungen: gleichzeitiges Tippen,
-  Cursor des anderen sichtbar, Veröffentlichen aus einer Sitzung, Beitritt
-  nach Verbindungsabbruch; Lasttest mit mehreren Sockets je Seite;
-  Sanitizer-Kette beim Veröffentlichen unverändert; OSV-Scan des
-  erweiterten Frontend-Lockfiles.
-- **Grenzen (geplant):** Gemeinsames Bearbeiten nur im Browser; die mobile
-  App schreibt weiter über die Arbeitskopie der Client-API.
+- **Umgesetzt:** Tiptap Collaboration und Collaboration-Caret mit Yjs im
+  Frontend-Bundle (`@tiptap/extension-collaboration`,
+  `@tiptap/extension-collaboration-caret`, `@tiptap/y-tiptap`, `yjs`,
+  `y-protocols`, alle MIT, Lizenztexte in `THIRD-PARTY.txt`). Kein
+  Node-Dienst: `spring-boot-starter-websocket`, `CollaborationHandler`
+  mit einem Raum je Seite unter `/ui/page/{id}/collab`, Replay des
+  gespeicherten Logs beim Beitritt, Weiterreichen von Updates und
+  Awareness, Seed-Zuweisung an den ersten Browser einer leeren
+  Arbeitskopie, Snapshot-Anforderung ab einem Megabyte, Rechteprüfung alle
+  30 Sekunden (Schließen mit 4403), Schließen mit 4409, wenn die
+  Arbeitskopie veröffentlicht oder verworfen wird (Ereignis
+  `WorkingCopyCleared` aus `PageEditingService`). `CollaborationHandshake`
+  verlangt die eigene Herkunft und das Bearbeitungsrecht; die Sitzung kommt
+  aus dem Cookie. Migration `1.0.21-live-collaboration` mit Tabelle
+  `page_collab_update`, die mit der Arbeitskopie gelöscht wird;
+  `PageCollabStore` mit Anhängen, Verdichten und Löschen. Im Browser
+  `LiveProvider` (eigener Transport, Wiederverbindung bis fünf Mal,
+  Fallback auf den Einzelmodus nach acht Sekunden), Editor erst nach dem
+  Abgleich, Statuszeile mit Teilnehmerzahl und Gründen, Autosave nur für
+  eigene Transaktionen. nginx-Beispiel mit WebSocket-Upgrade, Beschreibung
+  in [product-functions.md](product-functions.md#gemeinsames-bearbeiten-in-echtzeit),
+  [editor.md](editor.md#gemeinsames-bearbeiten-r63) und
+  [production.md](production.md#live-bearbeiten-hinter-dem-proxy). Texte
+  in allen sechs Sprachen.
+- **Geprüft:** `LiveCollaborationIntegrationTest` gegen einen echten Port
+  (Leser, fremde Herkunft, fehlende Herkunft und unbekannte Seite
+  abgewiesen; Seed-Flag, Replay in Reihenfolge, Weiterreichen mit Id ohne
+  Echo, Awareness ohne Speicherung, Verdichtung mit Erhalt späterer
+  Updates, Schließen mit 4409 beim Veröffentlichen samt leerem Log,
+  Übergang der Seed-Rolle, Schließen mit 4403 nach Rechteentzug);
+  `ApplicationSmokeIT` mit zwei Chromium-Tabs: zweiter Tab sieht den Text
+  des ersten und den Cursor mit Namen, Tippen in beiden ergibt denselben
+  Inhalt, Veröffentlichen im zweiten beendet die Live-Sitzung des ersten,
+  dessen veraltetes Formular weiter mit 409 abgelehnt wird. OSV-Scan mit
+  den neuen npm-Paketen: **352 Paketversionen, keine Treffer**.
+  Vollständiges `verify` lokal: **BUILD SUCCESS, 391 Tests und der
+  Chromium-Smoke-Test erfolgreich, keine Fehler oder übersprungenen Tests**;
+  gehosteter Nachweis mit dem PR-Lauf.
+- **Grenzen:** Live-Sitzungen liegen im Speicher einer Instanz; mehrere
+  Instanzen brauchen Sitzungsbindung. Gemeinsames Bearbeiten nur im
+  Browser, die mobile App schreibt weiter über die Arbeitskopie der
+  Client-API. Die Rechteprüfung läuft im 30-Sekunden-Takt, ein Entzug
+  wirkt also mit Verzögerung. Awareness ist nicht persistent: Wer beitritt,
+  sieht Cursor erst, wenn die anderen sich erneut melden (die Anwendung
+  fordert das beim Beitritt an). Keine Lastmessung mit vielen Sockets je
+  Seite.
 
 ### R64 – Anmeldung über OpenID Connect
 
