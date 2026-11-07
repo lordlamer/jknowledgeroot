@@ -76,8 +76,9 @@ Schreibend (Scope `mcp:write`):
 
 | Tool | Zweck |
 |---|---|
-| `create_page(name, content, parent?, space?, labels?, format?)` | Neue Seite unter einer Elternseite oder als Hauptseite |
-| `update_page(id, revision, name?, content?, labels?, format?)` | Speichern mit Revisionsprüfung; ausgelassene Felder bleiben |
+| `create_page(name, content, parent?, space?, labels?, format?, draft?)` | Neue Seite unter einer Elternseite oder als Hauptseite; `draft=true` legt einen Entwurf an, den nur Bearbeiter sehen |
+| `update_page(id, revision, name?, content?, labels?, format?, publish?)` | Schreibt in die Arbeitskopie der Seite (R62), die Leser nicht sehen; `publish=true` veröffentlicht sofort als neue Version. Revisionsprüfung; ausgelassene Felder bleiben |
+| `publish_page(id, revision)` | Veröffentlicht die Arbeitskopie oder einen Entwurf |
 | `set_labels(id, revision, labels)` | Labels ersetzen |
 | `add_comment(page, text)`, `delete_comment(page, comment_id)` | Kommentare im Namen des Benutzers |
 | `star_page(id, starred?)` | Favorit setzen oder entfernen |
@@ -91,7 +92,9 @@ in Markdown umgewandelt (flexmark), beim Schreiben Markdown in HTML; mit
 und Stile beim Speichern. Fehlermeldungen an den Assistenten sind feste Texte
 („You may not edit this page.", „The page has changed meanwhile…"); technische
 Ursachen stehen nur im Serverlog. Hochladen von Anhängen und die Rechte- und
-Space-Verwaltung gibt es bewusst nicht über MCP.
+Space-Verwaltung gibt es bewusst nicht über MCP. `get_page` nennt
+`published` und `hasWorkingCopy`; das Verwerfen einer Arbeitskopie bleibt
+der Oberfläche und der Client-API vorbehalten.
 
 ## Resources und Prompts
 

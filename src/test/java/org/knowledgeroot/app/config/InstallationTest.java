@@ -220,6 +220,8 @@ class InstallationTest {
         pages.forEach(page -> page.put("inherit_permissions", false));
         // Spaces put every existing page into the default space.
         pages.forEach(page -> page.put("space_id", 1));
+        // R62: every page that existed before working copies counts as published.
+        pages.forEach(page -> page.put("published", true));
         var users = jdbc.queryForList("SELECT * FROM user ORDER BY id");
         // R57: the never-chosen placeholder en_US becomes "automatic" (browser language).
         assertTrue(users.stream().anyMatch(user -> "en_US".equals(user.get("language"))), "fixture has the old placeholder");

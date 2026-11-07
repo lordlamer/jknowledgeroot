@@ -7,6 +7,8 @@ import org.knowledgeroot.app.page.domain.Page;
 import org.knowledgeroot.app.page.domain.PageCommentDao;
 import org.knowledgeroot.app.page.domain.PageCreationService;
 import org.knowledgeroot.app.page.domain.PageDao;
+import org.knowledgeroot.app.page.domain.PageDraft;
+import org.knowledgeroot.app.page.domain.PageDraftDao;
 import org.knowledgeroot.app.page.domain.PageEditingService;
 import org.knowledgeroot.app.page.domain.PageFilter;
 import org.knowledgeroot.app.page.domain.PageId;
@@ -53,6 +55,7 @@ public class McpTools {
     private final PageCreationService creation;
     private final PageEditingService editing;
     private final PageMoveService moves;
+    private final PageDraftDao drafts;
     private final CredentialRepository credentials;
 
     // --- spaces -------------------------------------------------------------------------------------
@@ -273,22 +276,26 @@ public class McpTools {
             @McpToolParam(description = "Parent page id; omit for a top-level page", required = false) Integer parent,
             @McpToolParam(description = "Space id for a top-level page; defaults to the default space", required = false) Integer space,
             @McpToolParam(description = "Labels (tags) for the page", required = false) List<String> labels,
-            @McpToolParam(description = "Content format: markdown (default) or html", required = false) String format) {
+            @McpToolParam(description = "Content format: markdown (default) or html", required = false) String format,
+            @McpToolParam(description = "true creates a draft that only editors see until publish_page", required = false) Boolean draft) {
         return support.write("create_page", params("name", name, "content", content, "parent", parent, "space", space,
-                "labels", labels, "format", format), () -> {
+                "labels", labels, "format", format, "draft", draft), () -> {
             String contentFormat = McpMarkdown.format(format);
             var dto = PageDto.builder().parent(parent == null ? 0 : parent).spaceId(parent == null ? space : null)
-                    .name(McpPages.trimName(name)).content(McpMarkdown.store(content, contentFormat)).build();
+                    .name(McpPages.trimName(name)).content(McpMarkdown.store(content, contentFormat))
+                    .published(!Boolean.TRUE.equals(draft)).build();
             int id = creation.create(dto, McpPages.labels(labels));
             Page created = pages.findById(new PageId(id));
-            return new McpModels.Saved(id, created.getName(), created.getRevision(), access.pageUrl(id), "Page created.");
+            return new McpModels.Saved(id, created.getName(), created.getRevision(), access.pageUrl(id),
+                    created.isPublished() ? "Page created." : "Draft created; readers see it after publish_page.");
         });
     }
 
     @McpTool(name = "update_page", generateOutputSchema = false,
-            description = "Saves a new name, content or labels of a page. Pass the revision from get_page; the save is "
-                    + "refused when the page changed meanwhile. Omitted fields keep their current value. Content is "
-                    + "Markdown by default or HTML with format=\"html\".",
+            description = "Saves a new name, content or labels of a page as its working copy, which readers do not see "
+                    + "until it is published; publish=true publishes right away as a new version. Pass the revision from "
+                    + "get_page; the save is refused when the page changed meanwhile. Omitted fields keep their current "
+                    + "value. Content is Markdown by default or HTML with format=\"html\".",
             annotations = @McpTool.McpAnnotations(readOnlyHint = false, destructiveHint = true, idempotentHint = false, openWorldHint = false))
     public McpModels.Saved updatePage(
             @McpToolParam(description = "Page id", required = true) int id,
@@ -296,17 +303,45 @@ public class McpTools {
             @McpToolParam(description = "New page name", required = false) String name,
             @McpToolParam(description = "New content in the given format", required = false) String content,
             @McpToolParam(description = "New labels; replaces the current ones", required = false) List<String> labels,
-            @McpToolParam(description = "Content format: markdown (default) or html", required = false) String format) {
+            @McpToolParam(description = "Content format: markdown (default) or html", required = false) String format,
+            @McpToolParam(description = "true publishes as a new version; otherwise only the working copy changes", required = false) Boolean publish) {
         return support.write("update_page", params("id", id, "revision", revision, "name", name, "content", content,
-                "labels", labels, "format", format), () -> {
+                "labels", labels, "format", format, "publish", publish), () -> {
             Page current = access.editable(id);
             String contentFormat = McpMarkdown.format(format);
-            var dto = PageDto.builder().id(id).name(name == null ? current.getName() : McpPages.trimName(name))
-                    .content(content == null ? current.getContent() : McpMarkdown.store(content, contentFormat)).revision(revision).build();
-            List<String> newLabels = labels == null ? this.labels.listForPage(new PageId(id)) : McpPages.labels(labels);
-            editing.edit(new PageId(id), dto, newLabels, Map.of(), List.of(), List.of());
+            PageId pageId = new PageId(id);
+            // Omitted fields continue the working copy when there is one, otherwise the published page.
+            var base = drafts.find(pageId);
+            String baseName = base.map(PageDraft::name).orElse(current.getName());
+            String baseContent = base.map(PageDraft::content).orElse(current.getContent());
+            List<String> baseLabels = base.map(PageDraft::labels).orElseGet(() -> this.labels.listForPage(pageId));
+            String newName = name == null ? baseName : McpPages.trimName(name);
+            String newContent = content == null ? baseContent : McpMarkdown.store(content, contentFormat);
+            List<String> newLabels = labels == null ? baseLabels : McpPages.labels(labels);
+            if (Boolean.TRUE.equals(publish)) {
+                var dto = PageDto.builder().id(id).name(newName).content(newContent).revision(revision).published(true).build();
+                editing.edit(pageId, dto, newLabels, Map.of(), List.of(), List.of());
+                Page saved = pages.findById(pageId);
+                return new McpModels.Saved(id, saved.getName(), saved.getRevision(), access.pageUrl(id), "Page published.");
+            }
+            editing.saveDraft(pageId, newName, newContent, newLabels, revision);
+            return new McpModels.Saved(id, newName, current.getRevision(), access.pageUrl(id),
+                    "Working copy saved; readers see it after publish_page or update_page with publish=true.");
+        });
+    }
+
+    @McpTool(name = "publish_page", generateOutputSchema = false,
+            description = "Publishes the working copy of a page as a new version, or makes a draft page visible to readers. "
+                    + "Pass the revision from get_page.",
+            annotations = @McpTool.McpAnnotations(readOnlyHint = false, destructiveHint = false, idempotentHint = false, openWorldHint = false))
+    public McpModels.Saved publishPage(
+            @McpToolParam(description = "Page id", required = true) int id,
+            @McpToolParam(description = "Revision from get_page", required = true) long revision) {
+        return support.write("publish_page", params("id", id, "revision", revision), () -> {
+            access.editable(id);
+            editing.publish(new PageId(id), revision);
             Page saved = pages.findById(new PageId(id));
-            return new McpModels.Saved(id, saved.getName(), saved.getRevision(), access.pageUrl(id), "Page saved.");
+            return new McpModels.Saved(id, saved.getName(), saved.getRevision(), access.pageUrl(id), "Page published.");
         });
     }
 

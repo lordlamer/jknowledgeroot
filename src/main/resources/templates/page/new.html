@@ -34,8 +34,10 @@
             <button type="button" class="kr-btn"
                     th:unless="${page}" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true" th:text="#{common.cancel}">Cancel</button>
             <button type="submit" class="kr-btn accent" th:text="#{page.new.submit}">Create page</button>
+            <button type="submit" class="kr-btn" name="published" value="false" th:text="#{page.new.save-draft}">Save as draft</button>
         </div>
     </header>
+    <p class="form-text" th:text="#{page.new.draft.hint}">A draft is visible only to users who may edit it until it is published.</p>
 
     <ul class="kr-editor-tabs nav nav-tabs" id="pageTabs" role="tablist" style="list-style:none; margin:0;">
         <li class="nav-item" role="presentation">

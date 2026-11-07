@@ -80,6 +80,10 @@ public class PagePermissionImpl implements PagePermissionDao {
         if (archived && minPermissionLevel == PagePermission.PermissionLevel.EDIT) {
             return false;
         }
+        // A draft page (never published) is visible only to those who may edit it (R62).
+        if (!page.published() && minPermissionLevel == PagePermission.PermissionLevel.VIEW) {
+            minPermissionLevel = PagePermission.PermissionLevel.EDIT;
+        }
         if (userId != null) {
             Boolean isAdmin = jdbcClient.sql("SELECT admin FROM user WHERE id = :id AND active = 1 AND deleted = 0")
                     .param("id", userId).query(Boolean.class).optional().orElse(null);
@@ -293,12 +297,13 @@ public class PagePermissionImpl implements PagePermissionDao {
                 .param("id", pageId.value()).update();
     }
 
-    private record PermissionNode(int parent, boolean inherits, int spaceId) {}
+    private record PermissionNode(int parent, boolean inherits, int spaceId, boolean published) {}
 
     private PermissionNode node(PageId pageId) {
-        return jdbcClient.sql("SELECT parent, inherit_permissions, space_id FROM page WHERE id = :id AND deleted = 0")
+        return jdbcClient.sql("SELECT parent, inherit_permissions, space_id, published FROM page WHERE id = :id AND deleted = 0")
                 .param("id", pageId.value())
-                .query((rs, row) -> new PermissionNode(rs.getInt("parent"), rs.getBoolean("inherit_permissions"), rs.getInt("space_id")))
+                .query((rs, row) -> new PermissionNode(rs.getInt("parent"), rs.getBoolean("inherit_permissions"),
+                        rs.getInt("space_id"), rs.getBoolean("published")))
                 .optional().orElse(null);
     }
 

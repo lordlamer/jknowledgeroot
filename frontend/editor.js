@@ -121,12 +121,84 @@ function initialize(root) {
       textarea.knowledgerootEditor = editor;
       instances.set(textarea, editor);
       refresh(editor);
+      if (textarea.form && textarea.form.dataset.autosave) autosave(textarea.form, textarea, editor);
     } catch (error) {
       shell.remove();
       textarea.hidden = false;
       console.error('Rich text editor initialization failed', error);
     }
   }
+}
+
+// Autosave (R62): a form with data-autosave posts name, labels, content and revision as the page's
+// working copy a moment after the last change. Publishing (the form's own request) pauses it and
+// drops a pending save, so a late autosave cannot bring back a working copy that was just published.
+const DEBOUNCE_MS = 2000;
+function autosave(form, textarea, editor) {
+  const status = form.querySelector('[data-autosave-status]');
+  const say = text => { if (status) status.textContent = text; };
+  let timer = null, dirty = false, paused = false, inFlight = null;
+  const csrf = () => {
+    const token = document.querySelector('meta[name="_csrf"]');
+    const header = document.querySelector('meta[name="_csrf_header"]');
+    return token && header ? { [header.content]: token.content } : {};
+  };
+  const body = () => {
+    const data = new URLSearchParams();
+    for (const field of ['name', 'labels', 'revision']) {
+      const input = form.elements[field];
+      if (input) data.set(field, input.value);
+    }
+    data.set('content', clean(editor.getHTML()));
+    return data;
+  };
+  const save = async keepalive => {
+    timer = null;
+    if (paused || !dirty) return;
+    dirty = false;
+    if (inFlight) inFlight.abort();
+    const controller = new AbortController();
+    inFlight = controller;
+    say(t('autosave.saving', 'Saving…'));
+    try {
+      const response = await fetch(form.dataset.autosave, {
+        method: 'POST', body: body(), keepalive, signal: controller.signal,
+        headers: { 'X-Requested-With': 'fetch', ...csrf() }
+      });
+      if (!response.ok) throw new Error(String(response.status));
+      const state = await response.json();
+      const at = new Date(state.savedAt);
+      say(t('autosave.saved', 'Saved at {0}', Number.isNaN(at.getTime()) ? state.savedAt : at.toLocaleTimeString()));
+      form.dataset.autosaveStale = String(Boolean(state.stale));
+    } catch (error) {
+      if (error.name === 'AbortError') return;
+      dirty = true;
+      say(t('autosave.failed', 'Could not save the working copy. Your changes stay in this editor.'));
+    } finally {
+      if (inFlight === controller) inFlight = null;
+    }
+  };
+  const changed = () => {
+    dirty = true;
+    if (paused) return;
+    clearTimeout(timer);
+    timer = setTimeout(save, DEBOUNCE_MS);
+  };
+  editor.on('update', changed);
+  form.addEventListener('input', event => { if (event.target !== textarea && event.target.form === form) changed(); });
+  form.addEventListener('htmx:beforeRequest', event => {
+    if (event.detail.elt !== form) return;
+    paused = true;
+    clearTimeout(timer);
+    timer = null;
+    if (inFlight) inFlight.abort();
+  });
+  form.addEventListener('htmx:afterRequest', event => {
+    if (event.detail.elt !== form || event.detail.successful) return;
+    paused = false;
+    if (dirty) changed();
+  });
+  textarea.knowledgerootAutosave = { flush: () => { clearTimeout(timer); return save(true); } };
 }
 
 // HTMX has already collected form values here: update its parameters as well as the textarea.
@@ -144,6 +216,7 @@ document.addEventListener('submit', event => {
 document.addEventListener('htmx:beforeCleanupElement', event => {
   for (const [textarea, editor] of instances) {
     if (event.detail.elt === textarea || event.detail.elt.contains(textarea)) {
+      if (textarea.knowledgerootAutosave) textarea.knowledgerootAutosave.flush();
       editor.destroy();
       instances.delete(textarea);
       delete textarea.knowledgerootEditor;

@@ -37,6 +37,21 @@ den aktuellen Bearbeitungsstand. Beim Austausch eines Seitenfragments wird die
 Editorinstanz zerstört und beim nächsten Öffnen neu erzeugt. Schlägt die
 Initialisierung fehl, bleibt das ursprüngliche Textfeld verfügbar.
 
+## Automatisches Speichern (R62)
+
+Ein Formular mit `data-autosave` (das Bearbeitungsformular) schickt zwei
+Sekunden nach der letzten Änderung Name, Labels, Inhalt und Revision per
+`fetch` an `POST /ui/page/{id}/draft`; die Antwort nennt Zeitpunkt und
+Bearbeiter, der Status steht in `[data-autosave-status]`. Der Inhalt wird
+vorher wie beim Speichern mit DOMPurify bereinigt, der Server bereinigt ihn
+erneut. Die Anfrage des Formulars selbst (Veröffentlichen) pausiert das
+Autosave und bricht einen laufenden Aufruf ab, damit eine späte Antwort keine
+eben veröffentlichte Arbeitskopie wieder anlegt; scheitert das Veröffentlichen
+(etwa 409), läuft das Autosave weiter. Beim Verlassen des Editors wird ein
+ausstehender Stand mit `keepalive` nachgereicht. Schlägt ein Autosave fehl,
+bleiben die Eingaben im Editor und die Statuszeile meldet es. Fachliche
+Beschreibung in [product-functions.md](product-functions.md#arbeitskopie-entwürfe-und-automatisches-speichern).
+
 ## Build und Aktualisierung
 
 Der Maven-Build installiert lokal unter `target/frontend` Node **24.21.0** und npm

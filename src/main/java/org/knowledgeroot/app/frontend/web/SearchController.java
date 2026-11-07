@@ -36,7 +36,7 @@ public class SearchController {
     record Part(String text, boolean match) {}
 
     record SearchHit(int id, String name, String snippet, List<Part> title, List<Part> excerpt,
-                     List<String> path, LocalDateTime changed, String space) {}
+                     List<String> path, LocalDateTime changed, String space, boolean draft) {}
 
     /** Searches all spaces the viewer may enter, or only {@code space} when given. */
     @GetMapping("/search")
@@ -61,7 +61,7 @@ public class SearchController {
             String snippet = snippet(page.getContent(), term);
             return new SearchHit(page.getPageId().value(), page.getName(), snippet,
                     highlight(page.getName(), term), highlight(snippet, term),
-                    path(page.getParent(), viewer, parents), page.getChangeDate(), keys.get(page.getSpaceId()));
+                    path(page.getParent(), viewer, parents), page.getChangeDate(), keys.get(page.getSpaceId()), !page.isPublished());
         }).toList();
         model.addAttribute("spaces", visibleSpaces);
         model.addAttribute("space", space);

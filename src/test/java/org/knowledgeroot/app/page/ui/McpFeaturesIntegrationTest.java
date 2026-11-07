@@ -69,7 +69,7 @@ class McpFeaturesIntegrationTest extends McpTestSupport {
             assertEquals("KR", JsonPath.read(space, "$.key"));
 
             // History: versions, an old version, a comparison.
-            ok(call(mcp, "update_page", Map.of("id", md, "revision", 1, "content", "## Second\n\nChanged text.")));
+            ok(call(mcp, "update_page", Map.of("id", md, "revision", 1, "content", "## Second\n\nChanged text.", "publish", true)));
             String history = ok(call(mcp, "get_history", Map.of("page", md)));
             assertEquals(2, JsonPath.<Integer>read(history, "$.currentRevision"));
             List<Integer> historyIds = JsonPath.read(history, "$.revisions[*].historyId");

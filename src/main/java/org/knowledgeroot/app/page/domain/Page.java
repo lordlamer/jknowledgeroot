@@ -30,7 +30,14 @@ public class Page {
     private String changedByLogin;
     private LocalDateTime changeDate;
     private Boolean deleted;
+    /** False for a draft page that was never published; only users who may edit it can see it. */
+    @Builder.Default
+    private Boolean published = Boolean.TRUE;
     private List<File> files;
+
+    public boolean isPublished() {
+        return !Boolean.FALSE.equals(published);
+    }
 
     public void setContent(String content) {
         this.content = Sanitizer.sanitize(content);

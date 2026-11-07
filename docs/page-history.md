@@ -12,13 +12,18 @@ und Historie des erfolgreichen Schreibers bleiben erhalten. Auch separat geände
 lokale Freigaben oder ein Wechsel des Vererbungsmodus machen ein bereits geöffnetes
 Bearbeitungsformular ungültig.
 
-Bei HTMX bleibt der eigene Entwurf samt Editor im Browser stehen. Die Meldung
-fordert dazu auf, die aktuelle Seite in einem zweiten Tab zu vergleichen. Es gibt
-kein automatisches Zusammenführen und kein erzwungenes Überschreiben: Entwurf
-zunächst kopieren, die aktuelle Seite neu laden und die gewünschten Änderungen
+Bei HTMX bleibt der eigene Stand samt Editor im Browser stehen. Es gibt
+kein automatisches Zusammenführen und kein erzwungenes Überschreiben: die
+aktuelle Seite in einem zweiten Tab vergleichen und die gewünschten Änderungen
 übertragen. Wiederholtes Speichern des alten Formulars umgeht den Konflikt nicht.
-Ungespeicherte Entwürfe sind nicht serverseitig gesichert und gehen beim Schließen
-oder Neuladen des Tabs verloren.
+Seit R62 sichert der Editor den Stand automatisch als Arbeitskopie der Seite
+(Tabelle `page_draft`, Migration `1.0.20-working-copy`): Er geht beim
+Schließen des Tabs nicht verloren, bleibt nach einem Konflikt zum Vergleichen
+erhalten und ist als veraltet gekennzeichnet, wenn die Seite seit Beginn der
+Arbeitskopie veröffentlicht wurde. Eine Version in der Historie entsteht erst
+beim Veröffentlichen; Autosave erhöht die Revision nicht. Entwürfe (nie
+veröffentlichte Seiten) sehen nur Benutzer mit Schreibrecht. Einzelheiten in
+[product-functions.md](product-functions.md#arbeitskopie-entwürfe-und-automatisches-speichern).
 
 Eine fehlende oder negative Revision ergibt **428 Precondition Required**. Vor
 dem Upgrade geöffnete Formulare müssen deshalb neu geladen werden. Bei einem

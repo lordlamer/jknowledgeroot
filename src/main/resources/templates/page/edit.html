@@ -16,15 +16,25 @@
     </ol>
 </nav>
 
-<form th:hx-post="'/ui/page/' + ${page.pageId} + '/edit'" hx-target="#content">
+<form th:hx-post="'/ui/page/' + ${page.pageId} + '/edit'" hx-target="#content"
+      th:attr="data-autosave='/ui/page/' + ${page.pageId} + '/draft'">
     <input type="hidden" name="revision" th:value="${page.revision}">
-    <p class="form-text" th:text="#{page.edit.conflict-hint}">If someone saves this page first, your changes stay here. Open the current page in another tab to compare before reloading.</p>
+    <input type="hidden" name="published" value="true" th:unless="${page.published}">
+    <p class="form-text" data-autosave-status th:text="#{page.edit.autosave.hint}">Changes are saved automatically as a working copy. Readers see them after publishing.</p>
+    <div class="alert alert-info kr-working-copy" th:if="${draft != null}">
+        <p th:text="#{page.edit.working-copy(${#temporals.format(draft.changeDate, #messages.msg('format.datetime'))}, ${draft.changedByLogin ?: #messages.msg('page.show.guest')})}">Working copy saved … by …</p>
+        <p th:if="${draftStale}" th:text="#{page.edit.working-copy.stale}">The page was published by someone else since this working copy started.</p>
+        <button type="button" class="btn btn-secondary btn-sm"
+                th:hx-post="'/ui/page/' + ${page.pageId} + '/draft/discard'" hx-target="#content"
+                th:hx-confirm="#{page.edit.discard.confirm}" th:text="#{page.edit.discard}">Discard working copy</button>
+    </div>
 
     <header class="kr-page-header">
         <div class="kr-page-title-wrap">
             <h1 class="kr-page-title" th:text="#{page.edit.heading}">Edit page</h1>
             <div class="kr-page-meta">
-                <span class="kr-pill active" th:text="#{page.edit.draft}">Draft</span>
+                <span class="kr-pill" th:classappend="${page.published} ? 'active' : 'inactive'"
+                      th:text="${page.published} ? #{page.edit.published} : #{page.edit.draft}">Published</span>
                 <span class="kr-dotsep">·</span>
                 <span th:text="#{page.edit.editing(${page.name})}">Editing page</span>
             </div>
@@ -33,7 +43,7 @@
             <button type="button" class="kr-btn"
                     th:attr="hx-get='/ui/page/' + ${page.getPageId()}"
                     hx-target="#content" hx-push-url="true" th:text="#{common.cancel}">Cancel</button>
-            <button type="submit" class="kr-btn accent" th:text="#{common.save-changes}">Save changes</button>
+            <button type="submit" class="kr-btn accent" th:text="${page.published} ? #{page.edit.publish-changes} : #{page.edit.publish}">Publish changes</button>
         </div>
     </header>
 
@@ -60,7 +70,7 @@
                 <div class="tab-pane fade show active" id="site-content" role="tabpanel" aria-labelledby="site-tab">
                     <div class="mb-3">
                         <label for="page-name" class="form-label" th:text="#{common.name}">Name</label>
-                        <input type="text" class="form-control" id="page-name" name="name" th:value="${page.name}" required>
+                        <input type="text" class="form-control" id="page-name" name="name" th:value="${editName}" required>
                     </div>
                     <div class="mb-3">
                         <label for="page-labels" class="form-label" th:text="#{page.edit.labels}">Labels</label>
@@ -73,7 +83,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="page-content" class="form-label" th:text="#{page.edit.content}">Content</label>
-                        <textarea class="form-control" id="page-content" data-rich-editor rows="3" name="content"><th:block th:text="${page.content}">Content</th:block></textarea>
+                        <textarea class="form-control" id="page-content" data-rich-editor rows="3" name="content"><th:block th:text="${editContent}">Content</th:block></textarea>
                     </div>
                 </div>
 
@@ -184,7 +194,7 @@
             </div>
         </div>
     <div style="padding:0 28px 24px; display:flex; gap:8px">
-        <button type="submit" class="kr-btn accent" th:text="#{common.save-changes}">Save changes</button>
+        <button type="submit" class="kr-btn accent" th:text="${page.published} ? #{page.edit.publish-changes} : #{page.edit.publish}">Publish changes</button>
         <button type="button" class="kr-btn"
                 th:hx-get="'/ui/page/' + ${page.getPageId()}"
                 hx-target="#content"

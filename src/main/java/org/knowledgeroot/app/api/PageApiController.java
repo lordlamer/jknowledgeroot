@@ -29,6 +29,7 @@ class PageApiController {
     private final PageCreationService creation;
     private final PageEditingService editing;
     private final PageMoveService moves;
+    private final PageDraftDao drafts;
 
     @GetMapping("/{id}")
     ApiModels.PageDetail page(@PathVariable int id) {
@@ -40,17 +41,54 @@ class PageApiController {
     @ResponseStatus(HttpStatus.CREATED)
     ApiModels.Created create(@RequestBody ApiModels.PageInput input) {
         var dto = PageDto.builder().parent(input.parent() == null ? 0 : input.parent()).spaceId(input.space())
-                .name(trim(input.name())).content(input.content()).build();
+                .name(trim(input.name())).content(input.content()).published(input.published()).build();
         return new ApiModels.Created(creation.create(dto, labels(input.labels())));
     }
 
-    /** Saves name, content and labels; {@code revision} must match the edited version (409 otherwise). */
+    /**
+     * Publishes name, content and labels as a new version and drops the working copy; {@code revision}
+     * must match the edited version (409 otherwise). {@code published: true} also publishes a draft page.
+     */
     @PutMapping("/{id}")
     ApiModels.PageDetail update(@PathVariable int id, @RequestBody ApiModels.PageInput input) {
         var dto = PageDto.builder().id(id).name(trim(input.name())).content(input.content())
-                .revision(input.revision()).build();
+                .revision(input.revision()).published(input.published()).build();
         editing.edit(new PageId(id), dto, labels(input.labels()), java.util.Map.of(), List.of(), List.of());
         return detail(id);
+    }
+
+    /** The working copy (R62) for users who may edit the page; 404 when there is none. */
+    @GetMapping("/{id}/draft")
+    ApiModels.WorkingCopy draft(@PathVariable int id) {
+        api.require(id, PagePermission.PermissionLevel.EDIT);
+        return editing.draft(new PageId(id)).map(copy -> workingCopy(id, copy))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    /** Autosave: stores name, content and labels as the working copy; {@code revision} is the version the editor opened. */
+    @PutMapping("/{id}/draft")
+    ApiModels.WorkingCopy saveDraft(@PathVariable int id, @RequestBody ApiModels.PageInput input) {
+        var copy = editing.saveDraft(new PageId(id), trim(input.name()), input.content(), labels(input.labels()), input.revision());
+        return workingCopy(id, copy);
+    }
+
+    @DeleteMapping("/{id}/draft")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void discardDraft(@PathVariable int id) {
+        editing.discardDraft(new PageId(id));
+    }
+
+    /** Publishes the working copy as a new version, or a draft page as it is. */
+    @PostMapping("/{id}/publish")
+    ApiModels.PageDetail publish(@PathVariable int id, @RequestBody ApiModels.PublishInput input) {
+        editing.publish(new PageId(id), input.revision());
+        return detail(id);
+    }
+
+    private ApiModels.WorkingCopy workingCopy(int id, PageDraft copy) {
+        long current = pages.findById(new PageId(id)).getRevision();
+        return new ApiModels.WorkingCopy(id, copy.name(), copy.content(), copy.labels(), copy.baseRevision(), copy.isStale(current),
+                copy.changedBy(), copy.changedByLogin(), copy.changeDate());
     }
 
     @DeleteMapping("/{id}")
@@ -134,7 +172,8 @@ class PageApiController {
                 page.getCreatedBy(), page.getCreatedByLogin(), page.getCreateDate(),
                 page.getChangedBy(), page.getChangedByLogin(), page.getChangeDate(),
                 canEdit, viewer != null, viewer != null && stars.isStarred(viewer, pid), viewer != null,
-                api.admin(), attachments, comments.countForPage(pid));
+                api.admin(), attachments, comments.countForPage(pid),
+                page.isPublished(), canEdit && drafts.find(pid).isPresent());
     }
 
     private static List<String> labels(List<String> values) {

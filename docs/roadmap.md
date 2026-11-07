@@ -1509,7 +1509,7 @@ Index.
 
 ### R62 – Arbeitskopie, Entwürfe und automatisches Speichern
 
-- [ ] Geplant.
+- [x] Lokal umgesetzt und geprüft am 7. November 2026.
 - **Ziel:** Jede Seite hat neben der veröffentlichten Version eine
   Arbeitskopie. Der Editor speichert automatisch in die Arbeitskopie; Leser
   sehen weiterhin den veröffentlichten Stand. „Veröffentlichen" übernimmt
@@ -1518,27 +1518,56 @@ Index.
   angelegt werden: eine Seite ohne veröffentlichte Version, sichtbar nur für
   Bearbeiter mit Schreibrecht, in Navigation und Suche als Entwurf
   gekennzeichnet.
-- **Umsetzung:** Migration mit Tabelle für die Arbeitskopie (Seite, Inhalt,
-  Titel, Bearbeiter, Zeitpunkt, Basisrevision) und Entwurfsstatus an der
-  Seite. Autosave per htmx im Abstand weniger Sekunden nach der letzten
-  Änderung, mit sichtbarem Status im Editor („Gespeichert um …"). Die
-  bisherige Revisionsprüfung (409/428) gilt nur noch beim Veröffentlichen
-  gegen die veröffentlichte Version; Historie wächst nur je
-  Veröffentlichung. Client-API: Arbeitskopie lesen und schreiben,
-  Veröffentlichen, Verwerfen, Entwurf anlegen; die mobile App
-  (knowledgeroot-app) wird nachgezogen, damit sie nicht an der Arbeitskopie
-  vorbei speichert. MCP: `update_page` schreibt in die Arbeitskopie und
-  veröffentlicht nur mit ausdrücklichem Parameter.
-- **Abnahme:** Integrationstests für Autosave, Veröffentlichen, Verwerfen,
-  Entwurfssichtbarkeit je Rolle und Space, Rechte beim Veröffentlichen,
-  Migration bestehender Seiten ohne Arbeitskopie; Chromium prüft Autosave
-  und Statusanzeige; Beschreibung in [editor.md](editor.md) und
-  [page-history.md](page-history.md); Upgrade-/Rollbackkette mit der neuen
-  Migration.
-- **Offene Entscheidungen:** Ob Bearbeiter mit Schreibrecht die
-  Arbeitskopie anderer sehen (Vorschlag: ja, es gibt genau eine je Seite);
-  ob Entwürfe in `/api/v1/tree` für Leser ohne Schreibrecht erscheinen
-  (Vorschlag: nein).
+- **Umgesetzt:** Migration `1.0.20-working-copy` (`page.published`,
+  Tabelle `page_draft` mit Name, Inhalt, Labels, Basisrevision, Bearbeiter,
+  Zeitpunkt); `PageDraftDao`/`PageDraftImpl`; `PageEditingService` mit
+  `saveDraft`, `draft`, `discardDraft` und `publish`, Veröffentlichen aus
+  dem Formular und per API verwirft die Arbeitskopie; die Revisionsprüfung
+  gilt nur noch beim Veröffentlichen, Autosave erhöht die Revision nicht und
+  erzeugt keine Version. Unveröffentlichte Seiten verlangen in
+  `PagePermissionImpl` und `ReadablePagesSql` das Bearbeitungsrecht zum
+  Lesen, damit Seitenleiste, Suche, Client-API, MCP, Anhänge und Kommentare
+  dieselbe Regel anwenden. Oberfläche: Autosave in `frontend/editor.js`
+  (zwei Sekunden nach der letzten Änderung, Statuszeile, Pause und Abbruch
+  beim Veröffentlichen, `keepalive` beim Verlassen), Hinweis mit
+  Zeitpunkt/Bearbeiter, Warnung bei veralteter Arbeitskopie, „Discard
+  working copy", „Publish changes"/„Publish", „Save as draft" beim Anlegen,
+  Entwurfshinweis und Veröffentlichen in der Seitenansicht, Kennzeichen
+  „Draft" in Seitenleiste und Suche. Client-API: `published` und
+  `hasWorkingCopy` in den Seitendetails, `GET/PUT/DELETE /pages/{id}/draft`,
+  `POST /pages/{id}/publish`, `published: false` beim Anlegen, `draft` in
+  Baum und Suche. MCP: `update_page` schreibt in die Arbeitskopie und
+  veröffentlicht nur mit `publish=true`, `publish_page`, `create_page` mit
+  `draft`, `get_page` nennt `published`/`hasWorkingCopy`. Texte in allen
+  sechs Sprachen. Beschreibung in
+  [product-functions.md](product-functions.md#arbeitskopie-entwürfe-und-automatisches-speichern),
+  [editor.md](editor.md#automatisches-speichern-r62),
+  [page-history.md](page-history.md), [client-api.md](client-api.md) und
+  [mcp.md](mcp.md).
+- **Entscheidungen:** Genau eine Arbeitskopie je Seite, sichtbar für alle
+  mit Schreibrecht (Grundlage für R63). Entwürfe erscheinen für Leser ohne
+  Schreibrecht nirgends, auch nicht in `/api/v1/tree`. Eine veröffentlichte
+  Seite wird nicht wieder zum Entwurf.
+- **Geprüft:** `WorkingCopyIntegrationTest` (Autosave ohne Version und
+  Revision, Bereinigung, 403/428/409, Editor startet mit der Arbeitskopie,
+  Hinweise nur für Bearbeiter, Veröffentlichen aus Formular und per Aktion
+  samt Labels, Verwerfen, veraltete Arbeitskopie, Entwurfsseite für Leser,
+  Gäste, Baum und Suche unsichtbar und für Bearbeiter gekennzeichnet,
+  Veröffentlichen des Entwurfs, Client-API-Ablauf); `McpIntegrationTest`
+  und `McpFeaturesIntegrationTest` an die neue Semantik angepasst
+  (Arbeitskopie, `publish_page`, Entwurf unsichtbar für Leser);
+  `PageAccessWebTest` und `PagePermissionDatabaseTest` um die neue
+  Abhängigkeit ergänzt; `InstallationTest` erwartet die neue Spalte beim
+  Legacy-Upgrade. Vollständiges `verify` lokal: **BUILD SUCCESS, 388 Tests
+  und der Chromium-Smoke-Test erfolgreich, keine Fehler oder übersprungenen
+  Tests**; gehosteter Nachweis mit dem PR-Lauf.
+- **Grenzen:** Gleichzeitiges Bearbeiten derselben Arbeitskopie folgt bis
+  R63 der Regel „letztes Autosave gewinnt". Ein genau beim Veröffentlichen
+  laufendes Autosave kann die Arbeitskopie erneut anlegen; sie ist dann als
+  veraltet markiert und lässt sich verwerfen. Die mobile App
+  (knowledgeroot-app) nutzt weiter `PUT /pages/{id}` und veröffentlicht
+  damit direkt; Arbeitskopie und Entwürfe in der App sind ein eigener
+  Schritt im App-Repository. Versionen werden weiterhin nicht ausgedünnt.
 
 ### R63 – Gemeinsames Bearbeiten in Echtzeit
 

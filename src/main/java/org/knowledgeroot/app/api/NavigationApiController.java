@@ -59,7 +59,7 @@ class NavigationApiController {
         return new ApiModels.TreeResponse(parentRef, items.stream().map(page -> {
             int id = page.getPageId().value();
             return new ApiModels.TreeNode(id, page.getName(), page.getParent(), page.getRevision(),
-                    withChildren.contains(id), starred.contains(id));
+                    withChildren.contains(id), starred.contains(id), !page.isPublished());
         }).toList(), nextAfter);
     }
 
@@ -89,7 +89,7 @@ class NavigationApiController {
         Map<Integer, Optional<Page>> parents = new HashMap<>();
         var hits = results.stream().limit(SEARCH_PAGE_SIZE).map(page -> new ApiModels.SearchHit(
                 page.getPageId().value(), page.getName(), SearchController.snippet(page.getContent(), term),
-                path(page.getParent(), viewer, parents), page.getChangeDate(), api.spaceRef(page.getSpaceId()))).toList();
+                path(page.getParent(), viewer, parents), page.getChangeDate(), api.spaceRef(page.getSpaceId()), !page.isPublished())).toList();
         return new ApiModels.SearchResponse(term, hits, offset,
                 results.size() > SEARCH_PAGE_SIZE && offset + SEARCH_PAGE_SIZE <= 100_000);
     }

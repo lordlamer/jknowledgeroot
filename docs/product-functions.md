@@ -207,3 +207,44 @@ anlegen. Die Client-API bietet Spaces unter `/api/v1/spaces` und nimmt
 `space` bei Baum, Suche, Seitenanlage und Verschieben an
 ([client-api.md](client-api.md)). Regeln im Detail in
 [access-control.md](access-control.md#spaces).
+
+## Arbeitskopie, Entwürfe und automatisches Speichern
+
+Seit R62 hat jede Seite neben der veröffentlichten Version eine
+**Arbeitskopie**. Der Editor speichert zwei Sekunden nach der letzten
+Eingabe automatisch in diese Arbeitskopie; die Statuszeile über dem Formular
+zeigt „Saved at …" oder eine Fehlermeldung, bei der die Eingaben im Editor
+bleiben. Leser sehen weiterhin die veröffentlichte Version. **Publish
+changes** übernimmt das Formular als neue Version in die Historie und
+entfernt die Arbeitskopie; die Historie wächst nur je Veröffentlichung.
+
+- **Eine Arbeitskopie je Seite:** Alle Benutzer mit Schreibrecht sehen sie.
+  Wer die Seite bearbeitet, startet mit der Arbeitskopie; die Seitenansicht
+  zeigt Bearbeitern „Unpublished changes saved … by …" mit den Knöpfen
+  **Publish**, **Continue editing** und **Discard working copy**.
+  Verwerfen setzt den Editor auf die veröffentlichte Seite zurück.
+- **Veraltete Arbeitskopie:** Jede Arbeitskopie merkt sich die Revision, bei
+  der sie begann. Hat seither jemand anderes veröffentlicht, warnt Editor und
+  Seitenansicht; Veröffentlichen aus dem alten Formular wird wie bisher mit
+  409 abgelehnt, die Arbeitskopie bleibt zum Vergleichen erhalten.
+- **Entwürfe:** **Save as draft** beim Anlegen erzeugt eine Seite ohne
+  veröffentlichte Version. Sie erscheint nur für Benutzer mit Schreibrecht in
+  Seitenleiste, Suche, Client-API und MCP, dort mit der Kennzeichnung
+  „Draft"; Leser, Gäste und Links von außen erhalten 403. **Publish**
+  veröffentlicht den Entwurf beziehungsweise seine Arbeitskopie; eine
+  veröffentlichte Seite wird nicht wieder zum Entwurf.
+- **Client-API und MCP:** `PUT /api/v1/pages/{id}` veröffentlicht wie bisher
+  und verwirft die Arbeitskopie; `GET/PUT/DELETE /api/v1/pages/{id}/draft`
+  und `POST /api/v1/pages/{id}/publish` bedienen die Arbeitskopie,
+  `published: false` beim Anlegen erzeugt einen Entwurf. Das MCP-Tool
+  `update_page` schreibt in die Arbeitskopie und veröffentlicht nur mit
+  `publish=true`; `publish_page` veröffentlicht, `create_page` kennt
+  `draft=true`.
+
+Grenzen: Die Arbeitskopie fasst wie der Seiteninhalt bis zu 64 KB. Beim
+Veröffentlichen aus dem Formular kann ein genau gleichzeitig laufendes
+Autosave die eben veröffentlichte Arbeitskopie erneut anlegen; sie erscheint
+dann als veraltete Arbeitskopie und lässt sich verwerfen. Gleichzeitiges
+Bearbeiten derselben Arbeitskopie führt bis R63 zur Regel „der letzte
+Autosave gewinnt". Migration `1.0.20-working-copy` ergänzt
+`page.published` und die Tabelle `page_draft`.
