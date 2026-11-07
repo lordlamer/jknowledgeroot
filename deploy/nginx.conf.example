@@ -22,5 +22,9 @@ server {
         proxy_set_header X-Forwarded-Prefix "";
         proxy_read_timeout 150s;
         proxy_send_timeout 150s;
+        # Live collaboration (R63) keeps one WebSocket per open editor; pass the upgrade through.
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $http_upgrade;
     }
 }

@@ -167,6 +167,18 @@ Redirects bleiben auf der öffentlichen HTTPS-Adresse und fremde
 `X-Forwarded-For`-Werte verändern keine Login-Quote. Ein Proxy-/Zertifikatssetup
 für die konkrete Domain ist nicht durch die Konfigurationsdatei allein erledigt.
 
+### Live-Bearbeiten hinter dem Proxy
+
+Das gemeinsame Bearbeiten (R63) hält je offenem Editor einen WebSocket unter
+`/ui/page/{id}/collab`. Der Proxy muss den Upgrade durchreichen; das
+nginx-Beispiel setzt dafür `proxy_http_version 1.1` sowie die Header
+`Upgrade` und `Connection`. Die Leerlaufzeit (`proxy_read_timeout`)
+darf kurz sein, der Browser sendet alle 15 Sekunden einen Lebenszeichen.
+Die Live-Sitzungen liegen im Speicher der Instanz: Mehrere Instanzen hinter
+einem Lastverteiler brauchen Sitzungsbindung, damit die Bearbeiter einer
+Seite dieselbe Instanz erreichen. Ohne WebSocket arbeitet der Editor nach
+wenigen Sekunden ohne Live-Anzeige weiter.
+
 Der [lokale HTTPS-Proxytest](proxy-testing.md) prüft das nginx-Beispiel mit eigenen
 Testzertifikaten, Login/Logout, Cookies, Redirects und gefälschten Forwarded-Headern
 gegen das Produktions-Compose. Er ergänzt die CI; die Abnahme am Zielhost bleibt

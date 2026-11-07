@@ -225,6 +225,9 @@ public class PageController {
         model.addAttribute("editName", draft != null ? draft.name() : page.getName());
         model.addAttribute("editContent", draft != null ? draft.content() : page.getContent());
         model.addAttribute("labelsJoined", String.join(", ", draft != null ? draft.labels() : pageLabelDao.listForPage(pid)));
+        // Name shown at this user's caret in other browsers (R63).
+        UserDetails user = userContext.getUserContext();
+        model.addAttribute("collabUser", user.isGuest() || user.getLogin() == null ? "guest" : user.getLogin());
     }
 
     /** Autosave of the editor: stores the working copy and answers with its state as JSON. */

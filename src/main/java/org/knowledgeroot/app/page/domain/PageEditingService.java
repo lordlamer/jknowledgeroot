@@ -24,6 +24,7 @@ public class PageEditingService {
     private final PageLabelDao labels;
     private final UserContext users;
     private final PageDraftDao drafts;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     /**
      * Publishes the submitted name, content and labels as a new version. The page's working copy
@@ -47,7 +48,7 @@ public class PageEditingService {
         if (Boolean.TRUE.equals(dto.getPublished())) page.setPublished(true);
         pages.updatePage(page);
         labels.setForPage(id, pageLabels);
-        drafts.delete(id);
+        clearWorkingCopy(id);
         try {
             for (var entry : updates.entrySet()) {
                 permissions.updatePermissionForPage(id, PagePermission.builder()
@@ -82,7 +83,7 @@ public class PageEditingService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Use delete or history restore");
         if (Boolean.TRUE.equals(dto.getPublished())) page.setPublished(true);
         pages.updatePage(page);
-        drafts.delete(id);
+        clearWorkingCopy(id);
         // Return persisted audit identity and creation fields, never the client-supplied values.
         return new PageDtoConverter().convertAtoB(page);
     }
@@ -116,7 +117,7 @@ public class PageEditingService {
     @Transactional
     public void discardDraft(PageId id) {
         editablePage(id, actor());
-        drafts.delete(id);
+        clearWorkingCopy(id);
     }
 
     /**
@@ -139,7 +140,13 @@ public class PageEditingService {
         page.setChangeDate(LocalDateTime.now());
         pages.updatePage(page);
         draft.ifPresent(copy -> labels.setForPage(id, copy.labels()));
+        clearWorkingCopy(id);
+    }
+
+    /** Drops the working copy and its live-collaboration log and tells open editors (R63). */
+    private void clearWorkingCopy(PageId id) {
         drafts.delete(id);
+        events.publishEvent(new WorkingCopyCleared(id));
     }
 
     private Page editablePage(PageId id, Integer actor) {
@@ -169,7 +176,7 @@ public class PageEditingService {
         page.setChangedBy(actor);
         page.setChangeDate(LocalDateTime.now());
         pages.updatePage(page);
-        drafts.delete(id);
+        clearWorkingCopy(id);
     }
 
     public Page historyPage(PageId id) {

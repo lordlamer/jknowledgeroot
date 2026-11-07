@@ -17,10 +17,11 @@
 </nav>
 
 <form th:hx-post="'/ui/page/' + ${page.pageId} + '/edit'" hx-target="#content"
-      th:attr="data-autosave='/ui/page/' + ${page.pageId} + '/draft'">
+      th:attr="data-autosave='/ui/page/' + ${page.pageId} + '/draft',data-collab='/ui/page/' + ${page.pageId} + '/collab',data-collab-user=${collabUser}">
     <input type="hidden" name="revision" th:value="${page.revision}">
     <input type="hidden" name="published" value="true" th:unless="${page.published}">
     <p class="form-text" data-autosave-status th:text="#{page.edit.autosave.hint}">Changes are saved automatically as a working copy. Readers see them after publishing.</p>
+    <p class="kr-live-status" data-live-status data-live="off" th:text="#{page.edit.live.hint}">Live editing: other editors of this page see your changes as you type.</p>
     <div class="alert alert-info kr-working-copy" th:if="${draft != null}">
         <p th:text="#{page.edit.working-copy(${#temporals.format(draft.changeDate, #messages.msg('format.datetime'))}, ${draft.changedByLogin ?: #messages.msg('page.show.guest')})}">Working copy saved … by …</p>
         <p th:if="${draftStale}" th:text="#{page.edit.working-copy.stale}">The page was published by someone else since this working copy started.</p>

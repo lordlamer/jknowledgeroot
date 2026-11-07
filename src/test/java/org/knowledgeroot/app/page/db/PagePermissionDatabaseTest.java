@@ -451,7 +451,7 @@ class PagePermissionDatabaseTest {
                 .withBean("transactionManager", DataSourceTransactionManager.class, () -> new DataSourceTransactionManager(dataSource))
                 .withBean(PageEditingService.class, () -> new PageEditingService(
                         new PageImpl(mock(FileDao.class), JdbcClient.create(dataSource)), permissions, labels, users,
-                        new PageDraftImpl(JdbcClient.create(dataSource))));
+                        new PageDraftImpl(JdbcClient.create(dataSource)), event -> { }));
     }
 
     /** {@code guestMayEditSpace} raises the default space's guest grant from view to edit, the new way to allow guest root pages. */
