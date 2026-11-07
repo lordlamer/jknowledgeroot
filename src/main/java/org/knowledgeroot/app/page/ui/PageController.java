@@ -138,6 +138,11 @@ public class PageController {
         // Prüfen der Bearbeitungsberechtigungen
         boolean canEdit = pagePermissionImpl.hasUserPermission(pid, currentUserId, PagePermission.PermissionLevel.EDIT);
         model.addAttribute("canEdit", canEdit);
+        // Editors see whether a working copy waits for publication; a draft page shows its working copy (R62).
+        PageDraft draft = canEdit ? pageEditingService.draft(pid).orElse(null) : null;
+        model.addAttribute("draft", draft);
+        model.addAttribute("draftStale", draft != null && draft.isStale(page.getRevision()));
+        model.addAttribute("pageContent", draft != null && !page.isPublished() ? draft.content() : page.getContent());
 
         // Star button — only for authenticated users
         boolean canStar = currentUserId != null;
@@ -197,17 +202,62 @@ public class PageController {
 
         model.addAttribute("page", page);
         addPermissionModel(pid, model);
-        model.addAttribute("labelsJoined", String.join(", ", pageLabelDao.listForPage(pid)));
+        addDraftModel(page, model);
 
         // trigger reload sidebar
         if(trigger != null && trigger.equals("reload-sidebar"))
             response.addHeader("HX-Trigger", "reload-sidebar");
 
         if(htmxRequest.isHtmxRequest()) {
+            response.addHeader("HX-Push-Url", "/ui/page/" + pageId + "/edit");
             return "page/edit :: body";
         }
 
         return "page/edit";
+    }
+
+    /** The editor starts from the working copy when there is one, otherwise from the published page (R62). */
+    private void addDraftModel(Page page, Model model) {
+        PageId pid = page.getPageId();
+        PageDraft draft = pageEditingService.draft(pid).orElse(null);
+        model.addAttribute("draft", draft);
+        model.addAttribute("draftStale", draft != null && draft.isStale(page.getRevision()));
+        model.addAttribute("editName", draft != null ? draft.name() : page.getName());
+        model.addAttribute("editContent", draft != null ? draft.content() : page.getContent());
+        model.addAttribute("labelsJoined", String.join(", ", draft != null ? draft.labels() : pageLabelDao.listForPage(pid)));
+    }
+
+    /** Autosave of the editor: stores the working copy and answers with its state as JSON. */
+    @PostMapping("/ui/page/{pageId}/draft")
+    @ResponseBody
+    public Map<String, Object> saveDraft(@PathVariable("pageId") Integer pageId,
+                                         @RequestParam(name = "name", required = false) String name,
+                                         @RequestParam(name = "content", required = false) String content,
+                                         @RequestParam(name = "labels", required = false) String labelsJoined,
+                                         @RequestParam(name = "revision", required = false) Long revision) {
+        PageId pid = new PageId(pageId);
+        PageDraft draft = pageEditingService.saveDraft(pid, name, content, parseLabels(labelsJoined), revision);
+        Page page = pageImpl.findById(pid);
+        Map<String, Object> state = new HashMap<>();
+        state.put("savedAt", draft.changeDate().toString());
+        state.put("savedBy", draft.changedByLogin());
+        state.put("stale", draft.isStale(page.getRevision()));
+        return state;
+    }
+
+    /** Drops the working copy and shows the editor with the published page again. */
+    @PostMapping("/ui/page/{pageId}/draft/discard")
+    public ModelAndView discardDraft(@PathVariable("pageId") Integer pageId) {
+        pageEditingService.discardDraft(new PageId(pageId));
+        return new ModelAndView("redirect:/ui/page/" + pageId + "/edit");
+    }
+
+    /** Publishes the working copy, or a draft page as it is, as a new version. */
+    @PostMapping("/ui/page/{pageId}/publish")
+    public ModelAndView publish(@PathVariable("pageId") Integer pageId,
+                                @RequestParam(name = "revision", required = false) Long revision) {
+        pageEditingService.publish(new PageId(pageId), revision);
+        return new ModelAndView("redirect:/ui/page/" + pageId + "?trigger=reload-sidebar");
     }
 
     @GetMapping("/ui/page/{pageId}/new")
@@ -316,7 +366,7 @@ public class PageController {
         Page page = pageImpl.findById(pid);
         model.addAttribute("page", page);
         addPermissionModel(pid, model);
-        model.addAttribute("labelsJoined", String.join(", ", pageLabelDao.listForPage(pid)));
+        addDraftModel(page, model);
 
         if(htmxRequest.isHtmxRequest()) {
             return "page/edit :: body";

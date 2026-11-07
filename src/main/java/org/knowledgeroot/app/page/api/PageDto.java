@@ -35,4 +35,6 @@ public class PageDto {
             (shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime changeDate;
     private Boolean deleted;
+    /** False creates or keeps a draft page; true publishes it. Null keeps the current state (new pages: published). */
+    private Boolean published;
 }

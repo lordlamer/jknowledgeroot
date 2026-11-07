@@ -105,9 +105,27 @@ class McpIntegrationTest extends McpTestSupport {
             assertEquals("<p>hello</p>", jdbc.queryForObject("SELECT content FROM page WHERE id=?", String.class, child));
             assertEquals(editorId, jdbc.queryForObject("SELECT created_by FROM page WHERE id=?", Integer.class, child));
             assertTrue(error(call(mcp, "update_page", Map.of("id", child, "revision", 7, "content", "v2"))).contains("changed"));
-            String saved = ok(call(mcp, "update_page", Map.of("id", child, "revision", 0, "content", "<p>v2</p>", "format", "html")));
-            assertEquals(1, JsonPath.<Integer>read(saved, "$.revision"));
+            // Without publish=true the save only changes the working copy (R62): no new version, readers see nothing.
+            String copied = ok(call(mcp, "update_page", Map.of("id", child, "revision", 0, "content", "<p>working copy</p>", "format", "html")));
+            assertEquals(0, JsonPath.<Integer>read(copied, "$.revision"));
+            assertTrue(JsonPath.<String>read(copied, "$.message").contains("Working copy"), copied);
+            assertEquals("<p>hello</p>", jdbc.queryForObject("SELECT content FROM page WHERE id=?", String.class, child));
+            assertEquals("<p>working copy</p>", jdbc.queryForObject("SELECT content FROM page_draft WHERE page_id=?", String.class, child));
+            assertEquals(true, JsonPath.read(ok(call(mcp, "get_page", Map.of("id", child))), "$.hasWorkingCopy"));
+            String published = ok(call(mcp, "publish_page", Map.of("id", child, "revision", 0)));
+            assertEquals(1, JsonPath.<Integer>read(published, "$.revision"));
+            assertEquals("<p>working copy</p>", jdbc.queryForObject("SELECT content FROM page WHERE id=?", String.class, child));
+            assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM page_draft WHERE page_id=?", Integer.class, child));
+            String saved = ok(call(mcp, "update_page", Map.of("id", child, "revision", 1, "content", "<p>v2</p>", "format", "html", "publish", true)));
+            assertEquals(2, JsonPath.<Integer>read(saved, "$.revision"));
             assertEquals("From Claude", jdbc.queryForObject("SELECT name FROM page WHERE id=?", String.class, child));
+            // A draft page is created for editors only and becomes visible with publish_page.
+            String drafted = ok(call(mcp, "create_page", Map.of("name", "Draft from Claude", "content", "soon", "parent", pageId, "draft", true)));
+            int draftPage = JsonPath.read(drafted, "$.id");
+            assertEquals(false, JsonPath.read(ok(call(mcp, "get_page", Map.of("id", draftPage))), "$.published"));
+            assertFalse(login(this.reader).perform(get("/api/v1/tree?parent=" + pageId)).andReturn().getResponse().getContentAsString().contains("Draft from Claude"));
+            ok(call(mcp, "publish_page", Map.of("id", draftPage, "revision", 0)));
+            assertTrue(login(this.reader).perform(get("/api/v1/tree?parent=" + pageId)).andReturn().getResponse().getContentAsString().contains("Draft from Claude"));
             ok(call(mcp, "add_comment", Map.of("page", child, "text", "Looks good")));
             assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM page_comment WHERE page_id=? AND user_id=?", Integer.class, child, editorId));
             var listed = ok(call(mcp, "list_pages", Map.of("parent", pageId)));

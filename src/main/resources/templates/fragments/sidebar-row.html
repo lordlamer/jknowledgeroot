@@ -8,6 +8,7 @@
                 data-page-id=${page.pageId}"
        hx-target="#content" hx-push-url="true"
        th:text="${page.name}">Name</a>
+    <span class="kr-pill inactive sidebar-draft" th:unless="${page.published}" th:text="#{page.draft}">Draft</span>
 
     <!-- Inline star icon — only for logged-in users -->
     <th:block th:if="${canStar}"

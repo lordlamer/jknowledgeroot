@@ -65,8 +65,26 @@
     </div>
 </header>
 
+<div class="alert alert-warning kr-working-copy" th:if="${canEdit and (!page.published or draft != null)}">
+    <p th:unless="${page.published}" th:text="#{page.show.draft.notice}">This page is a draft. It is visible only to users who may edit it.</p>
+    <p th:if="${draft != null}" th:text="#{page.show.working-copy(${#temporals.format(draft.changeDate, #messages.msg('format.datetime'))}, ${draft.changedByLogin ?: #messages.msg('page.show.guest')})}">Unpublished changes saved … by …</p>
+    <p th:if="${draftStale}" th:text="#{page.edit.working-copy.stale}">The page was published by someone else since this working copy started.</p>
+    <div style="display:flex; gap:8px; flex-wrap:wrap">
+        <form th:hx-post="'/ui/page/' + ${page.pageId} + '/publish'" hx-target="#content" style="margin:0">
+            <input type="hidden" name="revision" th:value="${page.revision}">
+            <button type="submit" class="kr-btn accent sm" th:text="#{page.show.publish}">Publish</button>
+        </form>
+        <button type="button" class="kr-btn sm"
+                th:attr="hx-get='/ui/page/' + ${page.pageId} + '/edit'" hx-target="#content" hx-push-url="true"
+                th:text="#{page.show.continue-editing}">Continue editing</button>
+        <button type="button" class="kr-btn sm" th:if="${draft != null}"
+                th:hx-post="'/ui/page/' + ${page.pageId} + '/draft/discard'" hx-target="#content"
+                th:hx-confirm="#{page.edit.discard.confirm}" th:text="#{page.edit.discard}">Discard working copy</button>
+    </div>
+</div>
+
 <section class="kr-content-area">
-    <article class="kr-content" th:utext="${page.content}">Pagecontent…</article>
+    <article class="kr-content" th:utext="${pageContent}">Pagecontent…</article>
 
     <section class="kr-attachments" th:if="${!#lists.isEmpty(files) or canEdit}" aria-labelledby="kr-attachments-title">
         <div class="kr-attachments-head">

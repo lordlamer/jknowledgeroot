@@ -48,7 +48,7 @@ public final class McpModels {
 
     public record PageDetail(int id, String name, long revision, String url, SpaceRef space, List<PageRef> breadcrumb,
                              List<String> labels, String format, String content, String changedBy, String changedAt,
-                             boolean canEdit, int comments, int attachments) {}
+                             boolean canEdit, int comments, int attachments, boolean published, boolean hasWorkingCopy) {}
 
     public record Comment(int id, String author, String createdAt, String text) {}
 

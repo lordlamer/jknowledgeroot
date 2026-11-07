@@ -32,6 +32,7 @@ class McpPages {
     private final PageLabelDao labels;
     private final PageCommentDao comments;
     private final FileDao files;
+    private final org.knowledgeroot.app.page.domain.PageDraftDao drafts;
 
     boolean canView(int pageId) {
         return pageId > 0 && permissions.hasUserPermission(new PageId(pageId), McpToolSupport.userId(), PagePermission.PermissionLevel.VIEW);
@@ -98,7 +99,8 @@ class McpPages {
         return new McpModels.PageDetail(id, page.getName(), page.getRevision(), pageUrl(id), spaceRef(page.getSpaceId()),
                 breadcrumb(id), labels.listForPage(page.getPageId()), format, McpMarkdown.render(page.getContent(), format),
                 page.getChangedByLogin(), McpModels.time(page.getChangeDate()), canEdit(id), comments.countForPage(page.getPageId()),
-                files.listFiles(FileFilter.builder().pageId(page.getPageId()).build()).size());
+                files.listFiles(FileFilter.builder().pageId(page.getPageId()).build()).size(),
+                page.isPublished(), drafts.find(page.getPageId()).isPresent());
     }
 
     static String trimName(String name) {

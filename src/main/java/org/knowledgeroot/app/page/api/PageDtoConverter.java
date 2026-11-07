@@ -24,6 +24,7 @@ public class PageDtoConverter implements Converter<Page, PageDto> {
         pageDto.setDeleted(from.getDeleted());
         pageDto.setTimeStart(from.getTimeStart());
         pageDto.setTimeEnd(from.getTimeEnd());
+        pageDto.setPublished(from.isPublished());
 
         return pageDto;
     }
@@ -45,6 +46,7 @@ public class PageDtoConverter implements Converter<Page, PageDto> {
                 .deleted(from.getDeleted())
                 .timeStart(from.getTimeStart())
                 .timeEnd(from.getTimeEnd())
+                .published(from.getPublished() == null || from.getPublished())
                 .build();
     }
 }

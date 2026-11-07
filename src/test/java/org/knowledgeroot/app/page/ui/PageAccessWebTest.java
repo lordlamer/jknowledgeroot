@@ -41,6 +41,7 @@ class PageAccessWebTest {
     @MockitoBean PageStarDao stars;
     @MockitoBean PageCommentDao comments;
     @MockitoBean PageLabelDao labels;
+    @MockitoBean org.knowledgeroot.app.page.domain.PageDraftDao drafts;
     @MockitoBean UserDao users;
     @MockitoBean GroupDao groups;
     @MockitoBean UserContext userContext;

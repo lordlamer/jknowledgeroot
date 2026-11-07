@@ -55,12 +55,13 @@ public class PageImpl implements PageDao {
         Map<String, Object> params = new HashMap<>(arguments);
         params.put("viewer", viewer);
         return jdbcClient.sql(ReadablePagesSql.CTE + """
-                SELECT id, name, revision, space_id,
+                SELECT id, name, revision, space_id, published,
                     CASE WHEN parent = 0 OR parent IN (SELECT id FROM readable_pages) THEN parent ELSE NULL END AS parent
                 FROM page WHERE id IN (SELECT id FROM readable_pages) AND
                 """ + condition).params(params).query((rs, row) -> Page.builder()
                 .pageId(new PageId(rs.getInt("id"))).name(rs.getString("name")).spaceId(rs.getInt("space_id"))
-                .revision(rs.getLong("revision")).parent(rs.getObject("parent", Integer.class)).build()).list();
+                .revision(rs.getLong("revision")).parent(rs.getObject("parent", Integer.class))
+                .published(rs.getBoolean("published")).build()).list();
     }
 
     /**
@@ -100,9 +101,10 @@ public class PageImpl implements PageDao {
                     changed_by,
                     change_date,
                     active,
-                    deleted
+                    deleted,
+                    published
                 FROM
-                    page      
+                    page
         """.formatted(visibleOnly
                 ? "CASE WHEN parent = 0 OR parent IN (SELECT id FROM readable_pages) THEN parent ELSE NULL END AS parent"
                 : "parent"));
@@ -269,6 +271,7 @@ public class PageImpl implements PageDao {
                                     .changeDate(changeDate)
                                     .active(rs.getBoolean("active"))
                                     .deleted(rs.getBoolean("deleted"))
+                                    .published(rs.getBoolean("published"))
                                     .build();
                         }
                 )
@@ -306,8 +309,9 @@ public class PageImpl implements PageDao {
                     uu.login as changed_by_login,
                     p.change_date,
                     p.active,
-                    p.deleted
-                FROM 
+                    p.deleted,
+                    p.published
+                FROM
                     page p
                 LEFT JOIN user cu ON cu.id = p.created_by
                 LEFT JOIN user uu ON uu.id = p.changed_by
@@ -361,6 +365,7 @@ public class PageImpl implements PageDao {
                                     .changeDate(changeDate)
                                     .active(rs.getBoolean("active"))
                                     .deleted(rs.getBoolean("deleted"))
+                                    .published(rs.getBoolean("published"))
                                     .build();
                         }
                 )
@@ -396,9 +401,10 @@ public class PageImpl implements PageDao {
                     create_date,
                     changed_by,
                     change_date,
-                    deleted
+                    deleted,
+                    published
                 ) VALUES (
-                    ?,?,?,?,?,?,?,?,?,?,?,?
+                    ?,?,?,?,?,?,?,?,?,?,?,?,?
                 )
                 """)
                 .params(
@@ -413,7 +419,8 @@ public class PageImpl implements PageDao {
                         page.getCreateDate(),
                         page.getChangedBy(),
                         page.getChangeDate(),
-                        page.getDeleted()
+                        page.getDeleted(),
+                        page.isPublished()
                 )
                 .update(keyHolder);
 
@@ -447,6 +454,7 @@ public class PageImpl implements PageDao {
                     changed_by = ?,
                     change_date = ?,
                     deleted = ?,
+                    published = ?,
                     revision = revision + 1
                 WHERE
                     id = ? AND revision = ?
@@ -460,6 +468,7 @@ public class PageImpl implements PageDao {
                         page.getChangedBy(),
                         page.getChangeDate(),
                         page.getDeleted(),
+                        page.isPublished(),
                         page.getPageId().value(),
                         page.getRevision()
                 )

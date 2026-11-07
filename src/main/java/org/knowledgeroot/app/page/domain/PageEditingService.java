@@ -3,6 +3,7 @@ package org.knowledgeroot.app.page.domain;
 import lombok.RequiredArgsConstructor;
 import org.knowledgeroot.app.page.api.PageDto;
 import org.knowledgeroot.app.page.api.PageDtoConverter;
+import org.knowledgeroot.app.sanitizer.Sanitizer;
 import org.knowledgeroot.app.security.context.domain.UserContext;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -21,7 +23,13 @@ public class PageEditingService {
     private final PagePermissionDao permissions;
     private final PageLabelDao labels;
     private final UserContext users;
+    private final PageDraftDao drafts;
 
+    /**
+     * Publishes the submitted name, content and labels as a new version. The page's working copy
+     * is dropped because the editor sends its full state. A draft page becomes visible to readers
+     * when {@code dto.published} is true; a published page never becomes a draft again.
+     */
     @Transactional
     public void edit(PageId id, PageDto dto, List<String> pageLabels,
                      Map<String, String> updates, List<String> deletions, List<Map<String, String>> additions) {
@@ -36,8 +44,10 @@ public class PageEditingService {
         }
         LocalDateTime now = LocalDateTime.now();
         setContent(page, dto, actor, now);
+        if (Boolean.TRUE.equals(dto.getPublished())) page.setPublished(true);
         pages.updatePage(page);
         labels.setForPage(id, pageLabels);
+        drafts.delete(id);
         try {
             for (var entry : updates.entrySet()) {
                 permissions.updatePermissionForPage(id, PagePermission.builder()
@@ -70,9 +80,66 @@ public class PageEditingService {
         if (dto.getActive() != null) page.setActive(dto.getActive());
         if (dto.getDeleted() != null && Boolean.TRUE.equals(dto.getDeleted()) != Boolean.TRUE.equals(page.getDeleted()))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Use delete or history restore");
+        if (Boolean.TRUE.equals(dto.getPublished())) page.setPublished(true);
         pages.updatePage(page);
+        drafts.delete(id);
         // Return persisted audit identity and creation fields, never the client-supplied values.
         return new PageDtoConverter().convertAtoB(page);
+    }
+
+    /**
+     * Autosave (R62): stores the editor's state as the page's working copy without a new version.
+     * {@code revision} is the page revision the editor was opened with; the first save fixes it as
+     * the base revision, later saves keep it so that a page published meanwhile is detectable.
+     */
+    @Transactional
+    public PageDraft saveDraft(PageId id, String name, String content, List<String> pageLabels, Long revision) {
+        Integer actor = actor();
+        Page page = editablePage(id, actor);
+        var dto = PageDto.builder().name(name).content(content).build();
+        PageInput.validate(dto);
+        PageInput.labels(pageLabels);
+        if (revision == null || revision < 0) throw new ResponseStatusException(HttpStatus.PRECONDITION_REQUIRED, "A revision is required");
+        if (revision > page.getRevision()) throw new ResponseStatusException(HttpStatus.CONFLICT, "Page has changed");
+        long base = drafts.find(id).map(PageDraft::baseRevision).orElse(revision);
+        drafts.save(new PageDraft(id, dto.getName(), Sanitizer.sanitize(dto.getContent()),
+                pageLabels == null ? List.of() : pageLabels, base, actor, null, LocalDateTime.now()));
+        return drafts.find(id).orElseThrow();
+    }
+
+    /** The working copy, for users who may edit the page; empty when there is none. */
+    public Optional<PageDraft> draft(PageId id) {
+        editablePage(id, actor());
+        return drafts.find(id);
+    }
+
+    @Transactional
+    public void discardDraft(PageId id) {
+        editablePage(id, actor());
+        drafts.delete(id);
+    }
+
+    /**
+     * Publishes the working copy as a new version, or makes a draft page without a working copy
+     * visible as it is. {@code revision} must match the page's current revision.
+     */
+    @Transactional
+    public void publish(PageId id, Long revision) {
+        Integer actor = actor();
+        Page page = editablePage(id, actor);
+        requireRevision(page, revision);
+        var draft = drafts.find(id);
+        if (draft.isEmpty() && page.isPublished()) throw new ResponseStatusException(HttpStatus.CONFLICT, "There is nothing to publish");
+        draft.ifPresent(copy -> {
+            page.setName(copy.name());
+            page.setContent(copy.content());
+        });
+        page.setPublished(true);
+        page.setChangedBy(actor);
+        page.setChangeDate(LocalDateTime.now());
+        pages.updatePage(page);
+        draft.ifPresent(copy -> labels.setForPage(id, copy.labels()));
+        drafts.delete(id);
     }
 
     private Page editablePage(PageId id, Integer actor) {
@@ -102,6 +169,7 @@ public class PageEditingService {
         page.setChangedBy(actor);
         page.setChangeDate(LocalDateTime.now());
         pages.updatePage(page);
+        drafts.delete(id);
     }
 
     public Page historyPage(PageId id) {

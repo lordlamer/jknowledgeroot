@@ -30,7 +30,10 @@ Website: [knowledgeroot.org](https://knowledgeroot.org) · Images: [Docker Hub](
 - **Rich-text editor** (Tiptap, MIT-licensed, no license key): headings, lists, tables,
   code blocks, quotes, links and images. Pasted HTML is sanitised in the browser and again
   on the server.
-- **History you can use.** Every save keeps a version; compare any two versions side by
+- **Autosave, working copies and drafts.** The editor saves as you type into a working
+  copy that readers never see; publishing creates the version. Pages can start as drafts
+  visible only to editors.
+- **History you can use.** Every publication keeps a version; compare any two versions side by
   side, restore an earlier one, and recover deleted pages as an administrator. Stale
   revisions are detected and your draft is preserved on a conflict.
 - **Search with filters** across all spaces you may enter, or inside one space, by label,

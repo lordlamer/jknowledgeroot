@@ -60,7 +60,7 @@ public final class ApiModels {
         static PageRef of(Page page) { return new PageRef(page.getPageId().value(), page.getName()); }
     }
 
-    public record TreeNode(int id, String name, Integer parent, long revision, boolean hasChildren, boolean starred) {}
+    public record TreeNode(int id, String name, Integer parent, long revision, boolean hasChildren, boolean starred, boolean draft) {}
 
     public record TreeResponse(PageRef parent, List<TreeNode> items, Integer nextAfter) {}
 
@@ -77,10 +77,18 @@ public final class ApiModels {
                              Integer createdBy, String createdByLogin, @JsonSerialize(using = ServerTime.class) LocalDateTime createDate,
                              Integer changedBy, String changedByLogin, @JsonSerialize(using = ServerTime.class) LocalDateTime changeDate,
                              boolean canEdit, boolean canStar, boolean starred, boolean canComment,
-                             boolean canManagePermissions, List<FileInfo> files, int commentCount) {}
+                             boolean canManagePermissions, List<FileInfo> files, int commentCount,
+                             boolean published, boolean hasWorkingCopy) {}
+
+    /** The working copy of a page (R62): autosaved editor state that readers do not see yet. */
+    public record WorkingCopy(int pageId, String name, String content, List<String> labels, long baseRevision, boolean stale,
+                              Integer changedBy, String changedByLogin, @JsonSerialize(using = ServerTime.class) LocalDateTime changeDate) {}
+
+    public record PublishInput(Long revision) {}
 
     /** {@code space} names the space of a new root page; children take the parent's space. */
-    public record PageInput(Integer parent, Integer space, String name, String content, List<String> labels, Long revision) {}
+    public record PageInput(Integer parent, Integer space, String name, String content, List<String> labels, Long revision,
+                            Boolean published) {}
 
     public record Created(int id) {}
 
@@ -155,7 +163,7 @@ public final class ApiModels {
 
     public record MoveCandidate(int id, String name) {}
 
-    public record SearchHit(int id, String name, String snippet, List<String> path, @JsonSerialize(using = ServerTime.class) LocalDateTime changeDate, SpaceRef space) {}
+    public record SearchHit(int id, String name, String snippet, List<String> path, @JsonSerialize(using = ServerTime.class) LocalDateTime changeDate, SpaceRef space, boolean draft) {}
 
     public record SearchResponse(String query, List<SearchHit> items, int start, boolean hasNext) {}
 
