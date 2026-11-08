@@ -20,15 +20,6 @@
       th:attr="data-autosave='/ui/page/' + ${page.pageId} + '/draft',data-collab='/ui/page/' + ${page.pageId} + '/collab',data-collab-user=${collabUser}">
     <input type="hidden" name="revision" th:value="${page.revision}">
     <input type="hidden" name="published" value="true" th:unless="${page.published}">
-    <p class="form-text" data-autosave-status th:text="#{page.edit.autosave.hint}">Changes are saved automatically as a working copy. Readers see them after publishing.</p>
-    <p class="kr-live-status" data-live-status data-live="off" th:text="#{page.edit.live.hint}">Live editing: other editors of this page see your changes as you type.</p>
-    <div class="alert alert-info kr-working-copy" th:if="${draft != null}">
-        <p th:text="#{page.edit.working-copy(${#temporals.format(draft.changeDate, #messages.msg('format.datetime'))}, ${draft.changedByLogin ?: #messages.msg('page.show.guest')})}">Working copy saved … by …</p>
-        <p th:if="${draftStale}" th:text="#{page.edit.working-copy.stale}">The page was published by someone else since this working copy started.</p>
-        <button type="button" class="btn btn-secondary btn-sm"
-                th:hx-post="'/ui/page/' + ${page.pageId} + '/draft/discard'" hx-target="#content"
-                th:hx-confirm="#{page.edit.discard.confirm}" th:text="#{page.edit.discard}">Discard working copy</button>
-    </div>
 
     <header class="kr-page-header">
         <div class="kr-page-title-wrap">
@@ -47,6 +38,23 @@
             <button type="submit" class="kr-btn accent" th:text="${page.published} ? #{page.edit.publish-changes} : #{page.edit.publish}">Publish changes</button>
         </div>
     </header>
+
+    <div class="kr-editor-status">
+        <div class="kr-live" data-live-status data-live="off">
+            <span class="kr-live-dot" aria-hidden="true"></span>
+            <span data-live-text th:text="#{page.edit.live.hint}">Live editing: other editors of this page see your changes as you type.</span>
+            <span class="kr-live-peers" data-live-peers></span>
+        </div>
+        <p class="kr-autosave" data-autosave-status th:text="#{page.edit.autosave.hint}">Changes are saved automatically as a working copy. Readers see them after publishing.</p>
+    </div>
+    <div class="kr-editor-notice" data-live-notice hidden></div>
+    <div class="alert kr-alert-info kr-working-copy" th:if="${draft != null}">
+        <p th:text="#{page.edit.working-copy(${#temporals.format(draft.changeDate, #messages.msg('format.datetime'))}, ${draft.changedByLogin ?: #messages.msg('page.show.guest')})}">Working copy saved … by …</p>
+        <p th:if="${draftStale}" th:text="#{page.edit.working-copy.stale}">The page was published by someone else since this working copy started.</p>
+        <button type="button" class="kr-btn sm"
+                th:hx-post="'/ui/page/' + ${page.pageId} + '/draft/discard'" hx-target="#content"
+                th:hx-confirm="#{page.edit.discard.confirm}" th:text="#{page.edit.discard}">Discard working copy</button>
+    </div>
 
     <ul class="kr-editor-tabs nav nav-tabs" id="pageTabs" role="tablist" style="list-style:none; margin:0;">
         <li class="nav-item" role="presentation">

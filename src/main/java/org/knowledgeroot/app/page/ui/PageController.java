@@ -237,9 +237,10 @@ public class PageController {
                                          @RequestParam(name = "name", required = false) String name,
                                          @RequestParam(name = "content", required = false) String content,
                                          @RequestParam(name = "labels", required = false) String labelsJoined,
-                                         @RequestParam(name = "revision", required = false) Long revision) {
+                                         @RequestParam(name = "revision", required = false) Long revision,
+                                         @RequestParam(name = "live", defaultValue = "false") boolean live) {
         PageId pid = new PageId(pageId);
-        PageDraft draft = pageEditingService.saveDraft(pid, name, content, parseLabels(labelsJoined), revision);
+        PageDraft draft = pageEditingService.saveDraft(pid, name, content, parseLabels(labelsJoined), revision, live);
         Page page = pageImpl.findById(pid);
         Map<String, Object> state = new HashMap<>();
         state.put("savedAt", draft.changeDate().toString());
@@ -298,6 +299,7 @@ public class PageController {
             @PathVariable("pageId") Integer pageId,
             @ModelAttribute PageDto pageDto,
             @RequestParam(name = "labels", required = false) String labelsJoined,
+            @RequestParam(name = "live", defaultValue = "false") boolean live,
             @RequestParam MultiValueMap<String, String> allParams
     ) {
         boolean hasPermissionChanges = allParams.keySet().stream().anyMatch(key ->
@@ -319,7 +321,7 @@ public class PageController {
         }
 
         pageEditingService.edit(pid, pageDto, parseLabels(labelsJoined),
-                permissionUpdates, permissionDeletions, permissionAdditions);
+                permissionUpdates, permissionDeletions, permissionAdditions, live);
         return new ModelAndView("redirect:/ui/page/" + pageId + "?trigger=reload-sidebar");
     }
     @PostMapping("/ui/page/new")

@@ -47,7 +47,7 @@ const ExistingBlockStyles = Extension.create({
 // Live collaboration (R63). One WebSocket per open editor relays Yjs updates and awareness
 // (carets, names) between the browsers of a page; the server stores the updates and replays them
 // to whoever joins. Frame layout: first byte = type, see CollaborationHandler on the server.
-const FRAME = { update: 0, awareness: 1, snapshot: 2, ready: 3, peerJoined: 4, snapshotRequested: 5 };
+const FRAME = { update: 0, awareness: 1, snapshot: 2, ready: 3, peerJoined: 4, snapshotRequested: 5, published: 6 };
 const CARET_COLORS = ['#2563eb', '#db2777', '#059669', '#d97706', '#7c3aed', '#dc2626', '#0891b2', '#4d7c0f'];
 const caretColor = name => CARET_COLORS[[...String(name)].reduce((sum, char) => sum + char.charCodeAt(0), 0) % CARET_COLORS.length];
 
@@ -110,6 +110,8 @@ class LiveProvider {
       this.peers();
     } else if (type === FRAME.peerJoined) {
       this.announce();
+    } else if (type === FRAME.published) {
+      this.callbacks.published(Number(view.getBigUint64(1)), new TextDecoder().decode(bytes.subarray(9)));
     } else if (type === FRAME.snapshotRequested) {
       const upTo = new Uint8Array(8);
       new DataView(upTo.buffer).setBigUint64(0, this.lastId);
@@ -133,8 +135,13 @@ class LiveProvider {
     this.send(FRAME.awareness, encodeAwarenessUpdate(this.awareness, [this.doc.clientID]));
   }
 
+  /** The other editors of the page (their caret users: name and colour), for the status line. */
   peers() {
-    this.callbacks.peers(this.awareness.getStates().size);
+    const others = [];
+    for (const [client, state] of this.awareness.getStates()) {
+      if (client !== this.doc.clientID && state && state.user) others.push(state.user);
+    }
+    this.callbacks.peers(others);
   }
 
   destroy() {
@@ -180,6 +187,9 @@ function initialize(root) {
       const livePath = form && form.dataset.collab && typeof WebSocket === 'function' ? form.dataset.collab : null;
       const user = form && form.dataset.collabUser ? form.dataset.collabUser : 'guest';
       const liveStatus = form ? form.querySelector('[data-live-status]') : null;
+      const liveText = liveStatus ? liveStatus.querySelector('[data-live-text]') : null;
+      const livePeers = liveStatus ? liveStatus.querySelector('[data-live-peers]') : null;
+      const liveNotice = form ? form.querySelector('[data-live-notice]') : null;
       let provider = null, ydoc = null, editor = null, editorLive = false;
       const starterKit = { link: { openOnClick: false, defaultProtocol: 'https', protocols: ['http', 'https', 'mailto'] } };
       const extensions = [
@@ -214,6 +224,7 @@ function initialize(root) {
             onTransaction: ({ editor }) => refresh(editor)
           });
           editorLive = live;
+          textarea.knowledgerootLiveEditing = live;
           editor.on('selectionUpdate', () => {
             heading.value = String(editor.getAttributes('heading').level || 0);
           });
@@ -230,23 +241,95 @@ function initialize(root) {
       if (livePath) {
         ydoc = new Y.Doc();
         const url = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + livePath;
-        let peerCount = 1;
+        let peerUsers = [], liveState = 'connecting', publishedText = null;
+        // Who else is here: one chip per login, coloured like that editor's caret.
+        const renderPeers = () => {
+          if (!livePeers) return;
+          livePeers.textContent = '';
+          const byName = new Map();
+          for (const peer of peerUsers) {
+            const name = peer.name || 'guest';
+            byName.set(name, { count: (byName.get(name) || { count: 0 }).count + 1, color: peer.color });
+          }
+          for (const [name, { count, color }] of byName) {
+            const chip = document.createElement('span');
+            chip.className = 'kr-live-peer';
+            chip.style.setProperty('--kr-peer', color || caretColor(name));
+            const avatar = document.createElement('span');
+            avatar.className = 'kr-live-avatar';
+            avatar.setAttribute('aria-hidden', 'true');
+            avatar.textContent = name.slice(0, 1).toUpperCase();
+            chip.append(avatar, document.createTextNode(count > 1 ? name + ' ×' + count : name));
+            livePeers.append(chip);
+          }
+        };
+        const notice = (text, action) => {
+          if (!liveNotice) return;
+          liveNotice.textContent = '';
+          liveNotice.hidden = !text;
+          if (!text) return;
+          const message = document.createElement('span');
+          message.textContent = text;
+          liveNotice.append(message);
+          if (action) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'kr-btn sm';
+            button.textContent = action.label;
+            button.addEventListener('click', action.run);
+            liveNotice.append(button);
+          }
+        };
+        const reload = () => {
+          if (window.htmx) window.htmx.ajax('GET', location.pathname, { target: '#content', swap: 'innerHTML' });
+          else location.reload();
+        };
+        // The room is gone for this browser: what is typed from now on could not be shared or saved safely.
+        const endLiveEditing = () => {
+          textarea.knowledgerootLiveEditing = false;
+          if (editor && editorLive) editor.setEditable(false);
+          if (textarea.knowledgerootAutosave) textarea.knowledgerootAutosave.stop();
+        };
         const status = state => {
+          liveState = state;
           if (liveStatus) {
-            liveStatus.dataset.live = state === 'live' ? 'on' : 'off';
-            liveStatus.textContent = state === 'live'
-              ? (peerCount > 1 ? t('collab.live-with', 'Live editing with {0} others', peerCount - 1) : t('collab.live', 'Live editing on'))
+            liveStatus.dataset.live = state === 'live' ? 'on' : state === 'connecting' ? 'connecting'
+              : (state === 'lost' || state === 'cleared') ? 'warn' : 'off';
+            (liveText || liveStatus).textContent = state === 'live'
+              ? (publishedText || (peerUsers.length
+                ? t('collab.live-with', 'Live editing with')
+                : t('collab.live', 'Live editing on. You are the only editor right now.')))
               : state === 'connecting' ? t('collab.connecting', 'Connecting live editing…')
-              : state === 'lost' ? t('collab.lost', 'You may no longer edit this page.')
-              : state === 'cleared' ? t('collab.cleared', 'The working copy was published or discarded elsewhere. Reload the editor to continue.')
+              : (state === 'lost' || state === 'cleared') ? t('collab.ended', 'Live editing ended.')
               : t('collab.offline', 'Live editing unavailable. Changes are still saved as a working copy.');
+            if (state === 'live') renderPeers();
+            else if (livePeers) livePeers.textContent = '';
+          }
+          if (state === 'lost') {
+            endLiveEditing();
+            notice(t('collab.lost', 'You may no longer edit this page.'));
+          } else if (state === 'cleared') {
+            endLiveEditing();
+            notice(t('collab.cleared', 'The working copy was discarded or the page was changed outside this editor. Reload the editor to continue.'),
+              { label: t('collab.reload', 'Reload editor'), run: reload });
           }
           // Without a live session the editor still has to open, from the working copy in the form.
           if ((state === 'offline' || state === 'lost' || state === 'cleared') && !editor) createEditor(false);
         };
         provider = new LiveProvider(url, ydoc, {
           status,
-          peers: count => { peerCount = count; if (liveStatus && liveStatus.dataset.live === 'on') status('live'); },
+          peers: users => { peerUsers = users; if (liveState === 'live') status('live'); },
+          // Someone published the shared document: this form now targets the new revision and editing goes on.
+          published: (revision, login) => {
+            if (form.elements.revision) form.elements.revision.value = String(revision);
+            form.dataset.autosaveStale = 'false';
+            const copy = form.querySelector('.kr-working-copy');
+            if (copy) copy.remove();
+            publishedText = t('collab.published', '{0} published the page at {1}. Live editing continues.', login || 'guest', new Date().toLocaleTimeString());
+            if (liveState === 'live') status('live');
+            setTimeout(() => { publishedText = null; status(liveState); }, 10000);
+            if (textarea.knowledgerootAutosave) textarea.knowledgerootAutosave.revisionChanged();
+          },
           ready: seed => {
             if (editor && !editorLive) { status('offline'); return; }
             // The first browser on an empty document seeds it from the working copy or the page. The content goes
@@ -324,7 +407,7 @@ const DEBOUNCE_MS = 2000;
 function autosave(form, textarea, editor) {
   const status = form.querySelector('[data-autosave-status]');
   const say = text => { if (status) status.textContent = text; };
-  let timer = null, dirty = false, paused = false, inFlight = null;
+  let timer = null, dirty = false, paused = false, stopped = false, inFlight = null;
   const csrf = () => {
     const token = document.querySelector('meta[name="_csrf"]');
     const header = document.querySelector('meta[name="_csrf_header"]');
@@ -337,6 +420,7 @@ function autosave(form, textarea, editor) {
       if (input) data.set(field, input.value);
     }
     data.set('content', clean(editor.getHTML()));
+    data.set('live', textarea.knowledgerootLiveEditing ? 'true' : 'false');
     return data;
   };
   const save = async keepalive => {
@@ -352,6 +436,9 @@ function autosave(form, textarea, editor) {
         method: 'POST', body: body(), keepalive, signal: controller.signal,
         headers: { 'X-Requested-With': 'fetch', ...csrf() }
       });
+      // 409 in a live session: the page was just published from the shared document and the new revision
+      // arrives over the socket, which repeats the save.
+      if (response.status === 409 && textarea.knowledgerootLiveEditing) { dirty = true; return; }
       if (!response.ok) throw new Error(String(response.status));
       const state = await response.json();
       const at = new Date(state.savedAt);
@@ -382,11 +469,15 @@ function autosave(form, textarea, editor) {
     if (inFlight) inFlight.abort();
   });
   form.addEventListener('htmx:afterRequest', event => {
-    if (event.detail.elt !== form || event.detail.successful) return;
+    if (event.detail.elt !== form || event.detail.successful || stopped) return;
     paused = false;
     if (dirty) changed();
   });
-  textarea.knowledgerootAutosave = { flush: () => { clearTimeout(timer); return save(true); } };
+  textarea.knowledgerootAutosave = {
+    flush: () => { clearTimeout(timer); return save(true); },
+    revisionChanged: () => { if (dirty && !paused) changed(); },
+    stop: () => { stopped = true; paused = true; clearTimeout(timer); timer = null; if (inFlight) inFlight.abort(); }
+  };
 }
 
 // HTMX has already collected form values here: update its parameters as well as the textarea.
@@ -395,6 +486,8 @@ document.addEventListener('htmx:configRequest', event => {
     if (event.detail.elt === textarea.form) {
       textarea.value = clean(editor.getHTML());
       event.detail.parameters[textarea.name] = textarea.value;
+      // Tells the server whether the content is the shared live document (R63).
+      event.detail.parameters.live = textarea.knowledgerootLiveEditing ? 'true' : 'false';
     }
   }
 });
@@ -414,6 +507,7 @@ document.addEventListener('htmx:beforeCleanupElement', event => {
     delete textarea.knowledgerootEditor;
     delete textarea.knowledgerootLive;
     delete textarea.knowledgerootAutosave;
+    delete textarea.knowledgerootLiveEditing;
     delete textarea.knowledgerootMounted;
   }
 });

@@ -293,8 +293,8 @@ class ApplicationSmokeIT {
             assertFalse(persisted.contains("onerror"), persisted);
             assertFalse(persisted.contains("<script"), persisted);
 
-            // Two real editor tabs edit the same live document (R63): each sees the other's text and caret,
-            // publishing in one ends the live session of the other, and the stale form is still refused.
+            // Two real editor tabs edit the same live document (R63): each sees the other's text, caret and name;
+            // publishing in one tab keeps the other editing, whose own publish then succeeds against the new revision.
             page.locator("#content a[hx-get$='/edit']").first().click();
             page.waitForSelector(".tiptap");
             page.waitForSelector("[data-live-status][data-live=on]");
@@ -303,7 +303,8 @@ class ApplicationSmokeIT {
                 second.navigate(uri(server, "/ui/page/" + pageId + "/edit").toString());
                 second.waitForSelector("[data-live-status][data-live=on]");
                 second.waitForFunction("document.querySelector('.tiptap').innerText.includes('Typed in the first tab')");
-                assertTrue(second.locator("[data-live-status]").innerText().contains("1 other"), second.locator("[data-live-status]").innerText());
+                second.waitForSelector("[data-live-peers] .kr-live-peer");
+                assertTrue(second.locator("[data-live-peers]").innerText().contains("smoke.admin"), second.locator("[data-live-peers]").innerText());
                 second.locator(".tiptap").press("End");
                 second.keyboard().type(" and continued in the second tab");
                 page.waitForFunction("document.querySelector('.tiptap').innerText.includes('continued in the second tab')");
@@ -313,17 +314,20 @@ class ApplicationSmokeIT {
                 second.locator("#content form button[type=submit]").first().click();
                 second.waitForSelector("#content a[hx-get$='/edit']");
             }
-            page.waitForFunction("document.querySelector('[data-live-status]').innerText.includes('published or discarded elsewhere')");
-            String localDraft = page.locator(".tiptap").innerHTML();
+            page.waitForFunction("document.querySelector('[data-live-status]').innerText.includes('published the page')");
+            page.waitForSelector("[data-live-status][data-live=on]");
+            page.locator(".tiptap").press("End");
+            page.keyboard().type(" and finished in the first tab");
             page.locator("#content form button[type=submit]").first().click();
-            page.waitForSelector(".kr-request-error");
-            assertTrue(page.locator(".kr-request-error").innerText().contains("page has changed"));
-            assertEquals(localDraft, page.locator(".tiptap").innerHTML());
+            page.waitForSelector("#content a[hx-get$='/edit']");
+            assertEquals(0, page.locator(".kr-request-error").count());
             String published = jdbc.queryForObject("SELECT content FROM page WHERE id=?", String.class, pageId);
-            assertTrue(published.contains("Typed in the first tab and continued in the second tab"), published);
-            assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM page_collab_update WHERE page_id=?", Integer.class, pageId));
+            assertTrue(published.contains("Typed in the first tab and continued in the second tab and finished in the first tab"), published);
+            assertTrue(jdbc.queryForObject("SELECT COUNT(*) FROM page_collab_update WHERE page_id=?", Integer.class, pageId) > 0,
+                    "the live log stays after publishing from the live editor");
             page.navigate(uri(server, "/ui/page/" + pageId + "/history").toString());
-            page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("View version")).first().click();
+            // Two live publishes left two history entries; the oldest one is the original page, which gets restored below.
+            page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("View version")).last().click();
             page.waitForSelector("article.kr-content");
             assertTrue(page.locator("article.kr-content").innerText().contains("Existing cell"));
             page.screenshot(new Page.ScreenshotOptions().setFullPage(true)

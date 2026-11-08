@@ -9,6 +9,7 @@ import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.net.http.WebSocketHandshakeException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletionException;
@@ -22,7 +23,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Live collaboration (R63) over a real port: who may open the socket, replay and relay of updates
- * and awareness, compaction, and the ways a room ends (publishing, lost permission).
+ * and awareness, compaction, publishing from the live document (the room stays), and the ways a
+ * room ends (content from outside the live document, lost permission).
  */
 class LiveCollaborationIntegrationTest extends McpTestSupport {
     @Autowired CollaborationHandler handler;
@@ -108,7 +110,7 @@ class LiveCollaborationIntegrationTest extends McpTestSupport {
         accepted.socket.sendClose(WebSocket.NORMAL_CLOSURE, "done").join();
     }
 
-    @Test void updatesAreStoredReplayedRelayedAndCompactedAndPublishingEndsTheRoom() throws Exception {
+    @Test void updatesAreStoredReplayedRelayedAndCompactedAndPublishingKeepsTheRoom() throws Exception {
         var client = signedIn(editor);
         var first = open(client, pageId, base());
         byte[] ready = first.frame();
@@ -158,9 +160,34 @@ class LiveCollaborationIntegrationTest extends McpTestSupport {
         assertArrayEquals(new byte[]{99, 98}, stored.get(0));
         assertArrayEquals(new byte[]{30}, stored.get(1));
 
-        // Publishing drops the working copy and its log and closes the room.
+        // Publishing from the live editor keeps the room: both browsers learn the new revision and the
+        // publisher, the log stays, and editing goes on.
         var session = login(editor);
-        session.perform(post("/ui/page/" + pageId + "/edit").param("name", "live").param("content", "<p>live</p>").param("revision", "0"))
+        session.perform(post("/ui/page/" + pageId + "/edit").param("name", "live").param("content", "<p>live</p>")
+                        .param("revision", "0").param("live", "true"))
+                .andExpect(status().is3xxRedirection());
+        byte[] published = first.frame();
+        assertEquals(CollaborationHandler.PUBLISHED, published[0]);
+        assertEquals(1L, Peer.id(published));
+        assertEquals(editor, new String(Peer.tail(published, 9), StandardCharsets.UTF_8));
+        assertEquals(CollaborationHandler.PUBLISHED, second.frame()[0]);
+        assertEquals(2, handler.openSessions(pageId));
+        assertEquals(2, rows(pageId));
+        // A live autosave still carrying the old revision waits for the new one; with it the working copy is saved.
+        session.perform(post("/ui/page/" + pageId + "/draft").param("name", "live").param("content", "<p>more</p>")
+                .param("revision", "0").param("live", "true")).andExpect(status().isConflict());
+        session.perform(post("/ui/page/" + pageId + "/draft").param("name", "live").param("content", "<p>more</p>")
+                .param("revision", "1").param("live", "true")).andExpect(status().isOk());
+        // Publishing that working copy from the page view keeps the room as well.
+        session.perform(post("/ui/page/" + pageId + "/publish").param("revision", "1")).andExpect(status().is3xxRedirection());
+        byte[] publishedAgain = first.frame();
+        assertEquals(CollaborationHandler.PUBLISHED, publishedAgain[0]);
+        assertEquals(2L, Peer.id(publishedAgain));
+        assertEquals(CollaborationHandler.PUBLISHED, second.frame()[0]);
+        assertEquals(2, rows(pageId));
+
+        // Content from outside the live document (an editor without live session, the API, MCP) drops the log and closes the room.
+        session.perform(post("/ui/page/" + pageId + "/edit").param("name", "live").param("content", "<p>plain</p>").param("revision", "2"))
                 .andExpect(status().is3xxRedirection());
         assertEquals(4409, first.closed());
         assertEquals(4409, second.closed());

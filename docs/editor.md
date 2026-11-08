@@ -59,7 +59,8 @@ Editor an ein Yjs-Dokument; `@tiptap/y-tiptap`, `yjs` und `y-protocols`
 (alle MIT) kommen ins Bundle. `LiveProvider` in `frontend/editor.js` ist
 der eigene Transport: ein WebSocket je Editor zu `/ui/page/{id}/collab`,
 binäre Frames mit einem Typbyte (Update, Awareness, Snapshot, Ready, Peer
-joined, Snapshot requested), beschrieben in `CollaborationHandler`. Der
+joined, Snapshot requested, Published), beschrieben in
+`CollaborationHandler`. Der
 Server (`spring-boot-starter-websocket`) hängt Updates an das Log der
 Arbeitskopie an und spielt es neuen Teilnehmern vor; beim Beitritt sagt
 das Ready-Frame, ob der Browser das Dokument aus dem Formular befüllen
@@ -70,10 +71,25 @@ Live-Modus abgeschaltet, Collaboration bringt ihre eigene mit.
 
 Der Editor wird erst nach dem Ready-Frame erzeugt; bleibt die Verbindung
 aus (acht Sekunden, fünf Verbindungsversuche), entsteht er ohne
-Live-Modus aus dem Formularinhalt. Schließt der Server mit 4403 (Recht
-verloren) oder 4409 (Arbeitskopie veröffentlicht oder verworfen), zeigt die
-Statuszeile den Grund. Das automatische Speichern (R62) läuft weiter, aber
-nur für Transaktionen, die im eigenen Browser entstanden sind; fremde
+Live-Modus aus dem Formularinhalt. Die Statusleiste (`.kr-editor-status`
+in `edit.html`, gefüllt von `editor.js`) zeigt den Zustand der Sitzung
+und je Mitbearbeiter einen Chip mit Initiale in der Cursorfarbe aus den
+Awareness-Daten.
+
+Veröffentlicht ein Browser mit Live-Sitzung (Formularfeld `live=true`,
+gesetzt von `editor.js`) oder jemand die Arbeitskopie von der
+Seitenansicht, bleibt das Log erhalten: `PageEditingService` löst
+`WorkingCopyPublished` aus, der Handler sendet nach dem Commit das
+Published-Frame (neue Revision und Login), und die Browser setzen ihr
+Revisionsfeld um. Ein Autosave mit `live=true` und veralteter Revision
+wird mit 409 beantwortet und vom Browser stillschweigend wiederholt, sobald
+die neue Revision da ist. Inhalt von außerhalb des gemeinsamen Dokuments
+(Client-API, MCP, Editor ohne Live-Sitzung, Verwerfen) löscht das Log und
+schließt den Raum mit 4409; 4403 bedeutet Recht verloren. In beiden Fällen
+wird der Editor schreibgeschützt, das automatische Speichern stoppt, und
+eine Hinweisbox nennt den Grund (bei 4409 mit „Reload editor"). Das
+automatische Speichern (R62) läuft sonst weiter, aber nur für
+Transaktionen, die im eigenen Browser entstanden sind; fremde
 Live-Änderungen speichert der Browser, der sie getippt hat.
 
 ## Build und Aktualisierung

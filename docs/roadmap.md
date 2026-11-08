@@ -1585,16 +1585,27 @@ Index.
   Awareness, Seed-Zuweisung an den ersten Browser einer leeren
   Arbeitskopie, Snapshot-Anforderung ab einem Megabyte, Rechteprüfung alle
   30 Sekunden (Schließen mit 4403), Schließen mit 4409, wenn die
-  Arbeitskopie veröffentlicht oder verworfen wird (Ereignis
-  `WorkingCopyCleared` aus `PageEditingService`). `CollaborationHandshake`
+  Arbeitskopie verworfen oder die Seite außerhalb des gemeinsamen Dokuments
+  geändert wird (Ereignis `WorkingCopyCleared` aus `PageEditingService`).
+  Veröffentlichen aus einem Live-Editor (Formularfeld `live=true`) oder
+  von der Seitenansicht behält das Log und den Raum: Ereignis
+  `WorkingCopyPublished`, Frame „Published" mit neuer Revision und Login,
+  die anderen Browser bearbeiten weiter und veröffentlichen ohne Konflikt;
+  ein Live-Autosave mit veralteter Revision wird mit 409 beantwortet und
+  wiederholt. `CollaborationHandshake`
   verlangt die eigene Herkunft und das Bearbeitungsrecht; die Sitzung kommt
   aus dem Cookie. Migration `1.0.21-live-collaboration` mit Tabelle
   `page_collab_update`, die mit der Arbeitskopie gelöscht wird;
   `PageCollabStore` mit Anhängen, Verdichten und Löschen. Im Browser
   `LiveProvider` (eigener Transport, Wiederverbindung bis fünf Mal,
   Fallback auf den Einzelmodus nach acht Sekunden), Editor erst nach dem
-  Abgleich, Statuszeile mit Teilnehmerzahl und Gründen, Autosave nur für
-  eigene Transaktionen. nginx-Beispiel mit WebSocket-Upgrade, Beschreibung
+  Abgleich, Statusleiste unter der Überschrift mit grünem Punkt, einem
+  Chip je Mitbearbeiter (Initiale in Cursorfarbe) und dem Stand des
+  automatischen Speicherns, Hinweisbox mit „Reload editor" bei 4409,
+  schreibgeschützter Editor nach 4403/4409, Autosave nur für eigene
+  Transaktionen. Fehlermeldungen von htmx-Anfragen als schließbare
+  Hinweisbox im Stil der Anwendung statt des Bootstrap-Balkens.
+  nginx-Beispiel mit WebSocket-Upgrade, Beschreibung
   in [product-functions.md](product-functions.md#gemeinsames-bearbeiten-in-echtzeit),
   [editor.md](editor.md#gemeinsames-bearbeiten-r63) und
   [production.md](production.md#live-bearbeiten-hinter-dem-proxy). Texte
@@ -1603,12 +1614,16 @@ Index.
   (Leser, fremde Herkunft, fehlende Herkunft und unbekannte Seite
   abgewiesen; Seed-Flag, Replay in Reihenfolge, Weiterreichen mit Id ohne
   Echo, Awareness ohne Speicherung, Verdichtung mit Erhalt späterer
-  Updates, Schließen mit 4409 beim Veröffentlichen samt leerem Log,
-  Übergang der Seed-Rolle, Schließen mit 4403 nach Rechteentzug);
-  `ApplicationSmokeIT` mit zwei Chromium-Tabs: zweiter Tab sieht den Text
-  des ersten und den Cursor mit Namen, Tippen in beiden ergibt denselben
-  Inhalt, Veröffentlichen im zweiten beendet die Live-Sitzung des ersten,
-  dessen veraltetes Formular weiter mit 409 abgelehnt wird. OSV-Scan mit
+  Updates, Published-Frame mit Revision und Login an beide Browser beim
+  Veröffentlichen aus dem Live-Editor und von der Seitenansicht bei
+  erhaltenem Log, 409 für ein Live-Autosave mit alter Revision, Schließen
+  mit 4409 samt leerem Log bei Inhalt von außerhalb, Übergang der
+  Seed-Rolle, Schließen mit 4403 nach Rechteentzug); `ApplicationSmokeIT`
+  mit zwei Chromium-Tabs: zweiter Tab sieht den Text des ersten, den
+  Cursor mit Namen und den Teilnehmer-Chip, Tippen in beiden ergibt
+  denselben Inhalt, Veröffentlichen im zweiten lässt den ersten
+  weiterarbeiten, dessen eigenes Veröffentlichen danach ohne 409 gelingt
+  und beide Ergänzungen enthält. OSV-Scan mit
   den neuen npm-Paketen: **352 Paketversionen, keine Treffer**.
   Vollständiges `verify` lokal: **BUILD SUCCESS, 391 Tests und der
   Chromium-Smoke-Test erfolgreich, keine Fehler oder übersprungenen Tests**;
@@ -1620,7 +1635,16 @@ Index.
   wirkt also mit Verzögerung. Awareness ist nicht persistent: Wer beitritt,
   sieht Cursor erst, wenn die anderen sich erneut melden (die Anwendung
   fordert das beim Beitritt an). Keine Lastmessung mit vielen Sockets je
-  Seite.
+  Seite. Eingaben während einer unterbrochenen Verbindung werden beim
+  Wiederverbinden nicht nachgesendet; der Browser speichert sie nur in
+  seiner Arbeitskopie.
+- **Nachtrag (8. November 2026):** Nach dem ersten Ausprobieren
+  überarbeitet: Veröffentlichen beendet die Live-Sitzung der anderen nicht
+  mehr (vorher bekamen sie 4409 und beim eigenen Veröffentlichen 409),
+  Statusleiste mit Namen der Mitbearbeiter, Hinweisboxen statt grauer
+  Textzeilen und des Bootstrap-Fehlerbalkens. Vollständiges `verify` lokal
+  danach erneut: **BUILD SUCCESS, 391 Tests und der Chromium-Smoke-Test**
+  **mit dem neuen Ablauf erfolgreich**.
 
 ### R64 – Anmeldung über OpenID Connect
 

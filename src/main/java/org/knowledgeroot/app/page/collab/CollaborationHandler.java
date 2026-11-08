@@ -7,9 +7,11 @@ import org.knowledgeroot.app.page.domain.PageId;
 import org.knowledgeroot.app.page.domain.PagePermission;
 import org.knowledgeroot.app.page.domain.PagePermissionDao;
 import org.knowledgeroot.app.page.domain.WorkingCopyCleared;
+import org.knowledgeroot.app.page.domain.WorkingCopyPublished;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
@@ -18,6 +20,7 @@ import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorato
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,16 +38,19 @@ import java.util.concurrent.ConcurrentHashMap;
  *     and this browser must seed the document from the working copy)</li>
  * <li>4 peer joined: server → browser, asks for the awareness state to be announced again</li>
  * <li>5 snapshot requested: server → browser when the log has grown</li>
+ * <li>6 published: server → browser, 8 bytes new page revision and the publisher's login (UTF-8); the
+ *     live document was published, editing continues against the new revision</li>
  * </ul>
  * One room per page keeps the open sessions; store writes and broadcasts of a page are serialised
  * on the room so that replay, ids and compaction stay in order. Permissions are rechecked every
- * half minute; publishing or discarding the working copy closes the room.
+ * half minute. Publishing from the live document keeps the room; discarding the working copy or a
+ * change from outside the live document (API, MCP, an editor without live session) closes it.
  */
 @Component
 @Slf4j
 @RequiredArgsConstructor
 public class CollaborationHandler extends BinaryWebSocketHandler {
-    public static final byte UPDATE = 0, AWARENESS = 1, SNAPSHOT = 2, READY = 3, PEER_JOINED = 4, SNAPSHOT_REQUESTED = 5;
+    public static final byte UPDATE = 0, AWARENESS = 1, SNAPSHOT = 2, READY = 3, PEER_JOINED = 4, SNAPSHOT_REQUESTED = 5, PUBLISHED = 6;
     /** Above this many stored bytes the browser that just wrote is asked for a snapshot. */
     static final long COMPACT_ABOVE_BYTES = 1024 * 1024;
     static final CloseStatus PERMISSION_LOST = new CloseStatus(4403, "You may no longer edit this page");
@@ -150,7 +156,22 @@ public class CollaborationHandler extends BinaryWebSocketHandler {
         if (session.isOpen()) session.close(CloseStatus.SERVER_ERROR);
     }
 
-    /** Publishing or discarding the working copy restarts the live document; open editors reconnect from the page. */
+    /**
+     * The live document was published (after commit, so the new revision is readable): every open
+     * editor learns the revision and the publisher and keeps editing on the same document.
+     */
+    @TransactionalEventListener(fallbackExecution = true)
+    public void onWorkingCopyPublished(WorkingCopyPublished event) {
+        Room room = rooms.get(event.pageId().value());
+        if (room == null) return;
+        byte[] login = event.login() == null ? new byte[0] : event.login().getBytes(StandardCharsets.UTF_8);
+        var frame = frame(PUBLISHED, event.revision(), login);
+        List<WebSocketSession> open;
+        synchronized (room) { open = new ArrayList<>(room.sessions.values()); }
+        for (WebSocketSession session : open) send(session, frame);
+    }
+
+    /** The working copy was discarded or replaced from outside the live document: open editors reload from the page. */
     @EventListener
     public void onWorkingCopyCleared(WorkingCopyCleared event) {
         Room room = rooms.get(event.pageId().value());
