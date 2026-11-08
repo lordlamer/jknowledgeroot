@@ -305,8 +305,10 @@ class ApplicationSmokeIT {
                 second.waitForFunction("document.querySelector('.tiptap').innerText.includes('Typed in the first tab')");
                 second.waitForSelector("[data-live-peers] .kr-live-peer");
                 assertTrue(second.locator("[data-live-peers]").innerText().contains("smoke.admin"), second.locator("[data-live-peers]").innerText());
-                // Caret to the end of the heading text (End only reaches the visual line end, Control+End the trailing paragraph).
-                second.evaluate("() => { const e = document.querySelector('textarea[data-rich-editor]').knowledgerootEditor; e.commands.focus(e.state.doc.firstChild.nodeSize - 1); }");
+                // Focus through Playwright (works for a background tab), then the caret to the end of the heading text:
+                // End only reaches the visual line end when the heading wraps, Control+End the trailing paragraph.
+                second.locator(".tiptap").focus();
+                second.evaluate("() => { const e = document.querySelector('textarea[data-rich-editor]').knowledgerootEditor; e.commands.setTextSelection(e.state.doc.firstChild.nodeSize - 1); }");
                 second.keyboard().type(" and continued in the second tab");
                 page.waitForFunction("document.querySelector('.tiptap').innerText.includes('continued in the second tab')");
                 page.waitForSelector(".tiptap .collaboration-carets__caret");
@@ -320,7 +322,8 @@ class ApplicationSmokeIT {
             }
             page.waitForFunction("document.querySelector('[data-live-status]').innerText.includes('published the page')");
             page.waitForSelector("[data-live-status][data-live=on]");
-            page.evaluate("() => { const e = document.querySelector('textarea[data-rich-editor]').knowledgerootEditor; e.commands.focus(e.state.doc.firstChild.nodeSize - 1); }");
+            page.locator(".tiptap").focus();
+            page.evaluate("() => { const e = document.querySelector('textarea[data-rich-editor]').knowledgerootEditor; e.commands.setTextSelection(e.state.doc.firstChild.nodeSize - 1); }");
             page.keyboard().type(" and finished in the first tab");
             page.locator("#content form button[type=submit]").first().click();
             page.waitForSelector("#content a[hx-get$='/edit']");
