@@ -23,6 +23,7 @@ class UserEntityConverter implements Converter<User, UserEntity> {
         userEntity.setEmail(from.getEmail());
         userEntity.setPassword(from.getPassword());
         userEntity.setAdmin(from.getAdmin());
+        userEntity.setLocalLogin(from.getLocalLogin() == null || from.getLocalLogin());
         userEntity.setActive(from.getActive());
         userEntity.setLanguage(from.getLanguage());
         userEntity.setTimezone(from.getTimezone());
@@ -45,6 +46,7 @@ class UserEntityConverter implements Converter<User, UserEntity> {
                 .email(from.getEmail())
                 .password(from.getPassword())
                 .admin(from.getAdmin())
+                .localLogin(from.getLocalLogin() == null || from.getLocalLogin())
                 .active(from.getActive())
                 .language(from.getLanguage())
                 .timezone(from.getTimezone())

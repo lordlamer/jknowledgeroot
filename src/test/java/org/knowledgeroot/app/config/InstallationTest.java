@@ -226,6 +226,8 @@ class InstallationTest {
         // R57: the never-chosen placeholder en_US becomes "automatic" (browser language).
         assertTrue(users.stream().anyMatch(user -> "en_US".equals(user.get("language"))), "fixture has the old placeholder");
         users.forEach(user -> user.put("language", ""));
+        // R64: every account that existed before single sign-on keeps its password sign-in.
+        users.forEach(user -> user.put("local_login", true));
         new ResourceDatabasePopulator(new ClassPathResource("org/springframework/session/jdbc/schema-mysql.sql"))
                 .execute(dataSource);
         var repository = sessionRepository();

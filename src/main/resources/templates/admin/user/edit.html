@@ -66,8 +66,18 @@
             <input class="form-check-input" type="checkbox" value="true" id="admin" name="admin" th:checked="${user.getAdmin()}">
             <label for="admin" style="margin:0" th:text="#{common.admin-role}">Admin</label>
         </div>
+        <div class="kr-field" style="display:flex; align-items:center; gap:8px">
+            <input type="hidden" name="localLoginPresent" value="true">
+            <input class="form-check-input" type="checkbox" value="true" id="localLogin" name="localLogin" th:checked="${user.getLocalLogin() == null or user.getLocalLogin()}">
+            <label for="localLogin" style="margin:0" th:text="#{admin.user-edit.local-login}">Allow sign-in with the local password</label>
+        </div>
+        <small th:text="#{admin.user-edit.local-login.hint}">Off: this account can only sign in through single sign-on.</small>
     </div>
 </form>
+<section class="kr-editor-pane mt-4" aria-labelledby="sso-heading" th:if="${identity != null}">
+    <h2 id="sso-heading" th:text="#{admin.user-edit.sso.heading}">Single sign-on</h2>
+    <p th:text="#{admin.user-edit.sso.linked(${identity.issuer()}, ${identity.subject()}, ${#temporals.format(identity.lastLogin(), #messages.msg('format.datetime'))})}">Linked to … as …; last sign-in ….</p>
+</section>
 <section class="kr-editor-pane mt-4" aria-labelledby="mfa-heading" th:if="${mfa != null}">
     <h2 id="mfa-heading" th:text="#{admin.user-edit.mfa.heading}">Two-factor authentication</h2>
     <p th:if="${!mfa.enrolled()}" th:text="#{admin.user-edit.mfa.inactive}">Not set up.</p>

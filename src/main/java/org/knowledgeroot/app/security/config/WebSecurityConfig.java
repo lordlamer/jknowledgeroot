@@ -33,6 +33,11 @@ public class WebSecurityConfig {
     private final UserContext userContext;
     /** Absent in slice tests without the MFA beans; then the password alone signs in. */
     private final org.springframework.beans.factory.ObjectProvider<org.knowledgeroot.app.security.mfa.SecondFactorGate> secondFactorGate;
+    /** Sign-in through an OpenID Connect provider (R64); absent in slice tests. */
+    private final org.springframework.beans.factory.ObjectProvider<org.knowledgeroot.app.security.oidc.OidcClientRegistrations> oidcRegistrations;
+    private final org.springframework.beans.factory.ObjectProvider<org.knowledgeroot.app.security.oidc.LinkedOidcUserService> oidcUsers;
+    private final org.springframework.beans.factory.ObjectProvider<org.knowledgeroot.app.security.oidc.OidcLoginSuccessHandler> oidcSuccess;
+    private final org.springframework.beans.factory.ObjectProvider<org.knowledgeroot.app.security.oidc.OidcLoginFailureHandler> oidcFailure;
 
     @Bean
     @org.springframework.core.annotation.Order(0)
@@ -54,7 +59,7 @@ public class WebSecurityConfig {
     @Bean
     protected SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         SecurityContextRepository contextRepository = securityContextRepository();
-        return http
+        http
                 .securityContext(context -> context.securityContextRepository(contextRepository))
                 .addFilterBefore(new SessionUserValidationFilter(userContext, contextRepository),
                         AnonymousAuthenticationFilter.class)
@@ -83,6 +88,7 @@ public class WebSecurityConfig {
                             "/webjars/**",
                             "/resources/**",
                             "/login",
+                            "/login/oidc",
                             "/account/forgot-password",
                             "/account/reset-password",
                             "/account/verify-email",
@@ -146,8 +152,20 @@ public class WebSecurityConfig {
                         .defaultAuthenticationEntryPointFor(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
                                 PathPatternRequestMatcher.withDefaults().matcher("/api/v1/**"))
                         .defaultAuthenticationEntryPointFor(new LoginUrlAuthenticationEntryPoint("/login"),
-                                AnyRequestMatcher.INSTANCE))
-                .build();
+                                AnyRequestMatcher.INSTANCE));
+        // OpenID Connect (R64): the provider's user ends up in the session as the same token a password sign-in
+        // produces. The registration is read lazily, so an unreachable provider does not stop the application.
+        var registrations = oidcRegistrations.getIfAvailable();
+        if (registrations != null) {
+            http.oauth2Login(login -> login
+                    .loginPage("/login")
+                    .clientRegistrationRepository(registrations)
+                    .authorizedClientService(new org.springframework.security.oauth2.client.InMemoryOAuth2AuthorizedClientService(registrations))
+                    .userInfoEndpoint(userInfo -> userInfo.oidcUserService(oidcUsers.getObject()))
+                    .successHandler(oidcSuccess.getObject())
+                    .failureHandler(oidcFailure.getObject()));
+        }
+        return http.build();
     }
 
     /** Session-backed security context storage, shared with the client API login. */

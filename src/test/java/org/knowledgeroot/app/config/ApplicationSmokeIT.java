@@ -42,8 +42,16 @@ class ApplicationSmokeIT {
     @TempDir Path files;
     private javax.net.ssl.SSLContext tls;
     private org.knowledgeroot.test.SmtpInbox inbox;
-    @org.junit.jupiter.api.BeforeEach void startInbox() throws Exception { inbox = new org.knowledgeroot.test.SmtpInbox(); }
-    @org.junit.jupiter.api.AfterEach void stopInbox() throws Exception { if (inbox != null) inbox.close(); }
+    /** The OpenID Connect provider (R64) the application is pointed at; it answers from this JVM. */
+    private org.knowledgeroot.test.FakeOidcProvider identityProvider;
+    @org.junit.jupiter.api.BeforeEach void startInbox() throws Exception {
+        inbox = new org.knowledgeroot.test.SmtpInbox();
+        identityProvider = new org.knowledgeroot.test.FakeOidcProvider("smoke-client");
+    }
+    @org.junit.jupiter.api.AfterEach void stopInbox() throws Exception {
+        if (inbox != null) inbox.close();
+        if (identityProvider != null) identityProvider.close();
+    }
 
     @Test
     void applicationStartsAndKeepsAuthenticatedJdbcSessionAfterRestart() throws Exception {
@@ -70,6 +78,7 @@ class ApplicationSmokeIT {
                 assertTrue(authenticated.headers().firstValue("location").orElseThrow().endsWith("/login/success"));
                 assertAdministrator(client, context);
                 browserEditingAndUploads(context);
+                singleSignOn(context);
                 monitoringAndDependencyRecovery(client, context);
                 var jdbc = new JdbcTemplate(new DriverManagerDataSource(database.getJdbcUrl(),
                         database.getUsername(), database.getPassword()));
@@ -172,6 +181,36 @@ class ApplicationSmokeIT {
         trust.init(keys);
         tls = javax.net.ssl.SSLContext.getInstance("TLS");
         tls.init(null, trust.getTrustManagers(), null);
+    }
+
+    /** Sign-in through the OpenID Connect provider (R64): the login page's button, the provider's redirect back, a new account. */
+    private void singleSignOn(TestServer server) {
+        identityProvider.nextUser(java.util.Map.of("sub", "smoke-sso-subject", "preferred_username", "sso.user",
+                "email", "sso.user@example.org", "email_verified", true, "given_name", "Sam", "family_name", "Single",
+                "groups", List.of("smoke-editors")));
+        try (var playwright = Playwright.create(); var browser = playwright.chromium().launch();
+             var context = browser.newContext(new Browser.NewContextOptions().setIgnoreHTTPSErrors(true).setLocale("en-US"))) {
+            var page = context.newPage();
+            page.navigate(uri(server, "/login").toString());
+            page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Sign in with Example ID")).click();
+            page.waitForURL(uri(server, "/").toString());
+            page.navigate(uri(server, "/profile").toString());
+            assertEquals("sso.user", page.locator("#login").inputValue(), "the session belongs to the new account");
+            var jdbc = new JdbcTemplate(new DriverManagerDataSource(database.getJdbcUrl(), database.getUsername(), database.getPassword()));
+            var account = jdbc.queryForMap("SELECT first_name, last_name, email, local_login FROM user WHERE login = 'sso.user'");
+            assertEquals("Sam", account.get("first_name"));
+            assertEquals("sso.user@example.org", account.get("email"));
+            assertEquals(false, account.get("local_login"), "no password sign-in for an account the provider created");
+            assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM user_identity WHERE subject = 'smoke-sso-subject'", Integer.class));
+            assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM `group` WHERE name = 'smoke-editors'", Integer.class),
+                    "unknown groups are not created unless configured");
+            // A fresh browser session signing in through the provider lands in the same account.
+            context.clearCookies();
+            page.navigate(uri(server, "/login").toString());
+            page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Sign in with Example ID")).click();
+            page.waitForURL(uri(server, "/").toString());
+            assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM user WHERE login LIKE 'sso.user%'", Integer.class));
+        }
     }
 
     private void localStorageAndUploadLimits(TestServer server) {
@@ -588,6 +627,9 @@ class ApplicationSmokeIT {
                 "--minio.url=" + (driver.equals("file") ? "invalid" : "http://" + storage.getHost() + ":" + storage.getMappedPort(org.knowledgeroot.test.StorageImage.PORT)),
                 "--minio.access-key=smoke-test-user", "--minio.secret-key=smoke-test-password",
                 "--minio.bucket=smoke-test", "--spring.main.banner-mode=off"));
+        command.addAll(List.of("--knowledgeroot.oidc.issuer=" + identityProvider.issuer(), "--knowledgeroot.oidc.client-id=smoke-client",
+                "--knowledgeroot.oidc.client-secret=smoke-client-secret", "--knowledgeroot.oidc.name=Example ID",
+                "--knowledgeroot.oidc.groups-claim=groups"));
         command.addAll(List.of("--knowledgeroot.recovery.enabled=true",
                 "--knowledgeroot.recovery.public-url=https://knowledge.example", "--knowledgeroot.recovery.from=noreply@example.org",
                 "--spring.mail.host=" + inbox.host(), "--spring.mail.port=" + inbox.port(),

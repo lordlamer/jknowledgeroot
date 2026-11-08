@@ -1,6 +1,6 @@
 # Roadmap zur Produktionsreife
 
-Stand: 7. November 2026. Grundlage ist die Code- und Build-Prüfung vom 12. September 2026.
+Stand: 8. November 2026. Grundlage ist die Code- und Build-Prüfung vom 12. September 2026.
 
 Ziel ist eine sicher betreibbare, reproduzierbar gebaute Version mit getesteten
 Zugriffsrechten, Migrationen und Wiederherstellung. Der aktuelle Stand ist noch
@@ -1468,7 +1468,7 @@ R54.
 
 ## 10. Version 1.2
 
-Stand der Planung: 7. November 2026. Version 1.1.0 ist seit dem 6. November
+Stand der Planung: 8. November 2026. Version 1.1.0 ist seit dem 6. November
 2026 freigegeben, `master` steht auf `1.2.0-SNAPSHOT`. Die Linie 1.2 bringt
 das Bearbeiten in Arbeitskopien mit automatischem Speichern und gemeinsamem
 Bearbeiten, die Anmeldung über einen externen Identitätsanbieter, Vorlagen,
@@ -1651,22 +1651,61 @@ Index.
 
 ### R64 – Anmeldung über OpenID Connect
 
-- [ ] Geplant.
+- [x] Lokal umgesetzt und geprüft am 8. November 2026.
 - **Ziel:** Benutzer melden sich wahlweise über einen externen
   Identitätsanbieter an (OIDC: Keycloak, Authentik, Entra ID, Google).
   Konten werden beim ersten Login angelegt oder über die Mailadresse mit
   bestehenden Konten verknüpft; Gruppen können aus Claims übernommen
   werden.
-- **Umsetzung:** Spring Security OAuth2-Client mit Konfiguration über
-  Umgebungsvariablen (Issuer, Client-ID/-Secret, Scopes, Claim für Gruppen);
-  Login-Seite mit Knopf je Anbieter neben dem lokalen Formular; lokales
-  Passwort und TOTP bleiben für lokale Konten; Administratoren können die
-  lokale Anmeldung für OIDC-Konten sperren. Der MCP-OAuth-Server aus R52
-  bleibt getrennt, nutzt aber dieselbe Anmeldung. Beschreibung in
-  [authentication.md](authentication.md).
-- **Abnahme:** Integrationstest gegen einen eingebetteten OIDC-Anbieter;
-  Erstanmeldung, Verknüpfung, Gruppenübernahme, gesperrte lokale Anmeldung;
-  Chromium-Ablauf; Betriebsanleitung mit Keycloak-Beispiel.
+- **Umgesetzt:** `spring-boot-starter-oauth2-client`; Konfiguration über
+  `KR_OIDC_ISSUER`, `KR_OIDC_CLIENT_ID`, `KR_OIDC_CLIENT_SECRET` (leer =
+  öffentlicher Client mit PKCE), `KR_OIDC_SCOPES`, `KR_OIDC_NAME`,
+  `KR_OIDC_GROUPS_CLAIM`, `KR_OIDC_ADMIN_GROUP`, `KR_OIDC_CREATE_GROUPS`
+  (`OidcSettings`, Prüfung beim Start). `OidcClientRegistrations` baut die
+  Registrierung beim ersten Klick aus dem Discovery-Dokument, damit ein
+  nicht erreichbarer Anbieter den Start nicht verhindert; `/login/oidc`
+  prüft den Anbieter und leitet in den Spring-Ablauf. `OidcAccountService`
+  verknüpft Issuer und `sub` (Tabelle `user_identity`, Migration
+  `1.0.22-oidc-login`) mit einem Konto: genau ein Konto mit verifizierter
+  Mailadresse wird verknüpft, sonst entsteht ein Konto mit Login aus
+  `preferred_username`, zufälligem Passwort und ausgeschalteter lokaler
+  Anmeldung (`user.local_login`); unverifizierte oder mehrdeutige
+  Mailadressen werden abgelehnt. Gruppen aus dem Claim werden bei jeder
+  Anmeldung hergestellt und zuvor übernommene wieder entzogen, das
+  Admin-Kennzeichen folgt der Admin-Gruppe. `OidcLoginSuccessHandler` legt
+  denselben `KnowledgerootUserToken` wie der Passwort-Login in die Sitzung
+  und geht über `/login/success` weiter (damit auch der MCP-OAuth-Ablauf);
+  `OidcLoginFailureHandler` protokolliert Fehlercode und -beschreibung und
+  zeigt auf der Anmeldeseite einen neutralen Hinweis. Anmeldeseite mit Knopf
+  „Sign in with …“, Benutzerformular mit Schalter „Allow sign-in with the
+  local password“ und Anzeige der verknüpften Identität, Benutzerliste mit
+  „SSO“; `DatabaseAuthentificationProvider` lehnt Passwort-Logins für
+  Konten ohne lokale Anmeldung ab (Formular und Client-API). Beschreibung
+  in [authentication.md](authentication.md#anmeldung-über-openid-connect-r64)
+  mit Keycloak-Beispiel, `deploy/production.env.example`, README,
+  [client-api.md](client-api.md). Texte in allen sechs Sprachen.
+- **Geprüft:** `OidcLoginIntegrationTest` gegen den eingebetteten Anbieter
+  `FakeOidcProvider` (Discovery, Authorization Code mit PKCE, RS256-ID-Token
+  mit Nonce, JWKS, Userinfo): Erstanmeldung legt Konto mit Name, Mail,
+  Sprache, Gruppen (bestehende beigetreten, fehlende angelegt) und
+  Admin-Kennzeichen an, zweite Anmeldung entzieht Admin und Gruppe wieder;
+  verifizierte Mailadresse verknüpft ein bestehendes Konto, das seine
+  Passwortanmeldung behält, unverifizierte wird abgelehnt und legt nichts an;
+  gesperrte lokale Anmeldung über Formular und Client-API, Umschalten durch
+  den Administrator in beide Richtungen. `ApplicationSmokeIT` meldet sich im
+  Chromium über den Knopf beim eingebetteten Anbieter an, prüft das neue
+  Konto und die zweite Anmeldung in dasselbe Konto. Vollständiges `verify`
+  lokal: **BUILD SUCCESS, 394 Tests und der Chromium-Smoke-Test erfolgreich,
+  keine Fehler oder übersprungenen Tests**; gehosteter Nachweis mit dem
+  PR-Lauf.
+- **Grenzen:** Ein Anbieter je Installation; mehrere Anbieter brauchen
+  Spring-Security-Konfiguration von Hand. Kein RP-initiated Logout beim
+  Anbieter und keine Übernahme von Profiländerungen nach der ersten
+  Anmeldung (Name, Mail bleiben lokal änderbar). Die mobile App und die
+  Client-API kennen nur Passwort-Login; SSO-Konten brauchen dort ein vom
+  Administrator freigeschaltetes lokales Passwort. Gruppen werden nur aus
+  einem flachen Claim übernommen (Keycloak-Pfade auf das letzte Segment
+  gekürzt).
 
 ### R65 – Seitenvorlagen und Anhänge über API und MCP
 

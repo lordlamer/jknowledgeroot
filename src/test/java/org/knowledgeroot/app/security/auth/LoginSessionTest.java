@@ -49,7 +49,7 @@ class LoginSessionTest {
 
     @BeforeEach
     void setUp() {
-        when(credentials.findByLogin("alice")).thenReturn(Optional.of(new CredentialRepository.Credential("1", HASH)));
+        when(credentials.findByLogin("alice")).thenReturn(Optional.of(new CredentialRepository.Credential("1", HASH, true)));
         when(credentials.replaceHash(eq("1"), eq(HASH), anyString())).thenReturn(true);
         when(credentials.isCurrent(eq("1"), anyString())).thenReturn(true);
         UserDetails account = account("1", "alice", UserDetails.Role.USER);
@@ -100,7 +100,7 @@ class LoginSessionTest {
     @ParameterizedTest
     @ValueSource(strings = {"", "not-a-hash", "$2$invalid$salt$hash", "$99$1000$salt$hash"})
     void malformedPasswordHashesFailLoginWithoutServerError(String hash) throws Exception {
-        when(credentials.findByLogin("alice")).thenReturn(Optional.of(new CredentialRepository.Credential("1", hash)));
+        when(credentials.findByLogin("alice")).thenReturn(Optional.of(new CredentialRepository.Credential("1", hash, true)));
         mvc.perform(post("/logmein").with(csrf()).param("username", "alice").param("password", PASSWORD))
                 .andExpect(redirectedUrl("/login?error"));
     }
