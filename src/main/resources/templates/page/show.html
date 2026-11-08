@@ -65,7 +65,7 @@
     </div>
 </header>
 
-<div class="alert alert-warning kr-working-copy" th:if="${canEdit and (!page.published or draft != null)}">
+<div class="alert kr-alert-warning kr-working-copy" th:if="${canEdit and (!page.published or draft != null)}">
     <p th:unless="${page.published}" th:text="#{page.show.draft.notice}">This page is a draft. It is visible only to users who may edit it.</p>
     <p th:if="${draft != null}" th:text="#{page.show.working-copy(${#temporals.format(draft.changeDate, #messages.msg('format.datetime'))}, ${draft.changedByLogin ?: #messages.msg('page.show.guest')})}">Unpublished changes saved … by …</p>
     <p th:if="${draftStale}" th:text="#{page.edit.working-copy.stale}">The page was published by someone else since this working copy started.</p>

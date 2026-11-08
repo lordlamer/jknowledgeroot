@@ -52,6 +52,49 @@ ausstehender Stand mit `keepalive` nachgereicht. Schlägt ein Autosave fehl,
 bleiben die Eingaben im Editor und die Statuszeile meldet es. Fachliche
 Beschreibung in [product-functions.md](product-functions.md#arbeitskopie-entwürfe-und-automatisches-speichern).
 
+## Gemeinsames Bearbeiten (R63)
+
+Die Tiptap-Erweiterungen Collaboration und Collaboration-Caret binden den
+Editor an ein Yjs-Dokument; `@tiptap/y-tiptap`, `yjs` und `y-protocols`
+(alle MIT) kommen ins Bundle. `LiveProvider` in `frontend/editor.js` ist
+der eigene Transport: ein WebSocket je Editor zu `/ui/page/{id}/collab`,
+binäre Frames mit einem Typbyte (Update, Awareness, Snapshot, Ready, Peer
+joined, Snapshot requested, Published), beschrieben in
+`CollaborationHandler`. Der
+Server (`spring-boot-starter-websocket`) hängt Updates an das Log der
+Arbeitskopie an und spielt es neuen Teilnehmern vor; beim Beitritt sagt
+das Ready-Frame, ob der Browser das Dokument aus dem Formular befüllen
+muss. Ab einem Megabyte Log fordert der Server den Schreiber zu einem
+Snapshot auf, der die bisherigen Updates ersetzt. Awareness (Cursor,
+Namen) wird nur weitergereicht. Die Undo-Historie von StarterKit ist im
+Live-Modus abgeschaltet, Collaboration bringt ihre eigene mit.
+
+Der Editor wird erst nach dem Ready-Frame erzeugt; bleibt die Verbindung
+aus (acht Sekunden, fünf Verbindungsversuche), entsteht er ohne
+Live-Modus aus dem Formularinhalt. Name und Labels liegen als
+Y.Map `fields` neben dem Textfragment im selben Dokument; die Eingabefelder
+schreiben hinein und übernehmen fremde Werte, sobald sie nicht fokussiert
+sind. Die Statusleiste (`.kr-editor-status`
+in `edit.html`, gefüllt von `editor.js`) zeigt den Zustand der Sitzung
+und je Mitbearbeiter einen Chip mit Initiale in der Cursorfarbe aus den
+Awareness-Daten.
+
+Veröffentlicht ein Browser mit Live-Sitzung (Formularfeld `live=true`,
+gesetzt von `editor.js`) oder jemand die Arbeitskopie von der
+Seitenansicht, bleibt das Log erhalten: `PageEditingService` löst
+`WorkingCopyPublished` aus, der Handler sendet nach dem Commit das
+Published-Frame (neue Revision und Login), und die Browser setzen ihr
+Revisionsfeld um. Ein Autosave mit `live=true` und veralteter Revision
+wird mit 409 beantwortet und vom Browser stillschweigend wiederholt, sobald
+die neue Revision da ist. Inhalt von außerhalb des gemeinsamen Dokuments
+(Client-API, MCP, Editor ohne Live-Sitzung, Verwerfen) löscht das Log und
+schließt den Raum mit 4409; 4403 bedeutet Recht verloren. In beiden Fällen
+wird der Editor schreibgeschützt, das automatische Speichern stoppt, und
+eine Hinweisbox nennt den Grund (bei 4409 mit „Reload editor"). Das
+automatische Speichern (R62) läuft sonst weiter, aber nur für
+Transaktionen, die im eigenen Browser entstanden sind; fremde
+Live-Änderungen speichert der Browser, der sie getippt hat.
+
 ## Build und Aktualisierung
 
 Der Maven-Build installiert lokal unter `target/frontend` Node **24.21.0** und npm

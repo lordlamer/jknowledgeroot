@@ -52,11 +52,22 @@
             if (!scope) return;
             scope.querySelector('.kr-request-error')?.remove();
             const alert = document.createElement('div');
-            alert.className = 'kr-request-error alert alert-danger';
+            alert.className = 'kr-request-error';
             alert.setAttribute('role', 'alert');
             const status = event.detail.xhr?.status;
             const known = [400, 403, 404, 409, 413, 428, 503].includes(status);
-            alert.textContent = known ? krT('request.' + status) : krT('request.failed', 'The request failed. Please try again.');
+            const icon = document.createElement('i');
+            icon.className = 'bi bi-exclamation-triangle-fill';
+            icon.setAttribute('aria-hidden', 'true');
+            const text = document.createElement('span');
+            text.textContent = known ? krT('request.' + status) : krT('request.failed', 'The request failed. Please try again.');
+            const close = document.createElement('button');
+            close.type = 'button';
+            close.className = 'kr-request-error-close';
+            close.setAttribute('aria-label', krT('request.dismiss', 'Dismiss'));
+            close.textContent = '\u00d7';
+            close.addEventListener('click', function () { alert.remove(); });
+            alert.append(icon, text, close);
             scope.prepend(alert);
         }
         document.addEventListener('htmx:responseError', showRequestError);

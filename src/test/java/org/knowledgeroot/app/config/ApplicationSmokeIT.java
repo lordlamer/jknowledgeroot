@@ -293,26 +293,49 @@ class ApplicationSmokeIT {
             assertFalse(persisted.contains("onerror"), persisted);
             assertFalse(persisted.contains("<script"), persisted);
 
-            // Two real editor tabs must not silently overwrite one another.
+            // Two real editor tabs edit the same live document (R63): each sees the other's text, caret and name;
+            // publishing in one tab keeps the other editing, whose own publish then succeeds against the new revision.
             page.locator("#content a[hx-get$='/edit']").first().click();
             page.waitForSelector(".tiptap");
-            page.locator(".tiptap").fill("Unsaved local draft");
+            page.waitForSelector("[data-live-status][data-live=on]");
+            page.locator(".tiptap").fill("Typed in the first tab");
             try (var second = context.newPage()) {
                 second.navigate(uri(server, "/ui/page/" + pageId + "/edit").toString());
-                second.waitForSelector(".tiptap");
-                second.locator(".tiptap").fill("Saved in another tab");
+                second.waitForSelector("[data-live-status][data-live=on]");
+                second.waitForFunction("document.querySelector('.tiptap').innerText.includes('Typed in the first tab')");
+                second.waitForSelector("[data-live-peers] .kr-live-peer");
+                assertTrue(second.locator("[data-live-peers]").innerText().contains("smoke.admin"), second.locator("[data-live-peers]").innerText());
+                // Focus through Playwright (works for a background tab), then the caret to the end of the heading text:
+                // End only reaches the visual line end when the heading wraps, Control+End the trailing paragraph.
+                second.locator(".tiptap").focus();
+                second.evaluate("() => { const e = document.querySelector('textarea[data-rich-editor]').knowledgerootEditor; e.commands.setTextSelection(e.state.doc.firstChild.nodeSize - 1); }");
+                second.keyboard().type(" and continued in the second tab");
+                page.waitForFunction("document.querySelector('.tiptap').innerText.includes('continued in the second tab')");
+                page.waitForSelector(".tiptap .collaboration-carets__caret");
+                assertTrue(page.locator(".tiptap .collaboration-carets__caret").first().innerText().contains("smoke.admin"));
+                assertTrue(page.locator(".tiptap").innerText().contains("Typed in the first tab and continued in the second tab"));
+                // Name and labels are shared as well: typed in the second tab, seen in the first.
+                second.locator("#page-labels").fill("smoke, live");
+                page.waitForFunction("document.querySelector('#page-labels').value === 'smoke, live'");
                 second.locator("#content form button[type=submit]").first().click();
                 second.waitForSelector("#content a[hx-get$='/edit']");
             }
-            String localDraft = page.locator(".tiptap").innerHTML();
+            page.waitForFunction("document.querySelector('[data-live-status]').innerText.includes('published the page')");
+            page.waitForSelector("[data-live-status][data-live=on]");
+            page.locator(".tiptap").focus();
+            page.evaluate("() => { const e = document.querySelector('textarea[data-rich-editor]').knowledgerootEditor; e.commands.setTextSelection(e.state.doc.firstChild.nodeSize - 1); }");
+            page.keyboard().type(" and finished in the first tab");
             page.locator("#content form button[type=submit]").first().click();
-            page.waitForSelector(".kr-request-error");
-            assertTrue(page.locator(".kr-request-error").innerText().contains("page has changed"));
-            assertEquals(localDraft, page.locator(".tiptap").innerHTML());
-            assertTrue(page.locator(".tiptap").innerText().contains("Unsaved local draft"));
-            assertTrue(jdbc.queryForObject("SELECT content FROM page WHERE id=?",String.class,pageId).contains("Saved in another tab"));
+            page.waitForSelector("#content a[hx-get$='/edit']");
+            assertEquals(0, page.locator(".kr-request-error").count());
+            String published = jdbc.queryForObject("SELECT content FROM page WHERE id=?", String.class, pageId);
+            assertTrue(published.contains("Typed in the first tab and continued in the second tab and finished in the first tab"), published);
+            assertEquals(List.of("live", "smoke"), jdbc.queryForList("SELECT t.name FROM tag t JOIN tag_content tc ON tc.tag_id = t.id WHERE tc.page_id=? ORDER BY t.name", String.class, pageId));
+            assertTrue(jdbc.queryForObject("SELECT COUNT(*) FROM page_collab_update WHERE page_id=?", Integer.class, pageId) > 0,
+                    "the live log stays after publishing from the live editor");
             page.navigate(uri(server, "/ui/page/" + pageId + "/history").toString());
-            page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("View version")).first().click();
+            // Two live publishes left two history entries; the oldest one is the original page, which gets restored below.
+            page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("View version")).last().click();
             page.waitForSelector("article.kr-content");
             assertTrue(page.locator("article.kr-content").innerText().contains("Existing cell"));
             page.screenshot(new Page.ScreenshotOptions().setFullPage(true)

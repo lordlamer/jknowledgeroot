@@ -1571,28 +1571,83 @@ Index.
 
 ### R63 – Gemeinsames Bearbeiten in Echtzeit
 
-- [ ] Geplant; setzt R62 voraus.
+- [x] Lokal umgesetzt und geprüft am 7. November 2026.
 - **Ziel:** Mehrere Benutzer bearbeiten dieselbe Seite gleichzeitig und
   sehen Cursor, Auswahl und Namen der anderen. Alle arbeiten auf derselben
   Arbeitskopie aus R62.
-- **Umsetzung:** Tiptap-Erweiterungen Collaboration und Collaboration-Caret
-  auf Basis von Yjs im bestehenden Frontend-Bundle. Kein zusätzlicher
-  Node-Dienst: ein Spring-WebSocket-Endpunkt je Seite reicht Yjs-Updates und
-  Awareness-Nachrichten zwischen den Browsern weiter, hängt die Updates in
-  der Datenbank an die Arbeitskopie an und liefert beim Beitritt den
-  gespeicherten Stand aus; Clients schicken periodisch einen verdichteten
-  Stand, der das Protokoll ersetzt. Die Sitzung und das Seitenrecht gelten
-  für den Socket; bei Rechteentzug oder Archivierung wird die Verbindung
-  getrennt. Ohne WebSocket (Proxy ohne Upgrade) fällt der Editor auf
-  Autosave ohne Live-Anzeige zurück. Proxy-Konfiguration für WebSocket in
-  [production.md](production.md).
-- **Abnahme:** Chromium-Test mit zwei Sitzungen: gleichzeitiges Tippen,
-  Cursor des anderen sichtbar, Veröffentlichen aus einer Sitzung, Beitritt
-  nach Verbindungsabbruch; Lasttest mit mehreren Sockets je Seite;
-  Sanitizer-Kette beim Veröffentlichen unverändert; OSV-Scan des
-  erweiterten Frontend-Lockfiles.
-- **Grenzen (geplant):** Gemeinsames Bearbeiten nur im Browser; die mobile
-  App schreibt weiter über die Arbeitskopie der Client-API.
+- **Umgesetzt:** Tiptap Collaboration und Collaboration-Caret mit Yjs im
+  Frontend-Bundle (`@tiptap/extension-collaboration`,
+  `@tiptap/extension-collaboration-caret`, `@tiptap/y-tiptap`, `yjs`,
+  `y-protocols`, alle MIT, Lizenztexte in `THIRD-PARTY.txt`). Kein
+  Node-Dienst: `spring-boot-starter-websocket`, `CollaborationHandler`
+  mit einem Raum je Seite unter `/ui/page/{id}/collab`, Replay des
+  gespeicherten Logs beim Beitritt, Weiterreichen von Updates und
+  Awareness, Seed-Zuweisung an den ersten Browser einer leeren
+  Arbeitskopie, Snapshot-Anforderung ab einem Megabyte, Rechteprüfung alle
+  30 Sekunden (Schließen mit 4403), Schließen mit 4409, wenn die
+  Arbeitskopie verworfen oder die Seite außerhalb des gemeinsamen Dokuments
+  geändert wird (Ereignis `WorkingCopyCleared` aus `PageEditingService`).
+  Veröffentlichen aus einem Live-Editor (Formularfeld `live=true`) oder
+  von der Seitenansicht behält das Log und den Raum: Ereignis
+  `WorkingCopyPublished`, Frame „Published" mit neuer Revision und Login,
+  die anderen Browser bearbeiten weiter und veröffentlichen ohne Konflikt;
+  ein Live-Autosave mit veralteter Revision wird mit 409 beantwortet und
+  wiederholt. `CollaborationHandshake`
+  verlangt die eigene Herkunft und das Bearbeitungsrecht; die Sitzung kommt
+  aus dem Cookie. Migration `1.0.21-live-collaboration` mit Tabelle
+  `page_collab_update`, die mit der Arbeitskopie gelöscht wird;
+  `PageCollabStore` mit Anhängen, Verdichten und Löschen. Im Browser
+  `LiveProvider` (eigener Transport, Wiederverbindung bis fünf Mal,
+  Fallback auf den Einzelmodus nach acht Sekunden), Editor erst nach dem
+  Abgleich, Statusleiste unter der Überschrift mit grünem Punkt, einem
+  Chip je Mitbearbeiter (Initiale in Cursorfarbe) und dem Stand des
+  automatischen Speicherns, Hinweisbox mit „Reload editor" bei 4409,
+  schreibgeschützter Editor nach 4403/4409, Autosave nur für eigene
+  Transaktionen. Fehlermeldungen von htmx-Anfragen als schließbare
+  Hinweisbox im Stil der Anwendung statt des Bootstrap-Balkens.
+  nginx-Beispiel mit WebSocket-Upgrade, Beschreibung
+  in [product-functions.md](product-functions.md#gemeinsames-bearbeiten-in-echtzeit),
+  [editor.md](editor.md#gemeinsames-bearbeiten-r63) und
+  [production.md](production.md#live-bearbeiten-hinter-dem-proxy). Texte
+  in allen sechs Sprachen.
+- **Geprüft:** `LiveCollaborationIntegrationTest` gegen einen echten Port
+  (Leser, fremde Herkunft, fehlende Herkunft und unbekannte Seite
+  abgewiesen; Seed-Flag, Replay in Reihenfolge, Weiterreichen mit Id ohne
+  Echo, Awareness ohne Speicherung, Verdichtung mit Erhalt späterer
+  Updates, Published-Frame mit Revision und Login an beide Browser beim
+  Veröffentlichen aus dem Live-Editor und von der Seitenansicht bei
+  erhaltenem Log, 409 für ein Live-Autosave mit alter Revision, Schließen
+  mit 4409 samt leerem Log bei Inhalt von außerhalb, Übergang der
+  Seed-Rolle, Schließen mit 4403 nach Rechteentzug); `ApplicationSmokeIT`
+  mit zwei Chromium-Tabs: zweiter Tab sieht den Text des ersten, den
+  Cursor mit Namen und den Teilnehmer-Chip, Tippen in beiden ergibt
+  denselben Inhalt, Veröffentlichen im zweiten lässt den ersten
+  weiterarbeiten, dessen eigenes Veröffentlichen danach ohne 409 gelingt
+  und beide Ergänzungen enthält. OSV-Scan mit
+  den neuen npm-Paketen: **352 Paketversionen, keine Treffer**.
+  Vollständiges `verify` lokal: **BUILD SUCCESS, 391 Tests und der
+  Chromium-Smoke-Test erfolgreich, keine Fehler oder übersprungenen Tests**;
+  gehosteter Nachweis mit dem PR-Lauf.
+- **Grenzen:** Live-Sitzungen liegen im Speicher einer Instanz; mehrere
+  Instanzen brauchen Sitzungsbindung. Gemeinsames Bearbeiten nur im
+  Browser, die mobile App schreibt weiter über die Arbeitskopie der
+  Client-API. Die Rechteprüfung läuft im 30-Sekunden-Takt, ein Entzug
+  wirkt also mit Verzögerung. Awareness ist nicht persistent: Wer beitritt,
+  sieht Cursor erst, wenn die anderen sich erneut melden (die Anwendung
+  fordert das beim Beitritt an). Keine Lastmessung mit vielen Sockets je
+  Seite. Eingaben während einer unterbrochenen Verbindung werden beim
+  Wiederverbinden nicht nachgesendet; der Browser speichert sie nur in
+  seiner Arbeitskopie.
+- **Nachtrag (8. November 2026):** Nach dem ersten Ausprobieren
+  überarbeitet: Veröffentlichen beendet die Live-Sitzung der anderen nicht
+  mehr (vorher bekamen sie 4409 und beim eigenen Veröffentlichen 409),
+  Statusleiste mit Namen der Mitbearbeiter, Hinweisboxen statt grauer
+  Textzeilen und des Bootstrap-Fehlerbalkens. Name und Labels sind Teil des
+  gemeinsamen Dokuments (Y.Map `fields`), damit ein Veröffentlichen aus
+  einem anderen Browser keine fremde Titel- oder Label-Änderung
+  überschreibt; der Smoke-Test prüft das mit Labels aus dem zweiten Tab. Vollständiges `verify` lokal
+  danach erneut: **BUILD SUCCESS, 391 Tests und der Chromium-Smoke-Test**
+  **mit dem neuen Ablauf erfolgreich**.
 
 ### R64 – Anmeldung über OpenID Connect
 

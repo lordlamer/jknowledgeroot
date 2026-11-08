@@ -24,6 +24,7 @@ public class PageEditingService {
     private final PageLabelDao labels;
     private final UserContext users;
     private final PageDraftDao drafts;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     /**
      * Publishes the submitted name, content and labels as a new version. The page's working copy
@@ -33,6 +34,18 @@ public class PageEditingService {
     @Transactional
     public void edit(PageId id, PageDto dto, List<String> pageLabels,
                      Map<String, String> updates, List<String> deletions, List<Map<String, String>> additions) {
+        edit(id, dto, pageLabels, updates, deletions, additions, false);
+    }
+
+    /**
+     * {@code live} says the content is the shared live document of the page (R63): the working copy
+     * is dropped, but the live log stays and open editors learn the new revision instead of being
+     * closed. Content from anywhere else (API, MCP, an editor without live session) resets the log.
+     */
+    @Transactional
+    public void edit(PageId id, PageDto dto, List<String> pageLabels,
+                     Map<String, String> updates, List<String> deletions, List<Map<String, String>> additions,
+                     boolean live) {
         Integer actor = actor();
         Page page = editablePage(id, actor);
         PageInput.validate(dto);
@@ -47,7 +60,7 @@ public class PageEditingService {
         if (Boolean.TRUE.equals(dto.getPublished())) page.setPublished(true);
         pages.updatePage(page);
         labels.setForPage(id, pageLabels);
-        drafts.delete(id);
+        if (live) published(id); else clearWorkingCopy(id);
         try {
             for (var entry : updates.entrySet()) {
                 permissions.updatePermissionForPage(id, PagePermission.builder()
@@ -82,7 +95,7 @@ public class PageEditingService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Use delete or history restore");
         if (Boolean.TRUE.equals(dto.getPublished())) page.setPublished(true);
         pages.updatePage(page);
-        drafts.delete(id);
+        clearWorkingCopy(id);
         // Return persisted audit identity and creation fields, never the client-supplied values.
         return new PageDtoConverter().convertAtoB(page);
     }
@@ -94,6 +107,16 @@ public class PageEditingService {
      */
     @Transactional
     public PageDraft saveDraft(PageId id, String name, String content, List<String> pageLabels, Long revision) {
+        return saveDraft(id, name, content, pageLabels, revision, false);
+    }
+
+    /**
+     * {@code live}: the browser is in a live session (R63). Its revision then has to be the current
+     * one; an older one means the page was just published from the live document and the browser
+     * has not received the new revision yet, so it saves again a moment later.
+     */
+    @Transactional
+    public PageDraft saveDraft(PageId id, String name, String content, List<String> pageLabels, Long revision, boolean live) {
         Integer actor = actor();
         Page page = editablePage(id, actor);
         var dto = PageDto.builder().name(name).content(content).build();
@@ -101,6 +124,7 @@ public class PageEditingService {
         PageInput.labels(pageLabels);
         if (revision == null || revision < 0) throw new ResponseStatusException(HttpStatus.PRECONDITION_REQUIRED, "A revision is required");
         if (revision > page.getRevision()) throw new ResponseStatusException(HttpStatus.CONFLICT, "Page has changed");
+        if (live && revision < page.getRevision()) throw new ResponseStatusException(HttpStatus.CONFLICT, "Page has changed");
         long base = drafts.find(id).map(PageDraft::baseRevision).orElse(revision);
         drafts.save(new PageDraft(id, dto.getName(), Sanitizer.sanitize(dto.getContent()),
                 pageLabels == null ? List.of() : pageLabels, base, actor, null, LocalDateTime.now()));
@@ -116,7 +140,7 @@ public class PageEditingService {
     @Transactional
     public void discardDraft(PageId id) {
         editablePage(id, actor());
-        drafts.delete(id);
+        clearWorkingCopy(id);
     }
 
     /**
@@ -139,7 +163,20 @@ public class PageEditingService {
         page.setChangeDate(LocalDateTime.now());
         pages.updatePage(page);
         draft.ifPresent(copy -> labels.setForPage(id, copy.labels()));
+        // The working copy is the saved state of the live document, so the live log stays valid.
+        published(id);
+    }
+
+    /** Drops the working copy and its live-collaboration log and tells open editors (R63). */
+    private void clearWorkingCopy(PageId id) {
         drafts.delete(id);
+        events.publishEvent(new WorkingCopyCleared(id));
+    }
+
+    /** Drops the working copy after a publish from the live document; open editors get the new revision (R63). */
+    private void published(PageId id) {
+        drafts.deleteKeepingLog(id);
+        events.publishEvent(new WorkingCopyPublished(id, pages.findById(id).getRevision(), users.getUserContext().getLogin()));
     }
 
     private Page editablePage(PageId id, Integer actor) {
@@ -169,7 +206,7 @@ public class PageEditingService {
         page.setChangedBy(actor);
         page.setChangeDate(LocalDateTime.now());
         pages.updatePage(page);
-        drafts.delete(id);
+        clearWorkingCopy(id);
     }
 
     public Page historyPage(PageId id) {

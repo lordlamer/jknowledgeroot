@@ -11,3 +11,6 @@
 .kr-rich-editor .tiptap .selectedCell { background: #dbeafe; color: #172554; }
 .kr-rich-editor .tiptap pre { white-space: pre-wrap; background: #18212c; color: #f0f4f8; padding: 12px; border-radius: 4px; }
 .kr-rich-editor .tiptap blockquote { border-left: 3px solid #aab1bb; padding-left: 16px; }
+/* Live collaboration (R63): carets and selections of the other editors, drawn by y-tiptap. */
+.kr-rich-editor .collaboration-carets__caret { position: relative; margin-left: -1px; margin-right: -1px; border-left: 1px solid; border-right: 1px solid; word-break: normal; pointer-events: none; }
+.kr-rich-editor .collaboration-carets__label { position: absolute; top: -1.4em; left: -1px; font-size: 11px; font-style: normal; font-weight: 600; line-height: normal; user-select: none; color: #fff; padding: 1px 5px; border-radius: 3px; white-space: nowrap; }
