@@ -36,6 +36,9 @@ public class UserEntity {
     @Column(name = "admin", nullable = false)
     private Boolean admin;
 
+    @Column(name = "local_login", nullable = false)
+    private Boolean localLogin;
+
     @Column(name = "language", nullable = false)
     private String language;
 

@@ -170,6 +170,79 @@ leitet jeden Aufruf außer `/mfa`, Abmelden und statischen Ressourcen auf
 Die Passwortwiederherstellung per E-Mail umgeht den zweiten Faktor nicht: Nach
 dem Zurücksetzen gilt beim nächsten Login dieselbe Prüfung.
 
+## Anmeldung über OpenID Connect (R64)
+
+Neben dem lokalen Passwort kann sich ein Benutzer über einen externen
+Identitätsanbieter anmelden (Keycloak, Authentik, Entra ID, Google oder jeder
+andere Anbieter mit OpenID-Connect-Discovery). Die Anmeldeseite zeigt dann unter
+dem Passwortformular den Knopf „Sign in with …“. Technisch ist die Anwendung
+ein OAuth2-Client von Spring Security (Authorization Code; mit leerem Secret ein
+öffentlicher Client mit PKCE); die Registrierung entsteht beim ersten Klick aus
+dem Discovery-Dokument des Anbieters, nicht beim Start. Ist der Anbieter nicht
+erreichbar, startet die Anwendung trotzdem, und die Anmeldeseite meldet den
+Fehlschlag.
+
+| Einstellung | Bedeutung |
+| --- | --- |
+| `KR_OIDC_ISSUER` | Issuer-URL des Anbieters, zum Beispiel `https://id.example.org/realms/firma`; leer = aus |
+| `KR_OIDC_CLIENT_ID`, `KR_OIDC_CLIENT_SECRET` | Zugangsdaten des beim Anbieter angelegten Clients; ohne Secret PKCE |
+| `KR_OIDC_SCOPES` | Standard `openid,profile,email`; `openid` ist Pflicht |
+| `KR_OIDC_NAME` | Beschriftung des Knopfes, Standard „Single sign-on“ |
+| `KR_OIDC_GROUPS_CLAIM` | Claim mit den Gruppen des Benutzers (zum Beispiel `groups`); leer = keine Übernahme |
+| `KR_OIDC_ADMIN_GROUP` | Gruppe aus dem Claim, deren Mitglieder Administratoren sind; setzt bei jeder Anmeldung |
+| `KR_OIDC_CREATE_GROUPS` | `true`: unbekannte Gruppen aus dem Claim anlegen; Standard: überspringen |
+
+Beim Anbieter ist als Redirect-URI `https://<host>/login/oauth2/code/oidc`
+einzutragen. Die Anwendung bildet diese Adresse aus der Anfrage; hinter einem
+Proxy müssen die Forwarded-Header vertraut werden (siehe
+[production.md](production.md#https-proxy-vertrauen-und-cookies)).
+
+**Kontenzuordnung.** Die Identität ist das Paar aus Issuer und `sub` und wird in
+`user_identity` gespeichert (Migration `1.0.22-oidc-login`). Bei der ersten
+Anmeldung sucht die Anwendung ein Konto mit derselben Mailadresse, sofern der
+Anbieter sie als verifiziert meldet (`email_verified` nicht `false`); genau ein
+Treffer wird verknüpft, mehrere Treffer oder ein bereits verknüpftes Konto führen
+zur Ablehnung. Ohne Treffer entsteht ein neues Konto: Login aus
+`preferred_username` (bereinigt auf Kleinbuchstaben, Ziffern und `. _ @ -`,
+bei Kollision mit Zähler), Name aus `given_name`/`family_name` oder `name`,
+Sprache aus `locale`, ein zufälliges, niemandem bekanntes Passwort und
+**lokale Anmeldung aus**. Eine unverifizierte Mailadresse verhindert das Anlegen.
+Die Zuordnung erfolgt in einer Transaktion; abgelehnte Anmeldungen landen mit
+Grund im Log (`LinkedOidcUserService`, `OidcLoginFailureHandler`) und auf der
+Anmeldeseite mit einem neutralen Hinweis.
+
+**Gruppen und Admin.** Ist `KR_OIDC_GROUPS_CLAIM` gesetzt und der Claim im
+ID-Token oder Userinfo vorhanden, werden bei jeder Anmeldung die Mitgliedschaften
+in den genannten lokalen Gruppen (Namensvergleich ohne Groß-/Kleinschreibung,
+bei Keycloak-Pfaden zählt das letzte Segment) hergestellt. Gruppen, die der
+Anbieter bei der vorherigen Anmeldung genannt hat und jetzt nicht mehr, werden
+wieder entzogen; von Hand vergebene Mitgliedschaften in anderen Gruppen bleiben.
+Mit `KR_OIDC_ADMIN_GROUP` folgt das Admin-Kennzeichen der Mitgliedschaft in
+dieser Gruppe. Fehlt der Claim in einem Token, bleibt alles unverändert.
+
+**Lokale Anmeldung.** Die Spalte `user.local_login` entscheidet, ob ein Konto
+sich mit Passwort anmelden darf (Formular und Client-API). Konten aus der
+SSO-Anmeldung starten mit „aus“; Administratoren schalten es im Benutzerformular
+um („Allow sign-in with the local password“) und sehen dort die verknüpfte
+Identität, die Benutzerliste zeigt „SSO“. Ein lokales Konto, das per Mailadresse
+verknüpft wurde, behält seine Passwortanmeldung. Der zweite Faktor gilt nur für
+Passwortanmeldungen; bei SSO ist er Sache des Anbieters. Der
+[MCP-OAuth-Server](mcp.md) nutzt dieselbe Anmeldeseite, ein Assistent kann also
+auch über SSO verbunden werden. Ein Abmelden beim Anbieter (RP-initiated logout)
+löst die Anwendung nicht aus.
+
+**Keycloak-Beispiel.** Client `knowledgeroot` mit Client authentication an,
+Standard flow, Valid redirect URI `https://wiki.example.org/login/oauth2/code/oidc`;
+Client scope mit Mapper „Group Membership“ (Token Claim Name `groups`, Full group
+path aus) und Mapper für `email`, `email_verified`, `preferred_username`.
+Umgebung: `KR_OIDC_ISSUER=https://id.example.org/realms/firma`,
+`KR_OIDC_CLIENT_ID=knowledgeroot`, `KR_OIDC_CLIENT_SECRET=…`,
+`KR_OIDC_GROUPS_CLAIM=groups`, `KR_OIDC_ADMIN_GROUP=wiki-admins`.
+
+Geprüft mit `OidcLoginIntegrationTest` gegen einen eingebetteten Anbieter
+(`FakeOidcProvider`: Discovery, Authorization Code, RS256-ID-Token, JWKS,
+Userinfo) und dem Chromium-Ablauf in `ApplicationSmokeIT`.
+
 ## Prüfungen und verbleibende Arbeit
 
 Tests prüfen moderne und alte Hashes, Salt, Leerzeichen/Unicode, Eingabegrenzen,

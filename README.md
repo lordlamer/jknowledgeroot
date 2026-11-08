@@ -35,6 +35,9 @@ Website: [knowledgeroot.org](https://knowledgeroot.org) · Images: [Docker Hub](
   visible only to editors.
 - **Live collaboration.** Several people edit the same page at once and see each other's
   carets and changes as they type (Yjs over one WebSocket per editor, no extra service).
+- **Single sign-on.** Sign in through any OpenID Connect provider (Keycloak, Authentik,
+  Entra ID, Google); accounts are created or linked by verified e-mail on first sign-in,
+  groups and the admin role can follow a claim.
 - **History you can use.** Every publication keeps a version; compare any two versions side by
   side, restore an earlier one, and recover deleted pages as an administrator. Stale
   revisions are detected and your draft is preserved on a conflict.

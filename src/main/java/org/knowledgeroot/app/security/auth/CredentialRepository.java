@@ -11,13 +11,14 @@ import java.util.Optional;
 public class CredentialRepository {
     private final JdbcTemplate jdbc;
 
-    public record Credential(String userId, String hash) {
+    /** {@code localLogin} false: the account signs in through single sign-on only (R64). */
+    public record Credential(String userId, String hash, boolean localLogin) {
         @Override public String toString() { return "Credential[redacted]"; }
     }
 
     public Optional<Credential> findByLogin(String login) {
-        var matches = jdbc.query("SELECT id, password FROM user WHERE BINARY LOWER(login) = ? AND active = 1 AND deleted = 0",
-                (rs, row) -> new Credential(rs.getString("id"), rs.getString("password")), login);
+        var matches = jdbc.query("SELECT id, password, local_login FROM user WHERE BINARY LOWER(login) = ? AND active = 1 AND deleted = 0",
+                (rs, row) -> new Credential(rs.getString("id"), rs.getString("password"), rs.getBoolean("local_login")), login);
         // Ambiguous login names must never select an arbitrary account.
         return matches.size() == 1 ? Optional.of(matches.getFirst()) : Optional.empty();
     }
@@ -28,8 +29,8 @@ public class CredentialRepository {
     }
 
     public Optional<Credential> findById(String id) {
-        return jdbc.query("SELECT id, password FROM user WHERE id = ? AND active = 1 AND deleted = 0",
-                (rs, row) -> new Credential(rs.getString("id"), rs.getString("password")), id).stream().findFirst();
+        return jdbc.query("SELECT id, password, local_login FROM user WHERE id = ? AND active = 1 AND deleted = 0",
+                (rs, row) -> new Credential(rs.getString("id"), rs.getString("password"), rs.getBoolean("local_login")), id).stream().findFirst();
     }
 
     public boolean changePassword(String id, String expected, String replacement) {
