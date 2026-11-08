@@ -266,7 +266,10 @@ des automatischen Speicherns.
   Arbeitskopie übernimmt den Inhalt des Formulars. Der Editor erscheint
   erst nach dem Abgleich, damit niemand auf einer leeren Seite tippt.
   Die Zusammenführung läuft im Browser (Yjs); der Server reicht die
-  Änderungen durch und speichert sie, ohne sie zu interpretieren.
+  Änderungen durch und speichert sie, ohne sie zu interpretieren. Auch
+  Name und Labels der Seite sind Teil des gemeinsamen Dokuments: Was einer
+  dort ändert, erscheint bei den anderen im Feld (kurz grün umrandet), und
+  jedes Veröffentlichen nimmt die gemeinsamen Werte.
   Rückgängig und Wiederholen betreffen nur die eigenen Eingaben.
 - **Zugang:** Der Socket verlangt dieselbe Sitzung wie der Editor, das
   Bearbeitungsrecht an der Seite und die eigene Herkunft der Anwendung;

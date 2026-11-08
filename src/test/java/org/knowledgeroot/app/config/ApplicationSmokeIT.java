@@ -311,6 +311,9 @@ class ApplicationSmokeIT {
                 page.waitForSelector(".tiptap .collaboration-carets__caret");
                 assertTrue(page.locator(".tiptap .collaboration-carets__caret").first().innerText().contains("smoke.admin"));
                 assertTrue(page.locator(".tiptap").innerText().contains("Typed in the first tab and continued in the second tab"));
+                // Name and labels are shared as well: typed in the second tab, seen in the first.
+                second.locator("#page-labels").fill("smoke, live");
+                page.waitForFunction("document.querySelector('#page-labels').value === 'smoke, live'");
                 second.locator("#content form button[type=submit]").first().click();
                 second.waitForSelector("#content a[hx-get$='/edit']");
             }
@@ -323,6 +326,7 @@ class ApplicationSmokeIT {
             assertEquals(0, page.locator(".kr-request-error").count());
             String published = jdbc.queryForObject("SELECT content FROM page WHERE id=?", String.class, pageId);
             assertTrue(published.contains("Typed in the first tab and continued in the second tab and finished in the first tab"), published);
+            assertEquals(List.of("live", "smoke"), jdbc.queryForList("SELECT t.name FROM tag t JOIN tag_content tc ON tc.tag_id = t.id WHERE tc.page_id=? ORDER BY t.name", String.class, pageId));
             assertTrue(jdbc.queryForObject("SELECT COUNT(*) FROM page_collab_update WHERE page_id=?", Integer.class, pageId) > 0,
                     "the live log stays after publishing from the live editor");
             page.navigate(uri(server, "/ui/page/" + pageId + "/history").toString());

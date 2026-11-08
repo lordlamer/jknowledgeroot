@@ -71,7 +71,10 @@ Live-Modus abgeschaltet, Collaboration bringt ihre eigene mit.
 
 Der Editor wird erst nach dem Ready-Frame erzeugt; bleibt die Verbindung
 aus (acht Sekunden, fünf Verbindungsversuche), entsteht er ohne
-Live-Modus aus dem Formularinhalt. Die Statusleiste (`.kr-editor-status`
+Live-Modus aus dem Formularinhalt. Name und Labels liegen als
+Y.Map `fields` neben dem Textfragment im selben Dokument; die Eingabefelder
+schreiben hinein und übernehmen fremde Werte, sobald sie nicht fokussiert
+sind. Die Statusleiste (`.kr-editor-status`
 in `edit.html`, gefüllt von `editor.js`) zeigt den Zustand der Sitzung
 und je Mitbearbeiter einen Chip mit Initiale in der Cursorfarbe aus den
 Awareness-Daten.

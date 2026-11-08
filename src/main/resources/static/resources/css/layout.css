@@ -841,6 +841,8 @@ body.kr-dark .kr-pill.admin { background: #2d1414; color: #fca5a5; }
     font-weight: 600;
 }
 .kr-autosave { margin: 0; }
+/* A form field that just took a value from another live editor. */
+.form-control.kr-field-remote { box-shadow: 0 0 0 3px rgba(22, 163, 74, .25); transition: box-shadow .6s; }
 .kr-editor-notice {
     display: flex;
     align-items: center;

@@ -1642,7 +1642,10 @@ Index.
   überarbeitet: Veröffentlichen beendet die Live-Sitzung der anderen nicht
   mehr (vorher bekamen sie 4409 und beim eigenen Veröffentlichen 409),
   Statusleiste mit Namen der Mitbearbeiter, Hinweisboxen statt grauer
-  Textzeilen und des Bootstrap-Fehlerbalkens. Vollständiges `verify` lokal
+  Textzeilen und des Bootstrap-Fehlerbalkens. Name und Labels sind Teil des
+  gemeinsamen Dokuments (Y.Map `fields`), damit ein Veröffentlichen aus
+  einem anderen Browser keine fremde Titel- oder Label-Änderung
+  überschreibt; der Smoke-Test prüft das mit Labels aus dem zweiten Tab. Vollständiges `verify` lokal
   danach erneut: **BUILD SUCCESS, 391 Tests und der Chromium-Smoke-Test**
   **mit dem neuen Ablauf erfolgreich**.
 

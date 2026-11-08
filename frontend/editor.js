@@ -241,6 +241,31 @@ function initialize(root) {
       if (livePath) {
         ydoc = new Y.Doc();
         const url = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + livePath;
+        // Name and labels are shared too (a Y.Map next to the text), so a publish from any browser carries the
+        // values everyone sees. A field someone is typing in takes a remote value when it loses focus.
+        const sharedFields = ydoc.getMap('fields');
+        const fieldOrigin = { field: true };
+        const sharedInputs = ['name', 'labels'].map(key => [key, form.elements[key]]).filter(([, input]) => input && input.tagName === 'INPUT');
+        const pendingFields = new Map();
+        const applyField = (key, input) => {
+          const value = sharedFields.get(key);
+          if (typeof value !== 'string' || value === input.value) return;
+          if (document.activeElement === input) { pendingFields.set(key, true); return; }
+          input.value = value;
+          input.classList.add('kr-field-remote');
+          setTimeout(() => input.classList.remove('kr-field-remote'), 1500);
+        };
+        for (const [key, input] of sharedInputs) {
+          input.addEventListener('input', () => {
+            if (!textarea.knowledgerootLiveEditing) return;
+            ydoc.transact(() => sharedFields.set(key, input.value), fieldOrigin);
+          });
+          input.addEventListener('blur', () => { if (pendingFields.delete(key)) applyField(key, input); });
+        }
+        sharedFields.observe(event => {
+          if (event.transaction.origin === fieldOrigin) return;
+          for (const [key, input] of sharedInputs) if (event.keysChanged.has(key)) applyField(key, input);
+        });
         let peerUsers = [], liveState = 'connecting', publishedText = null;
         // Who else is here: one chip per login, coloured like that editor's caret.
         const renderPeers = () => {
@@ -339,9 +364,14 @@ function initialize(root) {
               const body = new window.DOMParser().parseFromString(clean(textarea.value), 'text/html').body;
               const parsed = ProseMirrorDOMParser.fromSchema(getSchema(buildExtensions(true))).parse(body);
               const fragment = ydoc.getXmlFragment('default');
-              ydoc.transact(() => { fragment.delete(0, fragment.length); prosemirrorToYXmlFragment(parsed, fragment); });
+              ydoc.transact(() => {
+                fragment.delete(0, fragment.length);
+                prosemirrorToYXmlFragment(parsed, fragment);
+                for (const [key, input] of sharedInputs) sharedFields.set(key, input.value);
+              }, fieldOrigin);
             }
             createEditor(true);
+            for (const [key, input] of sharedInputs) applyField(key, input);
           }
         });
         textarea.knowledgerootLive = provider;
