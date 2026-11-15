@@ -83,22 +83,24 @@ public class PageImpl implements PageDao {
         return search(pageFilter, viewer, true);
     }
 
-    /** A page matches the boolean query in title or content, in a label, or in the text of an attachment (R68). */
-    private static final String FULLTEXT_MATCH = """
-            (MATCH(name, content) AGAINST(:fulltext IN BOOLEAN MODE)
-             OR id IN (SELECT tc.page_id FROM tag_content tc JOIN tag t ON t.id = tc.tag_id WHERE MATCH(t.name) AGAINST(:fulltext IN BOOLEAN MODE))
-             OR id IN (SELECT f.page_id FROM file f JOIN file_text ft ON ft.file_id = f.id WHERE f.deleted = 0 AND MATCH(ft.text) AGAINST(:fulltext IN BOOLEAN MODE)))""";
+    /**
+     * Label hits and attachment hits as sets the database materialises once per query (R68); correlated
+     * subqueries per candidate row or an IN (... UNION ...) made the ranking orders of magnitude slower.
+     */
+    private static final String FULLTEXT_JOIN = """
+            LEFT JOIN (SELECT DISTINCT tc.page_id FROM tag_content tc JOIN tag t ON t.id = tc.tag_id
+                       WHERE MATCH(t.name) AGAINST(:fulltext IN BOOLEAN MODE)) label_hit ON label_hit.page_id = page.id
+            LEFT JOIN (SELECT f.page_id, MIN(f.id) AS file_id FROM file f JOIN file_text ft ON ft.file_id = f.id
+                       WHERE f.deleted = 0 AND MATCH(ft.text) AGAINST(:fulltext IN BOOLEAN MODE) GROUP BY f.page_id) search_hit
+                   ON search_hit.page_id = page.id""";
+    /** A page matches in title or content, in a label, or in the text of an attachment. */
+    private static final String FULLTEXT_MATCH = "(MATCH(name, content) AGAINST(:fulltext IN BOOLEAN MODE) OR label_hit.page_id IS NOT NULL OR search_hit.file_id IS NOT NULL)";
     /** Ranking tiers: a title hit first, then a label hit, then content relevance, then a hit only in an attachment. */
-    private static final String FULLTEXT_SCORE = """
-            (MATCH(name) AGAINST(:fulltext IN BOOLEAN MODE) > 0) DESC,
-            EXISTS (SELECT 1 FROM tag_content tc JOIN tag t ON t.id = tc.tag_id WHERE tc.page_id = page.id AND MATCH(t.name) AGAINST(:fulltext IN BOOLEAN MODE)) DESC,
-            MATCH(name, content) AGAINST(:fulltext IN BOOLEAN MODE) DESC,
-            EXISTS (SELECT 1 FROM file f JOIN file_text ft ON ft.file_id = f.id WHERE f.page_id = page.id AND f.deleted = 0 AND MATCH(ft.text) AGAINST(:fulltext IN BOOLEAN MODE)) DESC""";
-    private static final String FULLTEXT_ATTACHMENT = """
-            (SELECT f.id FROM file f JOIN file_text ft ON ft.file_id = f.id WHERE f.page_id = page.id AND f.deleted = 0
-               AND MATCH(ft.text) AGAINST(:fulltext IN BOOLEAN MODE) ORDER BY f.id LIMIT 1) AS search_attachment_id,
-            (SELECT f.name FROM file f JOIN file_text ft ON ft.file_id = f.id WHERE f.page_id = page.id AND f.deleted = 0
-               AND MATCH(ft.text) AGAINST(:fulltext IN BOOLEAN MODE) ORDER BY f.id LIMIT 1) AS search_attachment""";
+    private static final String FULLTEXT_SCORE = "(MATCH(name) AGAINST(:fulltext IN BOOLEAN MODE) > 0) DESC, "
+            + "(label_hit.page_id IS NOT NULL) DESC, "
+            + "MATCH(name, content) AGAINST(:fulltext IN BOOLEAN MODE) DESC, "
+            + "(search_hit.file_id IS NOT NULL) DESC";
+    private static final String FULLTEXT_ATTACHMENT = "search_hit.file_id AS search_attachment_id, (SELECT f.name FROM file f WHERE f.id = search_hit.file_id) AS search_attachment";
 
     /**
      * A query runs against the full-text indexes first, ranked by title, labels, content and attachments;
@@ -135,11 +137,12 @@ public class PageImpl implements PageDao {
                     published,
                     %s
                 FROM
-                    page
+                    page %s
         """.formatted(visibleOnly
                 ? "CASE WHEN parent = 0 OR parent IN (SELECT id FROM readable_pages) THEN parent ELSE NULL END AS parent"
                 : "parent",
-                fullText != null ? FULLTEXT_ATTACHMENT : "NULL AS search_attachment_id, NULL AS search_attachment"));
+                fullText != null ? FULLTEXT_ATTACHMENT : "NULL AS search_attachment_id, NULL AS search_attachment",
+                fullText != null ? FULLTEXT_JOIN : ""));
 
         Map<String, Object> params = new HashMap<>();
         Map<String, String> sqlParams = new LinkedHashMap<>();
