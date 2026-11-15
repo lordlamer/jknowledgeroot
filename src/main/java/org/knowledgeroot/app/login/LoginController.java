@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 @lombok.RequiredArgsConstructor
 class LoginController {
     private final org.knowledgeroot.app.i18n.UiMessages messages;
+    private final org.knowledgeroot.app.security.oidc.OidcSettings oidc;
+    private final org.knowledgeroot.app.security.oidc.OidcClientRegistrations oidcRegistrations;
 
     @GetMapping("/login")
     public String login(
@@ -36,11 +38,10 @@ class LoginController {
             return "redirect:/";
         }
 
-        if (error != null) {
-            model.addAttribute("error", true);
-        } else {
-            model.addAttribute("error", false);
-        }
+        // "oidc": the provider's sign-in did not complete (R64); anything else is the password form.
+        model.addAttribute("error", error != null && !error.equals("oidc"));
+        model.addAttribute("oidcError", "oidc".equals(error));
+        if (oidc.enabled()) model.addAttribute("oidc", oidc.getName());
 
         if (logout != null) {
             model.addAttribute("msg", messages.get("login.logged-out"));
@@ -51,6 +52,14 @@ class LoginController {
         }
 
         return "login";
+    }
+
+    /** Starts the OpenID Connect sign-in (R64), after making sure the provider answers. */
+    @GetMapping(org.knowledgeroot.app.security.oidc.OidcClientRegistrations.START_PATH)
+    public String loginThroughProvider() {
+        if (!oidc.enabled()) return "redirect:/login";
+        if (!oidcRegistrations.available()) return "redirect:/login?error=oidc";
+        return "redirect:" + org.knowledgeroot.app.security.oidc.OidcClientRegistrations.AUTHORIZATION_PATH;
     }
 
     @GetMapping("/login/success")

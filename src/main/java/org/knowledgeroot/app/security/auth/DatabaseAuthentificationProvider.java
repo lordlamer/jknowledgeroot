@@ -45,6 +45,11 @@ public class DatabaseAuthentificationProvider implements AuthenticationProvider 
             if (!passwords.matches(password, credential == null ? null : credential.hash())) {
                 throw new BadCredentialsException("Invalid username or password");
             }
+            if (!credential.localLogin()) {
+                // The account belongs to the OpenID Connect provider (R64); the same answer as a wrong password.
+                log.info("Login refused for user {}: local sign-in is disabled, single sign-on required", login);
+                throw new BadCredentialsException("Invalid username or password");
+            }
             String currentHash = credential.hash();
             if (passwords.upgradeEncoding(currentHash)) {
                 String replacement = passwords.encode(password);

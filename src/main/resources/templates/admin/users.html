@@ -57,6 +57,7 @@
             <td>
                 <span class="kr-pill admin" th:if="${user.getAdmin()}" th:text="#{common.admin-role}">Admin</span>
                 <span style="color:var(--kr-text-3)" th:unless="${user.getAdmin()}" th:text="#{admin.users.member}">Member</span>
+                <span class="kr-pill role" th:if="${ssoUsers != null and ssoUsers.contains(user.getId().value())}" th:text="#{admin.users.sso}">SSO</span>
             </td>
             <td class="actions">
                 <button type="button" class="kr-btn sm"

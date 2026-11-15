@@ -28,6 +28,7 @@ public class AdminController {
     private final PasswordService passwords;
     private final org.knowledgeroot.app.security.mfa.SecondFactorService secondFactors;
     private final org.knowledgeroot.app.space.SpaceService spaces;
+    private final org.knowledgeroot.app.security.oidc.OidcAccountService oidcAccounts;
 
     /**
      * get all users
@@ -43,6 +44,7 @@ public class AdminController {
                         new UserFilter()
                 )
         );
+        model.addAttribute("ssoUsers", oidcAccounts.linkedUserIds());
 
         if(htmxRequest.isHtmxRequest()) {
             return "admin/users :: body";
@@ -106,6 +108,7 @@ public class AdminController {
                 userImpl.findById(new UserId(id))
         );
         model.addAttribute("mfa", secondFactors.status(id));
+        model.addAttribute("identity", oidcAccounts.identityOf(id).orElse(null));
 
         if(htmxRequest.isHtmxRequest()) {
             return "admin/user/edit :: body";
@@ -135,6 +138,8 @@ public class AdminController {
         user.setLogin(userDto.getLogin());
         user.setEmail(userDto.getEmail());
         user.setAdmin(Boolean.TRUE.equals(userDto.getAdmin()));
+        // Only the user form carries the switch; other callers leave the setting alone.
+        if (Boolean.TRUE.equals(userDto.getLocalLoginPresent())) user.setLocalLogin(Boolean.TRUE.equals(userDto.getLocalLogin()));
         user.setLanguage(org.knowledgeroot.app.i18n.Languages.normalise(userDto.getLanguage()));
 
         // update password if new password is set

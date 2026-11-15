@@ -19,7 +19,10 @@ der Web-UI. Es gibt keine zusätzlichen Tokens und keine Datenbankänderung daf�
    CSRF-Token rotiert; die Antwort enthält das neue Token. Verlangt das Konto
    einen zweiten Faktor, antwortet der Login mit `authenticated: false` und
    `mfa: {pending: true, requirement: "verify"}`; bis zum Code liefern alle
-   anderen API-Routen `401` mit `detail: "Second factor required."`.
+   anderen API-Routen `401` mit `detail: "Second factor required."`. Konten,
+   die nur über Single Sign-on anmelden dürfen (R64, `local_login` aus),
+   erhalten hier `401` wie bei einem falschen Passwort; ein Administrator kann
+   die lokale Anmeldung für sie einschalten und ein Passwort setzen.
 4. `POST /api/v1/auth/mfa` mit `{"code"}` (Authenticator- oder
    Wiederherstellungscode) schließt die Anmeldung ab und liefert die volle
    Sitzung mit neuem CSRF-Token; ein falscher Code gibt `401`, nach fünf

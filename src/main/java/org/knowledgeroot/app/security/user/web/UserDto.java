@@ -17,6 +17,9 @@ class UserDto {
     @ToString.Exclude
     private String password;
     private Boolean admin;
+    private Boolean localLogin;
+    /** Sent by the user form next to the checkbox, so an unchecked box is told apart from a request without the field. */
+    private Boolean localLoginPresent;
     /** A supported language code, or empty for the browser language. */
     private String language;
 }

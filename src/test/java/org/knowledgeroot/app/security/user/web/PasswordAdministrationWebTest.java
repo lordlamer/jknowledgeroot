@@ -39,6 +39,7 @@ class PasswordAdministrationWebTest {
     @MockitoBean DatabaseAuthentificationProvider provider;
     @MockitoBean org.knowledgeroot.app.security.mfa.SecondFactorService secondFactors;
     @MockitoBean org.knowledgeroot.app.space.SpaceService spaces;
+    @MockitoBean org.knowledgeroot.app.security.oidc.OidcAccountService oidcAccounts;
     private User existing;
 
     @BeforeEach

@@ -28,6 +28,7 @@
             <div th:if="${msg}" class="kr-login-info" role="status" th:text="${msg}"></div>
             <div th:if="${param.passwordChanged != null}" class="kr-login-info" role="status" th:text="#{login.password-changed}">Password changed. Sign in with your new password.</div>
             <div th:if="${param.mfaLocked != null}" class="kr-login-alert" role="alert" th:text="#{login.mfa-locked}">Too many wrong codes. Sign in again.</div>
+            <div th:if="${oidcError}" class="kr-login-alert" role="alert" th:text="#{login.oidc.failed(${oidc})}">Sign-in with the provider did not complete. Try again or use your local account.</div>
 
             <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
@@ -49,6 +50,13 @@
             </button>
             <a th:if="${@environment.getProperty('knowledgeroot.recovery.enabled', 'false') == 'true'}"
                th:href="@{/account/forgot-password}" th:text="#{login.forgot}">Forgot your password?</a>
+            <th:block th:if="${oidc != null}">
+                <div class="kr-divider"><span th:text="#{login.oidc.or}">or</span></div>
+                <a class="kr-btn kr-login-sso" th:href="@{/login/oidc}">
+                    <i class="bi bi-building-lock" aria-hidden="true"></i>
+                    <th:block th:text="#{login.oidc.button(${oidc})}">Sign in with single sign-on</th:block>
+                </a>
+            </th:block>
         </form>
     </div>
 </div>

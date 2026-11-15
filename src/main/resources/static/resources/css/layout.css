@@ -1525,6 +1525,17 @@ body.kr-dark .kr-login-brand .kr-brand-name .kr-dot { color: #c4ff3d; }
     height: 1px;
     background: var(--kr-border);
 }
+/* Single sign-on (R64): a second, quieter button under the password form. */
+.kr-login-card .kr-login-sso {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    border: 1px solid var(--kr-border);
+    background: var(--kr-surface);
+    color: var(--kr-text);
+}
+.kr-login-card .kr-login-sso:hover { background: var(--kr-surface-2); }
 .kr-login-alert {
     background: #fde8e8;
     border: 1px solid #f0c2c2;

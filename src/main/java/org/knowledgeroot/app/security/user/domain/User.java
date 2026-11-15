@@ -18,6 +18,8 @@ public class User {
     private String email;
     private String password;
     private Boolean admin;
+    /** False: the account signs in through single sign-on only (R64); null counts as true. */
+    private Boolean localLogin;
     private String language;
     private String timezone;
     private LocalDateTime timeStart;
