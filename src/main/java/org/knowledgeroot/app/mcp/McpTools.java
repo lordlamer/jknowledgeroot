@@ -57,6 +57,7 @@ public class McpTools {
     private final PageMoveService moves;
     private final PageDraftDao drafts;
     private final CredentialRepository credentials;
+    private final org.knowledgeroot.app.page.template.PageTemplateService templates;
 
     // --- spaces -------------------------------------------------------------------------------------
 
@@ -265,26 +266,55 @@ public class McpTools {
 
     // --- writing (scope mcp:write) -------------------------------------------------------------------
 
+    @McpTool(name = "list_templates", generateOutputSchema = false,
+            description = "The page templates of a space (from the space administrators): name, labels and content as the "
+                    + "starting point for a new page. Pass the template id to create_page to use one.",
+            annotations = @McpTool.McpAnnotations(readOnlyHint = true, idempotentHint = true, openWorldHint = false))
+    public List<McpModels.Template> listTemplates(
+            @McpToolParam(description = "Space id (from list_spaces); defaults to the default space", required = false) Integer space,
+            @McpToolParam(description = "Content format: markdown (default) or html", required = false) String format) {
+        return support.read("list_templates", params("space", space, "format", format), () -> {
+            int spaceId = access.requireSpace(space);
+            String contentFormat = McpMarkdown.format(format);
+            return templates.listForSpace(spaceId).stream().map(template -> new McpModels.Template(template.id(), template.name(),
+                    access.spaceRef(template.spaceId()), template.labels(), contentFormat,
+                    McpMarkdown.render(template.content(), contentFormat), McpModels.time(template.changeDate()))).toList();
+        });
+    }
+
     @McpTool(name = "create_page", generateOutputSchema = false,
             description = "Creates a page below a parent page, or as a top-level page of a space when parent is omitted. "
                     + "Content is Markdown by default (headings, lists, links, tables, code) or HTML with format=\"html\"; "
-                    + "scripts and styles are removed.",
+                    + "scripts and styles are removed. With template (id from list_templates) the template's name, "
+                    + "content and labels fill in whatever is omitted.",
             annotations = @McpTool.McpAnnotations(readOnlyHint = false, destructiveHint = false, idempotentHint = false, openWorldHint = false))
     public McpModels.Saved createPage(
-            @McpToolParam(description = "Page name (up to 255 characters)", required = true) String name,
-            @McpToolParam(description = "Content in the given format", required = true) String content,
+            @McpToolParam(description = "Page name (up to 255 characters); with a template defaults to its name", required = false) String name,
+            @McpToolParam(description = "Content in the given format; with a template defaults to its content", required = false) String content,
             @McpToolParam(description = "Parent page id; omit for a top-level page", required = false) Integer parent,
             @McpToolParam(description = "Space id for a top-level page; defaults to the default space", required = false) Integer space,
-            @McpToolParam(description = "Labels (tags) for the page", required = false) List<String> labels,
+            @McpToolParam(description = "Labels (tags) for the page; with a template defaults to its labels", required = false) List<String> labels,
             @McpToolParam(description = "Content format: markdown (default) or html", required = false) String format,
-            @McpToolParam(description = "true creates a draft that only editors see until publish_page", required = false) Boolean draft) {
+            @McpToolParam(description = "true creates a draft that only editors see until publish_page", required = false) Boolean draft,
+            @McpToolParam(description = "Template id from list_templates to start from", required = false) Integer template) {
         return support.write("create_page", params("name", name, "content", content, "parent", parent, "space", space,
-                "labels", labels, "format", format, "draft", draft), () -> {
+                "labels", labels, "format", format, "draft", draft, "template", template), () -> {
             String contentFormat = McpMarkdown.format(format);
+            String pageName = name;
+            String pageContent = content == null ? null : McpMarkdown.store(content, contentFormat);
+            List<String> pageLabels = labels;
+            if (template != null) {
+                int spaceId = parent != null && parent > 0 ? access.readable(parent).getSpaceId() : access.requireSpace(space);
+                var chosen = templates.templateFor(spaceId, template);
+                if (pageName == null || pageName.isBlank()) pageName = chosen.name();
+                if (pageContent == null || pageContent.isBlank()) pageContent = chosen.content();
+                if (pageLabels == null) pageLabels = chosen.labels();
+            }
+            if (pageContent == null) throw new McpToolException("Pass content, or a template to take it from.");
             var dto = PageDto.builder().parent(parent == null ? 0 : parent).spaceId(parent == null ? space : null)
-                    .name(McpPages.trimName(name)).content(McpMarkdown.store(content, contentFormat))
+                    .name(McpPages.trimName(pageName)).content(pageContent)
                     .published(!Boolean.TRUE.equals(draft)).build();
-            int id = creation.create(dto, McpPages.labels(labels));
+            int id = creation.create(dto, McpPages.labels(pageLabels));
             Page created = pages.findById(new PageId(id));
             return new McpModels.Saved(id, created.getName(), created.getRevision(), access.pageUrl(id),
                     created.isPublished() ? "Page created." : "Draft created; readers see it after publish_page.");

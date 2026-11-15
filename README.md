@@ -35,6 +35,8 @@ Website: [knowledgeroot.org](https://knowledgeroot.org) · Images: [Docker Hub](
   visible only to editors.
 - **Live collaboration.** Several people edit the same page at once and see each other's
   carets and changes as they type (Yjs over one WebSocket per editor, no extra service).
+- **Page templates.** Space administrators prepare a title, content and labels per space;
+  "New page" offers them, the client API and MCP use them, and every template is an MCP prompt.
 - **Single sign-on.** Sign in through any OpenID Connect provider (Keycloak, Authentik,
   Entra ID, Google); accounts are created or linked by verified e-mail on first sign-in,
   groups and the admin role can follow a claim.
@@ -51,7 +53,8 @@ Website: [knowledgeroot.org](https://knowledgeroot.org) · Images: [Docker Hub](
   policy from *off* to *required for everyone*.
 - **AI assistants over MCP.** Claude and other MCP clients connect to `/mcp` with
   OAuth 2.1 using the user's own account. They see exactly what that user may see; writing
-  is a separate consent. Administrators get an audit log of every call.
+  is a separate consent, and includes uploading attachments. Administrators get an audit log
+  of every call.
 - **Client API and mobile app.** A JSON API under `/api/v1` with the same session and
   CSRF protection serves the Knowledgeroot Flutter app.
 - **Six interface languages:** English, German, French, Spanish, Italian and Dutch, chosen

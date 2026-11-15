@@ -41,6 +41,8 @@ public class McpContentTools {
     private final PageDao pages;
     private final PageLabelDao labels;
     private final FileDao files;
+    private final org.knowledgeroot.app.file.domain.FileUploadService uploads;
+    private final org.knowledgeroot.app.file.domain.UploadPolicy uploadPolicy;
 
     // --- attachments ----------------------------------------------------------------------------------
 
@@ -87,6 +89,47 @@ public class McpContentTools {
             boolean truncated = text.length() > limit;
             return new McpModels.AttachmentContent(attachment(file), truncated ? text.substring(0, limit) : text, truncated,
                     truncated ? "The text was cut after " + limit + " characters; raise max_chars for more." : null);
+        });
+    }
+
+    @McpTool(name = "upload_attachment", generateOutputSchema = false,
+            description = "Adds an attachment to a page the user may edit: either text (stored as UTF-8) or base64 for binary "
+                    + "files, with a file name and optionally a media type. The server's upload limits apply.",
+            annotations = @McpTool.McpAnnotations(readOnlyHint = false, destructiveHint = false, idempotentHint = false, openWorldHint = false))
+    public McpModels.Attachment uploadAttachment(
+            @McpToolParam(description = "Page id", required = true) int page,
+            @McpToolParam(description = "File name including the extension, e.g. notes.md", required = true) String name,
+            @McpToolParam(description = "Text content of the file; use base64 for binary files", required = false) String text,
+            @McpToolParam(description = "Base64-encoded content of a binary file", required = false) String base64,
+            @McpToolParam(description = "Media type, e.g. text/markdown or image/png; guessed from the name when omitted", required = false) String type) {
+        return support.write("upload_attachment", params("page", page, "name", name, "text", text, "base64", base64, "type", type), () -> {
+            access.editable(page);
+            if ((text == null) == (base64 == null)) throw new McpToolException("Pass either text or base64.");
+            byte[] bytes;
+            if (text != null) {
+                bytes = text.getBytes(StandardCharsets.UTF_8);
+            } else {
+                try {
+                    bytes = java.util.Base64.getDecoder().decode(base64.replaceAll("\\s", ""));
+                } catch (IllegalArgumentException e) {
+                    throw new McpToolException("The base64 content could not be decoded.");
+                }
+            }
+            if (bytes.length == 0) throw new McpToolException("The file is empty.");
+            if (bytes.length > uploadPolicy.maxFileBytes())
+                throw new McpToolException("The file is larger than the upload limit of " + uploadPolicy.maxFileBytes() / (1024 * 1024) + " MB.");
+            String fileName;
+            try {
+                fileName = org.knowledgeroot.app.file.domain.UploadPolicy.name(name);
+            } catch (org.springframework.web.server.ResponseStatusException e) {
+                throw new McpToolException("Pass a plain file name without a path.");
+            }
+            String mediaType = type == null || type.isBlank() ? guessType(fileName, text != null) : type.strip();
+            uploads.upload(page, new BytesUpload(fileName, mediaType, bytes));
+            File stored = files.listFiles(FileFilter.builder().pageId(new PageId(page)).build()).stream()
+                    .filter(file -> fileName.equals(file.getName()))
+                    .max(java.util.Comparator.comparing(File::getId)).orElseThrow(() -> new McpToolException("The attachment could not be stored."));
+            return attachment(stored);
         });
     }
 
@@ -196,6 +239,30 @@ public class McpContentTools {
     private McpModels.Attachment attachment(File file) {
         return new McpModels.Attachment(file.getId(), file.getPageId(), file.getName(), file.getSize(), file.getType(),
                 McpModels.time(file.getCreateDate()), access.origin() + "/api/v1/files/" + file.getId() + "/content");
+    }
+
+    /** A media type for an upload without one: by the extension, text/plain for text, otherwise a byte stream. */
+    static String guessType(String name, boolean text) {
+        String lower = name.toLowerCase(Locale.ROOT);
+        int dot = lower.lastIndexOf('.');
+        String extension = dot < 0 ? "" : lower.substring(dot + 1);
+        return switch (extension) {
+            case "md", "markdown" -> "text/markdown";
+            case "txt", "log" -> "text/plain";
+            case "csv" -> "text/csv";
+            case "html", "htm" -> "text/html";
+            case "json" -> "application/json";
+            case "xml" -> "application/xml";
+            case "yaml", "yml" -> "application/yaml";
+            case "pdf" -> "application/pdf";
+            case "png" -> "image/png";
+            case "jpg", "jpeg" -> "image/jpeg";
+            case "gif" -> "image/gif";
+            case "svg" -> "image/svg+xml";
+            case "webp" -> "image/webp";
+            case "zip" -> "application/zip";
+            default -> text ? "text/plain" : "application/octet-stream";
+        };
     }
 
     /** text, html, pdf or null, judged by the stored type and the file name. */

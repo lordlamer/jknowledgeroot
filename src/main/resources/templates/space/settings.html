@@ -22,6 +22,8 @@
 
 <div th:if="${created}" class="alert kr-alert-info" role="alert" th:text="#{space.settings.created}">Space created. You administer it; grant others access below.</div>
 <div th:if="${saved}" class="alert kr-alert-info" role="alert" th:text="#{space.settings.saved}">Saved.</div>
+<div th:if="${templateNotice == 'saved'}" class="alert kr-alert-info" role="alert" th:text="#{space.template.saved}">Template saved.</div>
+<div th:if="${templateNotice == 'deleted'}" class="alert kr-alert-info" role="alert" th:text="#{space.template.deleted}">Template deleted.</div>
 <p th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></p>
 
 <form method="post" th:action="@{'/spaces/' + ${space.id} + '/settings'}">
@@ -103,6 +105,33 @@
             <button type="submit" class="kr-btn accent" th:text="#{space.settings.permissions.add}">Add</button>
         </div>
     </form>
+</section>
+
+<section class="kr-editor-pane mt-4" aria-labelledby="templates-heading">
+    <h2 id="templates-heading" th:text="#{space.settings.templates.heading}">Page templates</h2>
+    <p th:text="#{space.settings.templates.intro}">A template offers a prepared name, content and labels when someone creates a page in this space. Assistants connected over MCP see one prompt per template.</p>
+    <p th:if="${#lists.isEmpty(templates)}" th:text="#{space.settings.templates.none}">No templates yet.</p>
+    <table class="table" th:unless="${#lists.isEmpty(templates)}" data-templates>
+        <thead><tr><th th:text="#{common.name}">Name</th><th th:text="#{page.new.labels}">Labels</th><th th:text="#{space.settings.templates.changed}">Changed</th><th></th></tr></thead>
+        <tbody>
+        <tr th:each="template : ${templates}">
+            <td><a th:href="@{'/spaces/' + ${space.id} + '/templates/' + ${template.id}}"
+                   th:attr="hx-get='/spaces/' + ${space.id} + '/templates/' + ${template.id}" hx-target="#content" hx-push-url="true"
+                   th:text="${template.name}">Meeting notes</a></td>
+            <td th:text="${#strings.listJoin(template.labels, ', ')}">meeting</td>
+            <td><span th:text="${#temporals.format(template.changeDate, #messages.msg('format.datetime'))}">date</span>
+                <small th:if="${template.changedByLogin}" th:text="${template.changedByLogin}">login</small></td>
+            <td>
+                <form method="post" th:action="@{'/spaces/' + ${space.id} + '/templates/' + ${template.id} + '/delete'}" style="display:inline"
+                      th:attr="data-confirm=#{space.template.delete.confirm}" onsubmit="return confirm(this.dataset.confirm)">
+                    <button type="submit" class="kr-btn" th:text="#{common.delete}">Delete</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <a class="kr-btn accent" th:href="@{'/spaces/' + ${space.id} + '/templates/new'}" th:attr="hx-get='/spaces/' + ${space.id} + '/templates/new'"
+       hx-target="#content" hx-push-url="true" th:text="#{space.settings.templates.new}">New template</a>
 </section>
 
 <section class="kr-editor-pane mt-4" aria-labelledby="archive-heading">

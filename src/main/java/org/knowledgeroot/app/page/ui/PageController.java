@@ -52,6 +52,7 @@ public class PageController {
     private final PageEditingService pageEditingService;
     private final FileDao fileDao;
     private final UploadPolicy uploadPolicy;
+    private final org.knowledgeroot.app.page.template.PageTemplateService pageTemplates;
 
 
     /**
@@ -94,10 +95,14 @@ public class PageController {
 
     /** Form for a new top-level page in {@code space}, by default the space the sidebar shows. */
     @GetMapping("/ui/page/new")
-    public String showNewPage(@RequestParam(name = "space", required = false) Integer space, Model model, HtmxRequest htmxRequest) {
+    public String showNewPage(@RequestParam(name = "space", required = false) Integer space,
+                              @RequestParam(name = "template", required = false) Integer template,
+                              @RequestParam(name = "name", required = false) String name,
+                              Model model, HtmxRequest htmxRequest) {
         int spaceId = space != null ? space : currentSpace.currentId();
         pageCreationService.requireCanCreate(null, spaceId);
         model.addAttribute("space", spaceService.space(spaceId));
+        addTemplateModel(spaceId, template, name, model);
         if(htmxRequest.isHtmxRequest()) {
             return "page/new :: body";
         }
@@ -268,6 +273,8 @@ public class PageController {
     public String showNewPage(
             @PathVariable("pageId") Integer pageId,
             @RequestParam(name = "trigger", required = false) String trigger,
+            @RequestParam(name = "template", required = false) Integer template,
+            @RequestParam(name = "name", required = false) String name,
             Model model,
             HttpServletResponse response,
             HtmxRequest htmxRequest
@@ -281,7 +288,9 @@ public class PageController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
-        model.addAttribute("page", pageImpl.findById(pid));
+        Page parent = pageImpl.findById(pid);
+        model.addAttribute("page", parent);
+        addTemplateModel(parent.getSpaceId(), template, name, model);
 
         // trigger reload sidebar
         if(trigger != null && trigger.equals("reload-sidebar"))
@@ -324,6 +333,22 @@ public class PageController {
                 permissionUpdates, permissionDeletions, permissionAdditions, live);
         return new ModelAndView("redirect:/ui/page/" + pageId + "?trigger=reload-sidebar");
     }
+    /**
+     * The templates of the space a new page goes into (R65) and, when one was chosen, its name, labels and
+     * content as the form's starting values. A name the user already typed wins over the template's.
+     */
+    private void addTemplateModel(Integer spaceId, Integer templateId, String typedName, Model model) {
+        // A page without a known space (slice tests) simply gets no templates.
+        model.addAttribute("templates", spaceId == null ? java.util.List.of() : pageTemplates.listForSpace(spaceId));
+        org.knowledgeroot.app.page.template.PageTemplate template = spaceId == null || templateId == null || templateId <= 0 ? null
+                : pageTemplates.templateFor(spaceId, templateId);
+        model.addAttribute("template", template);
+        String name = typedName == null || typedName.isBlank() ? (template == null ? "" : template.name()) : typedName.trim();
+        model.addAttribute("editName", name);
+        model.addAttribute("labelsJoined", template == null ? "" : String.join(", ", template.labels()));
+        model.addAttribute("editContent", template == null ? "" : template.content());
+    }
+
     @PostMapping("/ui/page/new")
     public ModelAndView createNewPage(
             @ModelAttribute PageDto pageDto,

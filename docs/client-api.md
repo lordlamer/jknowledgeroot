@@ -54,9 +54,9 @@ Zeitstempel werden als ISO-8601 mit Zeitzonen-Offset geliefert
 
 | Bereich | Endpunkte |
 |---|---|
-| Spaces | `GET /spaces` (betretbare Spaces mit `key`, `name`, `homePageId`, `archived`, `canCreateRootPage`, `canManage`, `current`), `GET /spaces/{id}` (Details und bis zu 100 Hauptseiten), `POST /spaces/{id}/open` (merkt den Space für die Sitzung wie der Umschalter der Web-UI) |
+| Spaces | `GET /spaces` (betretbare Spaces mit `key`, `name`, `homePageId`, `archived`, `canCreateRootPage`, `canManage`, `current`), `GET /spaces/{id}` (Details und bis zu 100 Hauptseiten), `POST /spaces/{id}/open` (merkt den Space für die Sitzung wie der Umschalter der Web-UI), `GET /spaces/{id}/templates` (Seitenvorlagen des Space mit `name`, `content`, `labels`, R65) |
 | Navigation | `GET /tree?parent=&after=&space=` (50 Einträge, `nextAfter`, `hasChildren`, `starred`; `parent=0` liefert die Hauptseiten von `space`, ohne Angabe die des zuletzt in der Sitzung gewählten beziehungsweise des Standard-Space), `GET /starred?space=` (ohne `space` alle Favoriten, mit `space` nur die des Space), `GET /search?q=&start=&space=` (Treffer nennen ihren `space`) |
-| Seiten | `GET/PUT/DELETE /pages/{id}` (Details nennen `space` mit `id`, `key`, `name`, seit R62 `published` und `hasWorkingCopy`; `PUT` veröffentlicht und verwirft die Arbeitskopie, `published: true` veröffentlicht einen Entwurf), `POST /pages` (`space` für eine neue Hauptseite; Unterseiten nehmen den Space der Elternseite; `published: false` legt einen Entwurf an, den nur Bearbeiter sehen), `PUT/DELETE /pages/{id}/star` |
+| Seiten | `GET/PUT/DELETE /pages/{id}` (Details nennen `space` mit `id`, `key`, `name`, seit R62 `published` und `hasWorkingCopy`; `PUT` veröffentlicht und verwirft die Arbeitskopie, `published: true` veröffentlicht einen Entwurf), `POST /pages` (`space` für eine neue Hauptseite; Unterseiten nehmen den Space der Elternseite; `published: false` legt einen Entwurf an, den nur Bearbeiter sehen; `template` nennt eine Vorlage des Zielspace, deren Name, Inhalt und Labels gelten, soweit die Anfrage sie nicht angibt, R65), `PUT/DELETE /pages/{id}/star` |
 | Arbeitskopie (R62) | `GET /pages/{id}/draft` (404 ohne Arbeitskopie), `PUT /pages/{id}/draft` mit `{"name", "content", "labels", "revision"}` (Autosave; `revision` ist der beim Öffnen geladene Stand, die Antwort nennt `stale`), `DELETE /pages/{id}/draft`, `POST /pages/{id}/publish` mit `{"revision"}` (veröffentlicht die Arbeitskopie oder einen Entwurf); `tree`- und `search`-Einträge tragen `draft` |
 | Verschieben | `GET /pages/{id}/move-options?parent=&query=&start=&space=` (bei `parent=0` die Hauptseiten von `space`, Antwort nennt `space`), `POST /pages/{id}/move` mit `{"parent", "space", "revision"}` (`space` nur für die oberste Ebene eines anderen Space) |
 | Kommentare | `GET/POST /pages/{id}/comments`, `DELETE /pages/{id}/comments/{commentId}` |
@@ -88,4 +88,6 @@ wie in der Web-UI bereinigt.
 
 Die Integrationstests in `ClientApiIntegrationTest` prüfen Anmeldung, CSRF,
 Berechtigungen, Revisionen, Anhänge, Freigaben, Verwaltung und Emoji-Speicherung
-gegen eine echte MariaDB.
+gegen eine echte MariaDB; `PageTemplateIntegrationTest` die Vorlagen (Liste je
+Space, Anlegen aus Vorlage mit und ohne eigene Angaben, fremder Space, unbekannte
+Vorlage).

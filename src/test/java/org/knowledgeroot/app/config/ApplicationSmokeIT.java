@@ -290,6 +290,7 @@ class ApplicationSmokeIT {
             var jdbc = new JdbcTemplate(new DriverManagerDataSource(database.getJdbcUrl(), database.getUsername(), database.getPassword()));
             int pageId = jdbc.queryForObject("SELECT id FROM page WHERE name = 'Browser migration test'", Integer.class);
             assertTrue(jdbc.queryForObject("SELECT content FROM page WHERE id = ?", String.class, pageId).contains("New editor content"));
+            browserPageTemplates(page, server, jdbc, pageId);
 
             // Load persisted, older rich text into the replacement editor without losing its structure.
             jdbc.update("UPDATE page SET content = ? WHERE id = ?",
@@ -439,6 +440,38 @@ class ApplicationSmokeIT {
             browserProfilePassword(browser, server, jdbc);
             assertTrue(errors.isEmpty(), errors.toString());
         }
+    }
+
+    /** Page templates (R65): the space administrator creates one, "New page" offers it and the editor takes its content. */
+    private void browserPageTemplates(Page page, TestServer server, JdbcTemplate jdbc, int pageId) {
+        int space = jdbc.queryForObject("SELECT id FROM space WHERE space_key = 'KR'", Integer.class);
+        page.navigate(uri(server, "/spaces/" + space + "/templates/new").toString());
+        page.waitForSelector(".tiptap");
+        page.locator("#template-name").fill("Smoke template");
+        page.locator("#template-labels").fill("smoke, template");
+        page.locator(".tiptap").fill("Template body text");
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Save")).click();
+        page.waitForSelector("[data-templates]");
+        assertTrue(page.locator("[data-templates]").innerText().contains("Smoke template"), "the settings page lists the template");
+        int templateId = jdbc.queryForObject("SELECT id FROM page_template WHERE name = 'Smoke template'", Integer.class);
+        assertTrue(jdbc.queryForObject("SELECT content FROM page_template WHERE id = ?", String.class, templateId).contains("Template body text"));
+
+        page.navigate(uri(server, "/ui/page/new?space=" + space).toString());
+        page.waitForSelector(".tiptap");
+        page.locator("#page-name").fill("From template");
+        page.locator("#page-template").selectOption(String.valueOf(templateId));
+        page.waitForFunction("() => document.querySelector('.tiptap') && document.querySelector('.tiptap').innerText.includes('Template body text')");
+        assertEquals("From template", page.locator("#page-name").inputValue(), "the typed name survives the reload");
+        assertEquals("smoke, template", page.locator("#page-labels").inputValue(), "labels come from the template");
+        assertEquals(String.valueOf(templateId), page.locator("#page-template").inputValue(), "the picker keeps the choice");
+        page.locator("#content form button[type=submit]").first().click();
+        page.waitForSelector("#content a[hx-get$='/edit']");
+        int created = jdbc.queryForObject("SELECT id FROM page WHERE name = 'From template'", Integer.class);
+        assertTrue(jdbc.queryForObject("SELECT content FROM page WHERE id = ?", String.class, created).contains("Template body text"));
+        assertEquals(2, jdbc.queryForObject("SELECT COUNT(*) FROM tag_content WHERE page_id = ?", Integer.class, created));
+        // Back to the page the following steps edit.
+        page.navigate(uri(server, "/ui/page/" + pageId).toString());
+        page.waitForSelector("#content a[hx-get$='/edit']");
     }
 
     private void browserSidebarPagination(Page page, TestServer server, JdbcTemplate jdbc) {

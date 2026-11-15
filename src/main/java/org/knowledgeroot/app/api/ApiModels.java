@@ -86,9 +86,21 @@ public final class ApiModels {
 
     public record PublishInput(Long revision) {}
 
-    /** {@code space} names the space of a new root page; children take the parent's space. */
+    /**
+     * {@code space} names the space of a new root page; children take the parent's space. {@code template} (R65)
+     * fills name, content and labels of a new page from a template of that space where they are not given.
+     */
     public record PageInput(Integer parent, Integer space, String name, String content, List<String> labels, Long revision,
-                            Boolean published) {}
+                            Boolean published, Integer template) {}
+
+    /** A page template of a space (R65): the starting name, content and labels for a new page. */
+    public record Template(int id, int spaceId, String name, String content, List<String> labels,
+                           Integer changedBy, String changedByLogin, @JsonSerialize(using = ServerTime.class) LocalDateTime changeDate) {
+        static Template of(org.knowledgeroot.app.page.template.PageTemplate template) {
+            return new Template(template.id(), template.spaceId(), template.name(), template.content(), template.labels(),
+                    template.changedBy(), template.changedByLogin(), template.changeDate());
+        }
+    }
 
     public record Created(int id) {}
 

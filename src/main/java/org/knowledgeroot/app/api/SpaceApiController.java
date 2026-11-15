@@ -20,6 +20,7 @@ class SpaceApiController {
     private final SpaceService spaces;
     private final CurrentSpace currentSpace;
     private final org.knowledgeroot.app.page.domain.PageDao pages;
+    private final org.knowledgeroot.app.page.template.PageTemplateService templates;
 
     /** Spaces the viewer may enter; {@code current} marks the one the session last opened. */
     @GetMapping("/spaces")
@@ -39,6 +40,12 @@ class SpaceApiController {
         roots.setLimit(101);
         var rootPages = pages.listVisiblePages(roots, api.viewer()).stream().limit(100).map(ApiModels.PageRef::of).toList();
         return new ApiModels.SpaceDetail(info(space, currentSpace.currentId() == id), rootPages);
+    }
+
+    /** The page templates of a space (R65) for the app's "new page" screen; needs the view level on the space. */
+    @GetMapping("/spaces/{id}/templates")
+    List<ApiModels.Template> templates(@PathVariable int id) {
+        return templates.listForSpace(id).stream().map(ApiModels.Template::of).toList();
     }
 
     /** Remembers the space for the session, like the switcher in the web sidebar. */

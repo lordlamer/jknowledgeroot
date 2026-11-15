@@ -50,6 +50,7 @@ class PageAccessWebTest {
     @MockitoBean org.knowledgeroot.app.file.domain.UploadPolicy uploadPolicy;
     @MockitoBean org.knowledgeroot.app.space.SpaceService spaces;
     @MockitoBean org.knowledgeroot.app.space.CurrentSpace currentSpace;
+    @MockitoBean org.knowledgeroot.app.page.template.PageTemplateService templates;
     private RequestPostProcessor caller;
     private final PageId pageId = new PageId(100);
 

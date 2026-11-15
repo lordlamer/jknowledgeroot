@@ -66,6 +66,7 @@ Lesend (Scope `mcp:read`):
 | `recent_changes(space?, since?, start?)` | Zuletzt geänderte Seiten, neueste zuerst |
 | `list_labels(space?)` | Labels mit Seitenzahl, nur über lesbare Seiten gezählt |
 | `pages_by_label(label, space?, start?)` | Seiten mit einem Label |
+| `list_templates(space?, format?)` | Seitenvorlagen eines Space mit Name, Labels und Inhalt (R65) |
 | `list_attachments(page)` | Anhänge mit Größe, Typ und Download-Link |
 | `get_attachment(id, max_chars?)` | Text eines Anhangs: Text, Markdown, CSV, JSON, XML, HTML (als Markdown) und PDF, bis 100.000 Zeichen und 10 MB; andere Typen nur mit Link |
 | `get_history(page, start?)` | Gespeicherte Versionen mit History-ID; gelöschte Seiten sehen nur Administratoren |
@@ -76,7 +77,7 @@ Schreibend (Scope `mcp:write`):
 
 | Tool | Zweck |
 |---|---|
-| `create_page(name, content, parent?, space?, labels?, format?, draft?)` | Neue Seite unter einer Elternseite oder als Hauptseite; `draft=true` legt einen Entwurf an, den nur Bearbeiter sehen |
+| `create_page(name?, content?, parent?, space?, labels?, format?, draft?, template?)` | Neue Seite unter einer Elternseite oder als Hauptseite; `draft=true` legt einen Entwurf an, den nur Bearbeiter sehen; `template` (ID aus `list_templates`) liefert Name, Inhalt und Labels, soweit sie nicht angegeben sind – ohne Vorlage bleibt `content` Pflicht |
 | `update_page(id, revision, name?, content?, labels?, format?, publish?)` | Schreibt in die Arbeitskopie der Seite (R62), die Leser nicht sehen; `publish=true` veröffentlicht sofort als neue Version. Revisionsprüfung; ausgelassene Felder bleiben |
 | `publish_page(id, revision)` | Veröffentlicht die Arbeitskopie oder einen Entwurf |
 | `set_labels(id, revision, labels)` | Labels ersetzen |
@@ -84,6 +85,7 @@ Schreibend (Scope `mcp:write`):
 | `star_page(id, starred?)` | Favorit setzen oder entfernen |
 | `delete_page(id, revision)`, `restore_page(id, revision, history_id?)` | In den Papierkorb; zurück holen Administratoren wie unter Admin → Deleted pages, Bearbeiter stellen frühere Versionen her |
 | `move_page(id, parent, revision, space?)` | Verschieben unter eine Seite oder auf die oberste Ebene eines Space |
+| `upload_attachment(page, name, text?, base64?, type?)` | Anhang anlegen: Text als UTF-8 oder Binärdaten als Base64, Medientyp optional (sonst aus der Endung); dieselben Größen- und Namensprüfungen wie im Browser (R65) |
 | `delete_attachment(id)` | Anhang entfernen |
 
 Inhalte sind standardmäßig Markdown: Beim Lesen wird das gespeicherte HTML
@@ -91,8 +93,8 @@ in Markdown umgewandelt (flexmark), beim Schreiben Markdown in HTML; mit
 `format=html` geht beides unverändert durch. Der Sanitizer entfernt Skripte
 und Stile beim Speichern. Fehlermeldungen an den Assistenten sind feste Texte
 („You may not edit this page.", „The page has changed meanwhile…"); technische
-Ursachen stehen nur im Serverlog. Hochladen von Anhängen und die Rechte- und
-Space-Verwaltung gibt es bewusst nicht über MCP. `get_page` nennt
+Ursachen stehen nur im Serverlog. Die Rechte- und Space-Verwaltung und das
+Anlegen von Vorlagen gibt es bewusst nicht über MCP. `get_page` nennt
 `published` und `hasWorkingCopy`; das Verwerfen einer Arbeitskopie bleibt
 der Oberfläche und der Client-API vorbehalten.
 
@@ -107,7 +109,13 @@ der Oberfläche und der Client-API vorbehalten.
   `summarize_space(space)`, `find_stale_pages(space?, months?)` und
   `draft_page(topic, parent?)`. Sie beschreiben dem Assistenten, welche
   Tools er in welcher Reihenfolge nutzt; Änderungen verlangen sie erst nach
-  Rückfrage beim Benutzer.
+  Rückfrage beim Benutzer. Dazu kommt je Seitenvorlage ein Prompt
+  `template_<id>(parent?, details?)` mit dem Vorlagennamen als Titel (R65):
+  Er lässt den Assistenten die Vorlage mit `list_templates` lesen, mit den
+  genannten Angaben ausfüllen, das Ergebnis zeigen und erst nach Freigabe
+  `create_page(template=…)` aufrufen. Die Prompts werden beim Start und bei
+  jeder Änderung einer Vorlage neu registriert (`McpTemplatePrompts`); die
+  Liste ist für alle Benutzer gleich, der Abruf prüft das Leserecht am Space.
 
 ## Audit und Grenzen
 
@@ -164,7 +172,9 @@ Einstellungen: `mcp.enabled`, `mcp.redirect-hosts` in `app_setting`.
 
 `McpFeaturesIntegrationTest` deckt die Inhaltswerkzeuge ab: Markdown hin und
 zurück, Labels, Favoriten, Baum, letzte Änderungen, Suchfilter, Verlauf mit
-Version und Vergleich, Anhänge (Text und Binärdatei), Kommentar löschen,
+Version und Vergleich, Anhänge (Text und Binärdatei lesen, Hochladen als Text
+und Base64 mit Fehlerfällen), Vorlagen (Liste, Seite aus Vorlage, Prompt je
+Vorlage samt Entfernen), Kommentar löschen,
 Verschieben, Löschen und Wiederherstellen, Resources, Prompts, die
 Audit-Zeilen und die Admin-Seite mit Trennen durch den Administrator.
 `McpIntegrationTest` läuft gegen einen echten Port mit MariaDB: Server aus

@@ -30,6 +30,7 @@ class PageApiController {
     private final PageEditingService editing;
     private final PageMoveService moves;
     private final PageDraftDao drafts;
+    private final org.knowledgeroot.app.page.template.PageTemplateService templates;
 
     @GetMapping("/{id}")
     ApiModels.PageDetail page(@PathVariable int id) {
@@ -40,9 +41,21 @@ class PageApiController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     ApiModels.Created create(@RequestBody ApiModels.PageInput input) {
+        String name = input.name();
+        String content = input.content();
+        List<String> pageLabels = input.labels();
+        if (input.template() != null) {
+            // The template belongs to the space the page goes into: the parent's, or the named one.
+            int space = input.parent() != null && input.parent() > 0 ? api.page(input.parent()).getSpaceId()
+                    : input.space() != null ? input.space() : api.spaces().defaultSpace().getId();
+            var template = templates.templateFor(space, input.template());
+            if (name == null || name.isBlank()) name = template.name();
+            if (content == null || content.isBlank()) content = template.content();
+            if (pageLabels == null) pageLabels = template.labels();
+        }
         var dto = PageDto.builder().parent(input.parent() == null ? 0 : input.parent()).spaceId(input.space())
-                .name(trim(input.name())).content(input.content()).published(input.published()).build();
-        return new ApiModels.Created(creation.create(dto, labels(input.labels())));
+                .name(trim(name)).content(content).published(input.published()).build();
+        return new ApiModels.Created(creation.create(dto, labels(pageLabels)));
     }
 
     /**
