@@ -1865,8 +1865,18 @@ Index.
   unverändert bestanden; `PagePermissionDatabaseTest` erwartet im Fenster
   über 5000 Seiten jetzt die jüngste Seite zuerst. Vollständiges `verify`
   lokal: **BUILD SUCCESS, 401 Tests und der Chromium-Smoke-Test erfolgreich,
-  keine Fehler oder übersprungenen Tests**; gehosteter Nachweis und
-  Lastmessung mit dem PR-Lauf.
+  keine Fehler oder übersprungenen Tests**. Gehostet geprüft:
+  [GitHub-Lauf 43731712680](https://github.com/lordlamer/jknowledgeroot/actions/runs/43731712680)
+  für `9b8c530`, Verify erfolgreich. Lastmessung mit 1000 Seiten, 80
+  Requests, Parallelität 1/4 (Runner-Messwerte): Gesamt-p95 **95,33/202,17 ms**,
+  vor R68 im Lauf 43721188229 94,22/170,07 ms; Suche mit 1000 Treffern
+  (`guest-search`) p95 123,22/202,17 ms gegenüber 105,79/132,70 ms, Suche als
+  Gruppenmitglied 96,59/214,77 ms gegenüber 94,22/160,76 ms, erfolglose Suche
+  mit Rückfall 35,07/67,52 ms gegenüber 38,91/48,45 ms. Die erste Fassung mit
+  korrelierten Unterabfragen je Treffer lag bei 138,25/291,87 ms (Lauf
+  43729675618) und wurde vor dem Merge durch einmalig materialisierte
+  Treffermengen ersetzt; lokal 46 ms für eine Suche über 5000 Seiten wie
+  vor R68.
 - **Grenzen:** Wörter unter drei Zeichen, Stoppwörter und Wortteile finden
   nur den Rückfall (Teilzeichenfolgen, ungewichtet). HTML-Tags im Inhalt
   werden mittokenisiert. Keine Zerlegung für CJK-Schriften, keine
