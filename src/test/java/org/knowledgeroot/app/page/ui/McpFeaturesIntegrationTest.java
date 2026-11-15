@@ -29,7 +29,7 @@ class McpFeaturesIntegrationTest extends McpTestSupport {
             var tools = mcp.listTools().tools().stream().map(McpSchema.Tool::name).toList();
             assertTrue(tools.containsAll(List.of("get_space", "get_tree", "recent_changes", "list_labels", "pages_by_label", "set_labels",
                     "delete_comment", "star_page", "delete_page", "restore_page", "move_page", "list_attachments", "get_attachment",
-                    "delete_attachment", "get_history", "get_revision", "compare_revisions")), tools.toString());
+                    "delete_attachment", "get_history", "get_revision", "compare_revisions", "upload_attachment", "list_templates")), tools.toString());
 
             // Markdown in, Markdown out; HTML on request.
             String created = ok(call(mcp, "create_page", Map.of("name", "Markdown page", "content", "# Heading\n\nHello **bold** world.\n\n- one\n- two",
@@ -97,6 +97,51 @@ class McpFeaturesIntegrationTest extends McpTestSupport {
             assertTrue(JsonPath.<String>read(binary, "$.note").contains("No text"));
             ok(call(mcp, "delete_attachment", Map.of("id", fileId)));
             assertEquals(List.of("photo.png"), JsonPath.read(ok(call(mcp, "list_attachments", Map.of("page", md))), "$[*].name"));
+
+            // Uploads (R65): text as UTF-8, binaries as base64, with the same limits and rights as the browser.
+            String uploaded = ok(call(mcp, "upload_attachment", Map.of("page", md, "name", "summary.md", "text", "# Summary\n\nDone.")));
+            assertEquals("summary.md", JsonPath.read(uploaded, "$.name"));
+            assertEquals("text/markdown", JsonPath.read(uploaded, "$.type"));
+            assertEquals("# Summary\n\nDone.", JsonPath.read(ok(call(mcp, "get_attachment", Map.of("id", JsonPath.<Integer>read(uploaded, "$.id")))), "$.text"));
+            String image = ok(call(mcp, "upload_attachment", Map.of("page", md, "name", "pixel.png",
+                    "base64", java.util.Base64.getEncoder().encodeToString(new byte[]{(byte) 0x89, 'P', 'N', 'G'}))));
+            assertEquals("image/png", JsonPath.read(image, "$.type"));
+            assertEquals(4, JsonPath.<Integer>read(image, "$.size"));
+            assertEquals(List.of("photo.png", "summary.md", "pixel.png"), JsonPath.read(ok(call(mcp, "list_attachments", Map.of("page", md))), "$[*].name"));
+            assertTrue(error(call(mcp, "upload_attachment", Map.of("page", md, "name", "x.txt"))).contains("either text or base64"));
+            assertTrue(error(call(mcp, "upload_attachment", Map.of("page", md, "name", "/", "text", "a"))).contains("plain file name"));
+            assertTrue(error(call(mcp, "upload_attachment", Map.of("page", md, "name", "b.bin", "base64", "@@@"))).contains("decoded"));
+            assertTrue(error(call(mcp, "upload_attachment", Map.of("page", otherPageId, "name", "no.txt", "text", "a"))).contains("not found or you may not read"));
+
+            // Templates (R65): listed per space, a page from one, one prompt per template.
+            int spaceId = JsonPath.read(page, "$.space.id");
+            var ui = login("integration.admin");
+            ui.perform(post("/spaces/" + spaceId + "/templates").param("name", "Decision record").param("labels", "decision")
+                    .param("content", "<h2>Context</h2><p>Why</p>")).andExpect(redirectedUrl("/spaces/" + spaceId + "/settings?template=saved"));
+            int templateId = jdbc.queryForObject("SELECT id FROM page_template WHERE space_id=? AND name='Decision record'", Integer.class, spaceId);
+            String templateList = ok(call(mcp, "list_templates", Map.of("space", spaceId)));
+            assertTrue(JsonPath.<List<Integer>>read(templateList, "$[*].id").contains(templateId), templateList);
+            List<String> templateContents = JsonPath.read(templateList, "$[?(@.id == " + templateId + ")].content");
+            assertTrue(templateContents.getFirst().contains("## Context"), templateList);
+            String fromTemplate = ok(call(mcp, "create_page", Map.of("parent", pageId, "template", templateId)));
+            int templated = JsonPath.read(fromTemplate, "$.id");
+            assertEquals("Decision record", jdbc.queryForObject("SELECT name FROM page WHERE id=?", String.class, templated));
+            assertTrue(jdbc.queryForObject("SELECT content FROM page WHERE id=?", String.class, templated).contains("<h2>Context</h2>"));
+            assertEquals(List.of("decision"), jdbc.queryForList("SELECT t.name FROM tag_content tc JOIN tag t ON t.id=tc.tag_id WHERE tc.page_id=?", String.class, templated));
+            String renamed = ok(call(mcp, "create_page", Map.of("parent", pageId, "template", templateId, "name", "ADR-7", "content", "Own text", "labels", List.of("adr"))));
+            assertEquals("ADR-7", JsonPath.read(renamed, "$.name"));
+            assertTrue(jdbc.queryForObject("SELECT content FROM page WHERE id=?", String.class, JsonPath.<Integer>read(renamed, "$.id")).contains("Own text"));
+            assertTrue(error(call(mcp, "create_page", Map.of("parent", pageId, "name", "No content"))).contains("content"));
+            assertTrue(mcp.listPrompts().prompts().stream().map(McpSchema.Prompt::name).toList().contains("template_" + templateId));
+            var templatePrompt = mcp.getPrompt(new McpSchema.GetPromptRequest("template_" + templateId,
+                    Map.of("parent", String.valueOf(pageId), "details", "Switch to MariaDB 12")));
+            String templateText = ((McpSchema.TextContent) templatePrompt.messages().getFirst().content()).text();
+            assertTrue(templateText.contains("\"Decision record\"") && templateText.contains("template=" + templateId)
+                    && templateText.contains("parent " + pageId) && templateText.contains("Switch to MariaDB 12"), templateText);
+            ui.perform(post("/spaces/" + spaceId + "/templates/" + templateId + "/delete")).andExpect(redirectedUrl("/spaces/" + spaceId + "/settings?template=deleted"));
+            assertFalse(mcp.listPrompts().prompts().stream().map(McpSchema.Prompt::name).toList().contains("template_" + templateId));
+            assertFalse(JsonPath.<List<Integer>>read(ok(call(mcp, "list_templates", Map.of("space", spaceId))), "$[*].id").contains(templateId));
+            assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM mcp_audit WHERE login=? AND kind='prompt' AND name=?", Integer.class, this.editor, "template_" + templateId));
 
             // Comments can be removed again.
             int commentId = JsonPath.read(ok(call(mcp, "add_comment", Map.of("page", md, "text", "temporary"))), "$.id");

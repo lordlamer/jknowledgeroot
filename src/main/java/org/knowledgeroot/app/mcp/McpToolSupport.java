@@ -155,7 +155,7 @@ public class McpToolSupport {
             if (value == null) return;
             if (!out.isEmpty()) out.append(", ");
             out.append(key).append('=');
-            if (key.equals("content") || key.equals("text")) {
+            if (key.equals("content") || key.equals("text") || key.equals("base64")) {
                 out.append('[').append(String.valueOf(value).length()).append(" chars]");
             } else if (value instanceof Collection<?> list) {
                 out.append(list.size()).append(" items");

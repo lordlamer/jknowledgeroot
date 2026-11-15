@@ -135,8 +135,8 @@ Assistent registriert sich selbst, der Benutzer meldet sich wie gewohnt an
 Assistent nur lesen oder auch Seiten anlegen, bearbeiten und kommentieren
 darf. Der Assistent sieht genau die Spaces und Seiten, die der Benutzer sehen
 darf, und schreibt in dessen Namen mit Revisionsprüfung; dazu gehören Baum,
-Suche mit Filtern, Labels, Favoriten, Kommentare, Anhänge lesen, Verlauf mit
-Vergleich, Verschieben, Löschen und Wiederherstellen. Administratoren sehen
+Suche mit Filtern, Labels, Favoriten, Kommentare, Anhänge lesen und hochladen,
+Vorlagen, Verlauf mit Vergleich, Verschieben, Löschen und Wiederherstellen. Administratoren sehen
 unter Admin → MCP jeden Aufruf mit Benutzer, Assistent, Parametern und
 Ergebnis und können Verbindungen trennen. Im Profil stehen die
 verbundenen Assistenten mit Zugriff und Gültigkeit; dort lassen sie sich
@@ -207,6 +207,84 @@ anlegen. Die Client-API bietet Spaces unter `/api/v1/spaces` und nimmt
 `space` bei Baum, Suche, Seitenanlage und Verschieben an
 ([client-api.md](client-api.md)). Regeln im Detail in
 [access-control.md](access-control.md#spaces).
+
+## Seitenvorlagen
+
+Space-Verwalter legen unter Spaces → Settings → „Page templates" Vorlagen
+für ihren Space an: ein Name, ein Inhalt im gewohnten Editor und Labels. Die
+Vorlage ist keine Seite; sie hat keinen Verlauf, keine Freigaben, keine
+Kommentare oder Anhänge und erscheint weder im Baum noch in der Suche. Je
+Space sind bis zu 100 Vorlagen möglich, der Name ist je Space eindeutig.
+
+„Neue Seite" zeigt in einem Space mit Vorlagen oben eine Auswahl „Template"
+mit „Blank page" und den Vorlagen des Space; für Unterseiten zählt der Space
+der Elternseite. Die Auswahl lädt das Formular neu: Inhalt und Labels kommen
+aus der Vorlage, ein bereits eingegebener Name bleibt stehen, sonst wird der
+Vorlagenname zum Seitennamen. Danach bearbeitet man die Seite wie jede andere;
+die Vorlage selbst ändert sich nicht. Vorlagen anderer Spaces werden
+abgelehnt.
+
+Die Client-API liefert die Vorlagen eines Space unter
+`GET /api/v1/spaces/{id}/templates` und nimmt bei `POST /api/v1/pages` eine
+`template`-ID an, die Name, Inhalt und Labels vorbelegt, soweit die Anfrage
+sie nicht nennt ([client-api.md](client-api.md)). Über MCP listet
+`list_templates` die Vorlagen, `create_page` nimmt `template` an, und für jede
+Vorlage gibt es einen Prompt `template_<id>`, der dem Assistenten den Weg
+von der Vorlage zur fertigen Seite beschreibt ([mcp.md](mcp.md)). Assistenten
+laden außerdem mit `upload_attachment` Anhänge hoch, mit denselben Grenzen
+und Rechten wie der Browser.
+
+## Seitenvorlagen
+
+Space-Verwalter legen unter Spaces → Settings → „Page templates" Vorlagen
+für ihren Space an: ein Name, ein Inhalt im gewohnten Editor und Labels. Die
+Vorlage ist keine Seite; sie hat keinen Verlauf, keine Freigaben, keine
+Kommentare oder Anhänge und erscheint weder im Baum noch in der Suche. Je
+Space sind bis zu 100 Vorlagen möglich, der Name ist je Space eindeutig.
+
+„Neue Seite" zeigt in einem Space mit Vorlagen oben eine Auswahl „Template"
+mit „Blank page" und den Vorlagen des Space; für Unterseiten zählt der Space
+der Elternseite. Die Auswahl lädt das Formular neu: Inhalt und Labels kommen
+aus der Vorlage, ein bereits eingegebener Name bleibt stehen, sonst wird der
+Vorlagenname zum Seitennamen. Danach bearbeitet man die Seite wie jede andere;
+die Vorlage selbst ändert sich nicht. Vorlagen anderer Spaces werden
+abgelehnt.
+
+Die Client-API liefert die Vorlagen eines Space unter
+`GET /api/v1/spaces/{id}/templates` und nimmt bei `POST /api/v1/pages` eine
+`template`-ID an, die Name, Inhalt und Labels vorbelegt, soweit die Anfrage
+sie nicht nennt ([client-api.md](client-api.md)). Über MCP listet
+`list_templates` die Vorlagen, `create_page` nimmt `template` an, und für jede
+Vorlage gibt es einen Prompt `template_<id>`, der dem Assistenten den Weg
+von der Vorlage zur fertigen Seite beschreibt ([mcp.md](mcp.md)). Assistenten
+laden außerdem mit `upload_attachment` Anhänge hoch, mit denselben Grenzen
+und Rechten wie der Browser.
+
+## Seitenvorlagen
+
+Space-Verwalter legen unter Spaces → Settings → „Page templates" Vorlagen
+für ihren Space an: ein Name, ein Inhalt im gewohnten Editor und Labels. Die
+Vorlage ist keine Seite; sie hat keinen Verlauf, keine Freigaben, keine
+Kommentare oder Anhänge und erscheint weder im Baum noch in der Suche. Je
+Space sind bis zu 100 Vorlagen möglich, der Name ist je Space eindeutig.
+
+„Neue Seite" zeigt in einem Space mit Vorlagen oben eine Auswahl „Template"
+mit „Blank page" und den Vorlagen des Space; für Unterseiten zählt der Space
+der Elternseite. Die Auswahl lädt das Formular neu: Inhalt und Labels kommen
+aus der Vorlage, ein bereits eingegebener Name bleibt stehen, sonst wird der
+Vorlagenname zum Seitennamen. Danach bearbeitet man die Seite wie jede andere;
+die Vorlage selbst ändert sich nicht. Vorlagen anderer Spaces werden
+abgelehnt.
+
+Die Client-API liefert die Vorlagen eines Space unter
+`GET /api/v1/spaces/{id}/templates` und nimmt bei `POST /api/v1/pages` eine
+`template`-ID an, die Name, Inhalt und Labels vorbelegt, soweit die Anfrage
+sie nicht nennt ([client-api.md](client-api.md)). Über MCP listet
+`list_templates` die Vorlagen, `create_page` nimmt `template` an, und für jede
+Vorlage gibt es einen Prompt `template_<id>`, der dem Assistenten den Weg
+von der Vorlage zur fertigen Seite beschreibt ([mcp.md](mcp.md)). Assistenten
+laden außerdem mit `upload_attachment` Anhänge hoch, mit denselben Grenzen
+und Rechten wie der Browser.
 
 ## Arbeitskopie, Entwürfe und automatisches Speichern
 

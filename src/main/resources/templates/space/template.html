@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
+<head>
+    <title th:text="#{space.template.title}">Knowledgeroot :: Page template</title>
+</head>
+<body>
+<form method="post" th:action="${template != null} ? @{'/spaces/' + ${space.id} + '/templates/' + ${template.id}} : @{'/spaces/' + ${space.id} + '/templates'}">
+    <nav th:aria-label="#{common.breadcrumb}">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true" th:text="#{common.home}">Home</a></li>
+            <li class="breadcrumb-item"><a href="/spaces" hx-get="/spaces" hx-target="#content" hx-push-url="true" th:text="#{common.spaces}">Spaces</a></li>
+            <li class="breadcrumb-item"><a th:href="@{'/spaces/' + ${space.id} + '/settings'}" th:attr="hx-get='/spaces/' + ${space.id} + '/settings'"
+                                           hx-target="#content" hx-push-url="true" th:text="${space.name}">Space</a></li>
+            <li class="breadcrumb-item active" aria-current="page" th:text="${template != null} ? #{space.template.heading.edit} : #{space.template.heading.new}">Template</li>
+        </ol>
+    </nav>
+
+    <header class="kr-page-header">
+        <div class="kr-page-title-wrap">
+            <h1 class="kr-page-title" th:text="${template != null} ? #{space.template.heading.edit} : #{space.template.heading.new}">New template</h1>
+            <p class="kr-page-subtitle" style="margin:0" th:text="#{space.template.subtitle(${space.name})}">Offered under "New page" in the space …</p>
+        </div>
+        <div class="kr-page-actions">
+            <a class="kr-btn" th:href="@{'/spaces/' + ${space.id} + '/settings'}" th:attr="hx-get='/spaces/' + ${space.id} + '/settings'"
+               hx-target="#content" hx-push-url="true" th:text="#{common.cancel}">Cancel</a>
+            <button type="submit" class="kr-btn accent" th:text="#{common.save}">Save</button>
+        </div>
+    </header>
+
+    <div class="kr-editor-pane">
+        <p th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></p>
+        <div class="kr-field">
+            <label for="template-name" th:text="#{common.name}">Name</label>
+            <input type="text" id="template-name" name="name" th:value="${templateName}" maxlength="255" required>
+            <small th:text="#{space.template.name.hint}">Shown in the template list and used as the name of the new page.</small>
+        </div>
+        <div class="kr-field">
+            <label for="template-labels" th:text="#{page.new.labels}">Labels</label>
+            <input type="text" id="template-labels" name="labels" th:value="${templateLabels}" th:placeholder="#{page.new.labels.placeholder}">
+            <small th:text="#{page.new.labels.hint}">Up to 32 labels, 64 characters each. Separate with commas.</small>
+        </div>
+        <div class="kr-field">
+            <label for="template-content" th:text="#{page.new.content}">Content</label>
+            <textarea class="form-control" id="template-content" data-rich-editor rows="12" name="content" th:text="${templateContent}"></textarea>
+        </div>
+    </div>
+</form>
+</body>
+</html>

@@ -95,6 +95,54 @@ automatische Speichern (R62) läuft sonst weiter, aber nur für
 Transaktionen, die im eigenen Browser entstanden sind; fremde
 Live-Änderungen speichert der Browser, der sie getippt hat.
 
+## Seitenvorlagen (R65)
+
+Das Formular „Neue Seite" (`page/new.html`) bekommt in Spaces mit Vorlagen
+eine Auswahl `select[name=template]`. Die Auswahl schickt per htmx ein
+`GET` an dieselbe Adresse (`/ui/page/new?space=…` oder
+`/ui/page/{id}/new`) mit `template` und dem bereits eingegebenen Namen
+(`hx-include="#page-name"`) und ersetzt `#content`. Der Server füllt Name,
+Labels und das `textarea` aus der Vorlage; der Editor wird beim Swap wie bei
+jedem Seitenwechsel abgebaut (`htmx:beforeCleanupElement`) und auf dem neuen
+Inhalt neu aufgesetzt (`htmx:load`). Es gibt also keinen eigenen Client-Code
+für Vorlagen; noch nicht gespeicherter Editorinhalt geht beim Wechsel der
+Vorlage verloren, worauf der Hinweis unter der Auswahl hinweist. Die
+Vorlagenformulare unter Spaces → Settings nutzen denselben Editor
+(`textarea[data-rich-editor]`) ohne Autosave und ohne Live-Sitzung. Beschreibung
+der Funktion in [product-functions.md](product-functions.md#seitenvorlagen).
+
+## Seitenvorlagen (R65)
+
+Das Formular „Neue Seite" (`page/new.html`) bekommt in Spaces mit Vorlagen
+eine Auswahl `select[name=template]`. Die Auswahl schickt per htmx ein
+`GET` an dieselbe Adresse (`/ui/page/new?space=…` oder
+`/ui/page/{id}/new`) mit `template` und dem bereits eingegebenen Namen
+(`hx-include="#page-name"`) und ersetzt `#content`. Der Server füllt Name,
+Labels und das `textarea` aus der Vorlage; der Editor wird beim Swap wie bei
+jedem Seitenwechsel abgebaut (`htmx:beforeCleanupElement`) und auf dem neuen
+Inhalt neu aufgesetzt (`htmx:load`). Es gibt also keinen eigenen Client-Code
+für Vorlagen; noch nicht gespeicherter Editorinhalt geht beim Wechsel der
+Vorlage verloren, worauf der Hinweis unter der Auswahl hinweist. Die
+Vorlagenformulare unter Spaces → Settings nutzen denselben Editor
+(`textarea[data-rich-editor]`) ohne Autosave und ohne Live-Sitzung. Beschreibung
+der Funktion in [product-functions.md](product-functions.md#seitenvorlagen).
+
+## Seitenvorlagen (R65)
+
+Das Formular „Neue Seite" (`page/new.html`) bekommt in Spaces mit Vorlagen
+eine Auswahl `select[name=template]`. Die Auswahl schickt per htmx ein
+`GET` an dieselbe Adresse (`/ui/page/new?space=…` oder
+`/ui/page/{id}/new`) mit `template` und dem bereits eingegebenen Namen
+(`hx-include="#page-name"`) und ersetzt `#content`. Der Server füllt Name,
+Labels und das `textarea` aus der Vorlage; der Editor wird beim Swap wie bei
+jedem Seitenwechsel abgebaut (`htmx:beforeCleanupElement`) und auf dem neuen
+Inhalt neu aufgesetzt (`htmx:load`). Es gibt also keinen eigenen Client-Code
+für Vorlagen; noch nicht gespeicherter Editorinhalt geht beim Wechsel der
+Vorlage verloren, worauf der Hinweis unter der Auswahl hinweist. Die
+Vorlagenformulare unter Spaces → Settings nutzen denselben Editor
+(`textarea[data-rich-editor]`) ohne Autosave und ohne Live-Sitzung. Beschreibung
+der Funktion in [product-functions.md](product-functions.md#seitenvorlagen).
+
 ## Build und Aktualisierung
 
 Der Maven-Build installiert lokal unter `target/frontend` Node **24.21.0** und npm

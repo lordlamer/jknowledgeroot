@@ -25,6 +25,7 @@ class SpaceController {
     private final CurrentSpace currentSpace;
     private final org.knowledgeroot.app.security.context.domain.UserContext userContext;
     private final org.knowledgeroot.app.frontend.web.LayoutDefines layout;
+    private final org.knowledgeroot.app.page.template.PageTemplateService templates;
 
     @GetMapping("/spaces")
     String list(Model model, HtmxRequest htmx) {
@@ -93,11 +94,13 @@ class SpaceController {
 
     @GetMapping("/spaces/{id}/settings")
     String settings(@PathVariable int id, @RequestParam(required = false) String created,
-                    @RequestParam(required = false) String saved, Model model, HtmxRequest htmx) {
+                    @RequestParam(required = false) String saved, @RequestParam(required = false) String template,
+                    Model model, HtmxRequest htmx) {
         spaces.requireManage(id);
         settingsModel(id, model);
         model.addAttribute("created", created != null);
         model.addAttribute("saved", saved != null);
+        model.addAttribute("templateNotice", template);
         return htmx.isHtmxRequest() ? "space/settings :: body" : "space/settings";
     }
 
@@ -154,9 +157,72 @@ class SpaceController {
         return "redirect:/spaces/" + id + "/settings?saved";
     }
 
+    // --- page templates (R65) ---------------------------------------------------------------------
+
+    @GetMapping("/spaces/{id}/templates/new")
+    String newTemplate(@PathVariable int id, Model model, HtmxRequest htmx) {
+        spaces.requireManage(id);
+        templateModel(id, null, model, "", "", "");
+        return htmx.isHtmxRequest() ? "space/template :: body" : "space/template";
+    }
+
+    @GetMapping("/spaces/{id}/templates/{templateId}")
+    String editTemplate(@PathVariable int id, @PathVariable int templateId, Model model, HtmxRequest htmx) {
+        spaces.requireManage(id);
+        var template = templates.templateFor(id, templateId);
+        templateModel(id, template, model, template.name(), String.join(", ", template.labels()), template.content());
+        return htmx.isHtmxRequest() ? "space/template :: body" : "space/template";
+    }
+
+    @PostMapping("/spaces/{id}/templates")
+    String createTemplate(@PathVariable int id, @RequestParam String name, @RequestParam(defaultValue = "") String labels,
+                          @RequestParam(defaultValue = "") String content, Model model, HtmxRequest htmx) {
+        try {
+            templates.create(id, name, content, org.knowledgeroot.app.page.template.PageTemplateService.parseLabels(labels));
+            return "redirect:/spaces/" + id + "/settings?template=saved";
+        } catch (ResponseStatusException e) {
+            if (e.getStatusCode().value() != 400 && e.getStatusCode().value() != 409) throw e;
+            templateModel(id, null, model, name, labels, content);
+            model.addAttribute("error", uiMessages.reason(e));
+            return htmx.isHtmxRequest() ? "space/template :: body" : "space/template";
+        }
+    }
+
+    @PostMapping("/spaces/{id}/templates/{templateId}")
+    String saveTemplate(@PathVariable int id, @PathVariable int templateId, @RequestParam String name,
+                        @RequestParam(defaultValue = "") String labels, @RequestParam(defaultValue = "") String content,
+                        Model model, HtmxRequest htmx) {
+        var template = templates.templateFor(id, templateId);
+        try {
+            templates.update(template.id(), name, content, org.knowledgeroot.app.page.template.PageTemplateService.parseLabels(labels));
+            return "redirect:/spaces/" + id + "/settings?template=saved";
+        } catch (ResponseStatusException e) {
+            if (e.getStatusCode().value() != 400 && e.getStatusCode().value() != 409) throw e;
+            templateModel(id, template, model, name, labels, content);
+            model.addAttribute("error", uiMessages.reason(e));
+            return htmx.isHtmxRequest() ? "space/template :: body" : "space/template";
+        }
+    }
+
+    @PostMapping("/spaces/{id}/templates/{templateId}/delete")
+    String deleteTemplate(@PathVariable int id, @PathVariable int templateId) {
+        templates.delete(templates.templateFor(id, templateId).id());
+        return "redirect:/spaces/" + id + "/settings?template=deleted";
+    }
+
+    private void templateModel(int spaceId, org.knowledgeroot.app.page.template.PageTemplate template, Model model,
+                               String name, String labels, String content) {
+        model.addAttribute("space", spaces.space(spaceId));
+        model.addAttribute("template", template);
+        model.addAttribute("templateName", name);
+        model.addAttribute("templateLabels", labels);
+        model.addAttribute("templateContent", content);
+    }
+
     private void settingsModel(int id, Model model) {
         Space space = spaces.space(id);
         model.addAttribute("space", space);
+        model.addAttribute("templates", templates.listForSpace(id));
         model.addAttribute("permissions", spaces.permissions(id));
         model.addAttribute("levels", SpacePermission.Level.values());
         var rootFilter = new PageFilter();

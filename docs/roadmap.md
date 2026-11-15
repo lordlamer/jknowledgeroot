@@ -1468,7 +1468,7 @@ R54.
 
 ## 10. Version 1.2
 
-Stand der Planung: 8. November 2026. Version 1.1.0 ist seit dem 6. November
+Stand der Planung: 15. November 2026. Version 1.1.0 ist seit dem 6. November
 2026 freigegeben, `master` steht auf `1.2.0-SNAPSHOT`. Die Linie 1.2 bringt
 das Bearbeiten in Arbeitskopien mit automatischem Speichern und gemeinsamem
 Bearbeiten, die Anmeldung über einen externen Identitätsanbieter, Vorlagen,
@@ -1709,17 +1709,53 @@ Index.
 
 ### R65 – Seitenvorlagen und Anhänge über API und MCP
 
-- [ ] Geplant; setzt R62 voraus.
+- [x] Lokal umgesetzt und geprüft am 15. November 2026.
 - **Ziel:** Berechtigte legen je Space Vorlagen an (Titel, Inhalt, Labels);
   „Neue Seite" bietet sie an. Client-API und MCP können Anhänge hochladen
   und auflisten; MCP erhält ein Prompt je Vorlage.
-- **Umsetzung:** Vorlagen als Seiten mit Vorlagenstatus im Space;
-  `POST /api/v1/pages/{id}/files` mit Multipart und denselben
-  Größen-/Typprüfungen wie die Oberfläche; MCP-Tool `upload_attachment`
-  und `list_templates`. Beschreibung in [editor.md](editor.md),
-  [client-api.md](client-api.md) und [mcp.md](mcp.md).
-- **Abnahme:** Integrationstests für Vorlagenverwaltung, Anlegen aus
-  Vorlage, Upload über API und MCP mit Rechte- und Größenprüfung.
+- **Umgesetzt:** Vorlagen als eigene Tabelle `page_template` je Space
+  (Migration `1.0.23-page-templates`; Name je Space eindeutig, bis zu 100
+  je Space, Inhalt bereinigt wie Seiten, Labels wie in der Arbeitskopie)
+  statt als Seiten mit Vorlagenstatus – so bleiben sie aus Baum, Suche,
+  Verlauf, Rechten und MCP-Seitentools heraus. `PageTemplateService`
+  (Verwalten nur mit Admin-Level am Space, Lesen mit View-Level,
+  `templateFor` lehnt Vorlagen fremder Spaces ab) und
+  `PageTemplateRepository`. Oberfläche: Abschnitt „Page templates" in den
+  Space-Einstellungen mit Formular (`space/template.html`, derselbe
+  Editor), „Neue Seite" mit Auswahl, die das Formular per htmx mit
+  Vorlageninhalt neu lädt und einen eingegebenen Namen behält. Client-API:
+  `GET /api/v1/spaces/{id}/templates`, `template` in `POST /api/v1/pages`;
+  der Multipart-Upload `POST /api/v1/pages/{id}/files` bestand bereits seit
+  R57. MCP: `list_templates`, `create_page(template?)` (`content` nur noch
+  ohne Vorlage Pflicht), `upload_attachment` (Text oder Base64,
+  `UploadPolicy` und `FileUploadService` wie im Browser, Medientyp aus der
+  Endung) und ein Prompt `template_<id>` je Vorlage, den
+  `McpTemplatePrompts` beim Start und nach `PageTemplatesChanged` am
+  zustandslosen Server registriert. Beschreibung in
+  [product-functions.md](product-functions.md#seitenvorlagen),
+  [editor.md](editor.md#seitenvorlagen-r65), [client-api.md](client-api.md)
+  und [mcp.md](mcp.md); README. Texte in allen sechs Sprachen.
+- **Geprüft:** `PageTemplateIntegrationTest`: Verwaltung durch
+  Space-Verwalter (Edit-Level abgelehnt, Validierung im Formular,
+  Duplikat, Bereinigung, Bearbeiten, Vorlage eines fremden Space), „Neue
+  Seite" mit Auswahl, Vorbelegung und erhaltenem Namen für Haupt- und
+  Unterseiten, Löschen; Client-API mit Liste, Rechten und Anlegen aus
+  Vorlage mit und ohne eigene Angaben. `McpFeaturesIntegrationTest`
+  erweitert um Upload (Text, Base64, Fehlerfälle, fremde Seite),
+  `list_templates`, `create_page` mit Vorlage, Prompt je Vorlage samt
+  Audit und Entfernen. `ApplicationSmokeIT` legt im Chromium eine Vorlage an,
+  wählt sie bei „Neue Seite", prüft Editorinhalt, erhaltenen Namen und
+  Labels der Seite. Vollständiges `verify` lokal: **BUILD SUCCESS, 396
+  Tests und der Chromium-Smoke-Test erfolgreich, keine Fehler oder
+  übersprungenen Tests**; gehosteter Nachweis mit dem PR-Lauf.
+- **Grenzen:** Vorlagen werden nur in der Oberfläche verwaltet (nicht über
+  Client-API oder MCP). Eine spätere Änderung der Vorlage wirkt nicht auf
+  bereits angelegte Seiten. Die Prompt-Liste ist für alle Assistenten gleich
+  und nennt damit Vorlagennamen aller Spaces; der Abruf prüft das Leserecht.
+  Der zustandslose MCP-Server meldet neue Prompts nicht aktiv, Clients sehen
+  sie beim nächsten Abruf der Liste. Base64-Uploads sind durch die
+  Parametergröße des Clients begrenzt; große Dateien bleiben Browser und
+  Client-API vorbehalten.
 
 ### R66 – Seiten beobachten und Benachrichtigungen
 

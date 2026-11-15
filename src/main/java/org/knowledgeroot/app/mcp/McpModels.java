@@ -56,6 +56,9 @@ public final class McpModels {
 
     public record Attachment(int id, int pageId, String name, Integer size, String type, String createdAt, String url) {}
 
+    /** A page template of a space (R65); {@code content} in the requested format. */
+    public record Template(int id, String name, SpaceRef space, List<String> labels, String format, String content, String changedAt) {}
+
     /** {@code text} is the extracted text, or null with {@code note} explaining why there is none. */
     public record AttachmentContent(Attachment attachment, String text, boolean truncated, String note) {}
 
