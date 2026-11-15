@@ -1846,7 +1846,9 @@ Index.
   Bestände beim Start und jede Minute in Fünfzigerpaketen nach, Binärdateien
   bekommen eine leere Zeile). `SearchTerms` baut die Boolean-Mode-Abfrage
   (`+wort*` je Wort ab drei Zeichen, bis zehn Wörter), `PageImpl` sortiert
-  in Stufen Titel, Label, Inhaltsrelevanz, Anhang und fällt ohne Treffer auf
+  in festen Stufen Titel, Label, Inhalt, Anhang (jüngste Änderung zuerst;
+  InnoDB-Relevanzwerte schwanken nach Massenimporten zwischen Zeilen und
+  machten die Reihenfolge im CI instabil) und fällt ohne Treffer auf
   die Teilzeichenfolgensuche zurück; die Rechte-CTE bleibt dieselbe.
   Treffer nur im Anhang nennen die Datei (`Page.searchAttachment`) und
   zeigen den Auszug aus ihrem Text, in Oberfläche (`search.in-attachment`),

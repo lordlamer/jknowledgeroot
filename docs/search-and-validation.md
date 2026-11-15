@@ -35,9 +35,10 @@ und holt Bestände jede Minute in Fünfzigerpaketen nach). `SearchTerms` macht
 aus dem Suchbegriff eine Boolean-Mode-Abfrage: jedes Wort ab drei Zeichen muss
 vorkommen, als Wort oder Wortanfang (`+wort*`), höchstens zehn Wörter,
 eingetippte Operatoren werden nicht durchgereicht. Die Treffer sind in Stufen
-sortiert: Titeltreffer, dann Labeltreffer, dann die Relevanz in Titel und
-Inhalt, dann Treffer nur im Anhang; innerhalb einer Stufe die jüngste Änderung
-zuerst. Ein Treffer, der nur im Anhang steht, nennt die Datei und zeigt den
+sortiert: Titeltreffer, dann Labeltreffer, dann Treffer im Inhalt, dann
+Treffer nur im Anhang; innerhalb einer Stufe die jüngste Änderung zuerst
+(feste Stufen statt InnoDB-Relevanzwerten, die nach Massenimporten zwischen
+Zeilen schwanken und die Blätterung instabil machen würden). Ein Treffer, der nur im Anhang steht, nennt die Datei und zeigt den
 Auszug aus ihrem Text. Findet der Index nichts, etwa bei Wörtern unter drei
 Zeichen, Stoppwörtern oder Wortteilen, antwortet die bisherige
 Teilzeichenfolgensuche in Titel und HTML-Inhalt; `%`, `_` und `!` sind dabei

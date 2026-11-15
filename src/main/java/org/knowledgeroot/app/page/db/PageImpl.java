@@ -95,10 +95,14 @@ public class PageImpl implements PageDao {
                    ON search_hit.page_id = page.id""";
     /** A page matches in title or content, in a label, or in the text of an attachment. */
     private static final String FULLTEXT_MATCH = "(MATCH(name, content) AGAINST(:fulltext IN BOOLEAN MODE) OR label_hit.page_id IS NOT NULL OR search_hit.file_id IS NOT NULL)";
-    /** Ranking tiers: a title hit first, then a label hit, then content relevance, then a hit only in an attachment. */
+    /**
+     * Ranking tiers: a title hit, a label hit, a content hit, a hit only in an attachment; newest change first within a
+     * tier. Boolean tiers rather than InnoDB relevance values, whose weights can differ between rows right after bulk
+     * inserts and would make the order and the pagination unstable.
+     */
     private static final String FULLTEXT_SCORE = "(MATCH(name) AGAINST(:fulltext IN BOOLEAN MODE) > 0) DESC, "
             + "(label_hit.page_id IS NOT NULL) DESC, "
-            + "MATCH(name, content) AGAINST(:fulltext IN BOOLEAN MODE) DESC, "
+            + "(MATCH(name, content) AGAINST(:fulltext IN BOOLEAN MODE) > 0) DESC, "
             + "(search_hit.file_id IS NOT NULL) DESC";
     private static final String FULLTEXT_ATTACHMENT = "search_hit.file_id AS search_attachment_id, (SELECT f.name FROM file f WHERE f.id = search_hit.file_id) AS search_attachment";
 
