@@ -134,4 +134,8 @@
         <sqlFile path="changes/1.0.23-page-templates.mariadb.sql"
                  relativeToChangelogFile="true" encoding="UTF-8" splitStatements="true" stripComments="true"/>
     </changeSet>
+    <changeSet id="1.0.24-notifications" author="knowledgeroot" dbms="mariadb">
+        <sqlFile path="changes/1.0.24-notifications.mariadb.sql"
+                 relativeToChangelogFile="true" encoding="UTF-8" splitStatements="true" stripComments="true"/>
+    </changeSet>
 </databaseChangeLog>

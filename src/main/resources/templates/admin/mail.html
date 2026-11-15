@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
+<head>
+    <title th:text="#{admin.mail.title}">Knowledgeroot Mail</title>
+</head>
+<body>
+<div class="kr-page-wrap" style="max-width:1200px">
+    <nav th:aria-label="#{common.breadcrumb}">
+        <ol class="breadcrumb" style="padding-left:0; padding-right:0">
+            <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true" th:text="#{common.home}">Home</a></li>
+            <li class="breadcrumb-item" th:text="#{common.admin}">Admin</li>
+            <li class="breadcrumb-item active" aria-current="page" th:text="#{admin.mail.heading}">Mail</li>
+        </ol>
+    </nav>
+
+    <header class="kr-page-header" style="padding:12px 0 20px">
+        <div class="kr-page-title-wrap">
+            <h1 class="kr-page-title" style="font-size:24px" th:text="#{admin.mail.heading}">Mail queue</h1>
+            <p class="kr-page-subtitle" style="margin:0">
+                <span th:if="${notificationsEnabled}" th:text="#{admin.mail.notifications-on}">Notification mails are switched on.</span>
+                <span th:unless="${notificationsEnabled}" th:text="#{admin.mail.notifications-off}">Notification mails are switched off (KR_NOTIFICATIONS_ENABLED); the queue still serves other mails.</span>
+                <th:block th:text="#{admin.mail.intro(${maxAttempts}, ${retentionDays})}">Mails are retried with a growing delay; after 8 failed attempts they wait here for you. Sent mails are kept for 30 days.</th:block>
+            </p>
+        </div>
+    </header>
+
+    <div th:if="${retried}" class="alert kr-alert-info" role="status" style="margin-bottom:16px" th:text="#{admin.mail.retried}">The mail is queued again.</div>
+    <div th:if="${deleted}" class="alert kr-alert-info" role="status" style="margin-bottom:16px" th:text="#{admin.mail.deleted}">The mail was deleted.</div>
+
+    <p class="kr-page-meta" data-mail-counts>
+        <span class="kr-pill" th:text="#{admin.mail.counts.pending(${counts.pending()})}">0 waiting</span>
+        <span class="kr-pill" th:classappend="${counts.failed() > 0} ? 'role' : ''" th:text="#{admin.mail.counts.failed(${counts.failed()})}">0 failed</span>
+        <span class="kr-pill" th:text="#{admin.mail.counts.sent(${counts.sent()})}">0 sent</span>
+    </p>
+
+    <p th:if="${#lists.isEmpty(mails)}" style="color:var(--kr-text-2)" th:text="#{admin.mail.none}">No mails in the queue.</p>
+    <table class="kr-tbl" th:unless="${#lists.isEmpty(mails)}" id="mail-queue">
+        <thead>
+        <tr>
+            <th scope="col" th:text="#{admin.mail.status}">Status</th>
+            <th scope="col" th:text="#{admin.mail.recipient}">Recipient</th>
+            <th scope="col" th:text="#{admin.mail.subject}">Subject</th>
+            <th scope="col" th:text="#{admin.mail.created}">Created</th>
+            <th scope="col" th:text="#{admin.mail.attempts}">Attempts</th>
+            <th scope="col" style="text-align:right" th:text="#{common.actions}">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="mail : ${mails}" th:attr="data-status=${mail.status()}">
+            <td>
+                <span th:switch="${mail.status()}">
+                    <span th:case="'sent'" th:text="#{admin.mail.status.sent}">sent</span>
+                    <span th:case="'failed'" class="kr-pill role" th:text="#{admin.mail.status.failed}">failed</span>
+                    <span th:case="*" th:text="#{admin.mail.status.pending}">waiting</span>
+                </span>
+                <small th:if="${mail.lastError() != null}" style="display:block; color:var(--kr-text-3)" th:text="${mail.lastError()}">error</small>
+            </td>
+            <td th:text="${mail.recipient()}">user@example.org</td>
+            <td th:text="${mail.subject()}">Subject</td>
+            <td th:text="${#temporals.format(mail.createDate(), #messages.msg('format.datetime'))}">date</td>
+            <td>
+                <span th:text="${mail.attempts()}">0</span>
+                <small th:if="${mail.sentDate() != null}" style="display:block; color:var(--kr-text-3)" th:text="#{admin.mail.sent-at(${#temporals.format(mail.sentDate(), #messages.msg('format.datetime'))})}">sent at</small>
+                <small th:if="${mail.sentDate() == null and mail.attempts() > 0 and mail.attempts() < maxAttempts}" style="display:block; color:var(--kr-text-3)"
+                       th:text="#{admin.mail.next-attempt(${#temporals.format(mail.nextAttempt(), #messages.msg('format.datetime'))})}">next try</small>
+            </td>
+            <td style="text-align:right; white-space:nowrap">
+                <form method="post" th:action="@{'/admin/mail/' + ${mail.id()} + '/retry'}" style="display:inline" th:if="${mail.sentDate() == null}">
+                    <button type="submit" class="kr-btn sm" th:text="#{admin.mail.retry}">Retry now</button>
+                </form>
+                <form method="post" th:action="@{'/admin/mail/' + ${mail.id()} + '/delete'}" style="display:inline">
+                    <button type="submit" class="kr-btn danger sm" th:text="#{common.delete}">Delete</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <p th:if="${#lists.size(mails) >= limit}" style="color:var(--kr-text-3); font-size:12.5px" th:text="#{admin.mail.limited(${limit})}">Only the first 100 mails are shown.</p>
+</div>
+</body>
+</html>

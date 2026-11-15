@@ -21,6 +21,7 @@ public class PageCreationService {
     private final PageLabelDao labels;
     private final UserContext users;
     private final SpaceService spaces;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     /** Children need edit access to the parent; root pages the edit level on the space (default space when unnamed). */
     public void requireCanCreate(Integer parent) {
@@ -61,6 +62,8 @@ public class PageCreationService {
         int id = pages.createPage(new PageDtoConverter().convertBtoA(dto));
         permissions.createDefaultPermissions(new PageId(id), actor);
         labels.setForPage(new PageId(id), pageLabels);
+        // A page created as published is news for the watchers of its space (R66); a draft is not yet.
+        if (!Boolean.FALSE.equals(dto.getPublished())) events.publishEvent(new PagePublished(new PageId(id), actor));
         return id;
     }
 }

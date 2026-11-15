@@ -34,6 +34,7 @@ class ProfileController {
     private final org.knowledgeroot.app.mcp.oauth.McpConnections mcpConnections;
     private final org.knowledgeroot.app.mcp.McpSettings mcpSettings;
     private final org.knowledgeroot.app.i18n.UiMessages uiMessages;
+    private final org.knowledgeroot.app.notification.NotificationService notifications;
 
     @PostMapping("/profile/password")
     public String changePassword(@RequestParam String currentPassword, @RequestParam String newPassword,
@@ -49,6 +50,9 @@ class ProfileController {
             model.addAttribute("mfa", secondFactors.status(userId));
             model.addAttribute("connections", mcpConnections.list(userId));
             model.addAttribute("mcpEnabled", mcpSettings.enabled());
+            model.addAttribute("preference", notifications.preference(userId));
+            model.addAttribute("frequencies", org.knowledgeroot.app.notification.NotificationFrequency.values());
+            model.addAttribute("mailsEnabled", notifications.mailsEnabled());
             return "profile/show";
         }
         new SecurityContextLogoutHandler().logout(request, response, SecurityContextHolder.getContext().getAuthentication());
@@ -66,6 +70,7 @@ class ProfileController {
     public String showProfile(
             @RequestParam(name = "updated", required = false) boolean updated,
             @RequestParam(name = "disconnected", required = false) String disconnected,
+            @RequestParam(name = "notifications", required = false) String notificationsSaved,
             Model model,
             HtmxRequest htmxRequest
     ) {
@@ -74,6 +79,10 @@ class ProfileController {
         if(userDetails.isGuest()) {
             return "redirect:/login";
         }
+        model.addAttribute("preference", notifications.preference(Integer.parseInt(userDetails.getUserId())));
+        model.addAttribute("frequencies", org.knowledgeroot.app.notification.NotificationFrequency.values());
+        model.addAttribute("mailsEnabled", notifications.mailsEnabled());
+        model.addAttribute("notificationsSaved", notificationsSaved != null);
 
         model.addAttribute("userDetails", myProfileDao.findMyProfile());
         model.addAttribute("updated", updated);

@@ -286,6 +286,39 @@ von der Vorlage zur fertigen Seite beschreibt ([mcp.md](mcp.md)). Assistenten
 laden außerdem mit `upload_attachment` Anhänge hoch, mit denselben Grenzen
 und Rechten wie der Browser.
 
+## Seiten beobachten und Benachrichtigungen
+
+Angemeldete Benutzer beobachten eine Seite mit „Watch“ im Seitenkopf oder
+einen ganzen Space mit „Watch space“ in der Space-Übersicht. Beobachter
+erfahren, wenn dort eine neue Version veröffentlicht, ein Kommentar
+geschrieben oder eine Seite verschoben wird; wer eine Seite beobachtet, sieht
+nur diese Seite, wer einen Space beobachtet, alle Seiten darin. Eine Erwähnung
+`@login` in einem Kommentar erreicht die genannte Person auch ohne
+Beobachtung. Der Auslöser selbst wird nie benachrichtigt, und wer die Seite
+nicht lesen darf, erfährt nichts von ihr.
+
+Jede Benachrichtigung landet im Verlauf unter der Glocke in der Kopfzeile;
+die Zahl daran nennt die ungelesenen Einträge, das Öffnen der Seite
+„Notifications“ markiert sie als gelesen. Dort stehen auch die beobachteten
+Seiten und Spaces mit „Stop watching“. Einträge werden nach 90 Tagen
+gelöscht.
+
+Mails steuert jeder Benutzer im Profil unter „Notifications“: sofort eine Mail
+je Ereignis (Standard), eine stündliche oder tägliche Zusammenfassung oder gar
+keine Mail; Erwähnungen lassen sich dort abschalten. Mails gibt es nur, wenn
+der Administrator sie mit `KR_NOTIFICATIONS_ENABLED=true` eingeschaltet hat
+(dazu `KR_PUBLIC_URL`, `KR_MAIL_FROM` und SMTP wie beim Passwortreset); der
+Verlauf füllt sich auch ohne Mails. Jede Mail ist in der Sprache des Empfängers
+verfasst, nennt den Link zur Seite und den Weg zu den Einstellungen.
+
+Der Versand läuft über die dauerhafte Mailwarteschlange in der Datenbank
+(Admin → Mail): Fehlversuche werden mit wachsendem Abstand wiederholt, nach
+acht Versuchen wartet die Mail auf einen Administrator, der sie erneut
+anstößt oder löscht; gesendete Mails bleiben 30 Tage sichtbar
+([monitoring.md](monitoring.md#mailwarteschlange)). Die Client-API bietet
+Beobachten, Verlauf und Einstellung unter `/api/v1`
+([client-api.md](client-api.md)).
+
 ## Arbeitskopie, Entwürfe und automatisches Speichern
 
 Seit R62 hat jede Seite neben der veröffentlichten Version eine

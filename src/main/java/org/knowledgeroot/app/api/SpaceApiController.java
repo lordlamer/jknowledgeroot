@@ -21,6 +21,7 @@ class SpaceApiController {
     private final CurrentSpace currentSpace;
     private final org.knowledgeroot.app.page.domain.PageDao pages;
     private final org.knowledgeroot.app.page.template.PageTemplateService templates;
+    private final org.knowledgeroot.app.notification.NotificationService notifications;
 
     /** Spaces the viewer may enter; {@code current} marks the one the session last opened. */
     @GetMapping("/spaces")
@@ -59,6 +60,7 @@ class SpaceApiController {
     private ApiModels.SpaceInfo info(Space space, boolean current) {
         if (space == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Space not found.");
         return new ApiModels.SpaceInfo(space.getId(), space.getKey(), space.getName(), space.getDescription(),
-                space.getHomePageId(), space.isArchived(), spaces.canCreateRootPage(space.getId()), spaces.canManage(space.getId()), current);
+                space.getHomePageId(), space.isArchived(), spaces.canCreateRootPage(space.getId()), spaces.canManage(space.getId()), current,
+                api.viewer() != null && notifications.watchesSpace(api.viewer(), space.getId()));
     }
 }

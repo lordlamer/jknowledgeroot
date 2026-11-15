@@ -291,6 +291,7 @@ class ApplicationSmokeIT {
             int pageId = jdbc.queryForObject("SELECT id FROM page WHERE name = 'Browser migration test'", Integer.class);
             assertTrue(jdbc.queryForObject("SELECT content FROM page WHERE id = ?", String.class, pageId).contains("New editor content"));
             browserPageTemplates(page, server, jdbc, pageId);
+            browserMailQueue(page, server, pageId);
 
             // Load persisted, older rich text into the replacement editor without losing its structure.
             jdbc.update("UPDATE page SET content = ? WHERE id = ?",
@@ -470,6 +471,15 @@ class ApplicationSmokeIT {
         assertTrue(jdbc.queryForObject("SELECT content FROM page WHERE id = ?", String.class, created).contains("Template body text"));
         assertEquals(2, jdbc.queryForObject("SELECT COUNT(*) FROM tag_content WHERE page_id = ?", Integer.class, created));
         // Back to the page the following steps edit.
+        page.navigate(uri(server, "/ui/page/" + pageId).toString());
+        page.waitForSelector("#content a[hx-get$='/edit']");
+    }
+
+    /** Admin → Mail (R66) renders in the production profile; nothing is queued yet because recovery mails go direct. */
+    private void browserMailQueue(Page page, TestServer server, int pageId) {
+        page.navigate(uri(server, "/admin/mail").toString());
+        page.waitForSelector("[data-mail-counts]");
+        assertTrue(page.locator("body").innerText().contains("No mails in the queue."), "the mail queue page lists nothing yet");
         page.navigate(uri(server, "/ui/page/" + pageId).toString());
         page.waitForSelector("#content a[hx-get$='/edit']");
     }

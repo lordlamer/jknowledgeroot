@@ -1,0 +1,29 @@
+<th:block xmlns:th="http://www.thymeleaf.org">
+
+    <!-- Watch toggle in the space overview header (R66) -->
+    <th:block th:fragment="button">
+        <button th:if="${watchingSpace}"
+                class="kr-btn kr-watch on"
+                type="button"
+                th:attr="hx-delete='/spaces/' + ${spaceId} + '/watch'"
+                hx-target="this" hx-swap="outerHTML"
+                th:title="#{space.watch.stop}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <th:block th:text="#{space.watch.watching}">Watching space</th:block>
+        </button>
+        <button th:unless="${watchingSpace}"
+                class="kr-btn kr-watch"
+                type="button"
+                th:attr="hx-post='/spaces/' + ${spaceId} + '/watch'"
+                hx-target="this" hx-swap="outerHTML"
+                th:title="#{space.watch.start}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <th:block th:text="#{space.watch.watch}">Watch space</th:block>
+        </button>
+    </th:block>
+
+</th:block>

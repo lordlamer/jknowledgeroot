@@ -18,6 +18,7 @@ public class PageMoveService {
     private final PagePermissionDao permissions;
     private final UserContext users;
     private final org.knowledgeroot.app.space.SpaceService spaces;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     public int actor() {
         var user = users.getUserContext();
@@ -89,6 +90,8 @@ public class PageMoveService {
         Integer targetSpace = parent > 0
                 ? jdbc.sql("SELECT space_id FROM page WHERE id=?").param(parent).query(Integer.class).single()
                 : topLevelSpace;
+        int fromParent = page.getParent() == null ? 0 : page.getParent();
+        int fromSpace = page.getSpaceId();
         // Record the original content, location and labels, then invalidate old edit forms.
         page.setParent(parent);
         page.setChangedBy(Integer.valueOf(users.getUserContext().getUserId()));
@@ -99,6 +102,7 @@ public class PageMoveService {
         jdbc.sql("UPDATE page SET parent=?, space_id=? WHERE id=?").params(parent, targetSpace, id.value()).update();
         if (!subtree.isEmpty()) jdbc.sql("UPDATE page SET revision=revision+1, space_id=:space WHERE id IN (:ids)")
                 .param("space", targetSpace).param("ids", subtree).update();
+        events.publishEvent(new PageMoved(id, page.getChangedBy(), fromParent, parent, fromSpace, targetSpace));
     }
 
     private record Parent(int parent, boolean deleted) { }

@@ -53,6 +53,7 @@ public class PageController {
     private final FileDao fileDao;
     private final UploadPolicy uploadPolicy;
     private final org.knowledgeroot.app.page.template.PageTemplateService pageTemplates;
+    private final org.knowledgeroot.app.notification.NotificationService pageNotifications;
 
 
     /**
@@ -154,6 +155,7 @@ public class PageController {
         model.addAttribute("canStar", canStar);
         model.addAttribute("pageId", pageId);
         model.addAttribute("starred", canStar && pageStarDao.isStarred(currentUserId, pid));
+        model.addAttribute("watching", canStar && pageNotifications.watchesPage(currentUserId, pageId));
 
         // Attachments and upload limits for the upload dialog
         model.addAttribute("files", fileDao.listFiles(FileFilter.builder().pageId(pid).build()));

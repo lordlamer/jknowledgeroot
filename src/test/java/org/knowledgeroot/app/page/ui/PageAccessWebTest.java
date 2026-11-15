@@ -51,6 +51,7 @@ class PageAccessWebTest {
     @MockitoBean org.knowledgeroot.app.space.SpaceService spaces;
     @MockitoBean org.knowledgeroot.app.space.CurrentSpace currentSpace;
     @MockitoBean org.knowledgeroot.app.page.template.PageTemplateService templates;
+    @MockitoBean org.knowledgeroot.app.notification.NotificationService notifications;
     private RequestPostProcessor caller;
     private final PageId pageId = new PageId(100);
 

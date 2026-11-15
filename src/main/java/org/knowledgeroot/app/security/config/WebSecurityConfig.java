@@ -77,6 +77,10 @@ public class WebSecurityConfig {
                     auth.requestMatchers(HttpMethod.POST,   "/ui/page/*/star").hasAnyRole("USER", "ADMIN");
                     auth.requestMatchers(HttpMethod.DELETE, "/ui/page/*/star").hasAnyRole("USER", "ADMIN");
                     auth.requestMatchers(                   "/ui/sidebar/starred").hasAnyRole("USER", "ADMIN");
+                    // Watching a page (R66) needs an account, like starring.
+                    auth.requestMatchers(HttpMethod.POST,   "/ui/page/*/watch").hasAnyRole("USER", "ADMIN");
+                    auth.requestMatchers(HttpMethod.DELETE, "/ui/page/*/watch").hasAnyRole("USER", "ADMIN");
+                    auth.requestMatchers("/notifications").hasAnyRole("USER", "ADMIN");
 
                     // Comments — anyone may read, only authenticated users may post or delete.
                     auth.requestMatchers(HttpMethod.POST,   "/ui/page/*/comments").hasAnyRole("USER", "ADMIN");
@@ -104,7 +108,7 @@ public class WebSecurityConfig {
                     ).permitAll();
                     // Space overviews and switching are open to guests of public spaces; creating and managing need a sign-in.
                     auth.requestMatchers("/spaces/new", "/spaces/*/settings", "/spaces/*/archive", "/spaces/*/permissions/**",
-                            "/spaces/*/templates/**").authenticated();
+                            "/spaces/*/templates/**", "/spaces/*/watch").authenticated();
                     auth.requestMatchers(HttpMethod.GET, "/spaces", "/spaces/open", "/spaces/*").permitAll();
 
                     auth.requestMatchers("/ui/admin/**", "/admin/**").hasRole("ADMIN");

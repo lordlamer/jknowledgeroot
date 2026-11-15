@@ -60,6 +60,7 @@ public class PageEditingService {
         if (Boolean.TRUE.equals(dto.getPublished())) page.setPublished(true);
         pages.updatePage(page);
         labels.setForPage(id, pageLabels);
+        if (page.isPublished()) events.publishEvent(new PagePublished(id, actor));
         if (live) published(id); else clearWorkingCopy(id);
         try {
             for (var entry : updates.entrySet()) {
@@ -95,6 +96,7 @@ public class PageEditingService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Use delete or history restore");
         if (Boolean.TRUE.equals(dto.getPublished())) page.setPublished(true);
         pages.updatePage(page);
+        if (page.isPublished()) events.publishEvent(new PagePublished(id, actor));
         clearWorkingCopy(id);
         // Return persisted audit identity and creation fields, never the client-supplied values.
         return new PageDtoConverter().convertAtoB(page);
@@ -163,6 +165,7 @@ public class PageEditingService {
         page.setChangeDate(LocalDateTime.now());
         pages.updatePage(page);
         draft.ifPresent(copy -> labels.setForPage(id, copy.labels()));
+        events.publishEvent(new PagePublished(id, actor));
         // The working copy is the saved state of the live document, so the live log stays valid.
         published(id);
     }

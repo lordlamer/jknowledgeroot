@@ -31,7 +31,7 @@ class PageCommentControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new PageCommentController(comments, permissions, userContext);
+        controller = new PageCommentController(comments, new org.knowledgeroot.app.page.domain.PageCommentService(comments, event -> {}), permissions, userContext);
         when(userContext.getUserContext()).thenReturn(UserDetails.builder()
                 .userId("2").login("reader").role(UserDetails.Role.USER).build());
     }

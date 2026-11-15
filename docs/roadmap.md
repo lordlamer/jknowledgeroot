@@ -1759,20 +1759,64 @@ Index.
 
 ### R66 – Seiten beobachten und Benachrichtigungen
 
-- [ ] Geplant; setzt R62 voraus.
+- [x] Lokal umgesetzt und geprüft am 15. November 2026.
 - **Ziel:** Benutzer beobachten Seiten oder Spaces und erhalten bei
   Veröffentlichung, Kommentar oder Verschieben eine Mail; Erwähnungen in
   Kommentaren benachrichtigen die genannte Person. Ein Verlauf in der
   Oberfläche zeigt die eigenen Benachrichtigungen.
-- **Umsetzung:** Dauerhafte Mailwarteschlange in der Datenbank mit
-  Wiederholung und Fehleranzeige im Admin-Bereich (ersetzt die flüchtige
-  Warteschlange aus R36); Beobachtungen je Seite/Space; Zusammenfassung
-  mehrerer Änderungen in einer Mail je Intervall; Profil-Einstellung für
-  Häufigkeit und Abmeldung. Beschreibung in [monitoring.md](monitoring.md)
-  und [product-functions.md](product-functions.md).
-- **Abnahme:** Integrationstests für Warteschlange (Wiederholung, Fehler,
-  Reihenfolge), Beobachtungen je Rolle und Rechteentzug, Erwähnungen;
-  Mailinhalte in den sechs Sprachen.
+- **Umgesetzt:** Migration `1.0.24-notifications` mit `page_watch`,
+  `space_watch`, `notification_setting`, `notification` und
+  `mail_queue`. Ereignisse `PagePublished` (Bearbeiten, Veröffentlichen,
+  Anlegen einer veröffentlichten Seite), `PageCommented` (über den neuen
+  `PageCommentService`, den Oberfläche, Client-API und MCP nutzen) und
+  `PageMoved`; `NotificationService` ermittelt nach dem Commit die
+  Beobachter der Seite und ihres Space ohne den Auslöser, prüft das
+  Leserecht, schreibt den Verlauf und reiht je nach Einstellung sofort eine
+  Mail ein oder sammelt für die stündliche/tägliche Zusammenfassung
+  (`sendDigests`, alle fünf Minuten geprüft); Erwähnungen `@login` in
+  Kommentaren gehen an aktive Konten mit Leserecht. `MailQueue`: Zeilen in
+  der Datenbank, ein Arbeitsthread je Instanz, Wiederholung mit wachsendem
+  Abstand, nach acht Versuchen „failed“; Admin → Mail mit Zählern, Liste,
+  erneut anstoßen und löschen; gesendete Mails 30 Tage, Verlauf 90 Tage.
+  Oberfläche: „Watch“ im Seitenkopf, „Watch space“ in der Space-Übersicht,
+  Glocke mit Zähler ungelesener Einträge, Seite „Notifications“ mit Verlauf
+  und beobachteten Seiten/Spaces, Abschnitt im Profil für Häufigkeit und
+  Erwähnungen. Client-API: `PUT/DELETE /pages/{id}/watch`,
+  `PUT/DELETE /spaces/{id}/watch`, `GET /notifications`,
+  `POST /notifications/read`, `GET/PUT /profile/notifications`;
+  `watched` in Seiten- und Space-Antworten. Konfiguration
+  `KR_NOTIFICATIONS_ENABLED` mit `KR_PUBLIC_URL`, `KR_MAIL_FROM` und
+  SMTP. Beschreibung in [product-functions.md](product-functions.md#seiten-beobachten-und-benachrichtigungen),
+  [monitoring.md](monitoring.md#mailwarteschlange),
+  [client-api.md](client-api.md), [account-recovery.md](account-recovery.md),
+  README und `production.env.example`. Mail- und Oberflächentexte in allen
+  sechs Sprachen.
+- **Abweichung:** Die flüchtige Warteschlange aus R36 bleibt für die Mails
+  des Passwortresets bestehen, weil dort ein unzustellbarer Link sofort
+  widerrufen werden muss; eine Wiederholung aus der Datenbank würde diese
+  Zusicherung aufheben. Die neue Warteschlange trägt alle
+  Benachrichtigungsmails.
+- **Geprüft:** `NotificationIntegrationTest`: Beobachten mit Leserecht
+  (403 ohne, Umleitung für Gäste), Veröffentlichung an Seiten- und
+  Space-Beobachter ohne den Autor mit Link und Absender, Erwähnung gegen
+  Kommentar, neue Seite und Verschieben auf die oberste Ebene für den
+  Space-Beobachter, Glocke und Verlauf, Client-API mit `unread` und
+  `watched`, Rechteentzug und Beenden der Beobachtung; tägliche
+  Zusammenfassung mit Intervall, „never“ nur Verlauf, Erwähnungen aus;
+  Warteschlange mit Fehlversuch, Wartezeit, Admin-Seite, erneutem Anstoß,
+  Löschen und Endzustand „failed“. Slice-Tests an die neuen Konstruktoren
+  angepasst; `ApplicationSmokeIT` öffnet Admin → Mail im Produktionsprofil.
+  Vollständiges `verify` lokal: **BUILD SUCCESS, 399 Tests und der
+  Chromium-Smoke-Test erfolgreich, keine Fehler oder übersprungenen Tests**;
+  gehosteter Nachweis mit dem PR-Lauf.
+- **Grenzen:** Wer eine Seite beobachtet, erfährt nichts über ihre
+  Unterseiten (dafür den Space beobachten). Kommentare werden nicht
+  gelöscht-benachrichtigt, Löschen und Wiederherstellen von Seiten lösen
+  keine Benachrichtigung aus. Ein Arbeitsthread je Instanz ohne Sperre: bei
+  mehreren Instanzen kann eine Mail doppelt gesendet werden. Keine
+  Erwähnungsvervollständigung im Kommentarfeld, `user.timezone` bleibt
+  unausgewertet. MCP kennt Beobachtungen
+  und Verlauf nicht.
 
 ### R67 – Export und Import
 

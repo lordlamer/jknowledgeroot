@@ -31,6 +31,7 @@ class PageApiController {
     private final PageMoveService moves;
     private final PageDraftDao drafts;
     private final org.knowledgeroot.app.page.template.PageTemplateService templates;
+    private final org.knowledgeroot.app.notification.NotificationService pageNotifications;
 
     @GetMapping("/{id}")
     ApiModels.PageDetail page(@PathVariable int id) {
@@ -186,7 +187,8 @@ class PageApiController {
                 page.getChangedBy(), page.getChangedByLogin(), page.getChangeDate(),
                 canEdit, viewer != null, viewer != null && stars.isStarred(viewer, pid), viewer != null,
                 api.admin(), attachments, comments.countForPage(pid),
-                page.isPublished(), canEdit && drafts.find(pid).isPresent());
+                page.isPublished(), canEdit && drafts.find(pid).isPresent(),
+                viewer != null && pageNotifications.watchesPage(viewer, id));
     }
 
     private static List<String> labels(List<String> values) {
