@@ -30,6 +30,7 @@ class NavigationApiController {
     private static final int SEARCH_PAGE_SIZE = 20;
     private static final int MAX_PATH_DEPTH = 12;
     private final ApiSupport api;
+    private final org.knowledgeroot.app.file.domain.AttachmentIndex attachments;
     private final PageDao pages;
     private final PageStarDao stars;
     private final org.knowledgeroot.app.space.CurrentSpace currentSpace;
@@ -88,8 +89,9 @@ class NavigationApiController {
         // Ancestors are shared between hits, so resolve each visible parent only once per request.
         Map<Integer, Optional<Page>> parents = new HashMap<>();
         var hits = results.stream().limit(SEARCH_PAGE_SIZE).map(page -> new ApiModels.SearchHit(
-                page.getPageId().value(), page.getName(), SearchController.snippet(page.getContent(), term),
-                path(page.getParent(), viewer, parents), page.getChangeDate(), api.spaceRef(page.getSpaceId()), !page.isPublished())).toList();
+                page.getPageId().value(), page.getName(), SearchController.snippet(page, term, attachments),
+                path(page.getParent(), viewer, parents), page.getChangeDate(), api.spaceRef(page.getSpaceId()), !page.isPublished(),
+                page.getSearchAttachment())).toList();
         return new ApiModels.SearchResponse(term, hits, offset,
                 results.size() > SEARCH_PAGE_SIZE && offset + SEARCH_PAGE_SIZE <= 100_000);
     }

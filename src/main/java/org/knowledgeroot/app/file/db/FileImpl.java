@@ -74,7 +74,7 @@ public class FileImpl implements FileDao {
     }
 
     @Override
-    public void createFile(MultipartFile file, Integer pageId, Integer actor) {
+    public int createFile(MultipartFile file, Integer pageId, Integer actor) {
         policy.validate(new MultipartFile[]{file});
         try (StagedUpload staged = StagedUpload.read(file, policy.maxFileBytes())) {
             if (!fileStorage.exists(staged.key)) {
@@ -102,6 +102,7 @@ public class FileImpl implements FileDao {
                     actor,
                     now
             );
+            return jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Integer.class);
         } catch (IOException ex) {
             throw new StorageException("Failed to stage upload", ex);
         }

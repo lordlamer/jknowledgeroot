@@ -47,7 +47,8 @@ Website: [knowledgeroot.org](https://knowledgeroot.org) · Images: [Docker Hub](
 - **History you can use.** Every publication keeps a version; compare any two versions side by
   side, restore an earlier one, and recover deleted pages as an administrator. Stale
   revisions are detected and your draft is preserved on a conflict.
-- **Search with filters** across all spaces you may enter, or inside one space, by label,
+- **Full-text search** over titles, labels, content and the text of attachments (including
+  PDF), ranked title first, across all spaces you may enter or inside one, with filters by label,
   change date and last editor. Permissions are applied before pagination.
 - **Attachments** on local disk or in any S3-compatible bucket, streamed with SHA-256
   hashing and size limits; comments, labels and favourites on every page.

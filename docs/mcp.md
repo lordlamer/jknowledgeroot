@@ -57,7 +57,7 @@ Lesend (Scope `mcp:read`):
 |---|---|
 | `list_spaces` | Betretbare Spaces mit id, key, name, description |
 | `get_space(id)` | Beschreibung, Homepage, eigene Rechte im Space |
-| `search_pages(query, space?, start?, label?, changed_since?, changed_by?)` | Volltextsuche, 20 Treffer je Aufruf mit Pfad, Space und Ausschnitt; Filter nach Label, Änderungsdatum (YYYY-MM-DD) und Login des letzten Bearbeiters |
+| `search_pages(query, space?, start?, label?, changed_since?, changed_by?)` | Volltextsuche über Titel, Inhalt, Labels und Anhangstexte (R68), beste Treffer zuerst, 20 je Aufruf mit Pfad, Space, Ausschnitt und `attachment` (Datei, wenn nur ein Anhang passt); Filter nach Label, Änderungsdatum (YYYY-MM-DD) und Login des letzten Bearbeiters |
 | `get_page(id, format?)` | Seite mit Breadcrumb, Labels, Inhalt (Markdown, mit `format=html` HTML), Revision, Link, Anzahl Kommentare und Anhänge |
 | `list_pages(parent?, space?)` | Unterseiten einer Seite oder Hauptseiten eines Space (50 je Aufruf) |
 | `get_tree(parent?, space?, depth?)` | Teilbaum als verschachtelte Knoten, bis 4 Ebenen und 500 Knoten |

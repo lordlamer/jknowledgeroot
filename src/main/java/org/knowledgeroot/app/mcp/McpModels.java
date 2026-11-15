@@ -36,7 +36,8 @@ public final class McpModels {
 
     public record Tree(PageRef root, SpaceRef space, List<TreeNode> pages, boolean truncated) {}
 
-    public record SearchHit(int id, String name, String url, SpaceRef space, List<String> path, String snippet, String changedAt) {}
+    /** {@code attachment} names the attachment whose text matched (R68), null when the page itself did. */
+    public record SearchHit(int id, String name, String url, SpaceRef space, List<String> path, String snippet, String changedAt, String attachment) {}
 
     public record SearchResult(String query, List<SearchHit> hits, int start, boolean hasMore) {}
 

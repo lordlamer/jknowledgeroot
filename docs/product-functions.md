@@ -286,6 +286,19 @@ von der Vorlage zur fertigen Seite beschreibt ([mcp.md](mcp.md)). Assistenten
 laden außerdem mit `upload_attachment` Anhänge hoch, mit denselben Grenzen
 und Rechten wie der Browser.
 
+## Suche
+
+Die Suche in der Kopfzeile durchsucht Titel, Inhalt, Labels und den Text von
+Anhängen (Text, Markdown, CSV, JSON, XML, HTML, PDF) aller Seiten, die man
+lesen darf, wahlweise auf einen Space begrenzt. Jedes Wort des Suchbegriffs
+muss vorkommen, auch als Wortanfang; Groß- und Kleinschreibung spielt keine
+Rolle. Die besten Treffer stehen oben: zuerst Seiten mit dem Begriff im Titel,
+dann mit passendem Label, dann nach Gewicht im Inhalt, zuletzt Seiten, bei
+denen nur ein Anhang passt. Solche Treffer zeigen den Dateinamen und einen
+Auszug aus dem Anhang. Bei sehr kurzen Wörtern oder Wortteilen greift die
+Teilzeichenfolgensuche. Einzelheiten und Grenzen in
+[search-and-validation.md](search-and-validation.md#seitenlisten-und-suche).
+
 ## Seiten beobachten und Benachrichtigungen
 
 Angemeldete Benutzer beobachten eine Seite mit „Watch“ im Seitenkopf oder

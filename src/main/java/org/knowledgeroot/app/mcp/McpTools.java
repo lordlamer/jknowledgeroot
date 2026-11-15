@@ -53,6 +53,7 @@ public class McpTools {
     private final PageStarDao stars;
     private final PageCommentDao comments;
     private final org.knowledgeroot.app.page.domain.PageCommentService pageComments;
+    private final org.knowledgeroot.app.file.domain.AttachmentIndex attachments;
     private final PageCreationService creation;
     private final PageEditingService editing;
     private final PageMoveService moves;
@@ -85,9 +86,10 @@ public class McpTools {
     // --- reading ------------------------------------------------------------------------------------
 
     @McpTool(name = "search_pages", generateOutputSchema = false,
-            description = "Full-text search over page names and contents the user may read. Returns up to 20 hits with id, "
-                    + "name, space, path and a snippet; use start for the next 20. Optional filters: space, label, "
-                    + "changed_since (date) and changed_by (login). Call get_page for the full content.",
+            description = "Full-text search over page names, contents, labels and attachment texts the user may read, "
+                    + "best matches first. Returns up to 20 hits with id, name, space, path, a snippet and the attachment "
+                    + "that matched, if any; use start for the next 20. Optional filters: space, label, changed_since (date) "
+                    + "and changed_by (login). Call get_page for the full content.",
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, idempotentHint = true, openWorldHint = false))
     public McpModels.SearchResult searchPages(
             @McpToolParam(description = "Words to search for", required = true) String query,
@@ -108,7 +110,7 @@ public class McpTools {
             var hits = results.stream().limit(PAGE_SIZE).map(page -> new McpModels.SearchHit(page.getPageId().value(),
                     page.getName(), access.pageUrl(page.getPageId().value()), access.spaceRef(page.getSpaceId()),
                     access.path(page.getParent()).stream().map(McpModels.PageRef::name).toList(),
-                    SearchController.snippet(page.getContent(), term), McpModels.time(page.getChangeDate()))).toList();
+                    SearchController.snippet(page, term, attachments), McpModels.time(page.getChangeDate()), page.getSearchAttachment())).toList();
             return new McpModels.SearchResult(term, hits, offset, results.size() > PAGE_SIZE);
         });
     }

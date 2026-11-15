@@ -1472,9 +1472,9 @@ Stand der Planung: 15. November 2026. Version 1.1.0 ist seit dem 6. November
 2026 freigegeben, `master` steht auf `1.2.0-SNAPSHOT`. Die Linie 1.2 bringt
 das Bearbeiten in Arbeitskopien mit automatischem Speichern und gemeinsamem
 Bearbeiten, die Anmeldung über einen externen Identitätsanbieter, Vorlagen,
-Anhänge über API und MCP sowie Benachrichtigungen. Export/Import und ein
-Volltextindex sind eingeplant, werden aber erst nach R66 entschieden und
-können in eine Linie 1.3 wandern. Die Reihenfolge folgt den Abhängigkeiten:
+Anhänge über API und MCP, Benachrichtigungen und den Volltextindex. Nach R66
+wurde am 15. November 2026 entschieden: R68 (Volltextindex) bleibt in 1.2,
+R67 (Export/Import) wandert in die Linie 1.3. Die Reihenfolge folgt den Abhängigkeiten:
 R62 ändert das Datenmodell, auf dem R64, R65 und R66 aufsetzen.
 
 Ausgangslage aus den Grenzen der 1.1-Einträge: MCP und Client-API laden
@@ -1820,7 +1820,7 @@ Index.
 
 ### R67 – Export und Import
 
-- [ ] Geplant; Entscheidung nach R66, ob 1.2 oder 1.3.
+- [ ] Verschoben in die Linie 1.3 (Entscheidung vom 15. November 2026).
 - **Ziel:** Einzelne Seiten und ganze Spaces lassen sich als HTML-Archiv
   mit Anhängen und als Markdown exportieren, einzelne Seiten als PDF; ein
   HTML-/Markdown-Import legt Seitenbäume mit Anhängen an.
@@ -1833,15 +1833,47 @@ Index.
 
 ### R68 – Volltextindex
 
-- [ ] Geplant; Entscheidung nach R66, ob 1.2 oder 1.3.
+- [x] Lokal umgesetzt und geprüft am 15. November 2026.
 - **Ziel:** Suche über einen Index statt Teilzeichenfolgensuche, mit
   Gewichtung von Titel, Labels und Inhalt und mit Treffern in Anhängen.
-- **Umsetzung:** Bevorzugt MariaDB FULLTEXT auf einer Indextabelle, die bei
-  Veröffentlichung aktualisiert wird; Alternative eingebettetes Lucene,
-  falls die Qualität nicht reicht. Die Lastmessung aus R27 wird wiederholt.
-- **Abnahme:** Trefferqualität gegen die heutige Suche auf dem
-  Lastdatensatz; Rechteprüfung unverändert; Messwerte in
-  [load-testing.md](load-testing.md).
+- **Umgesetzt:** InnoDB-FULLTEXT-Indizes direkt auf `page(name)`,
+  `page(name, content)` und `tag(name)` (Migration `1.0.25-search-index`)
+  statt einer eigenen Indextabelle: sie folgen jedem Schreibzugriff von
+  selbst, auch Importen per SQL wie im Lasttest, und brauchen keinen
+  Nachlauf bei Veröffentlichung. Anhangstexte in `file_text`
+  (`AttachmentText` für Text, Markdown, CSV, JSON, XML, HTML und PDF;
+  `AttachmentIndex` schreibt beim Hochladen in derselben Transaktion und holt
+  Bestände beim Start und jede Minute in Fünfzigerpaketen nach, Binärdateien
+  bekommen eine leere Zeile). `SearchTerms` baut die Boolean-Mode-Abfrage
+  (`+wort*` je Wort ab drei Zeichen, bis zehn Wörter), `PageImpl` sortiert
+  in Stufen Titel, Label, Inhaltsrelevanz, Anhang und fällt ohne Treffer auf
+  die Teilzeichenfolgensuche zurück; die Rechte-CTE bleibt dieselbe.
+  Treffer nur im Anhang nennen die Datei (`Page.searchAttachment`) und
+  zeigen den Auszug aus ihrem Text, in Oberfläche (`search.in-attachment`),
+  Client-API und MCP (`attachment`). Beschreibung in
+  [search-and-validation.md](search-and-validation.md#seitenlisten-und-suche),
+  [product-functions.md](product-functions.md#suche),
+  [load-testing.md](load-testing.md#volltextindex-r68), client-api.md, mcp.md,
+  README.
+- **Geprüft:** `SearchIndexIntegrationTest`: Stufen Titel, Label, Inhalt,
+  Anhang auf vier Seiten mit einem eindeutigen Begriff; Wortanfänge in
+  beliebiger Reihenfolge; Anhangstreffer mit Dateiname und Auszug in API und
+  Oberfläche; Außenstehender und Gast ohne Treffer; zwei Buchstaben und
+  Wortteile über den Rückfall; Umbenennen und Anhang löschen nehmen die
+  Treffer heraus; Nachholen des Anhangsindex einmalig, Binärdateien bleiben
+  liegen. Bestehende Such-Tests (Oberfläche, Client-API, MCP, Lasttest)
+  unverändert bestanden; `PagePermissionDatabaseTest` erwartet im Fenster
+  über 5000 Seiten jetzt die jüngste Seite zuerst. Vollständiges `verify`
+  lokal: **BUILD SUCCESS, 401 Tests und der Chromium-Smoke-Test erfolgreich,
+  keine Fehler oder übersprungenen Tests**; gehosteter Nachweis und
+  Lastmessung mit dem PR-Lauf.
+- **Grenzen:** Wörter unter drei Zeichen, Stoppwörter und Wortteile finden
+  nur den Rückfall (Teilzeichenfolgen, ungewichtet). HTML-Tags im Inhalt
+  werden mittokenisiert. Keine Zerlegung für CJK-Schriften, keine
+  Synonyme oder Stammformen. Die Blätterung bleibt beim Rückfall nicht
+  stabil, wenn der Index auf einer späteren Seite leer ausgeht. Kein Lucene;
+  die Qualität reicht für die Zielgröße, die Entscheidung bleibt
+  dokumentiert.
 
 ## Nachweise der Bestandsaufnahme
 

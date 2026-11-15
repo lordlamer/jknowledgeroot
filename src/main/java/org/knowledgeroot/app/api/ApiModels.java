@@ -175,7 +175,9 @@ public final class ApiModels {
 
     public record MoveCandidate(int id, String name) {}
 
-    public record SearchHit(int id, String name, String snippet, List<String> path, @JsonSerialize(using = ServerTime.class) LocalDateTime changeDate, SpaceRef space, boolean draft) {}
+    /** {@code attachment} names the attachment whose text matched (R68), null when the page itself did. */
+    public record SearchHit(int id, String name, String snippet, List<String> path, @JsonSerialize(using = ServerTime.class) LocalDateTime changeDate, SpaceRef space, boolean draft,
+                            String attachment) {}
 
     public record SearchResponse(String query, List<SearchHit> items, int start, boolean hasNext) {}
 
