@@ -31,12 +31,13 @@ public class SearchController {
     private final PageDao pages;
     private final UserContext users;
     private final org.knowledgeroot.app.space.SpaceService spaces;
+    private final org.knowledgeroot.app.file.domain.AttachmentIndex attachments;
 
     /** Text fragment of a title or snippet; matches are rendered as highlighted, escaped text. */
     record Part(String text, boolean match) {}
 
     record SearchHit(int id, String name, String snippet, List<Part> title, List<Part> excerpt,
-                     List<String> path, LocalDateTime changed, String space, boolean draft) {}
+                     List<String> path, LocalDateTime changed, String space, boolean draft, String attachment) {}
 
     /** Searches all spaces the viewer may enter, or only {@code space} when given. */
     @GetMapping("/search")
@@ -58,10 +59,11 @@ public class SearchController {
         // Ancestors are shared between hits, so resolve each visible parent only once per request.
         Map<Integer, Optional<Page>> parents = new HashMap<>();
         var hits = results.stream().limit(PAGE_SIZE).map(page -> {
-            String snippet = snippet(page.getContent(), term);
+            String snippet = snippet(page, term, attachments);
             return new SearchHit(page.getPageId().value(), page.getName(), snippet,
                     highlight(page.getName(), term), highlight(snippet, term),
-                    path(page.getParent(), viewer, parents), page.getChangeDate(), keys.get(page.getSpaceId()), !page.isPublished());
+                    path(page.getParent(), viewer, parents), page.getChangeDate(), keys.get(page.getSpaceId()), !page.isPublished(),
+                    page.getSearchAttachment());
         }).toList();
         model.addAttribute("spaces", visibleSpaces);
         model.addAttribute("space", space);
@@ -72,6 +74,20 @@ public class SearchController {
         model.addAttribute("nextStart", offset + PAGE_SIZE);
         model.addAttribute("hasNext", results.size() > PAGE_SIZE && offset + PAGE_SIZE <= 100_000);
         return request.isHtmxRequest() ? "search/search :: body" : "search/search";
+    }
+
+    /**
+     * The excerpt of a hit: from the page, or from the attachment that matched (R68) when neither the
+     * title nor the content contains the term.
+     */
+    public static String snippet(Page page, String term, org.knowledgeroot.app.file.domain.AttachmentIndex attachments) {
+        String body = snippet(page.getContent(), term);
+        if (page.getSearchAttachmentId() == null || contains(page.getName(), term) || contains(page.getContent(), term)) return body;
+        return attachments.text(page.getSearchAttachmentId()).map(text -> snippet(text, term)).orElse(body);
+    }
+
+    private static boolean contains(String text, String term) {
+        return text != null && !term.isEmpty() && text.toLowerCase(Locale.ROOT).contains(term.toLowerCase(Locale.ROOT));
     }
 
     /** Plain-text excerpt centred on the first match, or the beginning of the page when only the title matches. */

@@ -34,6 +34,9 @@ public class Page {
     @Builder.Default
     private Boolean published = Boolean.TRUE;
     private List<File> files;
+    /** Set by a ranked search (R68): the attachment whose text matched, when one did. */
+    private Integer searchAttachmentId;
+    private String searchAttachment;
 
     public boolean isPublished() {
         return !Boolean.FALSE.equals(published);

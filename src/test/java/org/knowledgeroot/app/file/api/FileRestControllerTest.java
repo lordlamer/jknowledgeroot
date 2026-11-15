@@ -38,6 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class FileRestControllerTest {
     @Autowired private MockMvc mvc;
     @MockitoBean private FileDao files;
+    @MockitoBean org.knowledgeroot.app.file.domain.AttachmentIndex attachmentIndex;
     @MockitoBean private PagePermissionDao permissions;
     @MockitoBean private UserContext userContext;
     @MockitoBean private DatabaseAuthentificationProvider authenticationProvider;

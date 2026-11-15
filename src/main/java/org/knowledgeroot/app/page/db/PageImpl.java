@@ -72,7 +72,7 @@ public class PageImpl implements PageDao {
      */
     @Override
     public List<Page> listPages(PageFilter pageFilter) {
-        return queryPages(pageFilter, null, false);
+        return search(pageFilter, null, false);
     }
 
     @Override
@@ -80,10 +80,46 @@ public class PageImpl implements PageDao {
         pageFilter.setStart(org.knowledgeroot.app.util.RequestValidation.start(pageFilter.getStart()));
         if (pageFilter.getLimit() == null) pageFilter.setLimit(50);
         org.knowledgeroot.app.util.RequestValidation.require(pageFilter.getLimit() > 0 && pageFilter.getLimit() <= 101);
-        return queryPages(pageFilter, viewer, true);
+        return search(pageFilter, viewer, true);
     }
 
-    private List<Page> queryPages(PageFilter pageFilter, Integer viewer, boolean visibleOnly) {
+    /**
+     * Label hits and attachment hits as sets the database materialises once per query (R68); correlated
+     * subqueries per candidate row or an IN (... UNION ...) made the ranking orders of magnitude slower.
+     */
+    private static final String FULLTEXT_JOIN = """
+            LEFT JOIN (SELECT DISTINCT tc.page_id FROM tag_content tc JOIN tag t ON t.id = tc.tag_id
+                       WHERE MATCH(t.name) AGAINST(:fulltext IN BOOLEAN MODE)) label_hit ON label_hit.page_id = page.id
+            LEFT JOIN (SELECT f.page_id, MIN(f.id) AS file_id FROM file f JOIN file_text ft ON ft.file_id = f.id
+                       WHERE f.deleted = 0 AND MATCH(ft.text) AGAINST(:fulltext IN BOOLEAN MODE) GROUP BY f.page_id) search_hit
+                   ON search_hit.page_id = page.id""";
+    /** A page matches in title or content, in a label, or in the text of an attachment. */
+    private static final String FULLTEXT_MATCH = "(MATCH(name, content) AGAINST(:fulltext IN BOOLEAN MODE) OR label_hit.page_id IS NOT NULL OR search_hit.file_id IS NOT NULL)";
+    /**
+     * Ranking tiers: a title hit, a label hit, a content hit, a hit only in an attachment; newest change first within a
+     * tier. Boolean tiers rather than InnoDB relevance values, whose weights can differ between rows right after bulk
+     * inserts and would make the order and the pagination unstable.
+     */
+    private static final String FULLTEXT_SCORE = "(MATCH(name) AGAINST(:fulltext IN BOOLEAN MODE) > 0) DESC, "
+            + "(label_hit.page_id IS NOT NULL) DESC, "
+            + "(MATCH(name, content) AGAINST(:fulltext IN BOOLEAN MODE) > 0) DESC, "
+            + "(search_hit.file_id IS NOT NULL) DESC";
+    private static final String FULLTEXT_ATTACHMENT = "search_hit.file_id AS search_attachment_id, (SELECT f.name FROM file f WHERE f.id = search_hit.file_id) AS search_attachment";
+
+    /**
+     * A query runs against the full-text indexes first, ranked by title, labels, content and attachments;
+     * when that finds nothing (short words, stop words, parts of words) the substring search of old answers.
+     */
+    private List<Page> search(PageFilter pageFilter, Integer viewer, boolean visibleOnly) {
+        String fullText = pageFilter.getQuery() == null ? null : SearchTerms.booleanQuery(pageFilter.getQuery());
+        if (fullText != null) {
+            List<Page> ranked = queryPages(pageFilter, viewer, visibleOnly, fullText);
+            if (!ranked.isEmpty()) return ranked;
+        }
+        return queryPages(pageFilter, viewer, visibleOnly, null);
+    }
+
+    private List<Page> queryPages(PageFilter pageFilter, Integer viewer, boolean visibleOnly, String fullText) {
         StringBuilder sql = new StringBuilder(visibleOnly ? ReadablePagesSql.CTE : "");
         sql.append("""
                 SELECT 
@@ -102,12 +138,15 @@ public class PageImpl implements PageDao {
                     change_date,
                     active,
                     deleted,
-                    published
+                    published,
+                    %s
                 FROM
-                    page
+                    page %s
         """.formatted(visibleOnly
                 ? "CASE WHEN parent = 0 OR parent IN (SELECT id FROM readable_pages) THEN parent ELSE NULL END AS parent"
-                : "parent"));
+                : "parent",
+                fullText != null ? FULLTEXT_ATTACHMENT : "NULL AS search_attachment_id, NULL AS search_attachment",
+                fullText != null ? FULLTEXT_JOIN : ""));
 
         Map<String, Object> params = new HashMap<>();
         Map<String, String> sqlParams = new LinkedHashMap<>();
@@ -115,7 +154,10 @@ public class PageImpl implements PageDao {
             params.put("viewer", viewer);
             sqlParams.put("visible", "id IN (SELECT id FROM readable_pages)");
         }
-        if (pageFilter.getQuery() != null) {
+        if (pageFilter.getQuery() != null && fullText != null) {
+            sqlParams.put("query", FULLTEXT_MATCH);
+            params.put("fulltext", fullText);
+        } else if (pageFilter.getQuery() != null) {
             sqlParams.put("query", "(name LIKE :query ESCAPE '!' OR content LIKE :query ESCAPE '!')");
             params.put("query", literalPattern(pageFilter.getQuery()));
         }
@@ -211,7 +253,8 @@ public class PageImpl implements PageDao {
         }
 
         if (!sqlParams.isEmpty()) sql.append(" WHERE ").append(String.join(" AND ", sqlParams.values()));
-        sql.append(Boolean.TRUE.equals(pageFilter.getNewestFirst()) ? " ORDER BY change_date DESC, id DESC" : " ORDER BY id ASC");
+        if (fullText != null) sql.append(" ORDER BY ").append(FULLTEXT_SCORE).append(", change_date DESC, id DESC");
+        else sql.append(Boolean.TRUE.equals(pageFilter.getNewestFirst()) ? " ORDER BY change_date DESC, id DESC" : " ORDER BY id ASC");
 
         if(pageFilter.getLimit() != null && pageFilter.getStart() != null) {
             params.put("limit", pageFilter.getLimit());
@@ -258,6 +301,10 @@ public class PageImpl implements PageDao {
                             return Page.builder()
                                     .pageId(new PageId(rs.getInt("pageId")))
                                     .revision(rs.getLong("revision"))
+                                    .searchAttachmentId(rs.getObject("search_attachment_id", Integer.class))
+                                    .searchAttachment(rs.getString("search_attachment"))
+                                    .searchAttachmentId(rs.getObject("search_attachment_id", Integer.class))
+                                    .searchAttachment(rs.getString("search_attachment"))
                                     .spaceId(rs.getInt("space_id"))
                                     .parent(rs.getObject("parent", Integer.class))
                                     .name(rs.getString("name"))

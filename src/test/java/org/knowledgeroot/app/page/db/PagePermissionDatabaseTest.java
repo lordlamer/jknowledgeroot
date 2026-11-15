@@ -344,7 +344,8 @@ class PagePermissionDatabaseTest {
         long begin = System.nanoTime();
         var result = dao.listVisiblePages(org.knowledgeroot.app.page.domain.PageFilter.builder().query("needle").start(5).limit(10).build(), null);
         System.out.println("R10 search: 5000 pages, one query, " + ((System.nanoTime() - begin) / 1_000_000) + " ms");
-        assertEquals(java.util.stream.IntStream.range(5985, 5995).boxed().toList(), result.stream().map(p -> p.getPageId().value()).toList());
+        // Ranked search (R68): equal hits come newest first, so the window runs from the highest id down.
+        assertEquals(java.util.stream.IntStream.range(5985, 5995).boxed().sorted(java.util.Comparator.reverseOrder()).toList(), result.stream().map(p -> p.getPageId().value()).toList());
         verify(client, times(1)).sql(anyString());
     }
 

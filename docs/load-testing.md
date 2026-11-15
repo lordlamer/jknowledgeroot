@@ -63,6 +63,16 @@ und Container-Ressourcenstände nach jeder Messphase. Die Ressourcenstände sind
 Momentaufnahmen und keine Spitzenwerte. Der Testskriptstand kann neuer sein als
 die unveränderte Anwendung im geprüften Image; beide Revisionen bleiben sichtbar.
 
+## Volltextindex (R68)
+
+Seit R68 beantwortet die Suche die Szenarien `guest-search`,
+`guest-search-offset`, `guest-search-empty` und `reader-search` über die
+FULLTEXT-Indizes; `absentfixture` findet der Index nicht und fällt auf die
+Teilzeichenfolgensuche zurück, die anderen Begriffe treffen alle Lastseiten.
+Die Lastseiten werden per SQL eingefügt, die Indizes auf `page` folgen dem
+automatisch. Der Vergleich mit R27 läuft über denselben CI-Lauf mit 1000
+Seiten; die Werte stehen im Roadmap-Eintrag R68.
+
 ## Verwendung und Grenzen
 
 Die CI führt 1000 Seiten mit Parallelität 1 und 4 sowie je 80 Requests aus und

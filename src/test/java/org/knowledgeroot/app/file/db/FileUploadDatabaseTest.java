@@ -214,6 +214,6 @@ class FileUploadDatabaseTest {
     private ApplicationContextRunner context() {
         return new ApplicationContextRunner().withUserConfiguration(Transactions.class)
                 .withBean("transactionManager", DataSourceTransactionManager.class, () -> new DataSourceTransactionManager(source))
-                .withBean(FileUploadService.class, () -> new FileUploadService(new FileImpl(jdbc, storage, policy), permissions, users, policy));
+                .withBean(FileUploadService.class, () -> new FileUploadService(new FileImpl(jdbc, storage, policy), permissions, users, policy, new org.knowledgeroot.app.file.domain.AttachmentIndex(org.springframework.jdbc.core.simple.JdbcClient.create(source), new FileImpl(jdbc, storage, policy))));
     }
 }

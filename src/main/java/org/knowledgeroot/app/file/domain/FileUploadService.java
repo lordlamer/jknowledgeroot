@@ -18,6 +18,7 @@ public class FileUploadService {
     private final PagePermissionDao permissions;
     private final UserContext users;
     private final UploadPolicy policy;
+    private final AttachmentIndex index;
 
     @Transactional
     public void upload(Integer pageId, MultipartFile... uploads) {
@@ -30,6 +31,7 @@ public class FileUploadService {
         policy.validate(uploads);
         // Store content first; publish all metadata in one database commit.
         // Do not delete shared hash objects on rollback: another upload may already reference them.
-        for (var upload : uploads) files.createFile(upload, pageId, actor);
+        // The text goes into the search index in the same transaction (R68).
+        for (var upload : uploads) index.index(files.createFile(upload, pageId, actor));
     }
 }

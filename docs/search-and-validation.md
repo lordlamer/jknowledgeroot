@@ -26,11 +26,30 @@ ihre gesonderte Rechteprüfung.
 | Suchbegriff beziehungsweise Seiten-Inhaltsfilter | höchstens 200 Zeichen |
 | Seiten-Namensfilter | höchstens 255 Zeichen |
 
-Seitenlisten sind stabil nach aufsteigender Seiten-ID sortiert. Die Suche findet
-Teilzeichenfolgen in Titel oder HTML-Inhalt. `%`, `_` und `!` werden als normale
-Zeichen behandelt, nicht als SQL-Wildcards. Ein leerer Suchbegriff liefert keine
-Treffer und löst keine Vollabfrage aus. Der Fehler im Inhaltsfilter (`description`
-statt `content`) ist behoben.
+Seitenlisten sind stabil nach aufsteigender Seiten-ID sortiert. Die Suche läuft
+seit R68 über InnoDB-FULLTEXT-Indizes (Migration `1.0.25-search-index`): auf
+`page(name)`, `page(name, content)`, `tag(name)` und auf `file_text(text)`,
+dem aus Anhängen gewonnenen Text (Text, Markdown, CSV, JSON, XML, HTML und PDF,
+bis 10 MB und 1 Million Zeichen; `AttachmentIndex` schreibt ihn beim Hochladen
+und holt Bestände jede Minute in Fünfzigerpaketen nach). `SearchTerms` macht
+aus dem Suchbegriff eine Boolean-Mode-Abfrage: jedes Wort ab drei Zeichen muss
+vorkommen, als Wort oder Wortanfang (`+wort*`), höchstens zehn Wörter,
+eingetippte Operatoren werden nicht durchgereicht. Die Treffer sind in Stufen
+sortiert: Titeltreffer, dann Labeltreffer, dann Treffer im Inhalt, dann
+Treffer nur im Anhang; innerhalb einer Stufe die jüngste Änderung zuerst
+(feste Stufen statt InnoDB-Relevanzwerten, die nach Massenimporten zwischen
+Zeilen schwanken und die Blätterung instabil machen würden). Ein Treffer, der nur im Anhang steht, nennt die Datei und zeigt den
+Auszug aus ihrem Text. Findet der Index nichts, etwa bei Wörtern unter drei
+Zeichen, Stoppwörtern oder Wortteilen, antwortet die bisherige
+Teilzeichenfolgensuche in Titel und HTML-Inhalt; `%`, `_` und `!` sind dabei
+normale Zeichen. Die Rechteprüfung ist in beiden Wegen dieselbe CTE. Ein leerer
+Suchbegriff liefert keine Treffer und löst keine Vollabfrage aus.
+
+Grenzen des Index: HTML-Tags im Inhalt werden mittokenisiert (kurze Tagnamen
+fallen unter die Mindestlänge, `strong`, `table` oder Linkadressen nicht);
+die InnoDB-Stoppwortliste und `innodb_ft_min_token_size` (Standard 3) gelten
+serverseitig; Schriften ohne Wortzwischenräume (CJK) werden nicht zerlegt. Der
+Fehler im Inhaltsfilter (`description` statt `content`) ist behoben.
 
 Suchergebnisse enthalten kurze, als Text ausgegebene Auszüge mit höchstens
 300 Zeichen zuzüglich Auslassungszeichen. Bilder und anderes eingebettetes HTML

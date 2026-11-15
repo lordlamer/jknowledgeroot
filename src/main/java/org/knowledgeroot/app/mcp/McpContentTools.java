@@ -79,7 +79,7 @@ public class McpContentTools {
                 byte[] bytes = content.readNBytes((int) MAX_ATTACHMENT_BYTES + 1);
                 if (bytes.length > MAX_ATTACHMENT_BYTES) return new McpModels.AttachmentContent(attachment(file), null, false,
                         "The file is larger than 10 MB and is not read; give the user the link instead.");
-                text = kind.equals("pdf") ? pdfText(bytes) : new String(bytes, StandardCharsets.UTF_8);
+                text = kind.equals("pdf") ? org.knowledgeroot.app.file.domain.AttachmentText.pdfText(bytes) : new String(bytes, StandardCharsets.UTF_8);
             } catch (IOException e) {
                 log.warn("MCP could not read attachment {}", id, e);
                 throw new McpToolException("The attachment could not be read.");
@@ -265,20 +265,8 @@ public class McpContentTools {
         };
     }
 
-    /** text, html, pdf or null, judged by the stored type and the file name. */
+    /** text, html, pdf or null; the same judgement the search index uses (R68). */
     static String textKind(File file) {
-        String type = file.getType() == null ? "" : file.getType().toLowerCase(Locale.ROOT);
-        String name = file.getName() == null ? "" : file.getName().toLowerCase(Locale.ROOT);
-        if (type.contains("pdf") || name.endsWith(".pdf")) return "pdf";
-        if (type.contains("html") || name.endsWith(".html") || name.endsWith(".htm")) return "html";
-        if (type.startsWith("text/") || type.contains("json") || type.contains("xml") || type.contains("csv")
-                || name.matches(".*\\.(txt|md|markdown|csv|json|xml|yaml|yml|log|properties|ini|conf|java|kt|py|js|ts|sql|sh)$")) return "text";
-        return null;
-    }
-
-    private static String pdfText(byte[] bytes) throws IOException {
-        try (PDDocument document = Loader.loadPDF(bytes)) {
-            return new PDFTextStripper().getText(document);
-        }
+        return org.knowledgeroot.app.file.domain.AttachmentText.kind(file);
     }
 }

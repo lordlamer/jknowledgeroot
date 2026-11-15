@@ -10,7 +10,8 @@ public interface FileDao {
 
     File findById(long id);
 
-    void createFile(MultipartFile file, Integer parentContent, Integer actor);
+    /** Stores the upload and its metadata; returns the id of the new file row. */
+    int createFile(MultipartFile file, Integer parentContent, Integer actor);
 
     void deleteFileById(long id);
 

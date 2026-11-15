@@ -17,7 +17,7 @@ class SearchControllerTest {
     private final UserContext users = mock(UserContext.class);
     private final HtmxRequest request = mock(HtmxRequest.class);
     private final org.knowledgeroot.app.space.SpaceService spaces = mock(org.knowledgeroot.app.space.SpaceService.class);
-    private final SearchController controller = new SearchController(pages, users, spaces);
+    private final SearchController controller = new SearchController(pages, users, spaces, mock(org.knowledgeroot.app.file.domain.AttachmentIndex.class));
 
     @Test
     void searchUsesVisibleWindowAndOnlyDisplaysTwentyShortTextSnippets() {
