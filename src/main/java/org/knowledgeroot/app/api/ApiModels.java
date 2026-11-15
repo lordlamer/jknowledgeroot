@@ -49,7 +49,7 @@ public final class ApiModels {
     public record EmailRequest(String email) {}
 
     public record SpaceInfo(int id, String key, String name, String description, Integer homePageId, boolean archived,
-                            boolean canCreateRootPage, boolean canManage, boolean current) {}
+                            boolean canCreateRootPage, boolean canManage, boolean current, boolean watched) {}
 
     public record SpaceDetail(SpaceInfo space, List<PageRef> rootPages) {}
 
@@ -78,7 +78,7 @@ public final class ApiModels {
                              Integer changedBy, String changedByLogin, @JsonSerialize(using = ServerTime.class) LocalDateTime changeDate,
                              boolean canEdit, boolean canStar, boolean starred, boolean canComment,
                              boolean canManagePermissions, List<FileInfo> files, int commentCount,
-                             boolean published, boolean hasWorkingCopy) {}
+                             boolean published, boolean hasWorkingCopy, boolean watched) {}
 
     /** The working copy of a page (R62): autosaved editor state that readers do not see yet. */
     public record WorkingCopy(int pageId, String name, String content, List<String> labels, long baseRevision, boolean stale,
@@ -212,4 +212,13 @@ public final class ApiModels {
     }
 
     public record AdminGroupInput(String name, String description) {}
+
+    /** One entry of the notification history (R66); {@code text} is the ready sentence in the request language. */
+    public record NotificationEntry(int id, String kind, Integer pageId, String pageName, String actorLogin, String detail, String text,
+                                    @JsonSerialize(using = ServerTime.class) LocalDateTime createDate, boolean unread) {}
+
+    public record NotificationList(List<NotificationEntry> items, int start, boolean hasNext, int unread) {}
+
+    /** {@code frequency} is immediate, hourly, daily or never; {@code mailsEnabled} says whether the server sends mails at all. */
+    public record NotificationPreference(String frequency, Boolean mentions, Boolean mailsEnabled) {}
 }

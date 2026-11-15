@@ -29,6 +29,7 @@ class CollaborationApiController {
     private static final int MAX_COMMENT_LENGTH = 4000;
     private final ApiSupport api;
     private final PageCommentDao comments;
+    private final org.knowledgeroot.app.page.domain.PageCommentService pageComments;
     private final FileDao files;
     private final FileUploadService uploads;
 
@@ -47,7 +48,7 @@ class CollaborationApiController {
         if (text.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Write a comment first.");
         if (text.length() > MAX_COMMENT_LENGTH)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Comments are limited to 4000 characters.");
-        comments.create(new PageId(id), user, text);
+        pageComments.create(new PageId(id), user, text);
         return list(id);
     }
 

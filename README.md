@@ -37,6 +37,10 @@ Website: [knowledgeroot.org](https://knowledgeroot.org) · Images: [Docker Hub](
   carets and changes as they type (Yjs over one WebSocket per editor, no extra service).
 - **Page templates.** Space administrators prepare a title, content and labels per space;
   "New page" offers them, the client API and MCP use them, and every template is an MCP prompt.
+- **Watching and notifications.** Watch a page or a whole space and hear about publications,
+  comments and moves, or be mentioned with `@login` in a comment: in-app history with an unread
+  badge, and mails per event, hourly or daily, sent through a durable queue with retries that
+  administrators can inspect.
 - **Single sign-on.** Sign in through any OpenID Connect provider (Keycloak, Authentik,
   Entra ID, Google); accounts are created or linked by verified e-mail on first sign-in,
   groups and the admin role can follow a claim.

@@ -466,7 +466,7 @@ class PagePermissionDatabaseTest {
                 mock(org.knowledgeroot.app.security.user.domain.UserDao.class), mock(org.knowledgeroot.app.security.user.domain.GroupDao.class));
         return new ApplicationContextRunner().withUserConfiguration(Transactions.class)
                 .withBean("transactionManager", DataSourceTransactionManager.class, () -> new DataSourceTransactionManager(dataSource))
-                .withBean(PageCreationService.class, () -> new PageCreationService(pages, permissions, labels, users, spaces));
+                .withBean(PageCreationService.class, () -> new PageCreationService(pages, permissions, labels, users, spaces, event -> {}));
     }
 
     private void grant(PagePermission.RoleType type, Integer roleId, PagePermission.PermissionLevel level) {

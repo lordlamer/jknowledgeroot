@@ -2279,3 +2279,19 @@ body.kr-dark .kr-upload-error { background: #3a1e1e; color: #fca5a5; }
     .kr-login-left { display: none; }
     .kr-history .kr-callout { flex-wrap: wrap; }
 }
+
+/* Notifications (R66): bell with unread badge, watch buttons, the history list */
+.kr-bell { position: relative; }
+.kr-nav-badge {
+  position: absolute; top: 2px; right: 2px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px;
+  background: var(--kr-accent); color: #fff; font-size: 10px; font-weight: 600; line-height: 16px; text-align: center;
+}
+.kr-watch.on { color: var(--kr-accent-ink); border-color: var(--kr-accent); background: var(--kr-accent-soft); }
+.kr-notifications { list-style: none; margin: 0; padding: 0; }
+.kr-notifications li { display: grid; grid-template-columns: 130px 1fr; gap: 4px 14px; padding: 10px 0; border-bottom: 1px solid var(--kr-border); }
+.kr-notifications li.unread a, .kr-notifications li.unread > span:not(.kr-notification-time) { font-weight: 600; }
+.kr-notification-time { color: var(--kr-text-3); font-size: 12.5px; }
+.kr-notification-detail { grid-column: 2; color: var(--kr-text-2); font-size: 13px; white-space: pre-wrap; }
+.kr-watched { list-style: none; margin: 0 0 12px; padding: 0; }
+.kr-watched li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--kr-border); }
+@media (max-width: 640px) { .kr-notifications li { grid-template-columns: 1fr; } .kr-notification-detail { grid-column: 1; } }

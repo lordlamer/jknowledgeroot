@@ -26,6 +26,7 @@ class SpaceController {
     private final org.knowledgeroot.app.security.context.domain.UserContext userContext;
     private final org.knowledgeroot.app.frontend.web.LayoutDefines layout;
     private final org.knowledgeroot.app.page.template.PageTemplateService templates;
+    private final org.knowledgeroot.app.notification.NotificationService notifications;
 
     @GetMapping("/spaces")
     String list(Model model, HtmxRequest htmx) {
@@ -61,6 +62,9 @@ class SpaceController {
         model.addAttribute("rootPages", pages.listVisiblePages(roots, viewer));
         model.addAttribute("canCreate", spaces.canCreateRootPage(id));
         model.addAttribute("canManage", spaces.canManage(id));
+        model.addAttribute("spaceId", id);
+        model.addAttribute("canWatch", viewer != null);
+        model.addAttribute("watchingSpace", viewer != null && notifications.watchesSpace(viewer, id));
         if (!spaceChanged && "reload-sidebar".equals(trigger)) response.addHeader("HX-Trigger", "reload-sidebar");
         return htmx.isHtmxRequest() ? "space/overview :: body" : "space/overview";
     }

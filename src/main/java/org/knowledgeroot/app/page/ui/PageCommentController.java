@@ -26,6 +26,7 @@ public class PageCommentController {
     private static final int MAX_COMMENT_LENGTH = 4000;
 
     private final PageCommentDao pageCommentDao;
+    private final org.knowledgeroot.app.page.domain.PageCommentService pageComments;
     private final PagePermissionDao pagePermissionDao;
     private final UserContext userContext;
 
@@ -62,7 +63,7 @@ public class PageCommentController {
             if (trimmed.length() > MAX_COMMENT_LENGTH) {
                 trimmed = trimmed.substring(0, MAX_COMMENT_LENGTH);
             }
-            pageCommentDao.create(pid, currentUserId, trimmed);
+            pageComments.create(pid, currentUserId, trimmed);
         }
 
         populateCommentsModel(model, pid, user, currentUserId);

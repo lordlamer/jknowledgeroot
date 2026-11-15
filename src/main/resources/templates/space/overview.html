@@ -23,6 +23,7 @@
         </p>
     </div>
     <div class="kr-page-actions">
+        <th:block th:if="${canWatch}" th:insert="~{space/watch-button :: button}"></th:block>
         <a th:if="${canCreate}" class="kr-btn accent" th:href="@{/ui/page/new(space=${space.id})}"
            th:attr="hx-get='/ui/page/new?space=' + ${space.id}" hx-target="#content" hx-push-url="true" th:text="#{space.overview.new-page}">New top-level page</a>
         <a th:if="${canManage}" class="kr-btn" th:href="@{'/spaces/' + ${space.id} + '/settings'}"

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{knowledgeroot :: layout(~{::title}, ~{::body})}">
+<head>
+    <title th:text="#{notifications.title}">Knowledgeroot :: Notifications</title>
+</head>
+<body>
+<nav th:aria-label="#{common.breadcrumb}">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/ui/welcome" hx-get="/ui/welcome" hx-target="#content" hx-push-url="true" th:text="#{common.home}">Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page" th:text="#{notifications.heading}">Notifications</li>
+    </ol>
+</nav>
+
+<header class="kr-page-header">
+    <div class="kr-page-title-wrap">
+        <h1 class="kr-page-title" th:text="#{notifications.heading}">Notifications</h1>
+        <p class="kr-page-subtitle" style="margin:0" th:text="#{notifications.subtitle}">What happened on the pages and spaces you watch, and where you were mentioned.</p>
+    </div>
+    <div class="kr-page-actions">
+        <a class="kr-btn" href="/profile" hx-get="/profile" hx-target="#content" hx-push-url="true" th:text="#{notifications.settings}">Mail settings</a>
+    </div>
+</header>
+
+<div class="kr-editor-pane" id="notification-list">
+    <p th:if="${!mailsEnabled}" class="form-text" th:text="#{notifications.mails-off}">Mails are switched off on this server; the history here still fills.</p>
+    <p th:if="${#lists.isEmpty(entries)}" style="color:var(--kr-text-2)" th:text="#{notifications.none}">Nothing yet. Watch a page or a space to be told about changes there.</p>
+    <ul class="kr-notifications" th:unless="${#lists.isEmpty(entries)}">
+        <li th:each="entry : ${entries}" th:classappend="${entry.notification().unread()} ? 'unread' : ''" th:attr="data-kind=${entry.notification().kind()}">
+            <span class="kr-notification-time" th:text="${#temporals.format(entry.notification().createDate(), #messages.msg('format.datetime'))}">date</span>
+            <a th:if="${entry.notification().pageId() != null}" th:href="@{'/ui/page/' + ${entry.notification().pageId()}}"
+               th:attr="hx-get='/ui/page/' + ${entry.notification().pageId()}" hx-target="#content" hx-push-url="true"
+               th:text="${entry.text()}">someone published a new version of "Page".</a>
+            <span th:if="${entry.notification().pageId() == null}" th:text="${entry.text()}">someone published a new version of "Page".</span>
+            <span class="kr-notification-detail" th:if="${entry.notification().detail() != null and (entry.notification().kind() == 'comment' or entry.notification().kind() == 'mention')}"
+                  th:text="${entry.notification().detail()}">comment text</span>
+        </li>
+    </ul>
+    <div th:if="${start > 0 or hasNext}" style="display:flex; gap:8px; margin-top:12px">
+        <a th:if="${start > 0}" class="kr-btn" th:href="@{/notifications(start=${start - 50 < 0 ? 0 : start - 50})}"
+           th:attr="hx-get='/notifications?start=' + (${start - 50 < 0} ? 0 : ${start - 50})" hx-target="#content" hx-push-url="true" th:text="#{notifications.newer}">Newer</a>
+        <a th:if="${hasNext}" class="kr-btn" th:href="@{/notifications(start=${nextStart})}"
+           th:attr="hx-get='/notifications?start=' + ${nextStart}" hx-target="#content" hx-push-url="true" th:text="#{notifications.older}">Older</a>
+    </div>
+</div>
+
+<section class="kr-editor-pane mt-4" aria-labelledby="watched-heading">
+    <h2 id="watched-heading" th:text="#{notifications.watched.heading}">Watched pages and spaces</h2>
+    <p th:if="${#lists.isEmpty(watchedPages) and #lists.isEmpty(watchedSpaces)}" style="color:var(--kr-text-2)" th:text="#{notifications.watched.none}">You watch nothing yet. Use "Watch" on a page or "Watch space" in a space overview.</p>
+    <ul th:unless="${#lists.isEmpty(watchedSpaces)}" class="kr-watched" data-watched-spaces>
+        <li th:each="space : ${watchedSpaces}">
+            <a th:href="@{'/spaces/' + ${space.id()}}" th:attr="hx-get='/spaces/' + ${space.id()}" hx-target="#content" hx-push-url="true">
+                <code th:text="${space.key()}">KR</code> <span th:text="${space.name()}">Space</span>
+            </a>
+            <button type="button" class="kr-btn sm" th:attr="hx-delete='/spaces/' + ${space.id()} + '/watch'" hx-target="closest li" hx-swap="delete" th:text="#{page.watch.stop}">Stop watching</button>
+        </li>
+    </ul>
+    <ul th:unless="${#lists.isEmpty(watchedPages)}" class="kr-watched" data-watched-pages>
+        <li th:each="watched : ${watchedPages}">
+            <a th:href="@{'/ui/page/' + ${watched.id()}}" th:attr="hx-get='/ui/page/' + ${watched.id()}" hx-target="#content" hx-push-url="true" th:text="${watched.name()}">Page</a>
+            <button type="button" class="kr-btn sm" th:attr="hx-delete='/ui/page/' + ${watched.id()} + '/watch'" hx-target="closest li" hx-swap="delete" th:text="#{page.watch.stop}">Stop watching</button>
+        </li>
+    </ul>
+</section>
+</body>
+</html>

@@ -15,6 +15,10 @@ gelten dieselben Umgebungsvariablen:
 | `KR_SMTP_AUTH` | Standard `true`; `false` nur für entsprechend abgesicherte Relays. |
 
 Die Vorlage steht in [production.env.example](../deploy/production.env.example).
+Dieselben SMTP-Variablen nutzen die Benachrichtigungsmails (R66,
+`KR_NOTIFICATIONS_ENABLED`); die gehen über die dauerhafte Warteschlange aus
+[monitoring.md](monitoring.md#mailwarteschlange), die Mails des Passwortresets
+dagegen weiterhin direkt, weil ein unzustellbarer Link sofort widerrufen wird.
 SMTP verlangt standardmäßig STARTTLS mit Prüfung des Servernamens;
 Verbindungs-, Lese- und Schreibtimeout sind
 je fünf Sekunden. Die entsprechenden `spring.mail.*`-Eigenschaften können bei

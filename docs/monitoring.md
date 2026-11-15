@@ -113,6 +113,25 @@ Diagnose. Für automatisiertes Scraping ein eigenes Zugangs-/Netzwerkkonzept
 ergänzen; keine Administratorpasswörter oder Sitzungen in öffentliche Scrape-URLs
 übernehmen und die Metrik-Endpunkte nicht pauschal anonym freigeben.
 
+## Mailwarteschlange
+
+Benachrichtigungsmails (R66) werden nicht direkt verschickt, sondern als
+Zeilen in `mail_queue` abgelegt; ein einzelner Arbeitsthread je Instanz
+(`MailQueue`) sendet fällige Mails sofort nach dem Einreihen und prüft
+jede Minute auf Wiederholungen. Ein Fehlversuch erhöht `attempts`, merkt
+`last_error` und setzt `next_attempt` mit wachsendem Abstand (1, 2, 4 …
+Minuten, höchstens eine Stunde). Nach acht Versuchen bleibt die Mail als
+„failed“ liegen; das Anwendungslog meldet das als `ERROR`, frühere Versuche
+als `WARN`. Administratoren sehen unter Admin → Mail Zähler für wartende,
+fehlgeschlagene und gesendete Mails, die letzten 100 Einträge mit Fehlertext
+und können einzelne Mails erneut anstoßen oder löschen. Gesendete Mails
+werden nach 30 Tagen entfernt, Benachrichtigungen im Verlauf nach 90 Tagen.
+Ein Ausfall des Mailservers ändert den Healthstatus nicht; der Zähler
+„failed“ auf der Admin-Seite ist das Signal zum Nachsehen. Die Mails des
+Passwortresets gehen weiterhin direkt (siehe
+[account-recovery.md](account-recovery.md)), weil ein unzustellbarer Link dort
+sofort widerrufen wird.
+
 ## Logs
 
 Zustandswechsel einer Abhängigkeit werden einmal als UP (INFO) beziehungsweise

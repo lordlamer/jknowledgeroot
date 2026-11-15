@@ -52,6 +52,7 @@ public class McpTools {
     private final PageLabelDao labels;
     private final PageStarDao stars;
     private final PageCommentDao comments;
+    private final org.knowledgeroot.app.page.domain.PageCommentService pageComments;
     private final PageCreationService creation;
     private final PageEditingService editing;
     private final PageMoveService moves;
@@ -402,7 +403,7 @@ public class McpTools {
             String trimmed = text == null ? "" : text.trim();
             if (trimmed.isEmpty()) throw new McpToolException("Write a comment first.");
             if (trimmed.length() > MAX_COMMENT_LENGTH) throw new McpToolException("Comments are limited to 4000 characters.");
-            int id = comments.create(new PageId(page), McpToolSupport.userId(), trimmed);
+            int id = pageComments.create(new PageId(page), McpToolSupport.userId(), trimmed);
             var created = comments.findById(id).orElseThrow();
             return new McpModels.Comment(id, created.getAuthorDisplayName(), McpModels.time(created.getCreateDate()), created.getContent());
         });

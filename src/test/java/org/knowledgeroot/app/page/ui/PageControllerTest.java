@@ -71,7 +71,8 @@ class PageControllerTest {
                 mock(org.knowledgeroot.app.space.CurrentSpace.class), mock(org.knowledgeroot.app.space.SpaceService.class), mock(org.knowledgeroot.app.frontend.web.LayoutDefines.class),
                 mock(org.knowledgeroot.app.page.domain.PageEditingService.class),
                 mock(org.knowledgeroot.app.file.domain.FileDao.class), mock(org.knowledgeroot.app.file.domain.UploadPolicy.class),
-                mock(org.knowledgeroot.app.page.template.PageTemplateService.class));
+                mock(org.knowledgeroot.app.page.template.PageTemplateService.class),
+                mock(org.knowledgeroot.app.notification.NotificationService.class));
     }
 
     @Test

@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 @ControllerAdvice(basePackages = {"org.knowledgeroot.app.frontend.web", "org.knowledgeroot.app.page.ui",
         "org.knowledgeroot.app.space", "org.knowledgeroot.app.security.user.web", "org.knowledgeroot.app.profile.web",
         "org.knowledgeroot.app.security.mfa", "org.knowledgeroot.app.login", "org.knowledgeroot.app.security.recovery",
-        "org.knowledgeroot.app.file.web", "org.knowledgeroot.app.mcp.oauth"})
+        "org.knowledgeroot.app.file.web", "org.knowledgeroot.app.mcp.oauth", "org.knowledgeroot.app.notification"})
 @RequiredArgsConstructor
 @lombok.extern.slf4j.Slf4j
 public class LayoutDefines {
@@ -25,6 +25,22 @@ public class LayoutDefines {
 
     /** Absent in web slice tests without the i18n beans; the scripts then use their English fallbacks. */
     private final org.springframework.beans.factory.ObjectProvider<org.knowledgeroot.app.i18n.JsMessages> jsMessages;
+
+    /** Absent in web slice tests without the notification beans; then the header shows no badge. */
+    private final org.springframework.beans.factory.ObjectProvider<org.knowledgeroot.app.notification.NotificationRepository> notifications;
+
+    /** Unread notifications for the bell in the header (R66); guests have none. */
+    @ModelAttribute("unreadNotifications")
+    public int unreadNotifications() {
+        var repository = notifications.getIfAvailable();
+        var user = userContext.getUserContext();
+        if (repository == null || user.isGuest()) return 0;
+        try {
+            return repository.countUnread(Integer.parseInt(user.getUserId()));
+        } catch (org.springframework.dao.DataAccessException | NumberFormatException e) {
+            return 0;
+        }
+    }
 
     /** Root pages need the edit level on the space the sidebar currently shows. */
     @ModelAttribute("canCreateRootPage")

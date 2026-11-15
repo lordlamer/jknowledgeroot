@@ -59,6 +59,28 @@
         </div>
     </div>
 </form>
+<section class="kr-editor-pane mt-4" aria-labelledby="notifications-heading">
+    <h2 id="notifications-heading" th:text="#{profile.show.notifications.heading}">Notifications</h2>
+    <div th:if="${notificationsSaved}" class="alert kr-alert-info" role="status" th:text="#{profile.show.notifications.saved}">Notification settings saved.</div>
+    <p th:text="#{profile.show.notifications.intro}">You are told about publications, comments and moves on the pages and spaces you watch, and when someone mentions you in a comment. The history is always kept; here you choose the mails.</p>
+    <p th:unless="${mailsEnabled}" class="form-text" th:text="#{notifications.mails-off}">Mails are switched off on this server; the history here still fills.</p>
+    <form method="post" th:action="@{/profile/notifications}">
+        <div class="kr-field">
+            <label for="notification-frequency" th:text="#{profile.show.notifications.frequency}">Mails</label>
+            <select id="notification-frequency" name="frequency">
+                <option th:each="option : ${frequencies}" th:value="${option.value()}" th:selected="${option == preference.frequency()}"
+                        th:text="#{profile.show.notifications.frequency.__${option.value()}__}">Immediately</option>
+            </select>
+        </div>
+        <div class="kr-check" style="margin-bottom:12px">
+            <input type="checkbox" id="notification-mentions" name="mentions" value="on" th:checked="${preference.mentions()}">
+            <label for="notification-mentions" th:text="#{profile.show.notifications.mentions}">Tell me when someone mentions me with @login in a comment</label>
+        </div>
+        <button type="submit" class="kr-btn accent" th:text="#{common.save}">Save</button>
+        <a class="kr-btn" href="/notifications" hx-get="/notifications" hx-target="#content" hx-push-url="true" th:text="#{notifications.heading}">Notifications</a>
+    </form>
+</section>
+
 <section class="kr-editor-pane mt-4" aria-labelledby="mfa-heading">
     <h2 id="mfa-heading" th:text="#{profile.show.mfa.heading}">Two-factor authentication</h2>
     <p th:if="${mfa != null and mfa.enrolled()}" th:text="#{profile.show.mfa.active(${mfa.recoveryCodesLeft()})}">Active. Unused recovery codes: 10.</p>
