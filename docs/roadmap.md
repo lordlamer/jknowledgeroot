@@ -1889,25 +1889,59 @@ Index.
   die Qualität reicht für die Zielgröße, die Entscheidung bleibt
   dokumentiert.
 
-### R69 – Seitenexport als PDF und Word
+### R69 – Seitenexport als PDF, Word und Markdown
 
-- [ ] Geplant, aufgenommen am 20. November 2026.
+- [x] Lokal umgesetzt und geprüft am 21. November 2026 (aufgenommen am 20. November 2026).
 - **Ziel:** Eine einzelne Seite lässt sich aus der Oberfläche und über die
   Client-API als PDF und als Word-Dokument (`.docx`, auch von LibreOffice
   Writer geöffnet) herunterladen: Titel, Space, Pfad, letzte Änderung,
   der Inhalt mit Überschriften, Listen, Tabellen, Code, Links und den
   eingebetteten Bildern aus den Anhängen. Kommentare und Unterseiten
   gehören nicht dazu; Space- und Baumexport bleiben in R67.
-- **Umsetzung:** PDF serverseitig ohne Browser aus dem gespeicherten HTML
-  mit OpenHTMLtoPDF auf dem vorhandenen PDFBox (reines Java, eingebettete
-  Schrift für Umlaute und Unicode); Word über Apache POI aus demselben
-  HTML, Abbildung der Elemente in eigenem Code. Bilder werden
-  serverseitig aus den Anhängen mit Rechteprüfung geladen, externe
-  Adressen bleiben außen vor. Lizenzen (LGPL bei OpenHTMLtoPDF) und
-  Imagegröße werden im PR festgehalten.
-- **Abnahme:** Integrationstest je Format mit Textauszug (PDFBox, Unzip
-  von `document.xml`); Außenstehende und Gäste ohne Zugriff; Rauchtest
-  lädt beide Formate herunter; Imagescan nach Aufnahme der Bibliotheken.
+- **Umgesetzt:** Paket `page/export`. `PageExportService` prüft das
+  Leserecht, sammelt Titel, Space, Pfad (nur sichtbare Vorfahren), Labels,
+  Autoren und den Inhalt (bei nie veröffentlichten Seiten für Bearbeiter die
+  Arbeitskopie, wie die Seitenansicht) und löst Bilder über `ExportImages`
+  auf: nur Anhänge dieser Installation (`/ui/file/…/download/…`,
+  `/api/v1/files/…/content`), nur mit Leserecht auf deren Seite, nur PNG,
+  JPEG, GIF und BMP bis 10 MB, höchstens 50 je Export; externe Adressen
+  werden nie geladen. `PdfWriter` rendert XHTML mit eigenem Stylesheet über
+  OpenHTMLtoPDF 1.1.37 auf PDFBox 3.0.8 (A4, Seitenzahlen, eingebettete
+  Liberation-Schriften aus `src/main/resources/fonts`, Bilder als
+  Data-URIs). `DocxWriter` bildet das HTML mit Apache POI 5.5.1 ab:
+  Formatvorlagen Title und Heading 1 bis 4, Aufzählungen und neu startende
+  Nummerierungen bis drei Ebenen, Tabellen mit Kopfzeile, Codeblöcke mit
+  Hintergrund, Zitate mit Randlinie, Hyperlinks, Ausrichtung, Textfarbe,
+  eingebettete Bilder (auf 600 px Breite skaliert). `MarkdownWriter` nutzt
+  den HTML-nach-Markdown-Konverter von MCP (Trennstrich jetzt `---`).
+  Oberfläche: Fußzeile der Seitenansicht „Herunterladen als PDF, Word,
+  Markdown" (`/ui/page/{id}/export?format=`); Client-API
+  `GET /api/v1/pages/{id}/export?format=pdf|docx|markdown`. Dateiname aus
+  dem Seitennamen, `Content-Disposition: attachment`. Übersetzungen in
+  sechs Sprachen. Doku: product-functions.md (dabei die dreifach eingefügte
+  Vorlagenbeschreibung auf eine gekürzt), client-api.md, dependencies.md
+  (Bibliotheken, Versionen, Lizenzen), README.
+- **Geprüft:** `PageExportIntegrationTest`: PDF-Text (PDFBox) mit Titel,
+  Pfad, Labels, Autoren und allen Blöcken, genau ein eingebettetes Bild,
+  Hinweis für das externe Bild; Word-ZIP mit `document.xml` (Hyperlink,
+  Nummerierung, Tabelle, Zeichnung, Heading2, Zentrierung, Farbe),
+  `numbering.xml`, `styles.xml` und einem Medienteil; Markdown mit
+  Überschrift, Metadatenliste und konvertiertem Inhalt; Außenstehende,
+  Gäste und unbekannte Seiten 403, ungültiges Format 400; Client-API mit
+  `word` und `md`; Anhangsbild einer nicht lesbaren Seite nur als
+  Hinweis, für den Administrator eingebettet. Word 365 öffnet das erzeugte
+  Dokument ohne Reparatur (eine Tabelle, ein Bild, zwei Listen, ein
+  Hyperlink) und stellt es wie das PDF dar; beide Ausgaben wurden als
+  Bild geprüft. Rauchtest: Klick auf den PDF-Link löst den Download aus,
+  Word und Markdown werden über die Sitzung abgerufen. Vollständiges
+  `verify` lokal und CI: siehe PR.
+- **Grenzen:** Kommentare, Anhangsliste und Unterseiten sind nicht
+  enthalten; Space- und Baumexport sowie Import bleiben R67. Externe
+  Bilder werden nicht nachgeladen. Verschachtelte Tabellen werden in Word
+  als Absätze ausgegeben, Spalten sind gleich breit. Word verwendet Arial
+  und Courier New (LibreOffice ersetzt sie durch Liberation). Kein Export
+  des Verlaufs oder einzelner Versionen. Die LGPL 2.1 von OpenHTMLtoPDF
+  gilt für die Bibliothek, nicht für das Projekt.
 
 ## 11. Version 1.3 (Entwurf)
 

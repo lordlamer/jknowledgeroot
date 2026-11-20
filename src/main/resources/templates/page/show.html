@@ -157,6 +157,13 @@
         <th:block th:text="#{page.show.at}">at</th:block>
         <span th:text="${#temporals.format(page.changeDate, #messages.msg('format.datetime'))}">01.01.2023</span>
     </span>
+    <span class="kr-dotsep">·</span>
+    <span class="kr-page-export">
+        <th:block th:text="#{page.show.export}">Download as</th:block>
+        <a th:href="@{/ui/page/{id}/export(id=${page.pageId},format='pdf')}" th:text="#{page.show.export.pdf}">PDF</a>
+        <a th:href="@{/ui/page/{id}/export(id=${page.pageId},format='docx')}" th:text="#{page.show.export.word}">Word</a>
+        <a th:href="@{/ui/page/{id}/export(id=${page.pageId},format='markdown')}" th:text="#{page.show.export.markdown}">Markdown</a>
+    </span>
 </footer>
 <th:block th:replace="~{fragments/space-context :: oob}"></th:block>
 </body>

@@ -292,6 +292,7 @@ class ApplicationSmokeIT {
             assertTrue(jdbc.queryForObject("SELECT content FROM page WHERE id = ?", String.class, pageId).contains("New editor content"));
             browserPageTemplates(page, server, jdbc, pageId);
             browserMailQueue(page, server, pageId);
+            browserPageExport(page, server, pageId);
 
             // Load persisted, older rich text into the replacement editor without losing its structure.
             jdbc.update("UPDATE page SET content = ? WHERE id = ?",
@@ -476,6 +477,26 @@ class ApplicationSmokeIT {
     }
 
     /** Admin → Mail (R66) renders in the production profile; nothing is queued yet because recovery mails go direct. */
+    /** Page export (R69): the footer links download the page as PDF, Word and Markdown. */
+    private void browserPageExport(Page page, TestServer server, int pageId) throws Exception {
+        page.navigate(uri(server, "/ui/page/" + pageId).toString());
+        page.waitForSelector(".kr-page-export a[href$='format=pdf']");
+        Download download = page.waitForDownload(() -> page.locator(".kr-page-export a[href$='format=pdf']").click());
+        assertTrue(download.suggestedFilename().endsWith(".pdf"), download.suggestedFilename());
+        byte[] pdf = Files.readAllBytes(download.path());
+        assertEquals("%PDF", new String(pdf, 0, 4, StandardCharsets.ISO_8859_1));
+        APIResponse word = page.request().get(uri(server, "/ui/page/" + pageId + "/export?format=docx").toString());
+        assertEquals(200, word.status());
+        assertTrue(word.headers().get("content-type").contains("wordprocessingml"), word.headers().toString());
+        assertEquals("PK", new String(word.body(), 0, 2, StandardCharsets.ISO_8859_1));
+        APIResponse markdown = page.request().get(uri(server, "/ui/page/" + pageId + "/export?format=markdown").toString());
+        assertEquals(200, markdown.status());
+        assertTrue(markdown.text().startsWith("# Browser migration test"), markdown.text());
+        assertTrue(markdown.text().contains("New editor content"), markdown.text());
+        page.navigate(uri(server, "/ui/page/" + pageId).toString());
+        page.waitForSelector("#content a[hx-get$='/edit']");
+    }
+
     private void browserMailQueue(Page page, TestServer server, int pageId) {
         page.navigate(uri(server, "/admin/mail").toString());
         page.waitForSelector("[data-mail-counts]");

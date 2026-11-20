@@ -143,6 +143,18 @@
             <artifactId>pdfbox</artifactId>
             <version>3.0.8</version>
         </dependency>
+        <!-- Page export (R69): PDF from the stored HTML without a browser (LGPL 2.1, used as a library),
+             Word documents through Apache POI. -->
+        <dependency>
+            <groupId>io.github.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-pdfbox</artifactId>
+            <version>1.1.37</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.5.1</version>
+        </dependency>
         <!-- Minio Dependencies -->
         <dependency>
             <groupId>io.minio</groupId>
@@ -267,6 +279,12 @@
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcutil-jdk18on</artifactId>
                 <version>1.86</version>
+            </dependency>
+            <!-- OpenHTMLtoPDF 1.1.37 pins PDFBox 3.0.3; keep its xmpbox at the PDFBox version used above. -->
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>xmpbox</artifactId>
+                <version>3.0.8</version>
             </dependency>
             <!-- flexmark's HTML converter brings jsoup 1.15.4; use the current release. -->
             <dependency>
