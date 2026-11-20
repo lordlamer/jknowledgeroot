@@ -1474,7 +1474,9 @@ das Bearbeiten in Arbeitskopien mit automatischem Speichern und gemeinsamem
 Bearbeiten, die Anmeldung über einen externen Identitätsanbieter, Vorlagen,
 Anhänge über API und MCP, Benachrichtigungen und den Volltextindex. Nach R66
 wurde am 15. November 2026 entschieden: R68 (Volltextindex) bleibt in 1.2,
-R67 (Export/Import) wandert in die Linie 1.3. Die Reihenfolge folgt den Abhängigkeiten:
+R67 (Export/Import) wandert in die Linie 1.3. Am 20. November 2026 kam R69
+hinzu: der Export einzelner Seiten als PDF und Word, als fester Teil von
+1.2 und als Vorgriff auf R67. Die Reihenfolge folgt den Abhängigkeiten:
 R62 ändert das Datenmodell, auf dem R64, R65 und R66 aufsetzen.
 
 Ausgangslage aus den Grenzen der 1.1-Einträge: MCP und Client-API laden
@@ -1886,6 +1888,56 @@ Index.
   stabil, wenn der Index auf einer späteren Seite leer ausgeht. Kein Lucene;
   die Qualität reicht für die Zielgröße, die Entscheidung bleibt
   dokumentiert.
+
+### R69 – Seitenexport als PDF und Word
+
+- [ ] Geplant, aufgenommen am 20. November 2026.
+- **Ziel:** Eine einzelne Seite lässt sich aus der Oberfläche und über die
+  Client-API als PDF und als Word-Dokument (`.docx`, auch von LibreOffice
+  Writer geöffnet) herunterladen: Titel, Space, Pfad, letzte Änderung,
+  der Inhalt mit Überschriften, Listen, Tabellen, Code, Links und den
+  eingebetteten Bildern aus den Anhängen. Kommentare und Unterseiten
+  gehören nicht dazu; Space- und Baumexport bleiben in R67.
+- **Umsetzung:** PDF serverseitig ohne Browser aus dem gespeicherten HTML
+  mit OpenHTMLtoPDF auf dem vorhandenen PDFBox (reines Java, eingebettete
+  Schrift für Umlaute und Unicode); Word über Apache POI aus demselben
+  HTML, Abbildung der Elemente in eigenem Code. Bilder werden
+  serverseitig aus den Anhängen mit Rechteprüfung geladen, externe
+  Adressen bleiben außen vor. Lizenzen (LGPL bei OpenHTMLtoPDF) und
+  Imagegröße werden im PR festgehalten.
+- **Abnahme:** Integrationstest je Format mit Textauszug (PDFBox, Unzip
+  von `document.xml`); Außenstehende und Gäste ohne Zugriff; Rauchtest
+  lädt beide Formate herunter; Imagescan nach Aufnahme der Bibliotheken.
+
+## 11. Version 1.3 (Entwurf)
+
+Stand: 20. November 2026. Noch nicht entschieden; die Liste hält fest, was
+sich aus den Grenzen der 1.2-Einträge und aus R67 als Kandidaten ergibt.
+Nummern werden erst bei der Entscheidung vergeben, Reihenfolge nach
+vorläufiger Gewichtung.
+
+- **R67 – Export und Import** als Anker der Linie: Spaces und Seitenbäume
+  als ZIP mit Anhängen und als Markdown, Import mit Rechteprüfung am
+  Zielort. PDF und Word je Seite kommen bereits mit R69.
+- **Betrieb mit mehreren Instanzen:** Live-Sitzungen liegen im Speicher
+  einer Instanz (R63), der Mail-Arbeitsthread hat keine Sperre und kann
+  doppelt senden (R66), der Nachlauf des Anhangsindex läuft je Instanz
+  (R68). Datenbankgestützte Sperre für Hintergrundjobs, dokumentierte
+  Sitzungsbindung für das gemeinsame Bearbeiten.
+- **Nachzügler aus 1.2:** Vorlagen über Client-API und MCP (R65);
+  Erwähnungsvervollständigung, Benachrichtigung bei Löschen und
+  Wiederherstellen, Beobachtungen über MCP, `user.timezone` (R66);
+  RP-initiated Logout und Profilabgleich bei jeder Anmeldung (R64);
+  Ausdünnen von Versionen, da Autosave die Versionstabelle schneller
+  füllt (R62).
+- **Seitenverknüpfung:** interne Links mit Vervollständigung im Editor,
+  Rückverweise („welche Seiten verweisen hierher"), Umbenennen ohne tote
+  Links, Papierkorb je Space mit Frist.
+- **Mobile App nachziehen:** Arbeitskopie, Entwürfe und SSO in der App
+  (eigenes Repository), damit App und Web nicht auseinanderlaufen.
+- **Nur bei Bedarf:** Stammformen, Synonyme und CJK-Zerlegung in der
+  Suche sowie stabile Blätterung im Rückfall (R68); mehrere OIDC-Anbieter
+  je Installation (R64); Lastmessung mit vielen Sockets je Seite (R63).
 
 ## Nachweise der Bestandsaufnahme
 
