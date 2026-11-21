@@ -1914,8 +1914,10 @@ Index.
   Hintergrund, Zitate mit Randlinie, Hyperlinks, Ausrichtung, Textfarbe,
   eingebettete Bilder (auf 600 px Breite skaliert). `MarkdownWriter` nutzt
   den HTML-nach-Markdown-Konverter von MCP (Trennstrich jetzt `---`).
-  Oberfläche: Fußzeile der Seitenansicht „Herunterladen als PDF, Word,
-  Markdown" (`/ui/page/{id}/export?format=`); Client-API
+  Oberfläche: Drei-Punkte-Menü der Seitenansicht, Abschnitt „Exportieren
+  als" mit PDF, Word und Markdown (`/ui/page/{id}/export?format=`); das
+  Menü ist jetzt für alle Betrachter sichtbar, die Bearbeitungseinträge
+  bleiben Bearbeitern vorbehalten. Client-API
   `GET /api/v1/pages/{id}/export?format=pdf|docx|markdown`. Dateiname aus
   dem Seitennamen, `Content-Disposition: attachment`. Übersetzungen in
   sechs Sprachen. Doku: product-functions.md (dabei die dreifach eingefügte
@@ -1932,7 +1934,7 @@ Index.
   Hinweis, für den Administrator eingebettet. Word 365 öffnet das erzeugte
   Dokument ohne Reparatur (eine Tabelle, ein Bild, zwei Listen, ein
   Hyperlink) und stellt es wie das PDF dar; beide Ausgaben wurden als
-  Bild geprüft. Rauchtest: Klick auf den PDF-Link löst den Download aus,
+  Bild geprüft. Rauchtest: Klick auf den PDF-Eintrag im Menü löst den Download aus,
   Word und Markdown werden über die Sitzung abgerufen. Vollständiges
   `verify` lokal und CI: siehe PR.
 - **Grenzen:** Kommentare, Anhangsliste und Unterseiten sind nicht

@@ -150,6 +150,10 @@ class PageExportIntegrationTest extends IsolatedApplicationTest {
         outsiderClient.perform(get("/api/v1/pages/" + pageId + "/export?format=pdf")).andExpect(status().isForbidden());
         mvc.perform(get("/ui/page/" + pageId + "/export?format=pdf")).andExpect(status().isForbidden());
         var readerClient = login(reader);
+        // The "More" menu offers the three formats to a reader, without the editing entries.
+        String view = readerClient.perform(get("/ui/page/" + pageId)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertTrue(view.contains("/export?format=pdf") && view.contains("/export?format=docx") && view.contains("/export?format=markdown"), view);
+        assertFalse(view.contains("hx-delete=\"/ui/page/" + pageId), "readers do not get the delete entry");
         readerClient.perform(get("/ui/page/" + pageId + "/export?format=xlsx")).andExpect(status().isBadRequest());
         readerClient.perform(get("/ui/page/" + pageId + "/export")).andExpect(status().isBadRequest());
         readerClient.perform(get("/ui/page/999999999/export?format=pdf")).andExpect(status().isForbidden());

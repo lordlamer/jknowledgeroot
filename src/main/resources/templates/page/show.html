@@ -28,7 +28,7 @@
             <span class="kr-tag" th:each="label : ${labels}" th:text="${label}">label</span>
         </div>
     </div>
-    <div class="kr-page-actions" th:if="${canStar} or ${canEdit}">
+    <div class="kr-page-actions">
         <th:block th:if="${canStar}" th:insert="~{page/star-button :: button}"></th:block>
         <th:block th:if="${canStar}" th:insert="~{page/watch-button :: button}"></th:block>
         <th:block th:if="${canEdit}">
@@ -41,12 +41,15 @@
             <a class="kr-btn primary" href="#"
                th:attr="hx-get='/ui/page/' + ${page.pageId} + '/edit'"
                hx-target="#content" hx-push-url="true" th:text="#{common.edit}">Edit</a>
+        </th:block>
 
-            <div class="dropdown">
-                <button class="kr-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" th:aria-label="#{page.show.more}" th:title="#{page.show.more}" style="padding:6px 9px">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end">
+        <!-- The "More" menu is open to every viewer: editing entries for editors, the export for everyone (R69). -->
+        <div class="dropdown">
+            <button class="kr-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" th:aria-label="#{page.show.more}" th:title="#{page.show.more}" style="padding:6px 9px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <th:block th:if="${canEdit}">
                     <li><a class="dropdown-item" href="#"
                            th:attr="hx-get='/ui/page/' + ${page.pageId} + '/new'"
                            hx-target="#content" hx-push-url="true" th:text="#{page.show.add-sub-page}">Add sub-page</a></li>
@@ -57,12 +60,22 @@
                            th:attr="hx-get='/ui/page/' + ${page.pageId} + '/move'" hx-target="#content" hx-push-url="true" th:text="#{page.show.move-page}">Move page</a></li>
                     <li><a class="dropdown-item" href="#" data-kr-upload-open th:text="#{page.show.upload-files}">Upload files</a></li>
                     <li><hr class="dropdown-divider"></li>
+                </th:block>
+                <li><h6 class="dropdown-header" th:text="#{page.show.export}">Export as</h6></li>
+                <li><a class="dropdown-item kr-export-link" th:href="@{/ui/page/{id}/export(id=${page.pageId},format='pdf')}">
+                    <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> <th:block th:text="#{page.show.export.pdf}">PDF</th:block></a></li>
+                <li><a class="dropdown-item kr-export-link" th:href="@{/ui/page/{id}/export(id=${page.pageId},format='docx')}">
+                    <i class="bi bi-file-earmark-word" aria-hidden="true"></i> <th:block th:text="#{page.show.export.word}">Word</th:block></a></li>
+                <li><a class="dropdown-item kr-export-link" th:href="@{/ui/page/{id}/export(id=${page.pageId},format='markdown')}">
+                    <i class="bi bi-markdown" aria-hidden="true"></i> <th:block th:text="#{page.show.export.markdown}">Markdown</th:block></a></li>
+                <th:block th:if="${canEdit}">
+                    <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item text-danger" href="#"
                            th:attr="hx-delete='/ui/page/' + ${page.pageId} + '?revision=' + ${page.revision}"
                            hx-target="#content" th:hx-confirm="#{page.show.delete.confirm}" th:text="#{page.show.delete}">Delete page</a></li>
-                </ul>
-            </div>
-        </th:block>
+                </th:block>
+            </ul>
+        </div>
     </div>
 </header>
 
@@ -156,13 +169,6 @@
         <strong th:text="${page.changedByLogin != null ? page.changedByLogin : (page.changedBy != null ? page.changedBy : #messages.msg('page.show.guest'))}">User</strong>
         <th:block th:text="#{page.show.at}">at</th:block>
         <span th:text="${#temporals.format(page.changeDate, #messages.msg('format.datetime'))}">01.01.2023</span>
-    </span>
-    <span class="kr-dotsep">·</span>
-    <span class="kr-page-export">
-        <th:block th:text="#{page.show.export}">Download as</th:block>
-        <a th:href="@{/ui/page/{id}/export(id=${page.pageId},format='pdf')}" th:text="#{page.show.export.pdf}">PDF</a>
-        <a th:href="@{/ui/page/{id}/export(id=${page.pageId},format='docx')}" th:text="#{page.show.export.word}">Word</a>
-        <a th:href="@{/ui/page/{id}/export(id=${page.pageId},format='markdown')}" th:text="#{page.show.export.markdown}">Markdown</a>
     </span>
 </footer>
 <th:block th:replace="~{fragments/space-context :: oob}"></th:block>

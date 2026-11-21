@@ -477,11 +477,14 @@ class ApplicationSmokeIT {
     }
 
     /** Admin → Mail (R66) renders in the production profile; nothing is queued yet because recovery mails go direct. */
-    /** Page export (R69): the footer links download the page as PDF, Word and Markdown. */
+    /** Page export (R69): the "More" menu of the page view downloads the page as PDF, Word and Markdown. */
     private void browserPageExport(Page page, TestServer server, int pageId) throws Exception {
         page.navigate(uri(server, "/ui/page/" + pageId).toString());
-        page.waitForSelector(".kr-page-export a[href$='format=pdf']");
-        Download download = page.waitForDownload(() -> page.locator(".kr-page-export a[href$='format=pdf']").click());
+        page.waitForSelector(".kr-page-actions .dropdown > button");
+        page.locator(".kr-page-actions .dropdown > button").click();
+        page.waitForSelector(".kr-page-actions .dropdown-menu.show a[href$='format=pdf']");
+        page.screenshot(new Page.ScreenshotOptions().setPath(Path.of(System.getProperty("application.jar")).getParent().resolve("export-menu.png")));
+        Download download = page.waitForDownload(() -> page.locator(".kr-page-actions .dropdown-menu a[href$='format=pdf']").click());
         assertTrue(download.suggestedFilename().endsWith(".pdf"), download.suggestedFilename());
         byte[] pdf = Files.readAllBytes(download.path());
         assertEquals("%PDF", new String(pdf, 0, 4, StandardCharsets.ISO_8859_1));

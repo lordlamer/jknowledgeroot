@@ -249,9 +249,10 @@ Teilzeichenfolgensuche. Einzelheiten und Grenzen in
 
 ## Seiten exportieren
 
-Jede Seite lässt sich in der Fußzeile der Seitenansicht („Herunterladen als")
-als PDF, Word-Dokument oder Markdown speichern; wer die Seite lesen darf,
-darf sie auch exportieren, Gäste eingeschlossen. Der Export enthält Titel,
+Jede Seite lässt sich über das Drei-Punkte-Menü der Seitenansicht (Abschnitt
+„Exportieren als") als PDF, Word-Dokument oder Markdown speichern; das Menü
+sehen alle Betrachter, die Bearbeitungseinträge darin nur Bearbeiter. Wer die
+Seite lesen darf, darf sie auch exportieren, Gäste eingeschlossen. Der Export enthält Titel,
 Space, Pfad im Seitenbaum, Labels, Ersteller und letzten Bearbeiter mit Datum
 sowie den Inhalt mit Überschriften, Listen, Tabellen, Code, Zitaten, Links,
 Ausrichtung und Textfarbe. Bilder, die als Anhang in dieser Installation
