@@ -24,6 +24,7 @@ public final class McpMarkdown {
     // ATX headings and dash bullets: the Markdown assistants write themselves.
     private static final FlexmarkHtmlConverter CONVERTER = FlexmarkHtmlConverter.builder(new MutableDataSet(OPTIONS)
             .set(FlexmarkHtmlConverter.SETEXT_HEADINGS, false)
+            .set(FlexmarkHtmlConverter.THEMATIC_BREAK, "---")
             .set(FlexmarkHtmlConverter.UNORDERED_LIST_DELIMITER, '-')).build();
 
     private McpMarkdown() {}

@@ -32,6 +32,7 @@ class PageApiController {
     private final PageDraftDao drafts;
     private final org.knowledgeroot.app.page.template.PageTemplateService templates;
     private final org.knowledgeroot.app.notification.NotificationService pageNotifications;
+    private final org.knowledgeroot.app.page.export.PageExportService exports;
 
     @GetMapping("/{id}")
     ApiModels.PageDetail page(@PathVariable int id) {
@@ -69,6 +70,13 @@ class PageApiController {
                 .revision(input.revision()).published(input.published()).build();
         editing.edit(new PageId(id), dto, labels(input.labels()), java.util.Map.of(), List.of(), List.of());
         return detail(id);
+    }
+
+    /** The page as a file (R69): {@code format} pdf, docx or markdown; the view permission applies. */
+    @GetMapping("/{id}/export")
+    org.springframework.http.ResponseEntity<byte[]> export(@PathVariable int id, @RequestParam(required = false) String format) {
+        RequestValidation.id(id);
+        return exports.export(id, org.knowledgeroot.app.page.export.ExportFormat.parse(format)).response();
     }
 
     /** The working copy (R62) for users who may edit the page; 404 when there is none. */

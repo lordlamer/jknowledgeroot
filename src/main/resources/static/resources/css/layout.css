@@ -1001,6 +1001,8 @@ body.kr-dark .kr-request-error { background: #3a1e1e; border-color: #5a2d2d; col
 }
 .kr-page-foot strong { color: var(--kr-text-2); font-weight: 500; }
 .kr-page-foot .kr-dotsep { opacity: .5; }
+.dropdown-header { padding: 6px 10px 2px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--kr-text-3); }
+.kr-export-link .bi { color: var(--kr-text-3); }
 
 /* Comments */
 .kr-comments {

@@ -234,58 +234,6 @@ von der Vorlage zur fertigen Seite beschreibt ([mcp.md](mcp.md)). Assistenten
 laden außerdem mit `upload_attachment` Anhänge hoch, mit denselben Grenzen
 und Rechten wie der Browser.
 
-## Seitenvorlagen
-
-Space-Verwalter legen unter Spaces → Settings → „Page templates" Vorlagen
-für ihren Space an: ein Name, ein Inhalt im gewohnten Editor und Labels. Die
-Vorlage ist keine Seite; sie hat keinen Verlauf, keine Freigaben, keine
-Kommentare oder Anhänge und erscheint weder im Baum noch in der Suche. Je
-Space sind bis zu 100 Vorlagen möglich, der Name ist je Space eindeutig.
-
-„Neue Seite" zeigt in einem Space mit Vorlagen oben eine Auswahl „Template"
-mit „Blank page" und den Vorlagen des Space; für Unterseiten zählt der Space
-der Elternseite. Die Auswahl lädt das Formular neu: Inhalt und Labels kommen
-aus der Vorlage, ein bereits eingegebener Name bleibt stehen, sonst wird der
-Vorlagenname zum Seitennamen. Danach bearbeitet man die Seite wie jede andere;
-die Vorlage selbst ändert sich nicht. Vorlagen anderer Spaces werden
-abgelehnt.
-
-Die Client-API liefert die Vorlagen eines Space unter
-`GET /api/v1/spaces/{id}/templates` und nimmt bei `POST /api/v1/pages` eine
-`template`-ID an, die Name, Inhalt und Labels vorbelegt, soweit die Anfrage
-sie nicht nennt ([client-api.md](client-api.md)). Über MCP listet
-`list_templates` die Vorlagen, `create_page` nimmt `template` an, und für jede
-Vorlage gibt es einen Prompt `template_<id>`, der dem Assistenten den Weg
-von der Vorlage zur fertigen Seite beschreibt ([mcp.md](mcp.md)). Assistenten
-laden außerdem mit `upload_attachment` Anhänge hoch, mit denselben Grenzen
-und Rechten wie der Browser.
-
-## Seitenvorlagen
-
-Space-Verwalter legen unter Spaces → Settings → „Page templates" Vorlagen
-für ihren Space an: ein Name, ein Inhalt im gewohnten Editor und Labels. Die
-Vorlage ist keine Seite; sie hat keinen Verlauf, keine Freigaben, keine
-Kommentare oder Anhänge und erscheint weder im Baum noch in der Suche. Je
-Space sind bis zu 100 Vorlagen möglich, der Name ist je Space eindeutig.
-
-„Neue Seite" zeigt in einem Space mit Vorlagen oben eine Auswahl „Template"
-mit „Blank page" und den Vorlagen des Space; für Unterseiten zählt der Space
-der Elternseite. Die Auswahl lädt das Formular neu: Inhalt und Labels kommen
-aus der Vorlage, ein bereits eingegebener Name bleibt stehen, sonst wird der
-Vorlagenname zum Seitennamen. Danach bearbeitet man die Seite wie jede andere;
-die Vorlage selbst ändert sich nicht. Vorlagen anderer Spaces werden
-abgelehnt.
-
-Die Client-API liefert die Vorlagen eines Space unter
-`GET /api/v1/spaces/{id}/templates` und nimmt bei `POST /api/v1/pages` eine
-`template`-ID an, die Name, Inhalt und Labels vorbelegt, soweit die Anfrage
-sie nicht nennt ([client-api.md](client-api.md)). Über MCP listet
-`list_templates` die Vorlagen, `create_page` nimmt `template` an, und für jede
-Vorlage gibt es einen Prompt `template_<id>`, der dem Assistenten den Weg
-von der Vorlage zur fertigen Seite beschreibt ([mcp.md](mcp.md)). Assistenten
-laden außerdem mit `upload_attachment` Anhänge hoch, mit denselben Grenzen
-und Rechten wie der Browser.
-
 ## Suche
 
 Die Suche in der Kopfzeile durchsucht Titel, Inhalt, Labels und den Text von
@@ -298,6 +246,34 @@ denen nur ein Anhang passt; innerhalb einer Stufe die zuletzt geänderte zuerst.
 Auszug aus dem Anhang. Bei sehr kurzen Wörtern oder Wortteilen greift die
 Teilzeichenfolgensuche. Einzelheiten und Grenzen in
 [search-and-validation.md](search-and-validation.md#seitenlisten-und-suche).
+
+## Seiten exportieren
+
+Jede Seite lässt sich über das Drei-Punkte-Menü der Seitenansicht (Abschnitt
+„Exportieren als") als PDF, Word-Dokument oder Markdown speichern; das Menü
+sehen alle Betrachter, die Bearbeitungseinträge darin nur Bearbeiter. Wer die
+Seite lesen darf, darf sie auch exportieren, Gäste eingeschlossen. Der Export enthält Titel,
+Space, Pfad im Seitenbaum, Labels, Ersteller und letzten Bearbeiter mit Datum
+sowie den Inhalt mit Überschriften, Listen, Tabellen, Code, Zitaten, Links,
+Ausrichtung und Textfarbe. Bilder, die als Anhang in dieser Installation
+liegen, werden in PDF und Word eingebettet, sofern man die Seite des Anhangs
+lesen darf; andere Bilder stehen dort als Hinweis „[Bild nicht enthalten: …]",
+im Markdown bleibt ihre Adresse erhalten. Kommentare, die Anhangsliste und
+Unterseiten gehören nicht zum Export; der Export ganzer Spaces und der Import
+sind für die Linie 1.3 vorgesehen (R67).
+
+Das PDF entsteht auf dem Server ohne Browser, im Format A4 mit eingebetteter
+Schrift (Liberation Sans und Mono) und Seitenzahlen. Das Word-Dokument
+(`.docx`) nutzt die Formatvorlagen Titel und Überschrift 1 bis 4, echte
+Nummerierungen und Tabellen und öffnet auch in LibreOffice Writer. Markdown
+entspricht der Darstellung, die MCP-Assistenten bekommen. Über die Client-API
+liefert `GET /api/v1/pages/{id}/export?format=pdf` (oder `docx`,
+`markdown`) dieselben Dateien ([client-api.md](client-api.md)).
+
+Grenzen: Eine nie veröffentlichte Seite exportiert für Bearbeiter die
+Arbeitskopie, wie die Seitenansicht sie zeigt. Bilder aus dem Internet werden
+nicht nachgeladen. Höchstens 50 Bilder je Export, je bis 10 MB, in den
+Formaten PNG, JPEG, GIF und BMP.
 
 ## Seiten beobachten und Benachrichtigungen
 

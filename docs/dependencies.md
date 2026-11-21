@@ -181,6 +181,21 @@ Jackson. Ergebnis: **280 Paketversionen, null Zuordnungen, Exitcode 0**; die
 Datenbanktests bestehen mit dem neuen Treiber. Die Überschreibung entfällt,
 sobald Spring Boot den Stand selbst verwaltet.
 
+## Exportbibliotheken (R69)
+
+Stand: 21. November 2026. Für den Seitenexport kamen hinzu:
+
+| Bibliothek | Version | Lizenz | Zweck |
+|---|---|---|---|
+| `io.github.openhtmltopdf:openhtmltopdf-pdfbox` mit `openhtmltopdf-core`, `de.rototor.pdfbox:graphics2d` 3.0.1 und `org.apache.pdfbox:xmpbox` | 1.1.37 | LGPL 2.1 oder später (OpenHTMLtoPDF), Apache 2.0 (graphics2d, xmpbox) | PDF aus XHTML und CSS ohne Browser auf dem vorhandenen PDFBox 3.0.8; `xmpbox` ist auf dieselbe PDFBox-Version festgelegt |
+| `org.apache.poi:poi-ooxml` mit `poi`, `poi-ooxml-lite`, `xmlbeans` 5.3.0, `commons-compress` 1.28.0, `commons-collections4` 4.5.0, `commons-math3` 3.6.1, `SparseBitSet` 1.3 | 5.5.1 | Apache 2.0 | Word-Dokumente (`.docx`) |
+| Liberation Fonts in `src/main/resources/fonts` (Sans Regular, Bold, Italic, BoldItalic; Mono Regular) | 2.1.5 | SIL Open Font License 1.1, Text in `LICENSE-Liberation.txt` daneben | Eingebettete Schrift im PDF |
+
+OpenHTMLtoPDF wird unverändert als Maven-Abhängigkeit eingebunden; die LGPL
+gilt für die Bibliothek und verlangt keine Änderung der BSD-2-Clause-Lizenz
+des Projekts. `log4j-api` war über Boots `log4j-to-slf4j` bereits im
+Klassenpfad. Die Imageprüfung der CI läuft über den PR von R69.
+
 ## Testgrenzen bei R08
 
 Der vorhandene Testsatz prüft nach der Migration weiterhin Login, Rechte,

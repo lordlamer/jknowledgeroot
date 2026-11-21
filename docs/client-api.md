@@ -62,6 +62,7 @@ Zeitstempel werden als ISO-8601 mit Zeitzonen-Offset geliefert
 | Kommentare | `GET/POST /pages/{id}/comments`, `DELETE /pages/{id}/comments/{commentId}` |
 | Anhänge | `GET/POST(multipart "file") /pages/{id}/files`, `GET /files/{id}/content`, `DELETE /files/{id}` |
 | Verlauf | `GET /pages/{id}/history`, `GET /pages/{id}/history/{historyId}`, `GET /pages/{id}/history/compare?from=&to=`, `POST /pages/{id}/history/{historyId}/restore` |
+| Export (R69) | `GET /pages/{id}/export?format=pdf`, `format=docx` (auch `word`) oder `format=markdown` (auch `md`): die Seite als Datei mit `Content-Disposition: attachment`, Rechte wie `GET /pages/{id}`; Inhalt mit Titel, Space, Pfad, Labels, Autoren und den Anhangsbildern, die der Aufrufer sehen darf; 400 bei anderem Format |
 | Freigaben (Admin) | `GET/POST /pages/{id}/permissions`, `PUT/DELETE /pages/{id}/permissions/{permissionId}`, `PUT /pages/{id}/permissions/mode` |
 | Profil | `GET/PUT /profile`, `POST /profile/password`, `GET/POST /profile/recovery`, `GET/PUT /profile/notifications` (`frequency` immediate, hourly, daily oder never; `mentions`; Antwort nennt `mailsEnabled`, R66) |
 | Benachrichtigungen (R66) | `GET /notifications?start=` (50 je Seite, neueste zuerst, `text` als fertiger Satz in der Anfragesprache, `unread`), `POST /notifications/read` (alles als gelesen markieren) |

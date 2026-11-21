@@ -50,6 +50,9 @@ Website: [knowledgeroot.org](https://knowledgeroot.org) · Images: [Docker Hub](
 - **Full-text search** over titles, labels, content and the text of attachments (including
   PDF), ranked title first, across all spaces you may enter or inside one, with filters by label,
   change date and last editor. Permissions are applied before pagination.
+- **Export.** Download any page as PDF (rendered on the server, no browser), Word `.docx`
+  (opens in LibreOffice too) or Markdown: title, space, path, labels and authors, the content
+  with headings, lists, tables, code and links, and the attachment images you may see.
 - **Attachments** on local disk or in any S3-compatible bucket, streamed with SHA-256
   hashing and size limits; comments, labels and favourites on every page.
 - **Sign-in done properly.** PBKDF2 password hashing, login throttling per account and
