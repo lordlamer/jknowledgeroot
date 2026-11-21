@@ -391,8 +391,9 @@ des automatischen Speicherns.
   wenigen Sekunden auf das Verhalten von R62 zurück: automatisches Speichern
   der Arbeitskopie, aber keine Live-Anzeige; die Statuszeile sagt es.
 
-Grenzen: Das gemeinsame Bearbeiten gilt für den Browser; die mobile App
-schreibt weiter über die Arbeitskopie der Client-API. Die Live-Sitzungen
+Grenzen: Die mobile App nimmt seit ihrer Version 1.2 mit demselben
+Mechanismus teil (ihr Editor öffnet den Collaboration-Socket mit dem
+Sitzungscookie). Die Live-Sitzungen
 einer Seite liegen im Speicher einer Anwendungsinstanz; bei mehreren
 Instanzen hinter einem Lastverteiler müssen die Bearbeiter derselben Seite
 auf derselben Instanz landen (Sitzungsbindung), sonst sehen sie einander

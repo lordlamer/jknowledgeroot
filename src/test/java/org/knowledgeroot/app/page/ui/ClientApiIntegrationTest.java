@@ -79,7 +79,9 @@ class ClientApiIntegrationTest extends IsolatedApplicationTest {
         var signedIn = signIn(editor);
         assertNotEquals(guestSession, signedIn.cookies.get("SESSION").getValue());
         signedIn.perform(get("/api/v1/session")).andExpect(jsonPath("$.authenticated").value(true))
-                .andExpect(jsonPath("$.serverVersion").value(matchesRegex("[0-9]+[.][0-9]+[.][0-9]+.*")));
+                .andExpect(jsonPath("$.serverVersion").value(matchesRegex("[0-9]+[.][0-9]+[.][0-9]+.*")))
+                // No OpenID Connect provider in this profile: the app shows no single sign-on button.
+                .andExpect(jsonPath("$.capabilities.singleSignOn").doesNotExist());
         signedIn.perform(post("/api/v1/auth/logout")).andExpect(status().isOk());
         signedIn.refresh();
         signedIn.perform(get("/api/v1/session")).andExpect(jsonPath("$.authenticated").value(false));

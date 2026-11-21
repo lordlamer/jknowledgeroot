@@ -41,8 +41,8 @@ Treffer nur im Anhang; innerhalb einer Stufe die jüngste Änderung zuerst
 Zeilen schwanken und die Blätterung instabil machen würden). Ein Treffer, der nur im Anhang steht, nennt die Datei und zeigt den
 Auszug aus ihrem Text. Findet der Index nichts, etwa bei Wörtern unter drei
 Zeichen, Stoppwörtern oder Wortteilen, antwortet die bisherige
-Teilzeichenfolgensuche in Titel und HTML-Inhalt; `%`, `_` und `!` sind dabei
-normale Zeichen. Die Rechteprüfung ist in beiden Wegen dieselbe CTE. Ein leerer
+Teilzeichenfolgensuche in Titel und HTML-Inhalt, ebenfalls jüngste Änderung
+zuerst; `%`, `_` und `!` sind dabei normale Zeichen. Die Rechteprüfung ist in beiden Wegen dieselbe CTE. Ein leerer
 Suchbegriff liefert keine Treffer und löst keine Vollabfrage aus.
 
 Grenzen des Index: HTML-Tags im Inhalt werden mittokenisiert (kurze Tagnamen

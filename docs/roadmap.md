@@ -1566,10 +1566,26 @@ Index.
 - **Grenzen:** Gleichzeitiges Bearbeiten derselben Arbeitskopie folgt bis
   R63 der Regel „letztes Autosave gewinnt". Ein genau beim Veröffentlichen
   laufendes Autosave kann die Arbeitskopie erneut anlegen; sie ist dann als
-  veraltet markiert und lässt sich verwerfen. Die mobile App
-  (knowledgeroot-app) nutzt weiter `PUT /pages/{id}` und veröffentlicht
-  damit direkt; Arbeitskopie und Entwürfe in der App sind ein eigener
-  Schritt im App-Repository. Versionen werden weiterhin nicht ausgedünnt.
+  veraltet markiert und lässt sich verwerfen. Versionen werden weiterhin
+  nicht ausgedünnt.
+- **Nachtrag (21. November 2026, R63):** Die mobile App nimmt seit ihrer
+  Version 1.2 am gemeinsamen Bearbeiten teil: ihr Editor-Bundle bindet
+  Tiptap Collaboration mit demselben Yjs an, der Socket zu
+  `/ui/page/{id}/collab` wird von der App mit Sitzungscookie und der
+  Herkunft des Servers geöffnet (der Handshake bleibt unverändert), die
+  Frames laufen über die WebView-Brücke. Geprüft gegen einen lokalen
+  1.2-Server mit einem zweiten Teilnehmer: Seed aus der App, Replay,
+  Updates in beide Richtungen, Cursor-Chips, geteilter Titel,
+  Published-Frame beim Veröffentlichen aus der App, 4409 nach Verwerfen
+  der Arbeitskopie mit „Editor neu laden“.
+- **Nachtrag (21. November 2026):** Die mobile App (knowledgeroot-app)
+  bearbeitet seit ihrer Version 1.2 in der Arbeitskopie der Client-API:
+  Autosave zwei Sekunden nach der letzten Änderung, Veröffentlichen aus
+  Editor und Seitenansicht, Entwürfe, Hinweis auf vorhandene und veraltete
+  Arbeitskopien; gegen einen 1.1-Server fällt sie auf `PUT /pages/{id}`
+  zurück. Ebenso in der App seit 1.2: Vorlagen (R65), Single Sign-on (R64,
+  über `capabilities.singleSignOn`), Beobachten und Benachrichtigungen
+  (R66), Anhangstreffer (R68) und der Export (R69).
 
 ### R63 – Gemeinsames Bearbeiten in Echtzeit
 
@@ -1631,9 +1647,7 @@ Index.
   Chromium-Smoke-Test erfolgreich, keine Fehler oder übersprungenen Tests**;
   gehosteter Nachweis mit dem PR-Lauf.
 - **Grenzen:** Live-Sitzungen liegen im Speicher einer Instanz; mehrere
-  Instanzen brauchen Sitzungsbindung. Gemeinsames Bearbeiten nur im
-  Browser, die mobile App schreibt weiter über die Arbeitskopie der
-  Client-API. Die Rechteprüfung läuft im 30-Sekunden-Takt, ein Entzug
+  Instanzen brauchen Sitzungsbindung. Die Rechteprüfung läuft im 30-Sekunden-Takt, ein Entzug
   wirkt also mit Verzögerung. Awareness ist nicht persistent: Wer beitritt,
   sieht Cursor erst, wenn die anderen sich erneut melden (die Anwendung
   fordert das beim Beitritt an). Keine Lastmessung mit vielen Sockets je
@@ -1703,11 +1717,17 @@ Index.
 - **Grenzen:** Ein Anbieter je Installation; mehrere Anbieter brauchen
   Spring-Security-Konfiguration von Hand. Kein RP-initiated Logout beim
   Anbieter und keine Übernahme von Profiländerungen nach der ersten
-  Anmeldung (Name, Mail bleiben lokal änderbar). Die mobile App und die
-  Client-API kennen nur Passwort-Login; SSO-Konten brauchen dort ein vom
-  Administrator freigeschaltetes lokales Passwort. Gruppen werden nur aus
-  einem flachen Claim übernommen (Keycloak-Pfade auf das letzte Segment
-  gekürzt).
+  Anmeldung (Name, Mail bleiben lokal änderbar). Die Client-API kennt
+  nur den Passwort-Login; SSO-Konten brauchen für reine API-Clients ein
+  vom Administrator freigeschaltetes lokales Passwort. Gruppen werden nur
+  aus einem flachen Claim übernommen (Keycloak-Pfade auf das letzte
+  Segment gekürzt).
+- **Nachtrag (21. November 2026):** `GET /api/v1/session` nennt in
+  `capabilities.singleSignOn` den Namen des Anbieters, damit die mobile
+  App den Knopf „Anmelden mit …“ anbietet; sie öffnet `/login/oidc` in
+  einer eingebetteten Browseransicht und übernimmt danach das
+  Sitzungscookie (umgesetzt im App-Repository). Geprüft in
+  `OidcLoginIntegrationTest` und `ClientApiIntegrationTest`.
 
 ### R65 – Seitenvorlagen und Anhänge über API und MCP
 
@@ -1882,7 +1902,10 @@ Index.
   Treffermengen ersetzt; lokal 46 ms für eine Suche über 5000 Seiten wie
   vor R68.
 - **Grenzen:** Wörter unter drei Zeichen, Stoppwörter und Wortteile finden
-  nur den Rückfall (Teilzeichenfolgen, ungewichtet). HTML-Tags im Inhalt
+  nur den Rückfall (Teilzeichenfolgen, ungewichtet, seit dem 21. November
+  2026 wie der Index jüngste Änderung zuerst statt aufsteigend nach Id,
+  nachdem `PagePermissionDatabaseTest` im CI einmal in den Rückfall lief
+  und die Reihenfolge kippte). HTML-Tags im Inhalt
   werden mittokenisiert. Keine Zerlegung für CJK-Schriften, keine
   Synonyme oder Stammformen. Die Blätterung bleibt beim Rückfall nicht
   stabil, wenn der Index auf einer späteren Seite leer ausgeht. Kein Lucene;
@@ -1969,8 +1992,6 @@ vorläufiger Gewichtung.
 - **Seitenverknüpfung:** interne Links mit Vervollständigung im Editor,
   Rückverweise („welche Seiten verweisen hierher"), Umbenennen ohne tote
   Links, Papierkorb je Space mit Frist.
-- **Mobile App nachziehen:** Arbeitskopie, Entwürfe und SSO in der App
-  (eigenes Repository), damit App und Web nicht auseinanderlaufen.
 - **Nur bei Bedarf:** Stammformen, Synonyme und CJK-Zerlegung in der
   Suche sowie stabile Blätterung im Rückfall (R68); mehrere OIDC-Anbieter
   je Installation (R64); Lastmessung mit vielen Sockets je Seite (R63).

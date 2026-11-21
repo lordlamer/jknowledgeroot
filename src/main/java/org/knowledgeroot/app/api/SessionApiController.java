@@ -53,6 +53,7 @@ class SessionApiController {
     private final SecurityContextRepository contextRepository = WebSecurityConfig.securityContextRepository();
     private final WebAuthenticationDetailsSource details = new WebAuthenticationDetailsSource();
     private final org.knowledgeroot.app.space.SpaceService spaces;
+    private final org.knowledgeroot.app.security.oidc.OidcSettings oidc;
 
     /** Current identity plus a CSRF token for the following state-changing requests. */
     @GetMapping("/session")
@@ -165,6 +166,6 @@ class SessionApiController {
 
     private ApiModels.Capabilities capabilities(boolean guest) {
         return new ApiModels.Capabilities(spaces.canCreateRootPage(spaces.defaultSpace().getId()), recoverySettings.isEnabled(),
-                uploadPolicy.maxFileBytes(), uploadPolicy.maxFiles());
+                uploadPolicy.maxFileBytes(), uploadPolicy.maxFiles(), oidc.enabled() ? oidc.getName() : null);
     }
 }

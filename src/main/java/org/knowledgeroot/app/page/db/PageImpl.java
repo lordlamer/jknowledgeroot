@@ -254,7 +254,10 @@ public class PageImpl implements PageDao {
 
         if (!sqlParams.isEmpty()) sql.append(" WHERE ").append(String.join(" AND ", sqlParams.values()));
         if (fullText != null) sql.append(" ORDER BY ").append(FULLTEXT_SCORE).append(", change_date DESC, id DESC");
-        else sql.append(Boolean.TRUE.equals(pageFilter.getNewestFirst()) ? " ORDER BY change_date DESC, id DESC" : " ORDER BY id ASC");
+        // The substring fallback of a search keeps the order of the ranked search (newest first), so a window that
+        // falls back (an index not yet synced after a bulk insert, a word too short) does not flip its order.
+        else sql.append(Boolean.TRUE.equals(pageFilter.getNewestFirst()) || pageFilter.getQuery() != null
+                ? " ORDER BY change_date DESC, id DESC" : " ORDER BY id ASC");
 
         if(pageFilter.getLimit() != null && pageFilter.getStart() != null) {
             params.put("limit", pageFilter.getLimit());

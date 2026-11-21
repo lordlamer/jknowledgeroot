@@ -98,6 +98,9 @@ class OidcLoginIntegrationTest extends IsolatedApplicationTest {
         String page = mvc.perform(get("/login")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         assertTrue(page.contains("Sign in with Example ID"), page);
         assertTrue(page.contains("/login/oidc"), page);
+        // The app learns the provider from the session endpoint and offers the same sign-in.
+        mvc.perform(get("/api/v1/session")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.capabilities.singleSignOn").value("Example ID"));
 
         String suffix = java.util.UUID.randomUUID().toString().substring(0, 8);
         jdbc.update("INSERT INTO `group` (name, description, active, created_by, create_date, changed_by, change_date, deleted) VALUES (?, '', TRUE, ?, NOW(), ?, NOW(), FALSE)", "docs-" + suffix, adminId, adminId);
