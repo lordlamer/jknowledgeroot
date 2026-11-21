@@ -1566,10 +1566,16 @@ Index.
 - **Grenzen:** Gleichzeitiges Bearbeiten derselben Arbeitskopie folgt bis
   R63 der Regel „letztes Autosave gewinnt". Ein genau beim Veröffentlichen
   laufendes Autosave kann die Arbeitskopie erneut anlegen; sie ist dann als
-  veraltet markiert und lässt sich verwerfen. Die mobile App
-  (knowledgeroot-app) nutzt weiter `PUT /pages/{id}` und veröffentlicht
-  damit direkt; Arbeitskopie und Entwürfe in der App sind ein eigener
-  Schritt im App-Repository. Versionen werden weiterhin nicht ausgedünnt.
+  veraltet markiert und lässt sich verwerfen. Versionen werden weiterhin
+  nicht ausgedünnt.
+- **Nachtrag (21. November 2026):** Die mobile App (knowledgeroot-app)
+  bearbeitet seit ihrer Version 1.2 in der Arbeitskopie der Client-API:
+  Autosave zwei Sekunden nach der letzten Änderung, Veröffentlichen aus
+  Editor und Seitenansicht, Entwürfe, Hinweis auf vorhandene und veraltete
+  Arbeitskopien; gegen einen 1.1-Server fällt sie auf `PUT /pages/{id}`
+  zurück. Ebenso in der App seit 1.2: Vorlagen (R65), Single Sign-on (R64,
+  über `capabilities.singleSignOn`), Beobachten und Benachrichtigungen
+  (R66), Anhangstreffer (R68) und der Export (R69).
 
 ### R63 – Gemeinsames Bearbeiten in Echtzeit
 
@@ -1975,8 +1981,6 @@ vorläufiger Gewichtung.
 - **Seitenverknüpfung:** interne Links mit Vervollständigung im Editor,
   Rückverweise („welche Seiten verweisen hierher"), Umbenennen ohne tote
   Links, Papierkorb je Space mit Frist.
-- **Mobile App nachziehen:** Arbeitskopie, Entwürfe und SSO in der App
-  (eigenes Repository), damit App und Web nicht auseinanderlaufen.
 - **Nur bei Bedarf:** Stammformen, Synonyme und CJK-Zerlegung in der
   Suche sowie stabile Blätterung im Rückfall (R68); mehrere OIDC-Anbieter
   je Installation (R64); Lastmessung mit vielen Sockets je Seite (R63).
