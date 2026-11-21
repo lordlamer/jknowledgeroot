@@ -1902,7 +1902,10 @@ Index.
   Treffermengen ersetzt; lokal 46 ms für eine Suche über 5000 Seiten wie
   vor R68.
 - **Grenzen:** Wörter unter drei Zeichen, Stoppwörter und Wortteile finden
-  nur den Rückfall (Teilzeichenfolgen, ungewichtet). HTML-Tags im Inhalt
+  nur den Rückfall (Teilzeichenfolgen, ungewichtet, seit dem 21. November
+  2026 wie der Index jüngste Änderung zuerst statt aufsteigend nach Id,
+  nachdem `PagePermissionDatabaseTest` im CI einmal in den Rückfall lief
+  und die Reihenfolge kippte). HTML-Tags im Inhalt
   werden mittokenisiert. Keine Zerlegung für CJK-Schriften, keine
   Synonyme oder Stammformen. Die Blätterung bleibt beim Rückfall nicht
   stabil, wenn der Index auf einer späteren Seite leer ausgeht. Kein Lucene;
