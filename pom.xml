@@ -24,7 +24,7 @@
 		<java.version>25</java.version>
         <project.build.outputTimestamp>2026-09-13T00:00:00Z</project.build.outputTimestamp>
         <build.revision>unknown</build.revision>
-        <htmx-spring-boot.version>5.1.0</htmx-spring-boot.version>
+        <htmx-spring-boot.version>6.0.1</htmx-spring-boot.version>
         <spring-ai.version>2.0.2</spring-ai.version>
         <flexmark.version>0.64.8</flexmark.version>
         <!-- Security fixes newer than Boot 4.1.1's managed Tomcat; remove when the BOM catches up. -->
