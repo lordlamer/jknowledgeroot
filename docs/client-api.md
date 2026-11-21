@@ -12,7 +12,11 @@ der Web-UI. Es gibt keine zusätzlichen Tokens und keine Datenbankänderung daf�
 
 1. `GET /api/v1/session` liefert Identität, Fähigkeiten (z. B. Upload-Grenzen,
    Root-Seiten anlegen, Passwort-Wiederherstellung) und ein CSRF-Token
-   (`csrf.headerName`, `csrf.token`).
+   (`csrf.headerName`, `csrf.token`). `capabilities.singleSignOn` nennt den
+   Namen des OpenID-Connect-Anbieters (R64), wenn einer konfiguriert ist,
+   sonst `null`; die App zeigt dann einen Knopf, öffnet `/login/oidc` in
+   einer eingebetteten Browseransicht und übernimmt nach der Rückkehr das
+   Sitzungscookie der Web-Anmeldung.
 2. Alle ändernden Requests senden das Token im Header `X-XSRF-TOKEN`.
 3. `POST /api/v1/auth/login` mit `{"username", "password"}` meldet an. Wie beim
    Formular-Login gelten die Loginquoten, die Sitzungs-ID wird erneuert und das

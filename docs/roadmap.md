@@ -1703,11 +1703,17 @@ Index.
 - **Grenzen:** Ein Anbieter je Installation; mehrere Anbieter brauchen
   Spring-Security-Konfiguration von Hand. Kein RP-initiated Logout beim
   Anbieter und keine Übernahme von Profiländerungen nach der ersten
-  Anmeldung (Name, Mail bleiben lokal änderbar). Die mobile App und die
-  Client-API kennen nur Passwort-Login; SSO-Konten brauchen dort ein vom
-  Administrator freigeschaltetes lokales Passwort. Gruppen werden nur aus
-  einem flachen Claim übernommen (Keycloak-Pfade auf das letzte Segment
-  gekürzt).
+  Anmeldung (Name, Mail bleiben lokal änderbar). Die Client-API kennt
+  nur den Passwort-Login; SSO-Konten brauchen für reine API-Clients ein
+  vom Administrator freigeschaltetes lokales Passwort. Gruppen werden nur
+  aus einem flachen Claim übernommen (Keycloak-Pfade auf das letzte
+  Segment gekürzt).
+- **Nachtrag (21. November 2026):** `GET /api/v1/session` nennt in
+  `capabilities.singleSignOn` den Namen des Anbieters, damit die mobile
+  App den Knopf „Anmelden mit …“ anbietet; sie öffnet `/login/oidc` in
+  einer eingebetteten Browseransicht und übernimmt danach das
+  Sitzungscookie (umgesetzt im App-Repository). Geprüft in
+  `OidcLoginIntegrationTest` und `ClientApiIntegrationTest`.
 
 ### R65 – Seitenvorlagen und Anhänge über API und MCP
 

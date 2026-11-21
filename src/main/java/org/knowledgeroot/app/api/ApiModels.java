@@ -22,8 +22,9 @@ public final class ApiModels {
 
     public record Csrf(String headerName, String token) {}
 
+    /** {@code singleSignOn} names the OpenID Connect provider (R64) when one is configured, null otherwise. */
     public record Capabilities(boolean canCreateRootPage, boolean recoveryEnabled, long uploadMaxFileBytes,
-                               int uploadMaxFiles) {}
+                               int uploadMaxFiles, String singleSignOn) {}
 
     /** pending: the password was accepted and a code (requirement verify) or an enrolment (enrol) is owed. */
     public record SecondFactor(boolean pending, String requirement, boolean enrolled, String policy) {}
