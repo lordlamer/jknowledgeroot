@@ -1568,6 +1568,16 @@ Index.
   laufendes Autosave kann die Arbeitskopie erneut anlegen; sie ist dann als
   veraltet markiert und lässt sich verwerfen. Versionen werden weiterhin
   nicht ausgedünnt.
+- **Nachtrag (21. November 2026, R63):** Die mobile App nimmt seit ihrer
+  Version 1.2 am gemeinsamen Bearbeiten teil: ihr Editor-Bundle bindet
+  Tiptap Collaboration mit demselben Yjs an, der Socket zu
+  `/ui/page/{id}/collab` wird von der App mit Sitzungscookie und der
+  Herkunft des Servers geöffnet (der Handshake bleibt unverändert), die
+  Frames laufen über die WebView-Brücke. Geprüft gegen einen lokalen
+  1.2-Server mit einem zweiten Teilnehmer: Seed aus der App, Replay,
+  Updates in beide Richtungen, Cursor-Chips, geteilter Titel,
+  Published-Frame beim Veröffentlichen aus der App, 4409 nach Verwerfen
+  der Arbeitskopie mit „Editor neu laden“.
 - **Nachtrag (21. November 2026):** Die mobile App (knowledgeroot-app)
   bearbeitet seit ihrer Version 1.2 in der Arbeitskopie der Client-API:
   Autosave zwei Sekunden nach der letzten Änderung, Veröffentlichen aus
@@ -1637,9 +1647,7 @@ Index.
   Chromium-Smoke-Test erfolgreich, keine Fehler oder übersprungenen Tests**;
   gehosteter Nachweis mit dem PR-Lauf.
 - **Grenzen:** Live-Sitzungen liegen im Speicher einer Instanz; mehrere
-  Instanzen brauchen Sitzungsbindung. Gemeinsames Bearbeiten nur im
-  Browser, die mobile App schreibt weiter über die Arbeitskopie der
-  Client-API. Die Rechteprüfung läuft im 30-Sekunden-Takt, ein Entzug
+  Instanzen brauchen Sitzungsbindung. Die Rechteprüfung läuft im 30-Sekunden-Takt, ein Entzug
   wirkt also mit Verzögerung. Awareness ist nicht persistent: Wer beitritt,
   sieht Cursor erst, wenn die anderen sich erneut melden (die Anwendung
   fordert das beim Beitritt an). Keine Lastmessung mit vielen Sockets je
